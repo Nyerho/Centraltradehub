@@ -191,8 +191,8 @@ class ContentManager {
                 description: 'Access over 20,000 instruments including forex, metals, shares, indices, commodities & cryptocurrencies on award-winning MT4 and MT5 Mobile Platforms with instant nano-second execution.',
                 image: 'assets/images/mt4.webp'
             },
-            'Tradetrendpro Trader 4/5': {
-                title: 'TradeTrendPro <span class="highlight">Advanced Platform</span>',
+            'Central Trade Hub Trader 4/5': {
+                title: 'Central Trade Hub <span class="highlight">Advanced Platform</span>',
                 description: 'Our proprietary trading platform with advanced charting tools, algorithmic trading capabilities, and institutional-grade execution. Perfect for professional traders.',
                 image: 'assets/images/tradeen.png'
             },

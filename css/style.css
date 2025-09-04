@@ -764,8 +764,7 @@ body {
 /* Choose Where To Go Next Section */
 .choose-next {
     padding: 80px 0;
-    background: linear-gradient(135deg, #0f1419 0%, #1a1a2e 100%);
-    color: #ffffff;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
 }
 
 .next-header {
@@ -774,50 +773,73 @@ body {
 }
 
 .next-header h2 {
-    font-size: 3rem;
-    font-weight: 700;
+    font-size: 2.5rem;
     color: #ffffff;
+    margin-bottom: 20px;
 }
 
 .next-options {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 40px;
+    max-width: 1000px;
+    margin: 0 auto;
 }
 
 .next-card {
-    background: rgba(0, 212, 255, 0.1);
-    border: 1px solid rgba(0, 212, 255, 0.3);
-    border-radius: 15px;
-    padding: 3rem 2rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 40px 30px;
     text-align: center;
     transition: all 0.3s ease;
-    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
 }
 
 .next-card:hover {
-    background: rgba(0, 212, 255, 0.2);
     transform: translateY(-10px);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #00d4ff;
     box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
 }
 
-.card-icon {
+.next-card .card-icon {
     width: 80px;
     height: 80px;
-    background: linear-gradient(135deg, #00d4ff, #0099cc);
-    border-radius: 50%;
+    margin: 0 auto 30px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 1.5rem;
-    font-size: 2rem;
-    color: #ffffff;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00d4ff, #0099cc);
+}
+
+.next-card .card-image {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
 }
 
 .next-card h3 {
     font-size: 1.5rem;
-    font-weight: 600;
     color: #ffffff;
+    margin: 0;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .next-options {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+    
+    .next-card {
+        padding: 30px 20px;
+    }
+    
+    .next-header h2 {
+        font-size: 2rem;
+    }
 }
 
 /* Responsive Design */
