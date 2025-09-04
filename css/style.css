@@ -906,22 +906,20 @@ body {
     color: #00d4ff;
 }
 
-/* Crypto Gift Box Image */
+/* Crypto Gift Image */
 .crypto-gift-image {
     width: 100%;
     max-width: 400px;
     height: auto;
     border-radius: 12px;
+    display: block;
+    margin: 0 auto;
     animation: float 3s ease-in-out infinite;
 }
 
 @keyframes float {
-    0%, 100% {
-        transform: translateY(0px);
-    }
-    50% {
-        transform: translateY(-10px);
-    }
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
 }
 
 .crypto-gift-box {
