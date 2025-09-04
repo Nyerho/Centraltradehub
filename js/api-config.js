@@ -1,0 +1,151 @@
+// API Configuration and Credentials Management
+class APIConfig {
+    constructor() {
+        this.apis = {
+            alphaVantage: {
+                baseUrl: 'https://www.alphavantage.co/query',
+                apiKey: 'LE40KTV79FF43Z0I', // Direct API key
+                rateLimit: 5, // requests per minute for free tier
+                endpoints: {
+                    quote: 'GLOBAL_QUOTE',
+                    intraday: 'TIME_SERIES_INTRADAY',
+                    forex: 'FX_INTRADAY',
+                    crypto: 'DIGITAL_CURRENCY_INTRADAY'
+                }
+            },
+            polygon: {
+                baseUrl: 'https://api.polygon.io',
+                apiKey: '3YvkpVuZ9UWlVYGcpEYCnHqNWVt2UQtG', // Direct API key
+                rateLimit: 1000, // requests per minute
+                endpoints: {
+                    quote: '/v2/last/trade',
+                    aggregates: '/v2/aggs/ticker',
+                    forex: '/v1/last_quote/currencies',
+                    crypto: '/v1/last/crypto'
+                }
+            },
+            finnhub: {
+                baseUrl: 'https://finnhub.io/api/v1',
+                wsUrl: 'wss://ws.finnhub.io',
+                apiKey: 'd2t106pr01qkuv3iqti0d2t106pr01qkuv3iqtig', // Direct API key
+                rateLimit: 60, // requests per minute for free tier
+                endpoints: {
+                    quote: '/quote',
+                    candles: '/stock/candle',
+                    forex: '/forex/rates',
+                    crypto: '/crypto/candle'
+                }
+            },
+            metaApi: {
+                baseUrl: 'https://mt-client-api-v1.london.agiliumtrade.ai',
+                wsUrl: 'wss://mt-client-api-v1.london.agiliumtrade.ai',
+                apiKey: this.getApiKey('METAAPI_TOKEN'),
+                accountId: this.getApiKey('METAAPI_ACCOUNT_ID')
+            }
+        };
+        
+        this.rateLimiters = new Map();
+        this.initRateLimiters();
+    }
+
+    // Secure API key retrieval
+    getApiKey(keyName) {
+        // For Alpha Vantage, return the provided key directly
+        if (keyName === 'ALPHA_VANTAGE_API_KEY') {
+            return 'LE40KTV79FF43Z0I';
+        }
+        
+        // In production, use environment variables or secure storage
+        if (typeof process !== 'undefined' && process.env) {
+            return process.env[keyName];
+        }
+        
+        // Development fallback - store in localStorage
+        const stored = localStorage.getItem(`api_${keyName}`);
+        if (!stored) {
+            console.warn(`API key ${keyName} not found. Please configure in settings.`);
+            return null;
+        }
+        
+        try {
+            return this.decrypt(stored);
+        } catch (error) {
+            console.error('Failed to decrypt API key:', error);
+            return null;
+        }
+    }
+
+    // Simple encryption for development (use proper encryption in production)
+    encrypt(text) {
+        return btoa(text); // Base64 encoding
+    }
+
+    decrypt(encryptedText) {
+        return atob(encryptedText); // Base64 decoding
+    }
+
+    // Store API key securely
+    setApiKey(keyName, value) {
+        if (typeof process !== 'undefined' && process.env) {
+            process.env[keyName] = value;
+        } else {
+            localStorage.setItem(`api_${keyName}`, this.encrypt(value));
+        }
+    }
+
+    // Initialize rate limiters for each API
+    initRateLimiters() {
+        Object.keys(this.apis).forEach(apiName => {
+            const api = this.apis[apiName];
+            if (api.rateLimit) {
+                this.rateLimiters.set(apiName, {
+                    requests: [],
+                    limit: api.rateLimit,
+                    window: 60000 // 1 minute
+                });
+            }
+        });
+    }
+
+    // Check if API request is within rate limit
+    checkRateLimit(apiName) {
+        const limiter = this.rateLimiters.get(apiName);
+        if (!limiter) return true;
+
+        const now = Date.now();
+        limiter.requests = limiter.requests.filter(time => now - time < limiter.window);
+        
+        if (limiter.requests.length >= limiter.limit) {
+            return false;
+        }
+        
+        limiter.requests.push(now);
+        return true;
+    }
+
+    // Get API configuration
+    getApiConfig(apiName) {
+        return this.apis[apiName] || null;
+    }
+
+    // Validate API configuration
+    validateConfig(apiName) {
+        const config = this.apis[apiName];
+        if (!config) {
+            throw new Error(`API configuration not found: ${apiName}`);
+        }
+        
+        if (!config.apiKey) {
+            throw new Error(`API key not configured for: ${apiName}`);
+        }
+        
+        return true;
+    }
+}
+
+// Export for use in other modules
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = APIConfig;
+} else {
+    window.APIConfig = APIConfig;
+}
