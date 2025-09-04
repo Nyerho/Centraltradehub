@@ -905,3 +905,51 @@ body {
     opacity: 1;
     color: #00d4ff;
 }
+
+/* Crypto Gift Box Image */
+.crypto-gift-image {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    border-radius: 12px;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.crypto-gift-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .crypto-gift-image {
+        max-width: 300px;
+    }
+    
+    .dashboard-preview {
+        height: 300px;
+        object-fit: contain;
+    }
+}
+.footer-section ul li a {
+    color: #ffffff;
+    text-decoration: none;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+.footer-section ul li a:hover {
+    opacity: 1;
+    color: #00d4ff;
+}
