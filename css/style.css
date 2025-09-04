@@ -505,6 +505,221 @@ body {
     color: #00d4ff;
 }
 
+/* Indices Trading Section */
+.indices-trading {
+    padding: 100px 0;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.indices-trading::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 30% 50%, rgba(0, 123, 255, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.indices-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+}
+
+.indices-text h2 {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 24px;
+    line-height: 1.2;
+}
+
+.indices-text .highlight {
+    color: #007bff;
+    background: linear-gradient(45deg, #007bff, #00d4ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.indices-text p {
+    font-size: 1.2rem;
+    color: #b8c5d6;
+    line-height: 1.6;
+    margin-bottom: 40px;
+}
+
+.indices-features {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.feature-item .feature-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(45deg, #007bff, #00d4ff);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 16px;
+}
+
+.feature-item span {
+    color: #ffffff;
+    font-weight: 500;
+}
+
+.trade-btn {
+    background: linear-gradient(45deg, #007bff, #00d4ff);
+    color: white;
+    border: none;
+    padding: 16px 32px;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.trade-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0, 123, 255, 0.3);
+}
+
+.indices-visual {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.indices-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.indices-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+.market-flags {
+    position: absolute;
+    top: 20%;
+    left: -10%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.flag-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    padding: 8px 16px;
+    border-radius: 25px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    animation: float 3s ease-in-out infinite;
+}
+
+.flag-item:nth-child(2) {
+    animation-delay: 0.5s;
+    margin-left: 20px;
+}
+
+.flag-item:nth-child(3) {
+    animation-delay: 1s;
+    margin-left: 40px;
+}
+
+.flag-item:nth-child(4) {
+    animation-delay: 1.5s;
+    margin-left: 60px;
+}
+
+.flag-item:nth-child(5) {
+    animation-delay: 2s;
+    margin-left: 80px;
+}
+
+.flag {
+    width: 24px;
+    height: 16px;
+    border-radius: 2px;
+}
+
+.flag-item span {
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+/* Responsive Design for Indices Section */
+@media (max-width: 768px) {
+    .indices-content {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        text-align: center;
+    }
+    
+    .indices-text h2 {
+        font-size: 2.5rem;
+    }
+    
+    .indices-features {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .market-flags {
+        position: static;
+        flex-direction: row;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
+    
+    .flag-item:nth-child(n) {
+        margin-left: 0;
+    }
+}
+
 .footer-bottom {
     border-top: 1px solid rgba(255,255,255,0.1);
     padding-top: 2rem;
