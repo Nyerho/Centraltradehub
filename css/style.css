@@ -326,11 +326,11 @@ body {
 }
 
 .feature-card {
-    background: #1a1a2e;
+    background: transparent;
     padding: 2.5rem;
     border-radius: 15px;
     text-align: center;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
     transition: transform 0.3s ease;
     border: 1px solid rgba(0, 212, 255, 0.2);
 }
@@ -784,7 +784,7 @@ body {
 }
 
 .stat-box {
-    background: rgba(0, 212, 255, 0.1);
+    background: transparent;
     border: 1px solid rgba(0, 212, 255, 0.3);
     border-radius: 10px;
     padding: 1.5rem;

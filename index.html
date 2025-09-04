@@ -428,6 +428,131 @@
 </body>
 </html>
 
+<!-- Login Modal -->
+<div id="loginModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Login to Your Account</h2>
+            <button class="modal-close" onclick="closeModal('loginModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form class="auth-form" id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email Address</label>
+                    <input type="email" id="loginEmail" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" name="password" required>
+                </div>
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="rememberMe" name="remember">
+                    <label for="rememberMe">Remember me</label>
+                </div>
+                <button type="submit" class="btn-primary btn-full">Login</button>
+                <div class="form-links">
+                    <a href="#" onclick="openModal('forgotPasswordModal'); closeModal('loginModal');">Forgot Password?</a>
+                    <a href="#" onclick="openModal('registerModal'); closeModal('loginModal');">Create Account</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Register Modal -->
+<div id="registerModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Create Your Account</h2>
+            <button class="modal-close" onclick="closeModal('registerModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form class="auth-form" id="registerForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">First Name</label>
+                        <input type="text" id="firstName" name="firstName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Last Name</label>
+                        <input type="text" id="lastName" name="lastName" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="registerEmail">Email Address</label>
+                    <input type="email" id="registerEmail" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" name="phone" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Password</label>
+                    <input type="password" id="registerPassword" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required>
+                </div>
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="agreeTerms" name="terms" required>
+                    <label for="agreeTerms">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></label>
+                </div>
+                <button type="submit" class="btn-primary btn-full">Create Account</button>
+                <div class="form-links">
+                    <a href="#" onclick="openModal('loginModal'); closeModal('registerModal');">Already have an account? Login</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Contact Modal -->
+<div id="contactModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Contact Our Trading Experts</h2>
+            <button class="modal-close" onclick="closeModal('contactModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form class="contact-form" id="contactForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="contactName">Full Name</label>
+                        <input type="text" id="contactName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactEmail">Email Address</label>
+                        <input type="email" id="contactEmail" name="email" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="contactSubject">Subject</label>
+                    <select id="contactSubject" name="subject" required>
+                        <option value="">Select a topic</option>
+                        <option value="account">Account Opening</option>
+                        <option value="platform">Platform Support</option>
+                        <option value="trading">Trading Questions</option>
+                        <option value="technical">Technical Issues</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="contactMessage">Message</label>
+                    <textarea id="contactMessage" name="message" rows="5" required placeholder="How can we help you?"></textarea>
+                </div>
+                <button type="submit" class="btn-primary btn-full">Send Message</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Live Chat Button -->
+<div id="liveChatBtn" class="live-chat-btn">
+    <span class="chat-icon">💬</span>
+    <span class="chat-text">Live Chat</span>
+</div>
+
 <div class="assets-text">
                     <h2>Trade <span class="highlight">Digital Assets</span> with Confidence</h2>
                     <p>Access the world's leading cryptocurrencies including Bitcoin, Ethereum, Ripple, and 50+ digital assets. Trade with institutional-grade security, deep liquidity, and advanced order types. Our platform offers competitive spreads and leverage up to 1:50 for experienced crypto traders.</p>
