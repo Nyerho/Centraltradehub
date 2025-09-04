@@ -196,8 +196,8 @@ class ContentManager {
                 description: 'Our proprietary trading platform with advanced charting tools, algorithmic trading capabilities, and institutional-grade execution. Perfect for professional traders.',
                 image: 'assets/images/tradeen.png'
             },
-            'Tradetrendpro-Plus': {
-                title: 'TradeTrendPro Plus <span class="highlight">Coming Soon</span>',
+            'CentralTradeHub-Plus': {
+                title: 'CentralTradeHub Plus <span class="highlight">Coming Soon</span>',
                 description: 'Next-generation trading platform with AI-powered analytics, social trading features, and advanced risk management tools. Stay tuned for the future of trading.',
                 image: 'assets/images/mt5.webp'
             }
