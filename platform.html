@@ -606,8 +606,6 @@
                 </div>
             </div>
         </main>
-    </div>
-
     <!-- Enhanced Scripts -->
     <script src="js/error-handler.js"></script>
     <script src="js/api-config.js"></script>
@@ -617,5 +615,55 @@
     <script src="js/platform.js"></script>
     <script src="js/main.js"></script>
     <script src="js/market-data.js"></script>
+    
+    <!-- Platform Initialization -->
+    <script>
+        // Initialize the trading platform when DOM is loaded
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Create global platform instance
+                window.tradingPlatform = new TradingPlatform();
+                
+                // Initialize the platform
+                await window.tradingPlatform.init();
+                
+                console.log('Trading platform initialized successfully');
+                
+                // Optional: Enable test mode for development
+                if (window.apiTestingFramework) {
+                    // Uncomment the next line to enable test mode
+                    // window.apiTestingFramework.enableTestMode();
+                }
+            } catch (error) {
+                console.error('Failed to initialize trading platform:', error);
+                
+                // Show user-friendly error message
+                const errorDiv = document.createElement('div');
+                errorDiv.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #ff4444;
+                    color: white;
+                    padding: 15px;
+                    border-radius: 5px;
+                    z-index: 10000;
+                    max-width: 300px;
+                `;
+                errorDiv.innerHTML = `
+                    <strong>Platform Loading Error</strong><br>
+                    The trading platform failed to initialize. Please refresh the page or check the console for details.
+                `;
+                document.body.appendChild(errorDiv);
+                
+                // Auto-remove error message after 10 seconds
+                setTimeout(() => {
+                    if (errorDiv.parentNode) {
+                        errorDiv.parentNode.removeChild(errorDiv);
+                    }
+                }, 10000);
+            }
+        });
+    </script>
 </body>
 </html>
