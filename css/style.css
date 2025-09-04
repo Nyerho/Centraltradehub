@@ -8,8 +8,8 @@
 body {
     font-family: 'Inter', sans-serif;
     line-height: 1.6;
-    color: #333;
-    background-color: #ffffff;
+    color: #ffffff;
+    background-color: #0f1419;
 }
 
 .container {
@@ -256,7 +256,7 @@ body {
 
 /* Market Overview */
 .market-overview {
-    background: #f8f9fa;
+    background: #1a1a2e;
     padding: 4rem 0;
 }
 
@@ -265,18 +265,19 @@ body {
     font-size: 2.5rem;
     font-weight: 700;
     margin-bottom: 3rem;
-    color: #1a1a2e;
+    color: #ffffff;
 }
 
 .market-ticker {
     display: flex;
     justify-content: space-between;
-    background: #ffffff;
+    background: #16213e;
     padding: 2rem;
     border-radius: 15px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
     overflow-x: auto;
     gap: 2rem;
+    border: 1px solid rgba(0, 212, 255, 0.2);
 }
 
 .ticker-item {
@@ -288,14 +289,14 @@ body {
 
 .symbol {
     font-weight: 600;
-    color: #1a1a2e;
+    color: #00d4ff;
     margin-bottom: 0.5rem;
 }
 
 .price {
     font-size: 1.25rem;
     font-weight: 700;
-    color: #333;
+    color: #ffffff;
     margin-bottom: 0.25rem;
 }
 
@@ -315,7 +316,7 @@ body {
 /* Features Section */
 .features {
     padding: 6rem 0;
-    background: #ffffff;
+    background: #0f1419;
 }
 
 .features-grid {
@@ -325,18 +326,18 @@ body {
 }
 
 .feature-card {
-    background: #ffffff;
+    background: #1a1a2e;
     padding: 2.5rem;
     border-radius: 15px;
     text-align: center;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
     transition: transform 0.3s ease;
-    border: 1px solid #f0f0f0;
+    border: 1px solid rgba(0, 212, 255, 0.2);
 }
 
 .feature-card:hover {
     transform: translateY(-10px);
-    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    box-shadow: 0 15px 40px rgba(0, 212, 255, 0.2);
 }
 
 .feature-icon {
@@ -359,17 +360,17 @@ body {
     font-size: 1.5rem;
     font-weight: 600;
     margin-bottom: 1rem;
-    color: #1a1a2e;
+    color: #ffffff;
 }
 
 .feature-card p {
-    color: #666;
+    color: #b3c1d1;
     line-height: 1.6;
 }
 
 /* Tools Preview */
 .tools-preview {
-    background: #f8f9fa;
+    background: #16213e;
     padding: 6rem 0;
 }
 
@@ -384,12 +385,12 @@ body {
     font-size: 2.5rem;
     font-weight: 700;
     margin-bottom: 1.5rem;
-    color: #1a1a2e;
+    color: #ffffff;
 }
 
 .tools-text p {
     font-size: 1.1rem;
-    color: #666;
+    color: #b3c1d1;
     margin-bottom: 2rem;
     line-height: 1.6;
 }
@@ -604,13 +605,14 @@ body {
 .gift-box {
     width: 200px;
     height: 120px;
-    background: linear-gradient(145deg, #ffffff, #e6e6e6);
+    background: linear-gradient(145deg, #1a1a2e, #16213e);
     border-radius: 10px;
     position: absolute;
     bottom: 50px;
     left: 50%;
     transform: translateX(-50%);
     box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    border: 2px solid rgba(0, 212, 255, 0.3);
 }
 
 .gift-box::before {
