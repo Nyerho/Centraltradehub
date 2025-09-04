@@ -528,3 +528,378 @@ body {
     opacity: 1;
     color: #00d4ff;
 }
+
+/* Virtual Assets Section */
+.virtual-assets {
+    padding: 80px 0;
+    background: linear-gradient(135deg, #0f1419 0%, #1a1a2e 100%);
+    color: #ffffff;
+}
+
+.assets-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+}
+
+.assets-text h2 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+}
+
+.assets-text .highlight {
+    color: #00d4ff;
+}
+
+.assets-text p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    color: #b3c1d1;
+}
+
+.features-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.stat-box {
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    border-radius: 10px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #00d4ff;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #b3c1d1;
+    line-height: 1.3;
+}
+
+/* Crypto Gift Box Animation */
+.assets-visual {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.gift-container {
+    position: relative;
+    width: 300px;
+    height: 300px;
+}
+
+.gift-box {
+    width: 200px;
+    height: 120px;
+    background: linear-gradient(145deg, #ffffff, #e6e6e6);
+    border-radius: 10px;
+    position: absolute;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.gift-box::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 20px;
+    background: #00d4ff;
+    border-radius: 10px 10px 0 0;
+}
+
+.gift-ribbon {
+    position: absolute;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 140px;
+    background: #00d4ff;
+    border-radius: 0 0 15px 15px;
+}
+
+.gift-ribbon::before {
+    content: '';
+    position: absolute;
+    top: 120px;
+    left: -10px;
+    width: 0;
+    height: 0;
+    border-left: 25px solid transparent;
+    border-right: 25px solid transparent;
+    border-top: 20px solid #0099cc;
+}
+
+.crypto-coins {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 20px;
+}
+
+.coin {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    animation: float 3s ease-in-out infinite;
+}
+
+.coin.ethereum {
+    background: linear-gradient(145deg, #627eea, #4c63d2);
+    color: white;
+    animation-delay: 0s;
+}
+
+.coin.bitcoin {
+    background: linear-gradient(145deg, #f7931a, #e8851a);
+    color: white;
+    animation-delay: 1s;
+}
+
+.coin.ripple {
+    background: linear-gradient(145deg, #23292f, #1a1f24);
+    color: #00d4ff;
+    animation-delay: 2s;
+}
+
+.sparkles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.sparkle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #00d4ff;
+    border-radius: 50%;
+    animation: sparkle 2s ease-in-out infinite;
+}
+
+.sparkle:nth-child(1) {
+    top: 20%;
+    right: 10%;
+    animation-delay: 0.5s;
+}
+
+.sparkle:nth-child(2) {
+    top: 60%;
+    right: 20%;
+    animation-delay: 1.5s;
+}
+
+.sparkle:nth-child(3) {
+    top: 40%;
+    left: 10%;
+    animation-delay: 2.5s;
+}
+
+/* Forex Trading Section */
+.forex-trading {
+    padding: 80px 0;
+    background: #0f1419;
+    color: #ffffff;
+}
+
+.forex-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+}
+
+.forex-text h2 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+}
+
+.forex-text p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    color: #b3c1d1;
+}
+
+.forex-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+/* Trading Platform Preview */
+.forex-visual {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.platform-screen {
+    width: 400px;
+    height: 280px;
+    background: #1a1a2e;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    transform: perspective(1000px) rotateY(-15deg) rotateX(5deg);
+}
+
+.platform-header {
+    height: 40px;
+    background: #16213e;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+}
+
+.platform-nav {
+    width: 100%;
+    height: 20px;
+    background: linear-gradient(90deg, #00d4ff 0%, #0099cc 100%);
+    border-radius: 10px;
+    opacity: 0.7;
+}
+
+.platform-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    height: 240px;
+}
+
+.chart-area {
+    padding: 15px;
+    background: #0f1419;
+}
+
+.trading-chart {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, #00d4ff20 0%, #0099cc20 50%, #00d4ff20 100%);
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+.trading-chart::before {
+    content: '';
+    position: absolute;
+    top: 20%;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: #00d4ff;
+    animation: chartLine 3s ease-in-out infinite;
+}
+
+.trading-panels {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px;
+    background: #16213e;
+}
+
+.panel {
+    flex: 1;
+    border-radius: 6px;
+    position: relative;
+}
+
+.panel.watchlist {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+}
+
+.panel.order-form {
+    background: linear-gradient(135deg, #0f1419, #1a1a2e);
+}
+
+/* Animations */
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+}
+
+@keyframes sparkle {
+    0%, 100% { opacity: 0; transform: scale(0); }
+    50% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes chartLine {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Responsive Design for New Sections */
+@media (max-width: 768px) {
+    .assets-content,
+    .forex-content {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        text-align: center;
+    }
+    
+    .assets-text h2,
+    .forex-text h2 {
+        font-size: 2rem;
+    }
+    
+    .features-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .forex-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .platform-screen {
+        width: 300px;
+        height: 200px;
+        transform: none;
+    }
+    
+    .gift-container {
+        width: 250px;
+        height: 250px;
+    }
+}
+
+.footer-section ul li a {
+    color: #ffffff;
+    text-decoration: none;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+.footer-section ul li a:hover {
+    opacity: 1;
+    color: #00d4ff;
+}
