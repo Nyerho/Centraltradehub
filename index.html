@@ -45,8 +45,8 @@
                 <h1 class="hero-title">Professional Trading Platform for Global Markets</h1>
                 <p class="hero-subtitle">Execute trades with institutional-grade technology. Access forex, cryptocurrencies, commodities, and indices with ultra-low latency execution, advanced risk management, and comprehensive market analysis tools trusted by over 150,000 active traders worldwide.</p>
                 <div class="hero-buttons">
-                    <a href="platform.html" class="btn-primary">Start Trading Now</a>
-                    <a href="#demo" class="btn-secondary">Try Free Demo</a>
+                    <button class="btn-primary" onclick="openModal('registerModal')">Start Trading</button>
+                    <button class="btn-secondary" onclick="openModal('loginModal')">Login to your Account</button>
                 </div>
                 <div class="hero-stats">
                     <div class="stat">
@@ -1314,7 +1314,27 @@
 </div>
 
 <!-- Live Chat Button -->
-<div id="liveChatBtn" class="live-chat-btn">
-    <span class="chat-icon">💬</span>
-    <span class="chat-text">Live Chat</span>
+<div class="live-chat-button" onclick="toggleChat()">
+    <i class="fas fa-comments"></i>
+    <span>Live Chat</span>
+</div>
+
+<!-- Live Chat Window -->
+<div id="chatWindow" class="chat-window">
+    <div class="chat-header">
+        <h4>Live Support</h4>
+        <button onclick="toggleChat()" class="chat-close">&times;</button>
+    </div>
+    <div class="chat-messages" id="chatMessages">
+        <div class="message bot-message">
+            <div class="message-content">Hello! How can I help you today?</div>
+            <div class="message-time">Just now</div>
+        </div>
+    </div>
+    <div class="chat-input">
+        <input type="text" id="chatInput" placeholder="Type your message..." onkeypress="handleChatKeyPress(event)">
+        <button onclick="sendMessage()" class="chat-send">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    </div>
 </div>

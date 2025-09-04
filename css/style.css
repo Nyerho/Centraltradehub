@@ -189,11 +189,16 @@ body {
     font-size: 1.1rem;
     transition: all 0.3s ease;
     display: inline-block;
+    border: none;
+    cursor: pointer;
+    min-width: 150px;
+    text-align: center;
 }
 
 .btn-primary:hover {
     transform: translateY(-3px);
     box-shadow: 0 10px 25px rgba(0, 212, 255, 0.3);
+    background: linear-gradient(135deg, #0099cc, #007399);
 }
 
 .btn-secondary {
@@ -201,16 +206,20 @@ body {
     color: #ffffff;
     text-decoration: none;
     padding: 1rem 2rem;
-    border: 2px solid #00d4ff;
+    border: 2px solid #ffffff;
     border-radius: 30px;
     font-weight: 600;
     font-size: 1.1rem;
     transition: all 0.3s ease;
     display: inline-block;
+    cursor: pointer;
+    min-width: 150px;
+    text-align: center;
 }
 
 .btn-secondary:hover {
-    background: #00d4ff;
+    background: #ffffff;
+    color: #0f1419;
     transform: translateY(-3px);
 }
 
