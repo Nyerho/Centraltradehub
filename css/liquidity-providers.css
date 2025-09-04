@@ -1,0 +1,132 @@
+/* Liquidity Providers Enhanced Styling */
+.providers-logos-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.providers-logos {
+    display: flex;
+    gap: 1.5rem;
+    width: calc(200% + 3rem);
+}
+
+.providers-row-1 {
+    animation: slideLeft 25s linear infinite;
+}
+
+.providers-row-2 {
+    animation: slideRight 30s linear infinite;
+}
+
+/* Override existing provider-logo styles */
+.liquidity-providers .provider-logo {
+    background: #ffffff !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    height: 100px;
+    min-width: 180px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.liquidity-providers .provider-logo:hover {
+    background: #f8f9fa !important;
+    border-color: #00d4ff !important;
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 212, 255, 0.2);
+    animation-play-state: paused;
+}
+
+.provider-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    text-align: center;
+}
+
+.bank-logo {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.provider-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #333;
+    line-height: 1.2;
+}
+
+/* Bank-specific logo colors */
+.jpmorgan { background: linear-gradient(135deg, #0066cc, #004499); }
+.barclays { background: linear-gradient(135deg, #00aeef, #0088cc); }
+.santander { background: linear-gradient(135deg, #ec0000, #cc0000); }
+.bbva { background: linear-gradient(135deg, #004481, #003366); }
+.boa { background: linear-gradient(135deg, #e31837, #cc1530); }
+.boi { background: linear-gradient(135deg, #1f4e79, #163a5f); }
+.bmo { background: linear-gradient(135deg, #cc092f, #aa0728); }
+.bos { background: linear-gradient(135deg, #005eb8, #004a93); }
+.investec { background: linear-gradient(135deg, #ffcc00, #e6b800); color: #333; text-shadow: none; }
+.itau { background: linear-gradient(135deg, #ec7000, #d45f00); }
+.kbc { background: linear-gradient(135deg, #1f5582, #194466); }
+.mizuho { background: linear-gradient(135deg, #0066cc, #004499); }
+.mufg { background: linear-gradient(135deg, #dc143c, #c41e3a); }
+.nomura { background: linear-gradient(135deg, #008000, #006600); }
+.bawag { background: linear-gradient(135deg, #ff6600, #e55a00); }
+.bayern { background: linear-gradient(135deg, #003d82, #002d5f); }
+
+/* Hide old provider placeholder */
+.provider-placeholder {
+    display: none;
+}
+
+/* New animations */
+@keyframes slideRight {
+    0% {
+        transform: translateX(-50%);
+    }
+    100% {
+        transform: translateX(0);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .liquidity-providers .provider-logo {
+        min-width: 150px !important;
+        height: 80px !important;
+        padding: 1rem !important;
+    }
+    
+    .bank-logo {
+        width: 40px;
+        height: 40px;
+        font-size: 0.7rem;
+    }
+    
+    .provider-name {
+        font-size: 0.8rem;
+    }
+    
+    .providers-logos {
+        gap: 1rem;
+    }
+    
+    .providers-logos-container {
+        gap: 1rem;
+    }
+}
