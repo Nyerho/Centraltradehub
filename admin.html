@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Central Trade Hub</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Admin Header -->
+    <header class="admin-header">
+        <div class="admin-nav">
+            <div class="admin-logo">
+                <i class="fas fa-chart-line"></i>
+                <span>Central Trade Hub Admin</span>
+            </div>
+            <div class="admin-user">
+                <span>Welcome, Admin</span>
+                <a href="index.html" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="admin-container">
+        <!-- Sidebar Navigation -->
+        <aside class="admin-sidebar">
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#dashboard" class="nav-item active" data-section="dashboard">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a></li>
+                    <li><a href="#users" class="nav-item" data-section="users">
+                        <i class="fas fa-users"></i> User Management
+                    </a></li>
+                    <li><a href="#content" class="nav-item" data-section="content">
+                        <i class="fas fa-edit"></i> Content Management
+                    </a></li>
+                    <li><a href="#trading" class="nav-item" data-section="trading">
+                        <i class="fas fa-chart-bar"></i> Trading Settings
+                    </a></li>
+                    <li><a href="#analytics" class="nav-item" data-section="analytics">
+                        <i class="fas fa-analytics"></i> Analytics
+                    </a></li>
+                    <li><a href="#settings" class="nav-item" data-section="settings">
+                        <i class="fas fa-cog"></i> Site Settings
+                    </a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="admin-main">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="admin-section active">
+                <div class="section-header">
+                    <h1>Dashboard Overview</h1>
+                    <p>Welcome to the Central Trade Hub administration panel</p>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>1,247</h3>
+                            <p>Total Users</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>$2.4M</h3>
+                            <p>Trading Volume</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>8,432</h3>
+                            <p>Active Trades</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>$847K</h3>
+                            <p>Revenue</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-charts">
+                    <div class="chart-container">
+                        <h3>Trading Activity</h3>
+                        <div class="chart-placeholder">
+                            <canvas id="tradingChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="recent-activity">
+                        <h3>Recent Activity</h3>
+                        <div class="activity-list">
+                            <div class="activity-item">
+                                <i class="fas fa-user-plus"></i>
+                                <span>New user registered: john.doe@email.com</span>
+                                <time>2 minutes ago</time>
+                            </div>
+                            <div class="activity-item">
+                                <i class="fas fa-exchange-alt"></i>
+                                <span>Large trade executed: $50,000 BTC/USD</span>
+                                <time>5 minutes ago</time>
+                            </div>
+                            <div class="activity-item">
+                                <i class="fas fa-cog"></i>
+                                <span>System maintenance completed</span>
+                                <time>1 hour ago</time>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- User Management Section -->
+            <section id="users" class="admin-section">
+                <div class="section-header">
+                    <h1>User Management</h1>
+                    <button class="btn-primary"><i class="fas fa-plus"></i> Add New User</button>
+                </div>
+                
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Balance</th>
+                                <th>Joined</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#001</td>
+                                <td>John Doe</td>
+                                <td>john.doe@email.com</td>
+                                <td><span class="status active">Active</span></td>
+                                <td>$12,450</td>
+                                <td>2024-01-15</td>
+                                <td>
+                                    <button class="btn-edit"><i class="fas fa-edit"></i></button>
+                                    <button class="btn-delete"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#002</td>
+                                <td>Jane Smith</td>
+                                <td>jane.smith@email.com</td>
+                                <td><span class="status suspended">Suspended</span></td>
+                                <td>$8,230</td>
+                                <td>2024-01-10</td>
+                                <td>
+                                    <button class="btn-edit"><i class="fas fa-edit"></i></button>
+                                    <button class="btn-delete"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Content Management Section -->
+            <section id="content" class="admin-section">
+                <div class="section-header">
+                    <h1>Content Management</h1>
+                    <button class="btn-primary"><i class="fas fa-plus"></i> Add Content</button>
+                </div>
+                
+                <div class="content-grid">
+                    <div class="content-card">
+                        <h3>Homepage Hero</h3>
+                        <p>Manage the main hero section content and call-to-action buttons</p>
+                        <button class="btn-edit">Edit Content</button>
+                    </div>
+                    <div class="content-card">
+                        <h3>Market Data</h3>
+                        <p>Update market information, trading pairs, and price feeds</p>
+                        <button class="btn-edit">Edit Content</button>
+                    </div>
+                    <div class="content-card">
+                        <h3>News & Updates</h3>
+                        <p>Manage news articles, market updates, and announcements</p>
+                        <button class="btn-edit">Edit Content</button>
+                    </div>
+                    <div class="content-card">
+                        <h3>Educational Content</h3>
+                        <p>Update trading guides, tutorials, and educational materials</p>
+                        <button class="btn-edit">Edit Content</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Trading Settings Section -->
+            <section id="trading" class="admin-section">
+                <div class="section-header">
+                    <h1>Trading Settings</h1>
+                </div>
+                
+                <div class="settings-form">
+                    <div class="form-group">
+                        <label>Trading Hours</label>
+                        <select>
+                            <option>24/7 Trading</option>
+                            <option>Market Hours Only</option>
+                            <option>Custom Schedule</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Minimum Trade Amount</label>
+                        <input type="number" value="10" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Maximum Trade Amount</label>
+                        <input type="number" value="100000" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Trading Fee (%)</label>
+                        <input type="number" value="0.1" step="0.01" min="0">
+                    </div>
+                    <button class="btn-primary">Save Settings</button>
+                </div>
+            </section>
+
+            <!-- Analytics Section -->
+            <section id="analytics" class="admin-section">
+                <div class="section-header">
+                    <h1>Analytics & Reports</h1>
+                </div>
+                
+                <div class="analytics-grid">
+                    <div class="analytics-card">
+                        <h3>User Growth</h3>
+                        <div class="chart-mini"></div>
+                        <p>+15% this month</p>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Trading Volume</h3>
+                        <div class="chart-mini"></div>
+                        <p>+23% this month</p>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Revenue</h3>
+                        <div class="chart-mini"></div>
+                        <p>+18% this month</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Site Settings Section -->
+            <section id="settings" class="admin-section">
+                <div class="section-header">
+                    <h1>Site Settings</h1>
+                </div>
+                
+                <div class="settings-form">
+                    <div class="form-group">
+                        <label>Site Name</label>
+                        <input type="text" value="Central Trade Hub">
+                    </div>
+                    <div class="form-group">
+                        <label>Site Description</label>
+                        <textarea>Advanced Trading Platform for Professional Traders</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Contact Email</label>
+                        <input type="email" value="admin@centraltradehub.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Maintenance Mode</label>
+                        <label class="toggle">
+                            <input type="checkbox">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <button class="btn-primary">Save Settings</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/admin.js"></script>
+</body>
+</html>
