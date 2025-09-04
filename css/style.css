@@ -493,6 +493,385 @@ body {
     margin-bottom: 0.75rem;
 }
 
+/* Why Choose Us Section */
+.why-choose-us {
+    padding: 80px 0;
+    background: linear-gradient(135deg, #0f1419 0%, #1a1a2e 100%);
+    color: #ffffff;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.section-subtitle {
+    color: #00d4ff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+}
+
+.section-header h2 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+}
+
+.section-description {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #b3c1d1;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.choose-us-features {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+    margin-bottom: 60px;
+}
+
+.feature-stat {
+    text-align: center;
+    padding: 2rem;
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #00d4ff, #0099cc);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-size: 1.5rem;
+    color: #ffffff;
+}
+
+.feature-stat h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #ffffff;
+}
+
+.stat-number {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #00d4ff;
+    margin-bottom: 0.5rem;
+}
+
+.stat-description {
+    font-size: 0.9rem;
+    color: #b3c1d1;
+    line-height: 1.4;
+}
+
+.bonus-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4rem;
+    background: rgba(0, 212, 255, 0.1);
+    border-radius: 20px;
+    padding: 3rem;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+}
+
+.bonus-card {
+    text-align: center;
+    padding: 2rem;
+    border: 2px solid #00d4ff;
+    border-radius: 15px;
+    background: rgba(0, 212, 255, 0.1);
+}
+
+.bonus-card h3 {
+    font-size: 4rem;
+    font-weight: 700;
+    color: #00d4ff;
+    margin-bottom: 0.5rem;
+}
+
+.bonus-card p {
+    font-size: 1.2rem;
+    color: #00d4ff;
+    font-weight: 600;
+}
+
+.bonus-info h3 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #ffffff;
+}
+
+.bonus-info .highlight {
+    color: #00d4ff;
+}
+
+.bonus-info p {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: #b3c1d1;
+}
+
+.terms {
+    font-size: 0.8rem !important;
+    color: #888 !important;
+    margin-bottom: 2rem !important;
+}
+
+/* Security of Funds Section */
+.security-funds {
+    padding: 80px 0;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #ffffff;
+}
+
+.security-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+}
+
+.security-visual img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 20px;
+}
+
+.security-text h2 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+    color: #ffffff;
+}
+
+.security-text p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    color: #b3c1d1;
+}
+
+/* Liquidity Providers Section */
+.liquidity-providers {
+    padding: 80px 0;
+    background: linear-gradient(135deg, #0f1419 0%, #1a1a2e 100%);
+    color: #ffffff;
+}
+
+.providers-header {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.providers-header h2 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #ffffff;
+}
+
+.providers-header p {
+    font-size: 1.1rem;
+    color: #b3c1d1;
+}
+
+.providers-logos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 2rem;
+    align-items: center;
+}
+
+.provider-logo {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    height: 80px;
+}
+
+.provider-logo:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #00d4ff;
+    transform: translateY(-5px);
+}
+
+.provider-logo img {
+    max-width: 100%;
+    max-height: 40px;
+    filter: brightness(0) invert(1);
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+.provider-logo:hover img {
+    opacity: 1;
+}
+
+/* News and Achievements Section */
+.news-achievements {
+    padding: 80px 0;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #ffffff;
+}
+
+.news-achievements-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+}
+
+.news-section,
+.achievements-section {
+    padding: 2rem;
+    background: rgba(0, 212, 255, 0.05);
+    border-radius: 15px;
+    border: 1px solid rgba(0, 212, 255, 0.2);
+}
+
+.news-section h3,
+.achievements-section h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #ffffff;
+}
+
+.news-section p,
+.achievements-section p {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #b3c1d1;
+}
+
+/* Choose Where To Go Next Section */
+.choose-next {
+    padding: 80px 0;
+    background: linear-gradient(135deg, #0f1419 0%, #1a1a2e 100%);
+    color: #ffffff;
+}
+
+.next-header {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.next-header h2 {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.next-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+}
+
+.next-card {
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    border-radius: 15px;
+    padding: 3rem 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.next-card:hover {
+    background: rgba(0, 212, 255, 0.2);
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
+}
+
+.card-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #00d4ff, #0099cc);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-size: 2rem;
+    color: #ffffff;
+}
+
+.next-card h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .choose-us-features {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+    
+    .security-content {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        text-align: center;
+    }
+    
+    .bonus-section {
+        flex-direction: column;
+        gap: 2rem;
+        text-align: center;
+    }
+    
+    .news-achievements-content {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+    
+    .next-options {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .providers-logos {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .section-header h2,
+    .security-text h2,
+    .providers-header h2,
+    .next-header h2 {
+        font-size: 2.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .choose-us-features {
+        grid-template-columns: 1fr;
+    }
+    
+    .providers-logos {
+        grid-template-columns: 1fr;
+    }
+}
+
 .footer-section ul li a {
     color: #ffffff;
     text-decoration: none;
