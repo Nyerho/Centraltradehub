@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/auth.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Sign-In API -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body class="auth-body">
     <!-- Navigation -->
@@ -103,10 +105,21 @@
                         </div>
                         
                         <div class="social-auth">
-                            <button type="button" class="social-btn google">
-                                <i class="fab fa-google"></i>
-                                Google
-                            </button>
+                            <div id="g_id_onload"
+                                 data-client_id="YOUR_GOOGLE_CLIENT_ID"
+                                 data-context="signin"
+                                 data-ux_mode="popup"
+                                 data-callback="handleGoogleSignIn"
+                                 data-auto_prompt="false">
+                            </div>
+                            <div class="g_id_signin"
+                                 data-type="standard"
+                                 data-shape="rectangular"
+                                 data-theme="outline"
+                                 data-text="signin_with"
+                                 data-size="large"
+                                 data-logo_alignment="left">
+                            </div>
                             <button type="button" class="social-btn facebook">
                                 <i class="fab fa-facebook-f"></i>
                                 Facebook
@@ -250,10 +263,21 @@
                         </div>
                         
                         <div class="social-auth">
-                            <button type="button" class="social-btn google">
-                                <i class="fab fa-google"></i>
-                                Google
-                            </button>
+                            <div id="g_id_onload_register"
+                                 data-client_id="YOUR_GOOGLE_CLIENT_ID"
+                                 data-context="signup"
+                                 data-ux_mode="popup"
+                                 data-callback="handleGoogleSignUp"
+                                 data-auto_prompt="false">
+                            </div>
+                            <div class="g_id_signin"
+                                 data-type="standard"
+                                 data-shape="rectangular"
+                                 data-theme="outline"
+                                 data-text="signup_with"
+                                 data-size="large"
+                                 data-logo_alignment="left">
+                            </div>
                             <button type="button" class="social-btn facebook">
                                 <i class="fab fa-facebook-f"></i>
                                 Facebook

@@ -445,3 +445,140 @@ document.addEventListener('click', function(e) {
         e.target.classList.remove('show');
     }
 });
+
+// Google Sign-In Configuration
+const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID'; // Replace with your actual Google Client ID
+
+// Google Sign-In Handlers
+function handleGoogleSignIn(response) {
+    try {
+        // Decode the JWT token
+        const responsePayload = decodeJwtResponse(response.credential);
+        
+        // Extract user information
+        const userData = {
+            email: responsePayload.email,
+            name: responsePayload.name,
+            firstName: responsePayload.given_name,
+            lastName: responsePayload.family_name,
+            picture: responsePayload.picture,
+            googleId: responsePayload.sub
+        };
+        
+        // Process Google Sign-In
+        processGoogleAuth(userData, 'signin');
+        
+    } catch (error) {
+        console.error('Google Sign-In Error:', error);
+        showNotification('Google Sign-In failed. Please try again.', 'error');
+    }
+}
+
+function handleGoogleSignUp(response) {
+    try {
+        // Decode the JWT token
+        const responsePayload = decodeJwtResponse(response.credential);
+        
+        // Extract user information
+        const userData = {
+            email: responsePayload.email,
+            name: responsePayload.name,
+            firstName: responsePayload.given_name,
+            lastName: responsePayload.family_name,
+            picture: responsePayload.picture,
+            googleId: responsePayload.sub
+        };
+        
+        // Process Google Sign-Up
+        processGoogleAuth(userData, 'signup');
+        
+    } catch (error) {
+        console.error('Google Sign-Up Error:', error);
+        showNotification('Google Sign-Up failed. Please try again.', 'error');
+    }
+}
+
+function decodeJwtResponse(token) {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    
+    return JSON.parse(jsonPayload);
+}
+
+function processGoogleAuth(userData, type) {
+    // Show loading state
+    const loadingMessage = type === 'signin' ? 'Signing you in...' : 'Creating your account...';
+    showNotification(loadingMessage, 'info');
+    
+    // Simulate API call to your backend
+    setTimeout(() => {
+        if (type === 'signin') {
+            // Handle successful Google Sign-In
+            localStorage.setItem('user', JSON.stringify({
+                id: userData.googleId,
+                email: userData.email,
+                name: userData.name,
+                picture: userData.picture,
+                authMethod: 'google'
+            }));
+            
+            showNotification(`Welcome back, ${userData.firstName}!`, 'success');
+            
+            // Redirect to platform or dashboard
+            setTimeout(() => {
+                window.location.href = 'platform.html';
+            }, 1500);
+            
+        } else {
+            // Handle successful Google Sign-Up
+            // Pre-fill registration form with Google data
+            document.getElementById('firstName').value = userData.firstName || '';
+            document.getElementById('lastName').value = userData.lastName || '';
+            document.getElementById('registerEmail').value = userData.email || '';
+            
+            // Show success message
+            showNotification(`Account created successfully! Welcome, ${userData.firstName}!`, 'success');
+            
+            // Store user data
+            localStorage.setItem('user', JSON.stringify({
+                id: userData.googleId,
+                email: userData.email,
+                name: userData.name,
+                picture: userData.picture,
+                authMethod: 'google'
+            }));
+            
+            // Redirect to platform
+            setTimeout(() => {
+                window.location.href = 'platform.html';
+            }, 1500);
+        }
+    }, 1000);
+}
+
+// Initialize Google Sign-In when page loads
+function initializeGoogleSignIn() {
+    // This function will be called after Google API loads
+    if (typeof google !== 'undefined' && google.accounts) {
+        google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: handleGoogleSignIn
+        });
+        
+        // Render sign-in buttons
+        google.accounts.id.renderButton(
+            document.querySelector('.g_id_signin'),
+            {
+                theme: 'outline',
+                size: 'large',
+                type: 'standard',
+                shape: 'rectangular',
+                text: 'signin_with',
+                logo_alignment: 'left'
+            }
+        );
+    }
+}

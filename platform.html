@@ -3,130 +3,416 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Platform - Central Trade Hub</title>
+    <title>Trading Platform - CentralTradeHub</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/platform.css">
     <link rel="stylesheet" href="css/responsive.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- TradingView Charting Library -->
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body class="platform-body">
-    <!-- Navigation -->
+    <!-- Enhanced Navigation -->
     <nav class="navbar platform-nav">
         <div class="nav-container">
             <div class="nav-logo">
-                <img src="assets/images/logo.png" alt="Central Trade Hub">
-                <span class="logo-text">Central Trade Hub</span>
+                <img src="assets/images/logo.png" alt="CentralTradeHub">
+                <span class="logo-text">CentralTradeHub</span>
             </div>
+            
+            <!-- Market Status -->
+            <div class="market-status">
+                <div class="status-indicator active"></div>
+                <span class="status-text">Markets Open</span>
+                <span class="market-time">London: 15:42</span>
+            </div>
+            
+            <!-- Platform Controls -->
             <div class="platform-controls">
                 <div class="account-info">
-                    <span class="balance">Balance: $47,892.35</span>
-                    <span class="pnl positive">P&L: +$2,847.92 (+6.32%)</span>
-                    <span class="equity">Equity: $50,740.27</span>
+                    <div class="balance-row">
+                        <span class="label">Balance:</span>
+                        <span class="balance">$47,892.35</span>
+                    </div>
+                    <div class="pnl-row">
+                        <span class="label">P&L:</span>
+                        <span class="pnl positive">+$2,847.92 (+6.32%)</span>
+                    </div>
+                    <div class="equity-row">
+                        <span class="label">Equity:</span>
+                        <span class="equity">$50,740.27</span>
+                    </div>
                 </div>
+                
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <button class="action-btn" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </button>
+                    <button class="action-btn" title="Settings">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                </div>
+                
                 <div class="user-menu">
                     <img src="assets/images/user-avatar.png" alt="User" class="user-avatar">
-                    <span class="username">Alex Thompson</span>
+                    <div class="user-info">
+                        <span class="username">Alex Thompson</span>
+                        <span class="user-level">Pro Trader</span>
+                    </div>
                     <i class="fas fa-chevron-down"></i>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- Trading Interface -->
+    <!-- Enhanced Trading Interface -->
     <div class="trading-interface">
-        <!-- Sidebar -->
+        <!-- Advanced Sidebar -->
         <aside class="trading-sidebar">
-            <div class="watchlist">
-                <h3>Watchlist</h3>
-                <div class="watchlist-items">
-                    <div class="watchlist-item active">
-                        <span class="symbol">EUR/USD</span>
-                        <span class="price">1.0856</span>
-                        <span class="change positive">+0.23%</span>
+            <!-- Market Overview -->
+            <div class="market-overview">
+                <h3><i class="fas fa-chart-line"></i> Market Overview</h3>
+                <div class="market-indices">
+                    <div class="index-item">
+                        <span class="index-name">S&P 500</span>
+                        <span class="index-value">4,567.89</span>
+                        <span class="index-change positive">+1.23%</span>
                     </div>
-                    <div class="watchlist-item">
-                        <span class="symbol">GBP/USD</span>
-                        <span class="price">1.2734</span>
-                        <span class="change negative">-0.35%</span>
+                    <div class="index-item">
+                        <span class="index-name">NASDAQ</span>
+                        <span class="index-value">14,234.56</span>
+                        <span class="index-change positive">+0.87%</span>
                     </div>
-                    <div class="watchlist-item">
-                        <span class="symbol">USD/JPY</span>
-                        <span class="price">149.82</span>
-                        <span class="change positive">+0.23%</span>
-                    </div>
-                    <div class="watchlist-item">
-                        <span class="symbol">BTC/USD</span>
-                        <span class="price">43,250</span>
-                        <span class="change positive">+2.98%</span>
+                    <div class="index-item">
+                        <span class="index-name">DXY</span>
+                        <span class="index-value">103.45</span>
+                        <span class="index-change negative">-0.34%</span>
                     </div>
                 </div>
             </div>
 
+            <!-- Enhanced Watchlist -->
+            <div class="watchlist">
+                <div class="watchlist-header">
+                    <h3><i class="fas fa-star"></i> Watchlist</h3>
+                    <button class="add-symbol-btn" title="Add Symbol">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div class="watchlist-tabs">
+                    <button class="watchlist-tab active" data-category="forex">Forex</button>
+                    <button class="watchlist-tab" data-category="crypto">Crypto</button>
+                    <button class="watchlist-tab" data-category="stocks">Stocks</button>
+                </div>
+                <div class="watchlist-items" id="forexWatchlist">
+                    <div class="watchlist-item active" data-symbol="EURUSD">
+                        <div class="symbol-info">
+                            <span class="symbol">EUR/USD</span>
+                            <span class="symbol-desc">Euro / US Dollar</span>
+                        </div>
+                        <div class="price-info">
+                            <span class="price">1.0856</span>
+                            <span class="change positive">+0.23%</span>
+                        </div>
+                        <div class="mini-chart">
+                            <canvas width="60" height="20"></canvas>
+                        </div>
+                    </div>
+                    <div class="watchlist-item" data-symbol="GBPUSD">
+                        <div class="symbol-info">
+                            <span class="symbol">GBP/USD</span>
+                            <span class="symbol-desc">British Pound / US Dollar</span>
+                        </div>
+                        <div class="price-info">
+                            <span class="price">1.2734</span>
+                            <span class="change negative">-0.35%</span>
+                        </div>
+                        <div class="mini-chart">
+                            <canvas width="60" height="20"></canvas>
+                        </div>
+                    </div>
+                    <div class="watchlist-item" data-symbol="USDJPY">
+                        <div class="symbol-info">
+                            <span class="symbol">USD/JPY</span>
+                            <span class="symbol-desc">US Dollar / Japanese Yen</span>
+                        </div>
+                        <div class="price-info">
+                            <span class="price">149.82</span>
+                            <span class="change positive">+0.23%</span>
+                        </div>
+                        <div class="mini-chart">
+                            <canvas width="60" height="20"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="watchlist-items" id="cryptoWatchlist" style="display: none;">
+                    <div class="watchlist-item" data-symbol="BTCUSD">
+                        <div class="symbol-info">
+                            <span class="symbol">BTC/USD</span>
+                            <span class="symbol-desc">Bitcoin / US Dollar</span>
+                        </div>
+                        <div class="price-info">
+                            <span class="price">43,250</span>
+                            <span class="change positive">+2.98%</span>
+                        </div>
+                        <div class="mini-chart">
+                            <canvas width="60" height="20"></canvas>
+                        </div>
+                    </div>
+                    <div class="watchlist-item" data-symbol="ETHUSD">
+                        <div class="symbol-info">
+                            <span class="symbol">ETH/USD</span>
+                            <span class="symbol-desc">Ethereum / US Dollar</span>
+                        </div>
+                        <div class="price-info">
+                            <span class="price">2,456</span>
+                            <span class="change positive">+1.87%</span>
+                        </div>
+                        <div class="mini-chart">
+                            <canvas width="60" height="20"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Order Form -->
             <div class="order-form">
-                <h3>Place Order</h3>
+                <div class="order-header">
+                    <h3><i class="fas fa-plus-circle"></i> Place Order</h3>
+                    <div class="order-mode-toggle">
+                        <button class="mode-btn active" data-mode="simple">Simple</button>
+                        <button class="mode-btn" data-mode="advanced">Advanced</button>
+                    </div>
+                </div>
+                
                 <form id="orderForm">
                     <div class="order-tabs">
-                        <button type="button" class="tab-btn active" data-tab="buy">BUY</button>
-                        <button type="button" class="tab-btn" data-tab="sell">SELL</button>
+                        <button type="button" class="tab-btn buy-tab active" data-tab="buy">
+                            <i class="fas fa-arrow-up"></i> BUY
+                        </button>
+                        <button type="button" class="tab-btn sell-tab" data-tab="sell">
+                            <i class="fas fa-arrow-down"></i> SELL
+                        </button>
                     </div>
                     
                     <div class="form-group">
-                        <label>Symbol</label>
-                        <select name="symbol" required>
-                            <option value="EURUSD">EUR/USD</option>
-                            <option value="GBPUSD">GBP/USD</option>
-                            <option value="USDJPY">USD/JPY</option>
-                            <option value="BTCUSD">BTC/USD</option>
-                        </select>
+                        <label><i class="fas fa-chart-bar"></i> Symbol</label>
+                        <div class="symbol-selector">
+                            <select name="symbol" required>
+                                <option value="EURUSD">EUR/USD</option>
+                                <option value="GBPUSD">GBP/USD</option>
+                                <option value="USDJPY">USD/JPY</option>
+                                <option value="BTCUSD">BTC/USD</option>
+                            </select>
+                            <span class="current-price">1.0856</span>
+                        </div>
                     </div>
                     
                     <div class="form-group">
-                        <label>Volume</label>
-                        <input type="number" name="volume" value="1.00" step="0.01" min="0.01" required>
+                        <label><i class="fas fa-layer-group"></i> Volume</label>
+                        <div class="volume-input">
+                            <input type="number" name="volume" value="1.00" step="0.01" min="0.01" required>
+                            <div class="volume-presets">
+                                <button type="button" class="preset-btn" data-volume="0.1">0.1</button>
+                                <button type="button" class="preset-btn" data-volume="0.5">0.5</button>
+                                <button type="button" class="preset-btn" data-volume="1.0">1.0</button>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="form-group">
-                        <label>Order Type</label>
+                        <label><i class="fas fa-list"></i> Order Type</label>
                         <select name="orderType">
-                            <option value="market">Market</option>
-                            <option value="limit">Limit</option>
-                            <option value="stop">Stop</option>
+                            <option value="market">Market Order</option>
+                            <option value="limit">Limit Order</option>
+                            <option value="stop">Stop Order</option>
+                            <option value="stop-limit">Stop-Limit Order</option>
                         </select>
                     </div>
                     
                     <div class="form-group price-group" style="display: none;">
-                        <label>Price</label>
-                        <input type="number" name="price" step="0.0001">
+                        <label><i class="fas fa-dollar-sign"></i> Price</label>
+                        <input type="number" name="price" step="0.0001" placeholder="Enter price">
                     </div>
                     
-                    <button type="submit" class="order-btn buy-btn">BUY EUR/USD</button>
+                    <!-- Advanced Options -->
+                    <div class="advanced-options" style="display: none;">
+                        <div class="form-group">
+                            <label><i class="fas fa-shield-alt"></i> Stop Loss</label>
+                            <input type="number" name="stopLoss" step="0.0001" placeholder="Optional">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label><i class="fas fa-target"></i> Take Profit</label>
+                            <input type="number" name="takeProfit" step="0.0001" placeholder="Optional">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label><i class="fas fa-clock"></i> Expiry</label>
+                            <select name="expiry">
+                                <option value="gtc">Good Till Cancelled</option>
+                                <option value="day">Day Order</option>
+                                <option value="ioc">Immediate or Cancel</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Order Summary -->
+                    <div class="order-summary">
+                        <div class="summary-row">
+                            <span>Margin Required:</span>
+                            <span class="margin-value">$1,085.60</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Spread:</span>
+                            <span class="spread-value">1.2 pips</span>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="order-btn buy-btn">
+                        <i class="fas fa-arrow-up"></i>
+                        BUY EUR/USD
+                    </button>
                 </form>
+            </div>
+
+            <!-- Portfolio Summary -->
+            <div class="portfolio-summary">
+                <h3><i class="fas fa-briefcase"></i> Portfolio</h3>
+                <div class="portfolio-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Total P&L</span>
+                        <span class="stat-value positive">+$2,847.92</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Win Rate</span>
+                        <span class="stat-value">68.5%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Open Positions</span>
+                        <span class="stat-value">3</span>
+                    </div>
+                </div>
             </div>
         </aside>
 
-        <!-- Main Trading Area -->
+        <!-- Enhanced Main Trading Area -->
         <main class="trading-main">
+            <!-- Advanced Chart Container -->
             <div class="chart-container">
                 <div class="chart-header">
-                    <h2>EUR/USD</h2>
+                    <div class="symbol-info">
+                        <h2 class="chart-symbol">EUR/USD</h2>
+                        <span class="symbol-description">Euro / US Dollar</span>
+                    </div>
+                    
+                    <div class="price-display">
+                        <span class="current-price">1.0856</span>
+                        <span class="price-change positive">+0.0023 (+0.21%)</span>
+                        <div class="price-details">
+                            <span class="high">H: 1.0892</span>
+                            <span class="low">L: 1.0834</span>
+                            <span class="volume">Vol: 2.4M</span>
+                        </div>
+                    </div>
+                    
                     <div class="chart-controls">
-                        <button class="chart-btn active">1M</button>
-                        <button class="chart-btn">5M</button>
-                        <button class="chart-btn">15M</button>
-                        <button class="chart-btn">1H</button>
-                        <button class="chart-btn">4H</button>
-                        <button class="chart-btn">1D</button>
+                        <div class="timeframe-selector">
+                            <button class="chart-btn" data-timeframe="1m">1M</button>
+                            <button class="chart-btn" data-timeframe="5m">5M</button>
+                            <button class="chart-btn active" data-timeframe="15m">15M</button>
+                            <button class="chart-btn" data-timeframe="1h">1H</button>
+                            <button class="chart-btn" data-timeframe="4h">4H</button>
+                            <button class="chart-btn" data-timeframe="1d">1D</button>
+                        </div>
+                        
+                        <div class="chart-tools">
+                            <button class="tool-btn" title="Drawing Tools">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                            <button class="tool-btn" title="Indicators">
+                                <i class="fas fa-chart-area"></i>
+                            </button>
+                            <button class="tool-btn" title="Fullscreen">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
+                
                 <div id="tradingChart" class="chart-area">
-                    <!-- Trading dashboard image removed -->
+                    <!-- Advanced chart will be rendered here -->
+                </div>
+                
+                <!-- Market Depth -->
+                <div class="market-depth">
+                    <div class="depth-header">
+                        <h4>Market Depth</h4>
+                        <span class="spread">Spread: 1.2 pips</span>
+                    </div>
+                    <div class="depth-content">
+                        <div class="order-book">
+                            <div class="book-side asks">
+                                <div class="book-header">ASK</div>
+                                <div class="book-row">
+                                    <span class="price">1.0858</span>
+                                    <span class="volume">2.5M</span>
+                                </div>
+                                <div class="book-row">
+                                    <span class="price">1.0857</span>
+                                    <span class="volume">1.8M</span>
+                                </div>
+                            </div>
+                            <div class="book-side bids">
+                                <div class="book-header">BID</div>
+                                <div class="book-row">
+                                    <span class="price">1.0856</span>
+                                    <span class="volume">3.2M</span>
+                                </div>
+                                <div class="book-row">
+                                    <span class="price">1.0855</span>
+                                    <span class="volume">2.1M</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
+            <!-- Enhanced Trading Panels -->
             <div class="trading-panels">
-                <div class="panel positions-panel">
-                    <h3>Open Positions</h3>
+                <!-- Tabbed Panel System -->
+                <div class="panel-tabs">
+                    <button class="panel-tab active" data-panel="positions">
+                        <i class="fas fa-chart-pie"></i> Positions (2)
+                    </button>
+                    <button class="panel-tab" data-panel="orders">
+                        <i class="fas fa-list-ul"></i> Orders (1)
+                    </button>
+                    <button class="panel-tab" data-panel="history">
+                        <i class="fas fa-history"></i> History
+                    </button>
+                    <button class="panel-tab" data-panel="analytics">
+                        <i class="fas fa-chart-bar"></i> Analytics
+                    </button>
+                </div>
+
+                <!-- Positions Panel -->
+                <div class="panel positions-panel active" id="positionsPanel">
+                    <div class="panel-header">
+                        <h3>Open Positions</h3>
+                        <div class="panel-actions">
+                            <button class="action-btn" title="Close All">
+                                <i class="fas fa-times-circle"></i> Close All
+                            </button>
+                            <button class="action-btn" title="Export">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
                     <div class="positions-table">
                         <table>
                             <thead>
@@ -137,35 +423,74 @@
                                     <th>Open Price</th>
                                     <th>Current Price</th>
                                     <th>P&L</th>
-                                    <th>Action</th>
+                                    <th>Swap</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td>EUR/USD</td>
-                                    <td class="buy">BUY</td>
+                            <tbody id="positionsTableBody">
+                                <tr data-position-id="1">
+                                    <td>
+                                        <div class="symbol-cell">
+                                            <span class="symbol">EUR/USD</span>
+                                            <span class="symbol-desc">Euro / US Dollar</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="position-type buy">BUY</span></td>
                                     <td>1.50</td>
                                     <td>1.0834</td>
-                                    <td>1.0856</td>
-                                    <td class="positive">+$330.00</td>
-                                    <td><button class="close-btn">Close</button></td>
+                                    <td class="current-price">1.0856</td>
+                                    <td class="pnl positive">+$330.00</td>
+                                    <td class="swap">-$2.50</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="modify-btn" title="Modify">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="close-btn" title="Close">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
-                                <tr>
-                                    <td>GBP/USD</td>
-                                    <td class="sell">SELL</td>
+                                <tr data-position-id="2">
+                                    <td>
+                                        <div class="symbol-cell">
+                                            <span class="symbol">GBP/USD</span>
+                                            <span class="symbol-desc">British Pound / US Dollar</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="position-type sell">SELL</span></td>
                                     <td>2.00</td>
                                     <td>1.2756</td>
-                                    <td>1.2734</td>
-                                    <td class="positive">+$440.00</td>
-                                    <td><button class="close-btn">Close</button></td>
+                                    <td class="current-price">1.2734</td>
+                                    <td class="pnl positive">+$440.00</td>
+                                    <td class="swap">+$1.20</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="modify-btn" title="Modify">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="close-btn" title="Close">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <div class="panel orders-panel">
-                    <h3>Pending Orders</h3>
+                <!-- Orders Panel -->
+                <div class="panel orders-panel" id="ordersPanel" style="display: none;">
+                    <div class="panel-header">
+                        <h3>Pending Orders</h3>
+                        <div class="panel-actions">
+                            <button class="action-btn" title="Cancel All">
+                                <i class="fas fa-ban"></i> Cancel All
+                            </button>
+                        </div>
+                    </div>
                     <div class="orders-table">
                         <table>
                             <thead>
@@ -174,27 +499,116 @@
                                     <th>Type</th>
                                     <th>Volume</th>
                                     <th>Price</th>
+                                    <th>Current Price</th>
+                                    <th>Distance</th>
                                     <th>Status</th>
-                                    <th>Action</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td>USD/JPY</td>
-                                    <td class="buy">BUY LIMIT</td>
+                            <tbody id="ordersTableBody">
+                                <tr data-order-id="1">
+                                    <td>
+                                        <div class="symbol-cell">
+                                            <span class="symbol">USD/JPY</span>
+                                            <span class="symbol-desc">US Dollar / Japanese Yen</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="order-type buy-limit">BUY LIMIT</span></td>
                                     <td>1.00</td>
                                     <td>149.50</td>
-                                    <td class="pending">Pending</td>
-                                    <td><button class="cancel-btn">Cancel</button></td>
+                                    <td>149.82</td>
+                                    <td class="distance">32 pips</td>
+                                    <td><span class="status pending">Pending</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="modify-btn" title="Modify">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="cancel-btn" title="Cancel">
+                                                <i class="fas fa-ban"></i>
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+
+                <!-- History Panel -->
+                <div class="panel history-panel" id="historyPanel" style="display: none;">
+                    <div class="panel-header">
+                        <h3>Trade History</h3>
+                        <div class="history-filters">
+                            <select class="filter-select">
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                                <option value="all">All Time</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="history-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Symbol</th>
+                                    <th>Type</th>
+                                    <th>Volume</th>
+                                    <th>Open Price</th>
+                                    <th>Close Price</th>
+                                    <th>P&L</th>
+                                    <th>Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody">
+                                <!-- Trade history will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Analytics Panel -->
+                <div class="panel analytics-panel" id="analyticsPanel" style="display: none;">
+                    <div class="panel-header">
+                        <h3>Performance Analytics</h3>
+                    </div>
+                    <div class="analytics-content">
+                        <div class="analytics-grid">
+                            <div class="analytics-card">
+                                <h4>Total Return</h4>
+                                <div class="metric-value positive">+15.8%</div>
+                                <div class="metric-change">+2.3% this month</div>
+                            </div>
+                            <div class="analytics-card">
+                                <h4>Win Rate</h4>
+                                <div class="metric-value">68.5%</div>
+                                <div class="metric-change">+3.2% vs last month</div>
+                            </div>
+                            <div class="analytics-card">
+                                <h4>Avg. Trade</h4>
+                                <div class="metric-value">$127.50</div>
+                                <div class="metric-change">-$15.20 vs last month</div>
+                            </div>
+                            <div class="analytics-card">
+                                <h4>Max Drawdown</h4>
+                                <div class="metric-value negative">-8.2%</div>
+                                <div class="metric-change">Improved from -12.1%</div>
+                            </div>
+                        </div>
+                        
+                        <div class="performance-chart">
+                            <h4>Equity Curve</h4>
+                            <canvas id="equityChart" width="400" height="200"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
+    <!-- Enhanced Scripts -->
     <script src="js/main.js"></script>
     <script src="js/market-data.js"></script>
     <script src="js/platform.js"></script>
