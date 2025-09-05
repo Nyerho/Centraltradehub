@@ -1519,6 +1519,21 @@
 
     <script src="js/main.js"></script>
     <script src="js/market-data.js"></script>
+
+    <!-- Firebase Integration -->
+    <script type="module">
+      import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+      import { getAuth } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+      import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+      
+      // Your existing scripts
+    </script>
+
+    <!-- Include Firebase configuration -->
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/firebase-auth.js"></script>
+    <script type="module" src="js/firebase-database.js"></script>
+    <script type="module" src="js/auth-integration.js"></script>
 </body>
 </html>
 
