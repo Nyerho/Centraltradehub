@@ -235,29 +235,33 @@ function handleLogin(e) {
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
     submitBtn.disabled = true;
     
-    // Use Firebase authentication through AuthManager
-    if (window.authManager) {
-        window.authManager.login(email, password).then(success => {
-            // Reset button
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-            
-            if (success) {
-                // Login successful - AuthManager will handle UI updates
-                console.log('Login successful');
-            }
-        }).catch(error => {
-            // Reset button on error
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-            console.error('Login error:', error);
-        });
-    } else {
-        // Fallback if AuthManager not available
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-        showNotification('Authentication system not ready. Please refresh the page.', 'error');
-    }
+    // Wait for AuthManager to be available
+    const waitForAuthManager = () => {
+        if (window.authManager) {
+            // Use Firebase authentication through AuthManager
+            window.authManager.login(email, password).then(success => {
+                // Reset button
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                
+                if (success) {
+                    // Login successful - AuthManager will handle UI updates
+                    console.log('Login successful');
+                }
+            }).catch(error => {
+                // Reset button on error
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                console.error('Login error:', error);
+                showNotification('Login failed: ' + error.message, 'error');
+            });
+        } else {
+            // Wait a bit more for AuthManager to load
+            setTimeout(waitForAuthManager, 100);
+        }
+    };
+    
+    waitForAuthManager();
 }
 
 function handleRegister(e) {
