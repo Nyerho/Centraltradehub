@@ -349,6 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Setup login/register button handlers
     const loginBtn = document.querySelector('.btn-login');
     const registerBtn = document.querySelector('.btn-register');
+    const adminBtn = document.querySelector('.btn-admin');
     
     if (loginBtn) {
         loginBtn.addEventListener('click', (e) => {
@@ -363,7 +364,48 @@ document.addEventListener('DOMContentLoaded', () => {
             openModal('registerModal');
         });
     }
+    
+    if (adminBtn) {
+        adminBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Check if user is authenticated and has admin privileges
+            checkAdminAccess();
+        });
+    }
 });
+
+// Admin access control function
+function checkAdminAccess() {
+    // Import Firebase auth to check current user
+    import('./firebase-config.js').then(({ auth }) => {
+        const user = auth.currentUser;
+        
+        if (!user) {
+            // User not logged in - show login modal first
+            showMessage('Please log in to access admin panel', 'error');
+            openModal('loginModal');
+            return;
+        }
+        
+        // Check if user has admin privileges (you can customize this logic)
+        const adminEmails = [
+            'admin@centraltradehub.com',
+            'owner@centraltradehub.com'
+            // Add your admin email addresses here
+        ];
+        
+        if (adminEmails.includes(user.email)) {
+            // User is authorized admin
+            window.location.href = 'admin.html';
+        } else {
+            // User is not authorized
+            showMessage('Access denied. Admin privileges required.', 'error');
+        }
+    }).catch(error => {
+        console.error('Error checking admin access:', error);
+        showMessage('Error checking admin access', 'error');
+    });
+}
 
 // Scroll animations
 const observerOptions = {

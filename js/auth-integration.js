@@ -71,11 +71,22 @@ class AuthManager {
       const userMenu = document.querySelector('.user-menu');
       const userName = document.querySelector('.user-name');
       
+      // Define admin emails
+      const adminEmails = [
+          'admin@centraltradehub.com',
+          'owner@centraltradehub.com'
+      ];
+      
       if (user) {
           // User is logged in
           if (loginBtn) loginBtn.style.display = 'none';
           if (registerBtn) registerBtn.style.display = 'none';
-          if (adminBtn) adminBtn.style.display = 'none';
+          
+          // Show admin button only for authorized admins
+          if (adminBtn) {
+              adminBtn.style.display = adminEmails.includes(user.email) ? 'inline-block' : 'none';
+          }
+          
           if (userMenu) {
               userMenu.style.display = 'flex';
               if (userName) {
@@ -86,7 +97,7 @@ class AuthManager {
           // User is not logged in
           if (loginBtn) loginBtn.style.display = 'inline-block';
           if (registerBtn) registerBtn.style.display = 'inline-block';
-          if (adminBtn) adminBtn.style.display = 'inline-block';
+          if (adminBtn) adminBtn.style.display = 'none'; // Hide admin button when not logged in
           if (userMenu) userMenu.style.display = 'none';
       }
   }
@@ -134,10 +145,9 @@ class AuthManager {
   }
 }
 
-// Initialize auth manager
+// Initialize AuthManager and make it globally available
 const authManager = new AuthManager();
-
-// Make it globally available
 window.authManager = authManager;
 
+// Export for module usage
 export default authManager;

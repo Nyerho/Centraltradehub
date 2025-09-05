@@ -235,20 +235,29 @@ function handleLogin(e) {
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
     submitBtn.disabled = true;
     
-    // Simulate API call
-    setTimeout(() => {
-        // Reset button
+    // Use Firebase authentication through AuthManager
+    if (window.authManager) {
+        window.authManager.login(email, password).then(success => {
+            // Reset button
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            
+            if (success) {
+                // Login successful - AuthManager will handle UI updates
+                console.log('Login successful');
+            }
+        }).catch(error => {
+            // Reset button on error
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            console.error('Login error:', error);
+        });
+    } else {
+        // Fallback if AuthManager not available
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
-        
-        // For demo purposes, show success message
-        showNotification('Login successful! Redirecting...', 'success');
-        
-        // Redirect to platform (in real app, this would be handled by backend)
-        setTimeout(() => {
-            window.location.href = 'platform.html';
-        }, 1500);
-    }, 2000);
+        showNotification('Authentication system not ready. Please refresh the page.', 'error');
+    }
 }
 
 function handleRegister(e) {
@@ -270,26 +279,46 @@ function handleRegister(e) {
         return;
     }
     
+    // Get form data
+    const formData = new FormData(form);
+    const userData = {
+        firstName: formData.get('firstName'),
+        lastName: formData.get('lastName'),
+        email: formData.get('email'),
+        password: formData.get('password'),
+        phone: formData.get('phone'),
+        country: formData.get('country')
+    };
+    
     // Show loading state
     const submitBtn = form.querySelector('button[type="submit"]');
     const originalText = submitBtn.innerHTML;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
     submitBtn.disabled = true;
     
-    // Simulate API call
-    setTimeout(() => {
-        // Reset button
+    // Use Firebase authentication through AuthManager
+    if (window.authManager) {
+        window.authManager.register(userData).then(success => {
+            // Reset button
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            
+            if (success) {
+                // Registration successful
+                console.log('Registration successful');
+            }
+        }).catch(error => {
+            // Reset button on error
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            console.error('Registration error:', error);
+        });
+    } else {
+        // Fallback if AuthManager not available
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
-        
-        // Show success message
-        showNotification('Account created successfully! Please check your email to verify your account.', 'success');
-        
-        // Switch to login tab
-        setTimeout(() => {
-            document.querySelector('[data-tab="login"]').click();
-        }, 2000);
-    }, 3000);
+        showNotification('Authentication system not ready. Please refresh the page.', 'error');
+    }
 }
 
 function handleForgotPassword(e) {
