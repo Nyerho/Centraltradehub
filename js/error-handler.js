@@ -564,3 +564,177 @@ if (typeof module !== 'undefined' && module.exports) {
 } else {
     window.ErrorHandler = ErrorHandler;
 }
+class ErrorHandler {
+    constructor() {
+        this.errorLog = [];
+        this.maxLogSize = 100;
+        this.retryAttempts = 3;
+        this.retryDelay = 1000;
+    }
+
+    async handleApiError(error, context = '') {
+        const errorInfo = {
+            timestamp: new Date().toISOString(),
+            context,
+            message: error.message,
+            stack: error.stack,
+            type: this.categorizeError(error)
+        };
+
+        this.logError(errorInfo);
+        
+        switch (errorInfo.type) {
+            case 'RATE_LIMIT':
+                return this.handleRateLimit(error, context);
+            case 'NETWORK':
+                return this.handleNetworkError(error, context);
+            case 'AUTH':
+                return this.handleAuthError(error, context);
+            case 'API':
+                return this.handleApiResponseError(error, context);
+            default:
+                return this.handleGenericError(error, context);
+        }
+    }
+
+    categorizeError(error) {
+        if (error.status === 429) return 'RATE_LIMIT';
+        if (error.status === 401 || error.status === 403) return 'AUTH';
+        if (!navigator.onLine || error.code === 'NETWORK_ERROR') return 'NETWORK';
+        if (error.status >= 400 && error.status < 500) return 'API';
+        return 'GENERIC';
+    }
+
+    async handleRateLimit(error, context) {
+        const retryAfter = error.headers?.['retry-after'] || 60;
+        this.showUserNotification(
+            `Rate limit exceeded. Retrying in ${retryAfter} seconds...`,
+            'warning'
+        );
+        
+        await this.delay(retryAfter * 1000);
+        return { retry: true, delay: retryAfter * 1000 };
+    }
+
+    async handleNetworkError(error, context) {
+        if (!navigator.onLine) {
+            this.showUserNotification(
+                'No internet connection. Please check your network.',
+                'error'
+            );
+            return { retry: false };
+        }
+
+        for (let attempt = 1; attempt <= this.retryAttempts; attempt++) {
+            await this.delay(this.retryDelay * attempt);
+            try {
+                // Retry the operation
+                return { retry: true, attempt };
+            } catch (retryError) {
+                if (attempt === this.retryAttempts) {
+                    this.showUserNotification(
+                        'Connection failed after multiple attempts.',
+                        'error'
+                    );
+                    return { retry: false };
+                }
+            }
+        }
+    }
+
+    handleAuthError(error, context) {
+        this.showUserNotification(
+            'Authentication failed. Please log in again.',
+            'error'
+        );
+        // Redirect to login or refresh token
+        setTimeout(() => {
+            window.location.href = '/login';
+        }, 2000);
+        return { retry: false };
+    }
+
+    handleApiResponseError(error, context) {
+        const message = error.response?.data?.message || 'API request failed';
+        this.showUserNotification(message, 'error');
+        return { retry: false };
+    }
+
+    handleGenericError(error, context) {
+        console.error('Unexpected error:', error);
+        this.showUserNotification(
+            'An unexpected error occurred. Please try again.',
+            'error'
+        );
+        return { retry: false };
+    }
+
+    logError(errorInfo) {
+        this.errorLog.unshift(errorInfo);
+        if (this.errorLog.length > this.maxLogSize) {
+            this.errorLog = this.errorLog.slice(0, this.maxLogSize);
+        }
+        
+        // Send to analytics service
+        this.sendToAnalytics(errorInfo);
+    }
+
+    showUserNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <span class="notification-message">${message}</span>
+                <button class="notification-close">&times;</button>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+        
+        // Manual close
+        notification.querySelector('.notification-close').onclick = () => {
+            notification.remove();
+        };
+    }
+
+    delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    sendToAnalytics(errorInfo) {
+        // Implementation for sending error data to analytics service
+        if (window.gtag) {
+            window.gtag('event', 'exception', {
+                description: errorInfo.message,
+                fatal: false
+            });
+        }
+    }
+
+    getErrorLog() {
+        return this.errorLog;
+    }
+
+    clearErrorLog() {
+        this.errorLog = [];
+    }
+}
+
+// Global error handler instance
+window.errorHandler = new ErrorHandler();
+
+// Global error event listeners
+window.addEventListener('error', (event) => {
+    window.errorHandler.handleApiError(event.error, 'Global Error');
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+    window.errorHandler.handleApiError(event.reason, 'Unhandled Promise Rejection');
+});
