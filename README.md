@@ -2,12 +2,17 @@
 
 A comprehensive web-based forex trading platform with real-time market data, advanced charting, and trading capabilities.
 
-## Features
-- Real-time market data integration
-- Advanced trading tools
-- Multi-platform support
-- Secure authentication
-- Admin dashboard
+## 🚀 Features
+
+- **Real-time Market Data**: Live forex, stocks, and cryptocurrency prices
+- **Advanced Trading Tools**: Professional-grade charts and analysis
+- **Multi-Platform Support**: Web-based platform accessible anywhere
+- **Secure Authentication**: User registration and login system
+- **Admin Dashboard**: Complete administrative control panel
+- **API Integration**: Alpha Vantage, IEX Cloud, Polygon.io, MetaTrader support
+- **Responsive Design**: Optimized for desktop and mobile devices
+
+## 📁 Project Structure
 
 ## Setup
 1. Clone the repository
