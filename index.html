@@ -1062,6 +1062,25 @@
         </div>
     </footer>
 
+    <script type="module">
+        import { auth } from './js/firebase-config.js';
+        import { signInWithEmailAndPassword } from 'firebase/auth';
+        
+        window.testLogin = async function() {
+            try {
+                const result = await signInWithEmailAndPassword(auth, 'test@example.com', 'password123');
+                console.log('Login success:', result);
+            } catch (error) {
+                console.error('Login error:', error);
+            }
+        };
+
+        // Wait for all modules to load
+        window.addEventListener('load', function() {
+            console.log('All modules loaded, AuthManager:', window.authManager);
+        });
+    </script>
+
     <script type="module" src="js/firebase-config.js"></script>
     <script type="module" src="js/firebase-auth.js"></script>
     <script type="module" src="js/firebase-database.js"></script>

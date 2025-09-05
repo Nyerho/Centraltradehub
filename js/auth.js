@@ -210,13 +210,15 @@ function setupFormSubmissions() {
 }
 
 function handleLogin(e) {
+    console.log('Login form submitted!');
     e.preventDefault();
     
     const form = e.target;
     const formData = new FormData(form);
     const email = formData.get('email');
     const password = formData.get('password');
-    const remember = formData.get('remember');
+    
+    console.log('Email:', email, 'Password length:', password?.length);
     
     // Validate form
     const emailField = form.querySelector('[name="email"]');
@@ -225,7 +227,10 @@ function handleLogin(e) {
     const emailValid = validateField(emailField);
     const passwordValid = validateField(passwordField);
     
+    console.log('Validation - Email:', emailValid, 'Password:', passwordValid);
+    
     if (!emailValid || !passwordValid) {
+        console.log('Validation failed');
         return;
     }
     
@@ -235,11 +240,16 @@ function handleLogin(e) {
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
     submitBtn.disabled = true;
     
+    console.log('Waiting for AuthManager...');
+    
     // Wait for AuthManager to be available
     const waitForAuthManager = () => {
+        console.log('Checking AuthManager:', window.authManager);
         if (window.authManager) {
+            console.log('AuthManager found, attempting login...');
             // Use Firebase authentication through AuthManager
             window.authManager.login(email, password).then(success => {
+                console.log('Login result:', success);
                 // Reset button
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
@@ -249,13 +259,14 @@ function handleLogin(e) {
                     console.log('Login successful');
                 }
             }).catch(error => {
+                console.error('Login error:', error);
                 // Reset button on error
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
-                console.error('Login error:', error);
                 showNotification('Login failed: ' + error.message, 'error');
             });
         } else {
+            console.log('AuthManager not ready, waiting...');
             // Wait a bit more for AuthManager to load
             setTimeout(waitForAuthManager, 100);
         }
