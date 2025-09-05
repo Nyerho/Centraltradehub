@@ -121,6 +121,31 @@ body {
     background: #e55a2b;
 }
 
+.btn-logout {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-logout:hover {
+    background: linear-gradient(135deg, #ee5a24, #ff6b6b);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(238, 90, 36, 0.4);
+}
+
+.user-welcome {
+    color: #fff;
+    font-size: 14px;
+    margin-right: 15px;
+    font-weight: 500;
+}
+
 .hamburger {
     display: none;
     flex-direction: column;
