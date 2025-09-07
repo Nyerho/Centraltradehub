@@ -95,64 +95,9 @@ class AuthManager {
   }
 
   updateUI() {
-    const loginBtn = document.querySelector('.btn-login');
-    const registerBtn = document.querySelector('.btn-register');
-    const adminBtn = document.querySelector('.btn-admin');
-    const userMenu = document.querySelector('.user-menu');
-    const userName = document.querySelector('.user-name');
-    const navButtons = document.querySelector('.nav-buttons');
-    
-    // Define admin emails
-    const adminEmails = [
-        'admin@centraltradehub.com',
-        'owner@centraltradehub.com'
-    ];
-    
-    if (this.isLoggedIn && this.currentUser) {
-        // User is logged in - HIDE login and register buttons
-        if (loginBtn) loginBtn.style.display = 'none';
-        if (registerBtn) registerBtn.style.display = 'none';
-        
-        // Show admin button only for authorized admins
-        if (adminBtn) {
-            adminBtn.style.display = adminEmails.includes(this.currentUser.email) ? 'inline-block' : 'none';
-        }
-        
-        // Show user menu
-        if (userMenu) {
-            userMenu.style.display = 'flex';
-            if (userName) {
-                userName.textContent = this.currentUser.displayName || this.currentUser.email.split('@')[0];
-            }
-        }
-        
-        // Add logout button if it doesn't exist
-        if (navButtons && !document.querySelector('.btn-logout')) {
-            const logoutBtn = document.createElement('a');
-            logoutBtn.href = '#';
-            logoutBtn.className = 'btn-logout';
-            logoutBtn.textContent = 'Logout';
-            logoutBtn.style.cssText = 'background: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-left: 10px;';
-            logoutBtn.onclick = (e) => {
-                e.preventDefault();
-                this.logout();
-            };
-            navButtons.appendChild(logoutBtn);
-        }
-        
-    } else {
-        // User is NOT logged in - SHOW login and register buttons
-        if (loginBtn) loginBtn.style.display = 'inline-block';
-        if (registerBtn) registerBtn.style.display = 'inline-block'; // Fixed: was loginBtn, should be registerBtn
-        if (adminBtn) adminBtn.style.display = 'none';
-        if (userMenu) userMenu.style.display = 'none';
-        
-        // Remove logout button if it exists
-        const logoutBtn = document.querySelector('.btn-logout');
-        if (logoutBtn) {
-            logoutBtn.remove();
-        }
-    }
+    this.currentUser = user;
+    this.updateUI();
+  }
 }
 
 // Initialize AuthManager and make it globally available
