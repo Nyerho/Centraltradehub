@@ -7,7 +7,9 @@ class AuthManager {
   constructor() {
     this.firebaseAuth = FirebaseAuthService;
     this.currentUser = null;
+    this.isLoggedIn = false;
     this.init();
+    this.initializeFirebaseAuth(); // Add this missing call
   }
 
   // Add the missing showMessage method
@@ -151,49 +153,6 @@ class AuthManager {
             logoutBtn.remove();
         }
     }
-    // Remove this duplicate declaration - navButtons is already declared at line 101
-    // const navButtons = document.querySelector('.nav-buttons');
-    
-    if (this.isLoggedIn) {
-        // Hide login and register buttons
-        if (loginBtn) loginBtn.style.display = 'none';
-        if (registerBtn) {
-            // Replace "Get Started" with logout button
-            registerBtn.textContent = 'Logout';
-            registerBtn.className = 'btn-logout';
-            registerBtn.onclick = (e) => {
-                e.preventDefault();
-                this.logout();
-            };
-            registerBtn.href = '#';
-        }
-    
-    // Add user welcome message if nav-buttons container exists
-    if (navButtons && !document.querySelector('.user-welcome')) {
-      const userWelcome = document.createElement('span');
-      userWelcome.className = 'user-welcome';
-      userWelcome.textContent = `Welcome, ${this.currentUser.displayName || this.currentUser.email.split('@')[0]}`;
-      userWelcome.style.color = '#fff';
-      userWelcome.style.marginRight = '15px';
-      userWelcome.style.fontSize = '14px';
-      navButtons.insertBefore(userWelcome, loginBtn);
-    }
-  } else {
-    // Show login button and restore register button
-    if (loginBtn) loginBtn.style.display = 'block';
-    if (registerBtn) {
-      registerBtn.textContent = 'Get Started';
-      registerBtn.className = 'btn-register';
-      registerBtn.onclick = null;
-      registerBtn.href = '#register';
-    }
-    
-    // Remove user welcome message
-    const userWelcome = document.querySelector('.user-welcome');
-    if (userWelcome) {
-      userWelcome.remove();
-    }
-  }
 }
 
 // Initialize AuthManager and make it globally available

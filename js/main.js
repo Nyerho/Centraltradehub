@@ -426,12 +426,20 @@ document.addEventListener('DOMContentLoaded', () => {
     animateElements.forEach(el => observer.observe(el));
 });
 
-// Handle extension message port errors
-window.addEventListener('unhandledrejection', function(event) {
-    if (event.reason && event.reason.message && 
-        event.reason.message.includes('message port closed')) {
-        // Suppress extension-related errors
-        event.preventDefault();
-        console.warn('Extension message port error suppressed:', event.reason.message);
+// Enhanced error handling for extension messages and Firebase
+window.addEventListener('error', function(e) {
+    // Suppress extension message port errors
+    if (e.message && e.message.includes('message port closed')) {
+        e.preventDefault();
+        return false;
     }
+    
+    // Log other errors for debugging
+    console.error('Application error:', e.error);
+});
+
+// Handle unhandled promise rejections
+window.addEventListener('unhandledrejection', function(e) {
+    console.error('Unhandled promise rejection:', e.reason);
+    e.preventDefault();
 });
