@@ -1012,7 +1012,7 @@
             <div class="footer-content">
                 <div class="footer-section">
                     <div class="footer-logo">
-                        <img src="assets/images/logo-white.png" alt="Central Trade Hub">
+                        <img src="assets/images/logo-white.png" alt="Central Trade Hub" class="logo">
                         <span>Central Trade Hub</span>
                     </div>
                     <p>The world's most advanced trading platform for professional traders and institutions.</p>
@@ -1062,31 +1062,13 @@
         </div>
     </footer>
 
-    <script type="module">
-        import { auth } from './js/firebase-config.js';
-        import { signInWithEmailAndPassword } from 'firebase/auth';
-        
-        window.testLogin = async function() {
-            try {
-                const result = await signInWithEmailAndPassword(auth, 'test@example.com', 'password123');
-                console.log('Login success:', result);
-            } catch (error) {
-                console.error('Login error:', error);
-            }
-        };
-
-        // Wait for all modules to load
-        window.addEventListener('load', function() {
-            console.log('All modules loaded, AuthManager:', window.authManager);
-        });
-    </script>
-
+    <!-- Firebase scripts should load first -->
     <script type="module" src="js/firebase-config.js"></script>
     <script type="module" src="js/firebase-auth.js"></script>
     <script type="module" src="js/firebase-database.js"></script>
     <script type="module" src="js/auth-integration.js"></script>
-    <script defer src="js/auth.js"></script>
-    <script src="js/main.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/main.js"></script>
 
     <!-- Login Modal -->
     <div id="loginModal" class="modal">

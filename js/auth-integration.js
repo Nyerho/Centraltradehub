@@ -151,18 +151,17 @@ class AuthManager {
             logoutBtn.remove();
         }
     }
-  }
-  
-  const navButtons = document.querySelector('.nav-buttons');
-  
-  if (this.isLoggedIn) {
-    // Hide login and register buttons
-    if (loginBtn) loginBtn.style.display = 'none';
-    if (registerBtn) {
-      // Replace "Get Started" with logout button
-      registerBtn.textContent = 'Logout';
-      registerBtn.className = 'btn-logout';
-      registerBtn.onclick = (e) => {
+
+    const navButtons = document.querySelector('.nav-buttons');
+    
+    if (this.isLoggedIn) {
+        // Hide login and register buttons
+        if (loginBtn) loginBtn.style.display = 'none';
+        if (registerBtn) {
+            // Replace "Get Started" with logout button
+            registerBtn.textContent = 'Logout';
+            registerBtn.className = 'btn-logout';
+            registerBtn.onclick = (e) => {
         e.preventDefault();
         this.logout();
       };
