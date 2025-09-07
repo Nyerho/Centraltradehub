@@ -129,8 +129,10 @@ style.textContent = `
 document.head.appendChild(style);
 
 // Simulate real-time updates
-setInterval(() => {
-    updateDashboardStats();
+setInterval(async () => {
+    if (document.getElementById('dashboard').classList.contains('active')) {
+        await loadDashboardData();
+    }
 }, 30000); // Update every 30 seconds
 
 function updateDashboardStats() {
@@ -156,4 +158,206 @@ function updateDashboardStats() {
             stat.textContent = newValue.toLocaleString();
         }
     });
+}
+
+// Add Firebase integration
+let adminAuth = null;
+let adminDB = null;
+
+// Wait for Firebase to load
+window.addEventListener('load', async () => {
+    // Wait for auth manager
+    while (!window.authManager) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    adminAuth = window.authManager;
+    
+    // Check if user is admin
+    checkAdminAccess();
+    
+    // Load real data
+    loadDashboardData();
+    loadUserData();
+});
+
+function checkAdminAccess() {
+    const currentUser = adminAuth.getCurrentUser();
+    if (!currentUser || !currentUser.isAdmin) {
+        window.location.href = 'auth.html';
+        return;
+    }
+}
+
+async function loadDashboardData() {
+    try {
+        // Load real statistics from Firebase
+        const stats = await adminDB.getAdminStats();
+        updateStatsCards(stats);
+    } catch (error) {
+        console.error('Error loading dashboard data:', error);
+    }
+}
+
+// Security middleware
+
+// Import Firebase services (add at top of file)
+import { auth, db } from './firebase-config.js';
+import { collection, getDocs, doc, deleteDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+// Admin Authentication Check
+class AdminSecurity {
+    constructor() {
+        this.checkAdminAccess();
+    }
+
+    async checkAdminAccess() {
+        // Wait for auth manager to be available
+        let attempts = 0;
+        while (!window.authManager && attempts < 50) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+
+        if (!window.authManager) {
+            this.redirectToLogin('Authentication system not available');
+            return;
+        }
+
+        const user = window.authManager.getCurrentUser();
+        if (!user) {
+            this.redirectToLogin('Please log in to access admin panel');
+            return;
+        }
+
+        // Check admin role using ES6 Firebase
+        const userRole = await this.getUserRole(user.uid);
+        if (userRole !== 'admin') {
+            this.redirectToLogin('Access denied: Admin privileges required');
+            return;
+        }
+
+        console.log('Admin access granted for:', user.email);
+        this.initializeAdminPanel();
+    }
+
+    async getUserRole(uid) {
+        try {
+            const userDoc = await getDoc(doc(db, 'users', uid));
+            return userDoc.exists() ? userDoc.data().role : 'user';
+        } catch (error) {
+            console.error('Error fetching user role:', error);
+            return 'user';
+        }
+    }
+
+    redirectToLogin(message) {
+        alert(message);
+        window.location.href = 'auth.html';
+    }
+
+    initializeAdminPanel() {
+        this.loadDashboardData();
+        this.setupRealTimeUpdates();
+    }
+
+    async loadDashboardData() {
+        try {
+            // Load real user statistics
+            const usersSnapshot = await getDocs(collection(db, 'users'));
+            const totalUsers = usersSnapshot.size;
+            
+            // Load trading data
+            const tradesSnapshot = await getDocs(collection(db, 'trades'));
+            const totalTrades = tradesSnapshot.size;
+            
+            // Update dashboard stats
+            document.querySelector('.stat-card:nth-child(1) .stat-number').textContent = totalUsers;
+            document.querySelector('.stat-card:nth-child(3) .stat-number').textContent = totalTrades;
+            
+            // Load user management table
+            this.loadUserManagementTable(usersSnapshot);
+        } catch (error) {
+            console.error('Error loading dashboard data:', error);
+        }
+    }
+
+    loadUserManagementTable(usersSnapshot) {
+        const tableBody = document.querySelector('#userManagement tbody');
+        if (!tableBody) return;
+
+        tableBody.innerHTML = '';
+        usersSnapshot.forEach(docSnapshot => {
+            const user = docSnapshot.data();
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${user.email || 'N/A'}</td>
+                <td>${user.displayName || 'N/A'}</td>
+                <td><span class="status ${user.status || 'active'}">${user.status || 'Active'}</span></td>
+                <td>${user.role || 'user'}</td>
+                <td>${new Date(user.createdAt?.toDate() || Date.now()).toLocaleDateString()}</td>
+                <td>
+                    <button class="btn-edit" onclick="editUser('${docSnapshot.id}')">Edit</button>
+                    <button class="btn-delete" onclick="deleteUser('${docSnapshot.id}')">Delete</button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+
+    setupRealTimeUpdates() {
+        // Real-time user count updates
+        onSnapshot(collection(db, 'users'), (snapshot) => {
+            document.querySelector('.stat-card:nth-child(1) .stat-number').textContent = snapshot.size;
+        });
+
+        // Real-time trades updates
+        onSnapshot(collection(db, 'trades'), (snapshot) => {
+            document.querySelector('.stat-card:nth-child(3) .stat-number').textContent = snapshot.size;
+        });
+    }
+}
+
+// User management functions
+window.editUser = async (userId) => {
+    console.log('Edit user:', userId);
+    // Implementation for editing user
+};
+
+window.deleteUser = async (userId) => {
+    if (confirm('Are you sure you want to delete this user?')) {
+        try {
+            await deleteDoc(doc(db, 'users', userId));
+            showNotification('User deleted successfully', 'success');
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            showNotification('Error deleting user', 'error');
+        }
+    }
+};
+
+// Initialize admin security when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    new AdminSecurity();
+});
+
+// Add logout functionality
+document.querySelector('.admin-nav .user-section').addEventListener('click', async () => {
+    if (confirm('Are you sure you want to logout?')) {
+        try {
+            await window.authManager.signOut();
+            window.location.href = 'auth.html';
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    }
+});
+function updateStatsCards(stats) {
+    const statCards = document.querySelectorAll('.stat-card');
+    if (stats && statCards.length >= 4) {
+        statCards[0].querySelector('h3').textContent = stats.totalUsers || '0';
+        statCards[1].querySelector('h3').textContent = `$${(stats.tradingVolume || 0).toLocaleString()}`;
+        statCards[2].querySelector('h3').textContent = stats.activeTrades || '0';
+        statCards[3].querySelector('h3').textContent = `$${(stats.revenue || 0).toLocaleString()}`;
+    }
 }
