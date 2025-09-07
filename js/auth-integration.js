@@ -151,8 +151,8 @@ class AuthManager {
             logoutBtn.remove();
         }
     }
-
-    const navButtons = document.querySelector('.nav-buttons');
+    // Remove this duplicate declaration - navButtons is already declared at line 101
+    // const navButtons = document.querySelector('.nav-buttons');
     
     if (this.isLoggedIn) {
         // Hide login and register buttons
@@ -162,11 +162,11 @@ class AuthManager {
             registerBtn.textContent = 'Logout';
             registerBtn.className = 'btn-logout';
             registerBtn.onclick = (e) => {
-        e.preventDefault();
-        this.logout();
-      };
-      registerBtn.href = '#';
-    }
+                e.preventDefault();
+                this.logout();
+            };
+            registerBtn.href = '#';
+        }
     
     // Add user welcome message if nav-buttons container exists
     if (navButtons && !document.querySelector('.user-welcome')) {

@@ -425,3 +425,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const animateElements = document.querySelectorAll('.feature-card, .stat-box, .tool-item');
     animateElements.forEach(el => observer.observe(el));
 });
+
+// Handle extension message port errors
+window.addEventListener('unhandledrejection', function(event) {
+    if (event.reason && event.reason.message && 
+        event.reason.message.includes('message port closed')) {
+        // Suppress extension-related errors
+        event.preventDefault();
+        console.warn('Extension message port error suppressed:', event.reason.message);
+    }
+});
