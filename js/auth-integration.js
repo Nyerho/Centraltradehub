@@ -8,8 +8,7 @@ class AuthManager {
     this.firebaseAuth = FirebaseAuthService;
     this.currentUser = null;
     this.isLoggedIn = false;
-    this.init();
-    this.initializeFirebaseAuth(); // Add this missing call
+    this.initializeFirebaseAuth();
   }
 
   // Add the missing showMessage method
