@@ -6,6 +6,7 @@
     <title>Central Trade Hub - Advanced Trading Platform</title>
     <link rel="icon" type="image/x-icon" href="assets/images/aF.png">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/auth.css">
     <link rel="stylesheet" href="css/responsive.css">
     <link rel="stylesheet" href="css/liquidity-providers.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -23,14 +24,13 @@
                 <li><a href="#home" class="nav-link active">Home</a></li>
                 <li><a href="platform.html" class="nav-link">Platform</a></li>
                 <li><a href="#markets" class="nav-link">Markets</a></li>
-                <li><a href="#education" class="nav-link">Education</a></li>
                 <li><a href="#about" class="nav-link">About</a></li>
                 <li><a href="#contact" class="nav-link">Contact</a></li>
             </ul>
             <div class="nav-buttons">
-                <button class="btn-secondary btn-login">Login</button>
-                <button class="btn-primary btn-register">Get Started</button>
-                <button class="btn-secondary btn-admin">Admin</button>
+                <a href="auth.html" class="btn-secondary btn-login">Login</a>
+                <a href="auth.html" class="btn-primary btn-register">Get Started</a>
+                <a href="admin.html" class="btn-secondary btn-admin">Admin</a>
                 <div class="user-menu" style="display: none;">
                     <span class="user-welcome">Welcome, <span class="user-name"></span></span>
                     <button class="btn-logout">Logout</button>
@@ -51,8 +51,8 @@
                 <h1 class="hero-title">Professional Trading Platform for Global Markets</h1>
                 <p class="hero-subtitle">Execute trades with institutional-grade technology. Access forex, cryptocurrencies, commodities, and indices with ultra-low latency execution, advanced risk management, and comprehensive market analysis tools trusted by over 150,000 active traders worldwide.</p>
                 <div class="hero-buttons">
-                    <button class="btn-primary" onclick="openModal('registerModal')">Start Trading</button>
-                    <button class="btn-secondary" onclick="openModal('loginModal')">Login to your Account</button>
+                    <a href="auth.html" class="btn-primary">Start Trading</a>
+                    <a href="auth.html" class="btn-secondary">Login to your Account</a>
                 </div>
                 <div class="hero-stats">
                     <div class="stat">
@@ -85,8 +85,8 @@
                     <p>Become part of the multitude of investors and elevate your portfolio to unparalleled heights.</p>
                     
                     <div class="market-buttons">
-                        <button class="btn-start-trading">Start Trading <i class="fas fa-arrow-right"></i></button>
-                        <button class="btn-login-account">Login to your Account <i class="fas fa-arrow-right"></i></button>
+                        <a href="platform.html" class="btn-start-trading">Start Trading <i class="fas fa-arrow-right"></i></a>
+                        <a href="auth.html" class="btn-login-account">Login to your Account <i class="fas fa-arrow-right"></i></a>
                     </div>
                 </div>
                 
@@ -206,7 +206,7 @@
                     <h2>Introducing Brokers & Institutional Program</h2>
                     <p class="brokers-subtitle">Increase your profits with the highest rebates & commissions in the industry.</p>
                     <p>Central Trade Hub Group's Institutional Programs include Introducing Broker, Affiliate Program, White Label, Prime of Primes & Franchise Partner, all exclusively tailored to suit your business needs.</p>
-                    <button class="login-btn">Login <i class="fas fa-arrow-right"></i></button>
+                    <a href="auth.html" class="login-btn">Login <i class="fas fa-arrow-right"></i></a>
                 </div>
                 <div class="brokers-visual">
                     <div class="crypto-mining-visual">
@@ -296,7 +296,7 @@
                         </div>
                     </div>
                     
-                    <button class="join-btn">Join Today <i class="fas fa-arrow-right"></i></button>
+                    <a href="auth.html" class="join-btn">Join Today <i class="fas fa-arrow-right"></i></a>
                 </div>
                 
                 <div class="platform-visual">
@@ -329,7 +329,7 @@
                         </div>
                     </div>
                     
-                    <button class="trade-btn">Start Trading <i class="fas fa-arrow-right"></i></button>
+                    <a href="platform.html" class="trade-btn">Start Trading <i class="fas fa-arrow-right"></i></a>
                 </div>
                 
                 <div class="indices-visual">
@@ -384,7 +384,7 @@
                             <li>Risk Management Strategies</li>
                             <li>Platform Navigation Guide</li>
                         </ul>
-                        <button class="btn-secondary">Watch Now</button>
+
                     </div>
                     <div class="education-card">
                         <div class="education-icon">
@@ -398,7 +398,7 @@
                             <li>Options Trading Strategies</li>
                             <li>Market Psychology Guide</li>
                         </ul>
-                        <button class="btn-secondary">Download</button>
+
                     </div>
                     <div class="education-card">
                         <div class="education-icon">
@@ -412,7 +412,7 @@
                             <li>Economic Calendar Events</li>
                             <li>Expert Trading Signals</li>
                         </ul>
-                        <button class="btn-secondary">View Analysis</button>
+
                     </div>
                     <div class="education-card">
                         <div class="education-icon">
@@ -426,7 +426,7 @@
                             <li>Q&A with Professional Traders</li>
                             <li>Market Update Sessions</li>
                         </ul>
-                        <button class="btn-secondary">Join Event</button>
+
                     </div>
                 </div>
             </div>
@@ -722,7 +722,7 @@
                     <h3>Receive up to <span class="highlight">$40,000</span></h3>
                     <p>in tradable and withdrawable bonuses</p>
                     <p class="terms">*Terms & Conditions Apply</p>
-                    <button class="btn-primary">Start Trading Now</button>
+                    <a href="platform.html" class="btn-primary">Start Trading Now</a>
                 </div>
             </div>
         </div>
@@ -739,7 +739,7 @@
                     <p class="section-subtitle">$1 MILLION EXCESS LOSS INSURANCE PER ACCOUNT</p>
                     <h2>Security of Funds</h2>
                     <p>Our partners have grown along with Central Trade Hub Group in the past two decades, and our latest entity, MEX Atlantic, is taking our success a step further by offering unparalleled security to our traders. MEX Atlantic has taken out an insurance policy with Lloyd's of London, the world's leading insurance market, that protects clients' funds for up to USD$1 million per account.</p>
-                    <button class="btn-outline">Learn More</button>
+
                 </div>
             </div>
         </div>
@@ -1030,25 +1030,21 @@
                         <li><a href="platform.html">Web Trading</a></li>
                         <li><a href="#">Mobile App</a></li>
                         <li><a href="#">Desktop App</a></li>
-                        <li><a href="#">API Documentation</a></li>
                     </ul>
                 </div>
                 <div class="footer-section">
                     <h4>Markets</h4>
                     <ul>
-                        <li><a href="#">Forex</a></li>
-                        <li><a href="#">Stocks</a></li>
-                        <li><a href="#">Commodities</a></li>
-                        <li><a href="#">Cryptocurrencies</a></li>
+                        <li><a href="platform.html">Forex</a></li>
+                        <li><a href="platform.html">Stocks</a></li>
+                        <li><a href="platform.html">Commodities</a></li>
+                        <li><a href="platform.html">Cryptocurrencies</a></li>
                     </ul>
                 </div>
                 <div class="footer-section">
                     <h4>Support</h4>
                     <ul>
-                        <li><a href="#">Help Center</a></li>
-                        <li><a href="#">Contact Us</a></li>
-                        <li><a href="#">Live Chat</a></li>
-                        <li><a href="#">System Status</a></li>
+                        <li><a href="#contact">Contact Us</a></li>
                     </ul>
                 </div>
             </div>
