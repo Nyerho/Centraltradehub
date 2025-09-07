@@ -152,6 +152,7 @@ class AuthManager {
         }
     }
   }
+  
   const navButtons = document.querySelector('.nav-buttons');
   
   if (this.isLoggedIn) {

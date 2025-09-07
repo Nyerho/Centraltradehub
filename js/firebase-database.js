@@ -2,7 +2,7 @@
 import { 
   collection, 
   doc, 
-  addDoc, 
+  setDoc, 
   getDoc, 
   getDocs, 
   updateDoc, 
@@ -10,13 +10,9 @@ import {
   query, 
   where, 
   orderBy, 
-  limit, 
-  onSnapshot,
-  serverTimestamp,
-  increment,
-  arrayUnion,
-  arrayRemove
-} from 'firebase/firestore';
+  limit,
+  onSnapshot
+} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { db } from './firebase-config.js';
 
 class FirebaseDatabaseService {
