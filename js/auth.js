@@ -325,29 +325,48 @@ function handleRegister(e) {
         if (window.authManager) {
             console.log('AuthManager found, attempting registration...');
             // Use Firebase authentication through AuthManager
-            window.authManager.register(userData).then(success => {
-                console.log('Registration result:', success);
-                // Reset button
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-                
-                if (success) {
-                    // Registration successful
-                    console.log('Registration successful');
-                }
-            }).catch(error => {
-                console.error('Registration error:', error);
-                // Reset button on error
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-            });
+            window.authManager.register(userData)
+                .then(success => {
+                    console.log('Registration result:', success);
+                    // Reset button
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                    
+                    if (success) {
+                        // Registration successful
+                        console.log('Registration successful');
+                        showNotification('Account created successfully! Please check your email for verification.', 'success');
+                        // Optionally redirect or close modal
+                        setTimeout(() => {
+                            window.location.href = 'platform.html';
+                        }, 2000);
+                    } else {
+                        showNotification('Registration failed. Please try again.', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Registration error:', error);
+                    // Reset button on error
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                    showNotification('Registration failed. Please try again.', 'error');
+                });
         } else {
             console.log('AuthManager not ready, waiting...');
+            // Add timeout to prevent infinite waiting
+            if (Date.now() - startTime > 10000) { // 10 second timeout
+                console.error('AuthManager timeout');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                showNotification('System not ready. Please refresh the page and try again.', 'error');
+                return;
+            }
             // Wait a bit more for AuthManager to load
             setTimeout(waitForAuthManager, 100);
         }
     };
     
+    const startTime = Date.now();
     waitForAuthManager();
 }
 

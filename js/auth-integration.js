@@ -6,9 +6,7 @@ import FirebaseDatabaseService from './firebase-database.js';
 class AuthManager {
   constructor() {
     this.firebaseAuth = FirebaseAuthService;
-    this.firebaseDb = FirebaseDatabaseService;
     this.currentUser = null;
-    this.isLoggedIn = false;
     this.init();
   }
 
@@ -16,7 +14,7 @@ class AuthManager {
   showMessage(message, type = 'info') {
     // Create notification element
     const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
+    notification.className = `notification ${type}`;
     notification.innerHTML = `
       <div class="notification-content">
         <span class="notification-message">${message}</span>
@@ -24,46 +22,7 @@ class AuthManager {
       </div>
     `;
     
-    // Add notification styles if not already added
-    if (!document.querySelector('#notification-styles')) {
-      const styles = document.createElement('style');
-      styles.id = 'notification-styles';
-      styles.textContent = `
-        .notification {
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          background: #333;
-          color: white;
-          padding: 15px 20px;
-          border-radius: 5px;
-          z-index: 10000;
-          max-width: 400px;
-          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .notification.notification-success {
-          background: #28a745;
-        }
-        .notification.notification-error {
-          background: #dc3545;
-        }
-        .notification-content {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        .notification-close {
-          background: none;
-          border: none;
-          color: white;
-          font-size: 18px;
-          cursor: pointer;
-          margin-left: 10px;
-        }
-      `;
-      document.head.appendChild(styles);
-    }
-    
+    // Add to page
     document.body.appendChild(notification);
     
     // Auto remove after 5 seconds
@@ -96,23 +55,29 @@ class AuthManager {
   }
 
   async register(formData) {
-    const result = await FirebaseAuthService.register(
-      formData.email,
-      formData.password,
-      {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phone: formData.phone,
-        country: formData.country
+    try {
+      const result = await FirebaseAuthService.register(
+        formData.email,
+        formData.password,
+        {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone,
+          country: formData.country
+        }
+      );
+      
+      if (result.success) {
+        this.showMessage(result.message, 'success');
+        this.closeModal('registerModal');
+        return true;
+      } else {
+        this.showMessage(result.message, 'error');
+        return false;
       }
-    );
-    
-    if (result.success) {
-      this.showMessage(result.message, 'success');
-      this.closeModal('registerModal');
-      return true;
-    } else {
-      this.showMessage(result.message, 'error');
+    } catch (error) {
+      console.error('Registration error:', error);
+      this.showMessage('Registration failed. Please try again.', 'error');
       return false;
     }
   }
