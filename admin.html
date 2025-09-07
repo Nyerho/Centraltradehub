@@ -18,7 +18,7 @@
             </div>
             <div class="admin-user">
                 <span>Welcome, Admin</span>
-                <a href="index.html" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                <a href="#" class="btn-logout" onclick="handleAdminLogout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
         </div>
     </header>
@@ -303,6 +303,29 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script type="module" src="js/firebase-config.js"></script>
-    <script type="module" src="js/auth-integration.js"></script>
+    <script type="module">
+        import authManager from './js/auth-integration.js';
+        
+        // Make logout function globally available
+        window.handleAdminLogout = async function() {
+            if (confirm('Are you sure you want to logout?')) {
+                try {
+                    await authManager.logout();
+                    // Redirect will be handled by the logout method
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    // Fallback redirect
+                    window.location.href = 'index.html';
+                }
+            }
+        };
+        
+        // Check if user is admin on page load
+        window.addEventListener('load', () => {
+            if (!authManager.isLoggedIn) {
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
 </body>
 </html>

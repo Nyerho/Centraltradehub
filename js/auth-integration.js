@@ -47,7 +47,10 @@ class AuthManager {
     
     if (result.success) {
       this.showMessage('Login successful!', 'success');
-      this.closeModal('loginModal');
+      // Fix: Use global closeModal function instead of this.closeModal
+      if (typeof closeModal === 'function') {
+        closeModal('loginModal');
+      }
       return true;
     } else {
       this.showMessage(result.message, 'error');
@@ -70,7 +73,10 @@ class AuthManager {
       
       if (result.success) {
         this.showMessage(result.message, 'success');
-        this.closeModal('registerModal');
+        // Fix: Use global closeModal function instead of this.closeModal
+        if (typeof closeModal === 'function') {
+          closeModal('registerModal');
+        }
         return true;
       } else {
         this.showMessage(result.message, 'error');
