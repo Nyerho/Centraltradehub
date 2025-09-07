@@ -378,32 +378,31 @@ document.addEventListener('DOMContentLoaded', () => {
 function checkAdminAccess() {
     // Import Firebase auth to check current user
     import('./firebase-config.js').then(({ auth }) => {
-        const user = auth.currentUser;
-        
-        if (!user) {
-            // User not logged in - show login modal first
-            showMessage('Please log in to access admin panel', 'error');
-            openModal('loginModal');
-            return;
-        }
-        
-        // Check if user has admin privileges (you can customize this logic)
-        const adminEmails = [
-            'admin@centraltradehub.com',
-            'owner@centraltradehub.com'
-            // Add your admin email addresses here
-        ];
-        
-        if (adminEmails.includes(user.email)) {
-            // User is authorized admin
-            window.location.href = 'admin.html';
-        } else {
-            // User is not authorized
-            showMessage('Access denied. Admin privileges required.', 'error');
-        }
-    }).catch(error => {
-        console.error('Error checking admin access:', error);
-        showMessage('Error checking admin access', 'error');
+        import('./firebase-auth.js').then(({ default: FirebaseAuthService }) => {
+            FirebaseAuthService.getCurrentUser().then(user => {
+                if (!user) {
+                    showNotification('Please log in to access admin panel', 'error');
+                    return;
+                }
+                
+                // Define admin emails
+                const adminEmails = [
+                    'admin@centraltradehub.com',
+                    'owner@centraltradehub.com'
+                ];
+                
+                if (adminEmails.includes(user.email)) {
+                    // User is authorized
+                    window.location.href = 'admin.html';
+                } else {
+                    // User is not authorized
+                    showNotification('Access denied. Admin privileges required.', 'error');
+                }
+            }).catch(error => {
+                console.error('Error checking admin access:', error);
+                showNotification('Error checking admin access', 'error');
+            });
+        });
     });
 }
 

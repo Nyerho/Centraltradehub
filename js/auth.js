@@ -278,6 +278,9 @@ function handleLogin(e) {
 function handleRegister(e) {
     e.preventDefault();
     
+    console.log('Registration form submitted');
+    console.log('AuthManager available:', !!window.authManager);
+    
     const form = e.target;
     const inputs = form.querySelectorAll('input, select');
     
@@ -290,6 +293,7 @@ function handleRegister(e) {
     });
     
     if (!isFormValid) {
+        console.log('Form validation failed');
         showNotification('Please fix the errors above', 'error');
         return;
     }
@@ -305,6 +309,8 @@ function handleRegister(e) {
         country: formData.get('country')
     };
     
+    console.log('User data:', userData);
+    
     // Show loading state
     const submitBtn = form.querySelector('button[type="submit"]');
     const originalText = submitBtn.innerHTML;
@@ -313,7 +319,9 @@ function handleRegister(e) {
     
     // Use Firebase authentication through AuthManager
     if (window.authManager) {
+        console.log('Calling authManager.register...');
         window.authManager.register(userData).then(success => {
+            console.log('Registration result:', success);
             // Reset button
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
@@ -323,12 +331,13 @@ function handleRegister(e) {
                 console.log('Registration successful');
             }
         }).catch(error => {
+            console.error('Registration error:', error);
             // Reset button on error
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
-            console.error('Registration error:', error);
         });
     } else {
+        console.error('AuthManager not available');
         // Fallback if AuthManager not available
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;

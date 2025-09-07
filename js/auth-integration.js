@@ -5,11 +5,74 @@ import FirebaseDatabaseService from './firebase-database.js';
 // Update existing auth.js to use Firebase
 class AuthManager {
   constructor() {
-    this.isLoggedIn = false;
+    this.firebaseAuth = FirebaseAuthService;
+    this.firebaseDb = FirebaseDatabaseService;
     this.currentUser = null;
-    this.initializeFirebaseAuth();
+    this.isLoggedIn = false;
+    this.init();
   }
 
+  // Add the missing showMessage method
+  showMessage(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+      <div class="notification-content">
+        <span class="notification-message">${message}</span>
+        <button class="notification-close" onclick="this.parentElement.parentElement.remove()">&times;</button>
+      </div>
+    `;
+    
+    // Add notification styles if not already added
+    if (!document.querySelector('#notification-styles')) {
+      const styles = document.createElement('style');
+      styles.id = 'notification-styles';
+      styles.textContent = `
+        .notification {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: #333;
+          color: white;
+          padding: 15px 20px;
+          border-radius: 5px;
+          z-index: 10000;
+          max-width: 400px;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .notification.notification-success {
+          background: #28a745;
+        }
+        .notification.notification-error {
+          background: #dc3545;
+        }
+        .notification-content {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .notification-close {
+          background: none;
+          border: none;
+          color: white;
+          font-size: 18px;
+          cursor: pointer;
+          margin-left: 10px;
+        }
+      `;
+      document.head.appendChild(styles);
+    }
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+      if (notification.parentElement) {
+        notification.remove();
+      }
+    }, 5000);
+  }
   initializeFirebaseAuth() {
     // Listen for authentication state changes
     FirebaseAuthService.addAuthStateListener((user) => {
