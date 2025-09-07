@@ -317,32 +317,38 @@ function handleRegister(e) {
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
     submitBtn.disabled = true;
     
-    // Use Firebase authentication through AuthManager
-    if (window.authManager) {
-        console.log('Calling authManager.register...');
-        window.authManager.register(userData).then(success => {
-            console.log('Registration result:', success);
-            // Reset button
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-            
-            if (success) {
-                // Registration successful
-                console.log('Registration successful');
-            }
-        }).catch(error => {
-            console.error('Registration error:', error);
-            // Reset button on error
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-        });
-    } else {
-        console.error('AuthManager not available');
-        // Fallback if AuthManager not available
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-        showNotification('Authentication system not ready. Please refresh the page.', 'error');
-    }
+    console.log('Waiting for AuthManager...');
+    
+    // Wait for AuthManager to be available (same logic as handleLogin)
+    const waitForAuthManager = () => {
+        console.log('Checking AuthManager:', window.authManager);
+        if (window.authManager) {
+            console.log('AuthManager found, attempting registration...');
+            // Use Firebase authentication through AuthManager
+            window.authManager.register(userData).then(success => {
+                console.log('Registration result:', success);
+                // Reset button
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                
+                if (success) {
+                    // Registration successful
+                    console.log('Registration successful');
+                }
+            }).catch(error => {
+                console.error('Registration error:', error);
+                // Reset button on error
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        } else {
+            console.log('AuthManager not ready, waiting...');
+            // Wait a bit more for AuthManager to load
+            setTimeout(waitForAuthManager, 100);
+        }
+    };
+    
+    waitForAuthManager();
 }
 
 function handleForgotPassword(e) {
