@@ -365,5 +365,14 @@
     <script type="module" src="js/auth-integration.js"></script>
     <!-- Finally load the main auth script -->
     <script type="module" src="js/auth.js"></script>
+    <script>
+        // Check URL hash and switch to registration tab if needed
+        window.addEventListener('DOMContentLoaded', function() {
+            if (window.location.hash === '#register') {
+                // Switch to register tab
+                document.querySelector('.auth-tab[data-tab="register"]').click();
+            }
+        });
+    </script>
 </body>
 </html>

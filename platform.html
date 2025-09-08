@@ -22,6 +22,28 @@
     <script>
         // Check authentication before loading platform
         (function() {
+            // Wait for Firebase to be available
+            function checkAuth() {
+                if (typeof firebase !== 'undefined') {
+                    firebase.auth().onAuthStateChanged((user) => {
+                        if (!user) {
+                            // User is not logged in, redirect to login page
+                            alert('Please log in to access the trading platform.');
+                            window.location.href = 'auth.html';
+                        }
+                    });
+                } else {
+                    // Retry after a short delay
+                    setTimeout(checkAuth, 100);
+                }
+            }
+            checkAuth();
+        })();
+    </script>
+    <!-- Authentication Protection -->
+    <script>
+        // Check authentication before loading platform
+        (function() {
             // Wait for Firebase and authManager to be available
             function checkAuth() {
                 if (typeof firebase !== 'undefined' && window.authManager) {
