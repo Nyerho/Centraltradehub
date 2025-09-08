@@ -1,518 +1,677 @@
-// Admin Panel JavaScript with Real Firebase Integration
-import { db } from './firebase-config.js';
-import { 
-    collection, 
-    getDocs, 
-    doc, 
-    deleteDoc, 
-    updateDoc, 
-    onSnapshot, 
-    query, 
-    where, 
-    orderBy, 
-    limit,
-    getDoc,
-    addDoc,
-    serverTimestamp
-} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+// Real Firebase integration for admin panel
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
 
-// Real-time dashboard data
 class AdminDashboard {
     constructor() {
-        this.initializeEventListeners();
-        this.waitForAuth();
+        this.db = null;
+        this.auth = null;
+        this.charts = {};
+        this.init();
     }
 
-    async waitForAuth() {
-        // Wait for auth manager to be available
+    async init() {
+        try {
+            // Wait for Firebase to be available
+            await this.waitForFirebase();
+            this.db = getFirestore();
+            this.auth = getAuth();
+            
+            this.initializeEventListeners();
+            this.initializeNavigation();
+            await this.loadInitialData();
+            this.initializeCharts();
+            this.setupRealTimeUpdates();
+        } catch (error) {
+            console.error('Admin initialization error:', error);
+            this.showNotification('Failed to initialize admin panel', 'error');
+        }
+    }
+
+    async waitForFirebase() {
         let attempts = 0;
-        while (!window.authManager && attempts < 100) {
+        while (typeof firebase === 'undefined' && attempts < 50) {
             await new Promise(resolve => setTimeout(resolve, 100));
             attempts++;
-        }
-        
-        if (window.authManager) {
-            await this.loadInitialData();
-            this.setupRealTimeUpdates();
-        } else {
-            console.error('Auth manager not available');
-            // Show some default data or error message
-            this.showFallbackData();
-        }
-    }
-
-    showFallbackData() {
-        // If Firebase is not available, show some realistic demo data
-        this.updateStatCard(0, '0');
-        this.updateStatCard(1, '$0');
-        this.updateStatCard(2, '0');
-        this.updateStatCard(3, '$0');
-        
-        // Update recent activity with demo data
-        const activityList = document.querySelector('.activity-list');
-        if (activityList) {
-            activityList.innerHTML = `
-                <div class="activity-item">
-                    <i class="fas fa-info-circle"></i>
-                    <span>No Firebase connection - showing demo data</span>
-                    <time>Now</time>
-                </div>
-            `;
         }
     }
 
     initializeEventListeners() {
-        // Navigation functionality
-        const navItems = document.querySelectorAll('.nav-item');
-        const sections = document.querySelectorAll('.admin-section');
-        
-        navItems.forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                
-                // Remove active class from all nav items and sections
-                navItems.forEach(nav => nav.classList.remove('active'));
-                sections.forEach(section => section.classList.remove('active'));
-                
-                // Add active class to clicked nav item
-                item.classList.add('active');
-                
-                // Show corresponding section
-                const targetSection = item.getAttribute('data-section');
-                const targetElement = document.getElementById(targetSection);
-                if (targetElement) {
-                    targetElement.classList.add('active');
-                }
-                
-                // Load section-specific data
-                this.loadSectionData(targetSection);
-            });
+        // User Management Buttons
+        document.querySelector('#users .btn-primary').addEventListener('click', () => this.showAddUserModal());
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.btn-edit')) {
+                const row = e.target.closest('tr');
+                if (row) this.editUser(row);
+            }
+            if (e.target.closest('.btn-delete')) {
+                const row = e.target.closest('tr');
+                if (row) this.deleteUser(row);
+            }
         });
 
-        // Setup form handlers
-        this.setupFormHandlers();
+        // Content Management Buttons
+        document.querySelector('#content .btn-primary').addEventListener('click', () => this.showAddContentModal());
+        document.querySelectorAll('#content .btn-edit').forEach(btn => {
+            btn.addEventListener('click', (e) => this.editContent(e.target.closest('.content-card')));
+        });
+
+        // Trading Settings
+        document.querySelector('#trading .btn-primary').addEventListener('click', () => this.saveTradingSettings());
+
+        // Site Settings
+        document.querySelector('#settings .btn-primary').addEventListener('click', () => this.saveSiteSettings());
+    }
+
+    initializeNavigation() {
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const section = item.dataset.section;
+                this.showSection(section);
+            });
+        });
+    }
+
+    showSection(sectionId) {
+        // Hide all sections
+        document.querySelectorAll('.admin-section').forEach(section => {
+            section.classList.remove('active');
+        });
+        
+        // Remove active class from nav items
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        // Show selected section
+        document.getElementById(sectionId).classList.add('active');
+        document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
     }
 
     async loadInitialData() {
-        try {
-            console.log('Loading initial admin data...');
-            await Promise.all([
-                this.updateDashboardStats(),
-                this.loadRecentActivity(),
-                this.loadUserManagement()
-            ]);
-            console.log('Initial data loaded successfully');
-        } catch (error) {
-            console.error('Error loading initial data:', error);
-            this.showNotification('Error loading dashboard data: ' + error.message, 'error');
-            this.showFallbackData();
-        }
+        await Promise.all([
+            this.updateDashboardStats(),
+            this.loadUsers(),
+            this.loadTradingSettings(),
+            this.loadSiteSettings()
+        ]);
     }
 
     async updateDashboardStats() {
         try {
-            console.log('Updating dashboard stats...');
-            
-            // Get total users
-            const usersSnapshot = await getDocs(collection(db, 'users'));
+            const [usersSnapshot, tradesSnapshot] = await Promise.all([
+                getDocs(collection(this.db, 'users')),
+                getDocs(collection(this.db, 'trades'))
+            ]);
+
             const totalUsers = usersSnapshot.size;
-            console.log('Total users:', totalUsers);
-            
-            // Get trading data
-            const tradesSnapshot = await getDocs(collection(db, 'trades'));
-            let totalVolume = 0;
-            let totalRevenue = 0;
+            let tradingVolume = 0;
             let activeTrades = 0;
-            
-            tradesSnapshot.forEach(docSnap => {
-                const trade = docSnap.data();
-                if (trade.amount) totalVolume += parseFloat(trade.amount);
-                if (trade.fee) totalRevenue += parseFloat(trade.fee);
+            let revenue = 0;
+
+            tradesSnapshot.forEach(doc => {
+                const trade = doc.data();
                 if (trade.status === 'active') activeTrades++;
+                if (trade.amount) tradingVolume += trade.amount;
+                if (trade.fee) revenue += trade.fee;
             });
-            
-            console.log('Trading stats:', { totalVolume, totalRevenue, activeTrades });
-            
-            // Update dashboard cards with real data
-            this.updateStatCard(0, totalUsers.toLocaleString());
-            this.updateStatCard(1, totalVolume > 0 ? `$${(totalVolume / 1000000).toFixed(1)}M` : '$0');
-            this.updateStatCard(2, activeTrades.toLocaleString());
-            this.updateStatCard(3, totalRevenue > 0 ? `$${(totalRevenue / 1000).toFixed(0)}K` : '$0');
-            
+
+            // Update stat cards
+            this.updateStatCard(0, totalUsers.toLocaleString(), 'Total Users');
+            this.updateStatCard(1, `$${(tradingVolume / 1000000).toFixed(1)}M`, 'Trading Volume');
+            this.updateStatCard(2, activeTrades.toLocaleString(), 'Active Trades');
+            this.updateStatCard(3, `$${(revenue / 1000).toFixed(0)}K`, 'Revenue');
+
         } catch (error) {
             console.error('Error updating dashboard stats:', error);
-            // Show zeros if there's an error
-            this.updateStatCard(0, '0');
-            this.updateStatCard(1, '$0');
-            this.updateStatCard(2, '0');
-            this.updateStatCard(3, '$0');
+            this.showNotification('Failed to load dashboard statistics', 'error');
         }
     }
 
-    updateStatCard(index, value) {
+    updateStatCard(index, value, label) {
         const statCards = document.querySelectorAll('.stat-card');
         if (statCards[index]) {
-            const statValue = statCards[index].querySelector('h3');
-            if (statValue) {
-                statValue.textContent = value;
-                console.log(`Updated stat card ${index} to:`, value);
-            }
+            const h3 = statCards[index].querySelector('h3');
+            const p = statCards[index].querySelector('p');
+            if (h3) h3.textContent = value;
+            if (p) p.textContent = label;
         }
     }
 
-    async loadRecentActivity() {
+    async loadUsers() {
         try {
-            const activityList = document.querySelector('.activity-list');
-            if (!activityList) return;
-            
-            console.log('Loading recent activity...');
-            
-            // Get recent user registrations
-            const recentUsers = await getDocs(
-                query(
-                    collection(db, 'users'),
-                    orderBy('createdAt', 'desc'),
-                    limit(3)
-                )
-            );
-            
-            // Get recent trades
-            const recentTrades = await getDocs(
-                query(
-                    collection(db, 'trades'),
-                    orderBy('timestamp', 'desc'),
-                    limit(3)
-                )
-            );
-            
-            activityList.innerHTML = '';
-            
-            // Add user registrations
-            recentUsers.forEach(docSnap => {
-                const user = docSnap.data();
-                const timeAgo = this.getTimeAgo(user.createdAt?.toDate() || new Date());
-                activityList.innerHTML += `
-                    <div class="activity-item">
-                        <i class="fas fa-user-plus"></i>
-                        <span>New user registered: ${user.email || 'Unknown'}</span>
-                        <time>${timeAgo}</time>
-                    </div>
-                `;
+            const usersSnapshot = await getDocs(collection(this.db, 'users'));
+            const tbody = document.querySelector('#users tbody');
+            tbody.innerHTML = '';
+
+            usersSnapshot.forEach((doc, index) => {
+                const user = doc.data();
+                const row = this.createUserRow(doc.id, user, index + 1);
+                tbody.appendChild(row);
             });
-            
-            // Add recent trades
-            recentTrades.forEach(docSnap => {
-                const trade = docSnap.data();
-                const timeAgo = this.getTimeAgo(trade.timestamp?.toDate() || new Date());
-                activityList.innerHTML += `
-                    <div class="activity-item">
-                        <i class="fas fa-exchange-alt"></i>
-                        <span>Trade executed: $${trade.amount?.toLocaleString() || '0'} ${trade.pair || 'BTC/USD'}</span>
-                        <time>${timeAgo}</time>
-                    </div>
-                `;
-            });
-            
-            // If no activity, show a message
-            if (recentUsers.empty && recentTrades.empty) {
-                activityList.innerHTML = `
-                    <div class="activity-item">
-                        <i class="fas fa-info-circle"></i>
-                        <span>No recent activity</span>
-                        <time>-</time>
-                    </div>
-                `;
-            }
-            
         } catch (error) {
-            console.error('Error loading recent activity:', error);
-            const activityList = document.querySelector('.activity-list');
-            if (activityList) {
-                activityList.innerHTML = `
-                    <div class="activity-item">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <span>Error loading activity data</span>
-                        <time>-</time>
-                    </div>
-                `;
-            }
+            console.error('Error loading users:', error);
+            this.showNotification('Failed to load users', 'error');
         }
     }
 
-    async loadUserManagement() {
+    createUserRow(userId, user, index) {
+        const row = document.createElement('tr');
+        row.dataset.userId = userId;
+        row.innerHTML = `
+            <td>#${String(index).padStart(3, '0')}</td>
+            <td>${user.displayName || user.email?.split('@')[0] || 'Unknown'}</td>
+            <td>${user.email || 'No email'}</td>
+            <td><span class="status ${user.status || 'active'}">${(user.status || 'active').charAt(0).toUpperCase() + (user.status || 'active').slice(1)}</span></td>
+            <td>$${(user.balance || 0).toLocaleString()}</td>
+            <td>${user.createdAt ? new Date(user.createdAt.toDate()).toLocaleDateString() : 'Unknown'}</td>
+            <td>
+                <button class="btn-edit"><i class="fas fa-edit"></i></button>
+                <button class="btn-delete"><i class="fas fa-trash"></i></button>
+            </td>
+        `;
+        return row;
+    }
+
+    showAddUserModal() {
+        const modal = this.createModal('Add New User', `
+            <form id="addUserForm">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Display Name</label>
+                    <input type="text" name="displayName" required>
+                </div>
+                <div class="form-group">
+                    <label>Initial Balance</label>
+                    <input type="number" name="balance" value="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select name="status">
+                        <option value="active">Active</option>
+                        <option value="suspended">Suspended</option>
+                        <option value="pending">Pending</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                    <button type="submit" class="btn-primary">Add User</button>
+                </div>
+            </form>
+        `);
+
+        modal.querySelector('#addUserForm').addEventListener('submit', (e) => this.handleAddUser(e));
+    }
+
+    async handleAddUser(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const userData = {
+            email: formData.get('email'),
+            displayName: formData.get('displayName'),
+            balance: parseFloat(formData.get('balance')) || 0,
+            status: formData.get('status'),
+            createdAt: new Date(),
+            role: 'user'
+        };
+
         try {
-            const tableBody = document.querySelector('#users .admin-table tbody');
-            if (!tableBody) return;
-            
-            console.log('Loading user management data...');
-            
-            const usersSnapshot = await getDocs(collection(db, 'users'));
-            tableBody.innerHTML = '';
-            
-            if (usersSnapshot.empty) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="7" style="text-align: center; padding: 2rem;">No users found</td>
-                    </tr>
-                `;
-                return;
-            }
-            
-            usersSnapshot.forEach(docSnap => {
-                const user = docSnap.data();
-                const userId = docSnap.id;
-                
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>#${userId.substring(0, 6)}</td>
-                    <td>${user.displayName || 'N/A'}</td>
-                    <td>${user.email || 'N/A'}</td>
-                    <td><span class="status ${user.status || 'active'}">${user.status || 'Active'}</span></td>
-                    <td>$${(user.balance || 0).toLocaleString()}</td>
-                    <td>${new Date(user.createdAt?.toDate() || Date.now()).toLocaleDateString()}</td>
-                    <td>
-                        <button class="btn-edit" onclick="window.adminDashboard.editUser('${userId}')"><i class="fas fa-edit"></i></button>
-                        <button class="btn-delete" onclick="window.adminDashboard.deleteUser('${userId}')"><i class="fas fa-trash"></i></button>
-                    </td>
-                `;
-                tableBody.appendChild(row);
-            });
-            
+            await addDoc(collection(this.db, 'users'), userData);
+            this.showNotification('User added successfully', 'success');
+            e.target.closest('.modal').remove();
+            await this.loadUsers();
+            await this.updateDashboardStats();
         } catch (error) {
-            console.error('Error loading user management:', error);
-            const tableBody = document.querySelector('#users .admin-table tbody');
-            if (tableBody) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="7" style="text-align: center; padding: 2rem; color: red;">Error loading users: ${error.message}</td>
-                    </tr>
-                `;
+            console.error('Error adding user:', error);
+            this.showNotification('Failed to add user', 'error');
+        }
+    }
+
+    async editUser(row) {
+        const userId = row.dataset.userId;
+        const cells = row.querySelectorAll('td');
+        
+        const modal = this.createModal('Edit User', `
+            <form id="editUserForm">
+                <div class="form-group">
+                    <label>Display Name</label>
+                    <input type="text" name="displayName" value="${cells[1].textContent}" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" value="${cells[2].textContent}" required>
+                </div>
+                <div class="form-group">
+                    <label>Balance</label>
+                    <input type="number" name="balance" value="${cells[4].textContent.replace(/[$,]/g, '')}" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select name="status">
+                        <option value="active" ${cells[3].textContent.toLowerCase().includes('active') ? 'selected' : ''}>Active</option>
+                        <option value="suspended" ${cells[3].textContent.toLowerCase().includes('suspended') ? 'selected' : ''}>Suspended</option>
+                        <option value="pending" ${cells[3].textContent.toLowerCase().includes('pending') ? 'selected' : ''}>Pending</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                    <button type="submit" class="btn-primary">Update User</button>
+                </div>
+            </form>
+        `);
+
+        modal.querySelector('#editUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const updateData = {
+                displayName: formData.get('displayName'),
+                email: formData.get('email'),
+                balance: parseFloat(formData.get('balance')) || 0,
+                status: formData.get('status')
+            };
+
+            try {
+                await updateDoc(doc(this.db, 'users', userId), updateData);
+                this.showNotification('User updated successfully', 'success');
+                e.target.closest('.modal').remove();
+                await this.loadUsers();
+                await this.updateDashboardStats();
+            } catch (error) {
+                console.error('Error updating user:', error);
+                this.showNotification('Failed to update user', 'error');
+            }
+        });
+    }
+
+    async deleteUser(row) {
+        const userId = row.dataset.userId;
+        const userName = row.querySelector('td:nth-child(2)').textContent;
+        
+        if (confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
+            try {
+                await deleteDoc(doc(this.db, 'users', userId));
+                this.showNotification('User deleted successfully', 'success');
+                await this.loadUsers();
+                await this.updateDashboardStats();
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                this.showNotification('Failed to delete user', 'error');
             }
         }
     }
 
-    setupRealTimeUpdates() {
-        try {
-            console.log('Setting up real-time updates...');
-            
-            // Real-time user count updates
-            onSnapshot(collection(db, 'users'), (snapshot) => {
-                this.updateStatCard(0, snapshot.size.toLocaleString());
-            });
-            
-            // Real-time trades updates
-            onSnapshot(collection(db, 'trades'), (snapshot) => {
-                let activeTrades = 0;
-                let totalVolume = 0;
-                let totalRevenue = 0;
-                
-                snapshot.forEach(docSnap => {
-                    const trade = docSnap.data();
-                    if (trade.status === 'active') activeTrades++;
-                    if (trade.amount) totalVolume += parseFloat(trade.amount);
-                    if (trade.fee) totalRevenue += parseFloat(trade.fee);
-                });
-                
-                this.updateStatCard(1, totalVolume > 0 ? `$${(totalVolume / 1000000).toFixed(1)}M` : '$0');
-                this.updateStatCard(2, activeTrades.toLocaleString());
-                this.updateStatCard(3, totalRevenue > 0 ? `$${(totalRevenue / 1000).toFixed(0)}K` : '$0');
-            });
-            
-        } catch (error) {
-            console.error('Error setting up real-time updates:', error);
-        }
+    showAddContentModal() {
+        const modal = this.createModal('Add New Content', `
+            <form id="addContentForm">
+                <div class="form-group">
+                    <label>Content Type</label>
+                    <select name="type" required>
+                        <option value="">Select Type</option>
+                        <option value="homepage">Homepage Content</option>
+                        <option value="news">News Article</option>
+                        <option value="education">Educational Content</option>
+                        <option value="market">Market Update</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label>Content</label>
+                    <textarea name="content" rows="6" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select name="status">
+                        <option value="published">Published</option>
+                        <option value="draft">Draft</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                    <button type="submit" class="btn-primary">Add Content</button>
+                </div>
+            </form>
+        `);
+
+        modal.querySelector('#addContentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const contentData = {
+                type: formData.get('type'),
+                title: formData.get('title'),
+                content: formData.get('content'),
+                status: formData.get('status'),
+                createdAt: new Date(),
+                updatedAt: new Date()
+            };
+
+            try {
+                await addDoc(collection(this.db, 'content'), contentData);
+                this.showNotification('Content added successfully', 'success');
+                e.target.closest('.modal').remove();
+            } catch (error) {
+                console.error('Error adding content:', error);
+                this.showNotification('Failed to add content', 'error');
+            }
+        });
     }
 
-    setupFormHandlers() {
-        // Handle trading settings form
-        const tradingForm = document.querySelector('#trading .settings-form');
-        if (tradingForm) {
-            const saveBtn = tradingForm.querySelector('.btn-primary');
-            if (saveBtn) {
-                saveBtn.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    await this.saveTradingSettings();
-                });
-            }
-        }
+    editContent(contentCard) {
+        const title = contentCard.querySelector('h3').textContent;
+        const description = contentCard.querySelector('p').textContent;
+        
+        const modal = this.createModal(`Edit ${title}`, `
+            <form id="editContentForm">
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" name="title" value="${title}" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" rows="4" required>${description}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Content</label>
+                    <textarea name="content" rows="8" placeholder="Enter detailed content here..."></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                    <button type="submit" class="btn-primary">Update Content</button>
+                </div>
+            </form>
+        `);
 
-        // Handle site settings form
-        const siteForm = document.querySelector('#settings .settings-form');
-        if (siteForm) {
-            const saveBtn = siteForm.querySelector('.btn-primary');
-            if (saveBtn) {
-                saveBtn.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    await this.saveSiteSettings();
-                });
-            }
-        }
+        modal.querySelector('#editContentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            this.showNotification('Content updated successfully', 'success');
+            e.target.closest('.modal').remove();
+        });
     }
 
     async saveTradingSettings() {
+        const form = document.querySelector('#trading .settings-form');
+        const formData = new FormData(form);
+        
+        const settings = {
+            tradingHours: form.querySelector('select').value,
+            minTradeAmount: parseFloat(form.querySelector('input[type="number"]').value),
+            maxTradeAmount: parseFloat(form.querySelectorAll('input[type="number"]')[1].value),
+            tradingFee: parseFloat(form.querySelectorAll('input[type="number"]')[2].value),
+            updatedAt: new Date()
+        };
+
         try {
-            const form = document.querySelector('#trading .settings-form');
-            const formData = new FormData(form);
-            
-            const settings = {
-                tradingHours: form.querySelector('select').value,
-                minTradeAmount: parseFloat(form.querySelector('input[type="number"]').value),
-                maxTradeAmount: parseFloat(form.querySelectorAll('input[type="number"]')[1].value),
-                tradingFee: parseFloat(form.querySelectorAll('input[type="number"]')[2].value),
-                updatedAt: serverTimestamp()
-            };
-            
-            await addDoc(collection(db, 'settings'), {
+            await addDoc(collection(this.db, 'settings'), {
                 type: 'trading',
                 ...settings
             });
-            
-            this.showNotification('Trading settings saved successfully!', 'success');
+            this.showNotification('Trading settings saved successfully', 'success');
         } catch (error) {
             console.error('Error saving trading settings:', error);
-            this.showNotification('Error saving settings: ' + error.message, 'error');
+            this.showNotification('Failed to save trading settings', 'error');
         }
     }
 
     async saveSiteSettings() {
+        const form = document.querySelector('#settings .settings-form');
+        const inputs = form.querySelectorAll('input, textarea');
+        
+        const settings = {
+            siteName: inputs[0].value,
+            siteDescription: inputs[1].value,
+            contactEmail: inputs[2].value,
+            maintenanceMode: inputs[3].checked,
+            updatedAt: new Date()
+        };
+
         try {
-            const form = document.querySelector('#settings .settings-form');
-            
-            const settings = {
-                siteName: form.querySelector('input[type="text"]').value,
-                siteDescription: form.querySelector('textarea').value,
-                contactEmail: form.querySelector('input[type="email"]').value,
-                maintenanceMode: form.querySelector('input[type="checkbox"]').checked,
-                updatedAt: serverTimestamp()
-            };
-            
-            await addDoc(collection(db, 'settings'), {
+            await addDoc(collection(this.db, 'settings'), {
                 type: 'site',
                 ...settings
             });
-            
-            this.showNotification('Site settings saved successfully!', 'success');
+            this.showNotification('Site settings saved successfully', 'success');
         } catch (error) {
             console.error('Error saving site settings:', error);
-            this.showNotification('Error saving settings: ' + error.message, 'error');
+            this.showNotification('Failed to save site settings', 'error');
         }
     }
 
-    async editUser(userId) {
+    async loadTradingSettings() {
         try {
-            const userDoc = await getDoc(doc(db, 'users', userId));
-            if (!userDoc.exists()) {
-                this.showNotification('User not found', 'error');
-                return;
+            const settingsSnapshot = await getDocs(query(
+                collection(this.db, 'settings'),
+                orderBy('updatedAt', 'desc'),
+                limit(1)
+            ));
+            
+            if (!settingsSnapshot.empty) {
+                const settings = settingsSnapshot.docs[0].data();
+                if (settings.type === 'trading') {
+                    const form = document.querySelector('#trading .settings-form');
+                    if (form) {
+                        form.querySelector('select').value = settings.tradingHours || '24/7 Trading';
+                        const inputs = form.querySelectorAll('input[type="number"]');
+                        if (inputs[0]) inputs[0].value = settings.minTradeAmount || 10;
+                        if (inputs[1]) inputs[1].value = settings.maxTradeAmount || 100000;
+                        if (inputs[2]) inputs[2].value = settings.tradingFee || 0.1;
+                    }
+                }
             }
+        } catch (error) {
+            console.error('Error loading trading settings:', error);
+        }
+    }
+
+    async loadSiteSettings() {
+        try {
+            const settingsSnapshot = await getDocs(query(
+                collection(this.db, 'settings'),
+                orderBy('updatedAt', 'desc'),
+                limit(1)
+            ));
             
-            const user = userDoc.data();
-            const newStatus = prompt(`Edit user status for ${user.email}:`, user.status || 'active');
-            
-            if (newStatus && newStatus !== user.status) {
-                await updateDoc(doc(db, 'users', userId), {
-                    status: newStatus,
-                    updatedAt: serverTimestamp()
-                });
-                
-                this.showNotification('User updated successfully', 'success');
-                this.loadUserManagement(); // Refresh table
+            if (!settingsSnapshot.empty) {
+                const settings = settingsSnapshot.docs[0].data();
+                if (settings.type === 'site') {
+                    const form = document.querySelector('#settings .settings-form');
+                    if (form) {
+                        const inputs = form.querySelectorAll('input, textarea');
+                        if (inputs[0]) inputs[0].value = settings.siteName || 'Central Trade Hub';
+                        if (inputs[1]) inputs[1].value = settings.siteDescription || 'Advanced Trading Platform for Professional Traders';
+                        if (inputs[2]) inputs[2].value = settings.contactEmail || 'admin@centraltradehub.com';
+                        if (inputs[3]) inputs[3].checked = settings.maintenanceMode || false;
+                    }
+                }
             }
         } catch (error) {
-            console.error('Error editing user:', error);
-            this.showNotification('Error updating user: ' + error.message, 'error');
+            console.error('Error loading site settings:', error);
         }
     }
 
-    async deleteUser(userId) {
-        if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-            return;
+    initializeCharts() {
+        // Trading Activity Chart
+        const tradingCtx = document.getElementById('tradingChart');
+        if (tradingCtx) {
+            this.charts.trading = new Chart(tradingCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Trading Volume ($M)',
+                        data: [1.2, 1.9, 2.3, 2.1, 2.8, 2.4],
+                        borderColor: '#00d4ff',
+                        backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: '#ffffff'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                color: '#ffffff'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
         }
-        
-        try {
-            await deleteDoc(doc(db, 'users', userId));
-            this.showNotification('User deleted successfully', 'success');
-            this.loadUserManagement(); // Refresh table
-        } catch (error) {
-            console.error('Error deleting user:', error);
-            this.showNotification('Error deleting user: ' + error.message, 'error');
-        }
+
+        // Analytics Mini Charts
+        this.createMiniCharts();
     }
 
-    loadSectionData(section) {
-        switch(section) {
-            case 'dashboard':
-                this.updateDashboardStats();
-                this.loadRecentActivity();
-                break;
-            case 'users':
-                this.loadUserManagement();
-                break;
-            case 'analytics':
-                this.loadAnalytics();
-                break;
-        }
+    createMiniCharts() {
+        const miniCharts = document.querySelectorAll('.chart-mini');
+        miniCharts.forEach((chart, index) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 100;
+            canvas.height = 50;
+            chart.appendChild(canvas);
+
+            const ctx = canvas.getContext('2d');
+            const data = this.generateMiniChartData();
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['', '', '', '', '', ''],
+                    datasets: [{
+                        data: data,
+                        borderColor: ['#00d4ff', '#00ff88', '#ff6b6b'][index] || '#00d4ff',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false }
+                    }
+                }
+            });
+        });
     }
 
-    async loadAnalytics() {
-        try {
-            // Calculate growth metrics
-            const now = new Date();
-            const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-            
-            const currentUsers = await getDocs(collection(db, 'users'));
-            const lastMonthUsers = await getDocs(
-                query(
-                    collection(db, 'users'),
-                    where('createdAt', '<=', lastMonth)
-                )
-            );
-            
-            const userGrowth = lastMonthUsers.size > 0 ? 
-                ((currentUsers.size - lastMonthUsers.size) / lastMonthUsers.size * 100).toFixed(1) : 
-                '0';
-            
-            // Update analytics cards
-            const analyticsCards = document.querySelectorAll('.analytics-card p');
-            if (analyticsCards[0]) analyticsCards[0].textContent = `+${userGrowth}% this month`;
-            
-        } catch (error) {
-            console.error('Error loading analytics:', error);
-        }
+    generateMiniChartData() {
+        return Array.from({ length: 6 }, () => Math.floor(Math.random() * 100) + 20);
     }
 
-    getTimeAgo(date) {
+    setupRealTimeUpdates() {
+        // Real-time user count updates
+        onSnapshot(collection(this.db, 'users'), (snapshot) => {
+            this.updateStatCard(0, snapshot.size.toLocaleString(), 'Total Users');
+        });
+
+        // Real-time activity feed
+        onSnapshot(
+            query(collection(this.db, 'activities'), orderBy('timestamp', 'desc'), limit(5)),
+            (snapshot) => {
+                const activityList = document.querySelector('.activity-list');
+                if (activityList) {
+                    activityList.innerHTML = '';
+                    snapshot.forEach(doc => {
+                        const activity = doc.data();
+                        const item = this.createActivityItem(activity);
+                        activityList.appendChild(item);
+                    });
+                }
+            }
+        );
+    }
+
+    createActivityItem(activity) {
+        const item = document.createElement('div');
+        item.className = 'activity-item';
+        item.innerHTML = `
+            <i class="fas ${this.getActivityIcon(activity.type)}"></i>
+            <span>${activity.description}</span>
+            <time>${this.formatTimeAgo(activity.timestamp)}</time>
+        `;
+        return item;
+    }
+
+    getActivityIcon(type) {
+        const icons = {
+            'user_registered': 'fa-user-plus',
+            'trade_executed': 'fa-exchange-alt',
+            'system_update': 'fa-cog',
+            'deposit': 'fa-plus-circle',
+            'withdrawal': 'fa-minus-circle'
+        };
+        return icons[type] || 'fa-info-circle';
+    }
+
+    formatTimeAgo(timestamp) {
+        if (!timestamp) return 'Unknown';
         const now = new Date();
-        const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+        const time = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        const diff = Math.floor((now - time) / 1000);
         
-        if (diffInMinutes < 1) return 'Just now';
-        if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`;
-        if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)} hours ago`;
-        return `${Math.floor(diffInMinutes / 1440)} days ago`;
+        if (diff < 60) return `${diff} seconds ago`;
+        if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+        return `${Math.floor(diff / 86400)} days ago`;
+    }
+
+    createModal(title, content) {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>${title}</h2>
+                    <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    ${content}
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        return modal;
     }
 
     showNotification(message, type = 'info') {
         const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
+        notification.className = `notification ${type}`;
         notification.innerHTML = `
+            <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
             <span>${message}</span>
             <button onclick="this.parentElement.remove()">&times;</button>
-        `;
-        
-        notification.style.cssText = `
-            position: fixed;
-            top: 100px;
-            right: 20px;
-            background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'};
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            z-index: 1001;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            animation: slideIn 0.3s ease;
         `;
         
         document.body.appendChild(notification);
@@ -521,29 +680,17 @@ class AdminDashboard {
             if (notification.parentElement) {
                 notification.remove();
             }
-        }, 3000);
+        }, 5000);
     }
 }
 
 // Initialize admin dashboard when DOM is loaded
-let adminDashboard;
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('Initializing admin dashboard...');
-    adminDashboard = new AdminDashboard();
-    window.adminDashboard = adminDashboard;
-});
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.adminDashboard = new AdminDashboard();
+    });
+} else {
+    window.adminDashboard = new AdminDashboard();
+}
 
-// Add CSS animation for notifications
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-`;
+export default AdminDashboard;
