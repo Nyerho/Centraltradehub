@@ -194,9 +194,9 @@ class AuthManager {
   }
 
   updateUI() {
-    // Get all login-related buttons with different classes
-    const loginButtons = document.querySelectorAll('.btn-login, .btn-login-account, .login-btn');
-    const registerButtons = document.querySelectorAll('.btn-register, .btn-primary[href="auth.html"]');
+    // Get all login-related buttons with different classes - EXPANDED SELECTORS
+    const loginButtons = document.querySelectorAll('.btn-login, .btn-login-account, .login-btn, .btn-secondary[href="auth.html"], .trade-btn[href="auth.html"]');
+    const registerButtons = document.querySelectorAll('.btn-register, .btn-primary[href="auth.html#register"], .btn-start-trading, .btn-primary[href="auth.html"], .trade-btn, a[href="auth.html#register"]');
     const adminBtn = document.querySelector('.btn-admin');
     const userMenu = document.querySelector('.user-menu');
     const userName = document.querySelector('.user-name');
@@ -260,13 +260,8 @@ class AuthManager {
         if (logoutBtn) {
             logoutBtn.remove();
         }
-        // Redirect to auth page instead of closing modal
-        if (user) {
-            // User is logged in, redirect to platform
-            window.location.href = 'platform.html';
-        }
     }
-  }
+}
   // Add missing getCurrentUser method
   getCurrentUser() {
     return this.currentUser;
