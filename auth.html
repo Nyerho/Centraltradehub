@@ -6,9 +6,9 @@
     <title>Login & Register - CentralTradeHub</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/auth.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/mobile-performance.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Google Sign-In API -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body class="auth-body">
     <!-- Navigation -->
@@ -92,39 +92,13 @@
                                 <span class="checkmark"></span>
                                 Remember me
                             </label>
-                            <a href="#" class="forgot-link" onclick="showForgotPassword()">Forgot Password?</a>
+                            <a href="#" class="forgot-link">Forgot Password?</a>
                         </div>
                         
                         <button type="submit" class="auth-btn primary">
                             <i class="fas fa-sign-in-alt"></i>
                             Sign In
                         </button>
-                        
-                        <div class="auth-divider">
-                            <span>or continue with</span>
-                        </div>
-                        
-                        <div class="social-auth">
-                            <div id="g_id_onload"
-                                 data-client_id="YOUR_GOOGLE_CLIENT_ID"
-                                 data-context="signin"
-                                 data-ux_mode="popup"
-                                 data-callback="handleGoogleSignIn"
-                                 data-auto_prompt="false">
-                            </div>
-                            <div class="g_id_signin"
-                                 data-type="standard"
-                                 data-shape="rectangular"
-                                 data-theme="outline"
-                                 data-text="signin_with"
-                                 data-size="large"
-                                 data-logo_alignment="left">
-                            </div>
-                            <button type="button" class="social-btn facebook">
-                                <i class="fab fa-facebook-f"></i>
-                                Facebook
-                            </button>
-                        </div>
                     </form>
                 </div>
 
@@ -199,180 +173,60 @@
                             </label>
                             <input type="text" id="mirrorTradeCode" name="mirrorTradeCode" placeholder="Enter your Mirror Trade referral code">
                             <span class="form-error" id="mirrorTradeCodeError"></span>
-                            <small class="form-help">Have a Mirror Trade code? Enter it here to connect with experienced traders.</small>
                         </div>
                         
-                        <div class="form-group">
-                            <label for="registerPassword">
-                                <i class="fas fa-lock"></i>
-                                Password
-                            </label>
-                            <div class="password-input">
-                                <input type="password" id="registerPassword" name="password" required>
-                                <button type="button" class="password-toggle" onclick="togglePassword('registerPassword')">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                            <div class="password-strength" id="passwordStrength">
-                                <div class="strength-bar">
-                                    <div class="strength-fill"></div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="registerPassword">
+                                    <i class="fas fa-lock"></i>
+                                    Password
+                                </label>
+                                <div class="password-input">
+                                    <input type="password" id="registerPassword" name="password" required>
+                                    <button type="button" class="password-toggle" onclick="togglePassword('registerPassword')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
                                 </div>
-                                <span class="strength-text">Password strength</span>
+                                <span class="form-error" id="registerPasswordError"></span>
                             </div>
-                            <span class="form-error" id="registerPasswordError"></span>
+                            <div class="form-group">
+                                <label for="confirmPassword">
+                                    <i class="fas fa-lock"></i>
+                                    Confirm Password
+                                </label>
+                                <div class="password-input">
+                                    <input type="password" id="confirmPassword" name="confirmPassword" required>
+                                    <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <span class="form-error" id="confirmPasswordError"></span>
+                            </div>
                         </div>
                         
                         <div class="form-group">
-                            <label for="confirmPassword">
-                                <i class="fas fa-lock"></i>
-                                Confirm Password
-                            </label>
-                            <div class="password-input">
-                                <input type="password" id="confirmPassword" name="confirmPassword" required>
-                                <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                            <span class="form-error" id="confirmPasswordError"></span>
-                        </div>
-                        
-                        <div class="form-group checkbox-group">
                             <label class="checkbox-container">
-                                <input type="checkbox" id="agreeTerms" name="terms" required>
+                                <input type="checkbox" id="agreeTerms" name="agreeTerms" required>
                                 <span class="checkmark"></span>
                                 I agree to the <a href="#" class="terms-link">Terms of Service</a> and <a href="#" class="terms-link">Privacy Policy</a>
                             </label>
-                            <span class="form-error" id="termsError"></span>
-                        </div>
-                        
-                        <div class="form-group checkbox-group">
-                            <label class="checkbox-container">
-                                <input type="checkbox" id="newsletter" name="newsletter">
-                                <span class="checkmark"></span>
-                                Subscribe to market updates and trading insights
-                            </label>
+                            <span class="form-error" id="agreeTermsError"></span>
                         </div>
                         
                         <button type="submit" class="auth-btn primary">
                             <i class="fas fa-user-plus"></i>
                             Create Account
                         </button>
-                        
-                        <div class="auth-divider">
-                            <span>or continue with</span>
-                        </div>
-                        
-                        <div class="social-auth">
-                            <div id="g_id_onload_register"
-                                 data-client_id="YOUR_GOOGLE_CLIENT_ID"
-                                 data-context="signup"
-                                 data-ux_mode="popup"
-                                 data-callback="handleGoogleSignUp"
-                                 data-auto_prompt="false">
-                            </div>
-                            <div class="g_id_signin"
-                                 data-type="standard"
-                                 data-shape="rectangular"
-                                 data-theme="outline"
-                                 data-text="signup_with"
-                                 data-size="large"
-                                 data-logo_alignment="left">
-                            </div>
-                            <button type="button" class="social-btn facebook">
-                                <i class="fab fa-facebook-f"></i>
-                                Facebook
-                            </button>
-                        </div>
                     </form>
                 </div>
             </div>
-            
-            <!-- Features Sidebar -->
-            <div class="auth-features">
-                <h3>Why Choose CentralTradeHub?</h3>
-                <div class="feature-list">
-                    <div class="feature-item">
-                        <div class="feature-icon">
-                            <i class="fas fa-shield-alt"></i>
-                        </div>
-                        <div class="feature-content">
-                            <h4>Bank-Level Security</h4>
-                            <p>Your funds and data are protected with military-grade encryption</p>
-                        </div>
-                    </div>
-                    <div class="feature-item">
-                        <div class="feature-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <div class="feature-content">
-                            <h4>Advanced Trading Tools</h4>
-                            <p>Professional-grade charts and analysis tools</p>
-                        </div>
-                    </div>
-                    <div class="feature-item">
-                        <div class="feature-icon">
-                            <i class="fas fa-headset"></i>
-                        </div>
-                        <div class="feature-content">
-                            <h4>24/7 Support</h4>
-                            <p>Expert assistance around the clock</p>
-                        </div>
-                    </div>
-                    <div class="feature-item">
-                        <div class="feature-icon">
-                            <i class="fas fa-bolt"></i>
-                        </div>
-                        <div class="feature-content">
-                            <h4>Lightning Fast Execution</h4>
-                            <p>Ultra-low latency trading with institutional-grade infrastructure</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
-    <!-- Forgot Password Modal -->
-    <div id="forgotPasswordModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Reset Password</h2>
-                <button class="modal-close" onclick="closeForgotPassword()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p>Enter your email address and we'll send you a link to reset your password.</p>
-                <form class="auth-form" id="forgotPasswordForm">
-                    <div class="form-group">
-                        <label for="forgotEmail">
-                            <i class="fas fa-envelope"></i>
-                            Email Address
-                        </label>
-                        <input type="email" id="forgotEmail" name="email" required>
-                        <span class="form-error" id="forgotEmailError"></span>
-                    </div>
-                    <button type="submit" class="auth-btn primary">
-                        <i class="fas fa-paper-plane"></i>
-                        Send Reset Link
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Load Firebase first -->
-    <script type="module" src="js/firebase-config.js"></script>
-    <!-- Then load auth integration -->
-    <script type="module" src="js/auth-integration.js"></script>
-    <!-- Finally load the main auth script -->
-    <script type="module" src="js/auth.js"></script>
-    <script>
-        // Check URL hash and switch to registration tab if needed
-        window.addEventListener('DOMContentLoaded', function() {
-            if (window.location.hash === '#register') {
-                // Switch to register tab
-                document.querySelector('.auth-tab[data-tab="register"]').click();
-            }
-        });
-    </script>
+    <!-- Scripts -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/firebase-auth.js"></script>
+    <script src="js/auth-integration.js"></script>
+    <script src="js/auth.js"></script>
 </body>
 </html>
