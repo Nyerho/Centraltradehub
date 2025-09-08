@@ -347,8 +347,19 @@
             }
             
             if (window.authManager) {
+                // Wait for Firebase auth state to be restored
+                await new Promise((resolve) => {
+                    const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
+                        unsubscribe();
+                        resolve();
+                    });
+                });
+                
+                // Small additional delay to ensure auth manager state is updated
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
                 const user = window.authManager.getCurrentUser();
-                if (!user || !window.authManager.isAdmin(user.email)) {
+                if (!user || !window.authManager.isAdmin()) {
                     alert('Access denied. Admin privileges required.');
                     window.location.href = 'index.html';
                     return;
