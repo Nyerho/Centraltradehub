@@ -51,6 +51,12 @@ class AuthManager {
       if (typeof closeModal === 'function') {
         closeModal('loginModal');
       }
+      
+      // Add redirect logic after successful login
+      setTimeout(() => {
+        window.location.href = 'platform.html';
+      }, 1500);
+      
       return true;
     } else {
       this.showMessage(result.message, 'error');

@@ -233,11 +233,12 @@
     margin-bottom: 1.5rem;
 }
 
-.form-group label {
+.auth-form .form-group label,
+.auth-form-container .form-group label {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: #333;
+    color: #333 !important;
     font-weight: 600;
     margin-bottom: 0.5rem;
     font-size: 0.9rem;
@@ -248,43 +249,53 @@
     width: 16px;
 }
 
-.form-group input,
-.form-group select {
+.auth-form .form-group input,
+.auth-form .form-group select,
+.auth-form-container .form-group input,
+.auth-form-container .form-group select {
     width: 100%;
     padding: 0.875rem 1rem;
     border: 2px solid #e1e5e9;
     border-radius: 10px;
     font-size: 1rem;
     transition: all 0.3s ease;
-    background: white;
-    color: #333;
+    background: white !important;
+    color: #333 !important;
 }
 
-.form-group input:focus,
-.form-group select:focus {
+.auth-form .form-group input:focus,
+.auth-form .form-group select:focus,
+.auth-form-container .form-group input:focus,
+.auth-form-container .form-group select:focus {
     outline: none;
     border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    color: #333;
+    color: #333 !important;
+    background: white !important;
 }
 
-.form-group input::placeholder,
-.form-group select::placeholder {
-    color: #999;
+.auth-form .form-group input::placeholder,
+.auth-form .form-group select::placeholder,
+.auth-form-container .form-group input::placeholder,
+.auth-form-container .form-group select::placeholder {
+    color: #999 !important;
     opacity: 1;
 }
 
-.form-group input::-webkit-input-placeholder {
-    color: #999;
+.auth-form .form-group input::-webkit-input-placeholder,
+.auth-form-container .form-group input::-webkit-input-placeholder {
+    color: #999 !important;
 }
 
-.form-group input::-moz-placeholder {
-    color: #999;
+.auth-form .form-group input::-moz-placeholder,
+.auth-form-container .form-group input::-moz-placeholder {
+    color: #999 !important;
     opacity: 1;
 }
 
-.form-group input:-ms-input-placeholder {
-    color: #999;
+.auth-form .form-group input:-ms-input-placeholder,
+.auth-form-container .form-group input:-ms-input-placeholder {
+    color: #999 !important;
 }
 
 .password-input {
