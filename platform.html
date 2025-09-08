@@ -11,8 +11,58 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- TradingView Charting Library -->
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
 </head>
 <body class="platform-body">
+    <!-- Authentication Protection -->
+    <script>
+        // Check authentication before loading platform
+        (function() {
+            // Wait for Firebase and authManager to be available
+            function checkAuth() {
+                if (typeof firebase !== 'undefined' && window.authManager) {
+                    firebase.auth().onAuthStateChanged((user) => {
+                        if (!user) {
+                            // User is not logged in, redirect to login page
+                            alert('Please log in to access the trading platform.');
+                            window.location.href = 'auth.html';
+                        }
+                    });
+                } else {
+                    // Retry after a short delay
+                    setTimeout(checkAuth, 100);
+                }
+            }
+            checkAuth();
+        })();
+    </script>
+    <!-- Authentication Protection -->
+    <script>
+        // Check authentication before loading platform
+        (function() {
+            // Wait for Firebase and authManager to be available
+            function checkAuth() {
+                if (typeof firebase !== 'undefined' && window.authManager) {
+                    firebase.auth().onAuthStateChanged((user) => {
+                        if (!user) {
+                            // User is not logged in, redirect to login page
+                            alert('Please log in to access the trading platform.');
+                            window.location.href = 'auth.html';
+                        }
+                    });
+                } else {
+                    // Retry after a short delay
+                    setTimeout(checkAuth, 100);
+                }
+            }
+            checkAuth();
+        })();
+    </script>
+    
     <!-- Enhanced Navigation -->
     <nav class="navbar platform-nav">
         <div class="nav-container">
@@ -107,74 +157,8 @@
                     <button class="watchlist-tab" data-category="crypto">Crypto</button>
                     <button class="watchlist-tab" data-category="stocks">Stocks</button>
                 </div>
-                <div class="watchlist-items" id="forexWatchlist">
-                    <div class="watchlist-item active" data-symbol="EURUSD">
-                        <div class="symbol-info">
-                            <span class="symbol">EUR/USD</span>
-                            <span class="symbol-desc">Euro / US Dollar</span>
-                        </div>
-                        <div class="price-info">
-                            <span class="price">1.0856</span>
-                            <span class="change positive">+0.23%</span>
-                        </div>
-                        <div class="mini-chart">
-                            <canvas width="60" height="20"></canvas>
-                        </div>
-                    </div>
-                    <div class="watchlist-item" data-symbol="GBPUSD">
-                        <div class="symbol-info">
-                            <span class="symbol">GBP/USD</span>
-                            <span class="symbol-desc">British Pound / US Dollar</span>
-                        </div>
-                        <div class="price-info">
-                            <span class="price">1.2734</span>
-                            <span class="change negative">-0.35%</span>
-                        </div>
-                        <div class="mini-chart">
-                            <canvas width="60" height="20"></canvas>
-                        </div>
-                    </div>
-                    <div class="watchlist-item" data-symbol="USDJPY">
-                        <div class="symbol-info">
-                            <span class="symbol">USD/JPY</span>
-                            <span class="symbol-desc">US Dollar / Japanese Yen</span>
-                        </div>
-                        <div class="price-info">
-                            <span class="price">149.82</span>
-                            <span class="change positive">+0.23%</span>
-                        </div>
-                        <div class="mini-chart">
-                            <canvas width="60" height="20"></canvas>
-                        </div>
-                    </div>
-                </div>
-                <div class="watchlist-items" id="cryptoWatchlist" style="display: none;">
-                    <div class="watchlist-item" data-symbol="BTCUSD">
-                        <div class="symbol-info">
-                            <span class="symbol">BTC/USD</span>
-                            <span class="symbol-desc">Bitcoin / US Dollar</span>
-                        </div>
-                        <div class="price-info">
-                            <span class="price">43,250</span>
-                            <span class="change positive">+2.98%</span>
-                        </div>
-                        <div class="mini-chart">
-                            <canvas width="60" height="20"></canvas>
-                        </div>
-                    </div>
-                    <div class="watchlist-item" data-symbol="ETHUSD">
-                        <div class="symbol-info">
-                            <span class="symbol">ETH/USD</span>
-                            <span class="symbol-desc">Ethereum / US Dollar</span>
-                        </div>
-                        <div class="price-info">
-                            <span class="price">2,456</span>
-                            <span class="change positive">+1.87%</span>
-                        </div>
-                        <div class="mini-chart">
-                            <canvas width="60" height="20"></canvas>
-                        </div>
-                    </div>
+                <div class="watchlist-items">
+                    <!-- Watchlist items will be populated by JavaScript -->
                 </div>
             </div>
 
@@ -299,316 +283,83 @@
             </div>
         </aside>
 
-        <!-- Enhanced Main Trading Area -->
+        <!-- Main Trading Area -->
         <main class="trading-main">
-            <!-- Advanced Chart Container -->
-            <div class="chart-container">
+            <!-- Chart Section -->
+            <section class="chart-section">
                 <div class="chart-header">
                     <div class="symbol-info">
-                        <h2 class="chart-symbol">EUR/USD</h2>
-                        <span class="symbol-description">Euro / US Dollar</span>
-                    </div>
-                    
-                    <div class="price-display">
-                        <span class="current-price">1.0856</span>
-                        <span class="price-change positive">+0.0023 (+0.21%)</span>
-                        <div class="price-details">
-                            <span class="high">H: 1.0892</span>
-                            <span class="low">L: 1.0834</span>
-                            <span class="volume">Vol: 2.4M</span>
+                        <h2 class="symbol-name">EUR/USD</h2>
+                        <div class="symbol-details">
+                            <span class="current-price">1.0856</span>
+                            <span class="price-change positive">+0.0012 (+0.11%)</span>
                         </div>
                     </div>
                     
                     <div class="chart-controls">
-                        <div class="timeframe-selector">
-                            <button class="chart-btn" data-timeframe="1m">1M</button>
-                            <button class="chart-btn" data-timeframe="5m">5M</button>
-                            <button class="chart-btn active" data-timeframe="15m">15M</button>
-                            <button class="chart-btn" data-timeframe="1h">1H</button>
-                            <button class="chart-btn" data-timeframe="4h">4H</button>
-                            <button class="chart-btn" data-timeframe="1d">1D</button>
-                        </div>
-                        
-                        <div class="chart-tools">
-                            <button class="tool-btn" title="Drawing Tools">
-                                <i class="fas fa-pencil-alt"></i>
-                            </button>
-                            <button class="tool-btn" title="Indicators">
-                                <i class="fas fa-chart-area"></i>
-                            </button>
-                            <button class="tool-btn" title="Fullscreen">
-                                <i class="fas fa-expand"></i>
-                            </button>
+                        <div class="timeframe-buttons">
+                            <button class="chart-btn" data-timeframe="1M">1M</button>
+                            <button class="chart-btn" data-timeframe="5M">5M</button>
+                            <button class="chart-btn" data-timeframe="15M">15M</button>
+                            <button class="chart-btn active" data-timeframe="1H">1H</button>
+                            <button class="chart-btn" data-timeframe="4H">4H</button>
+                            <button class="chart-btn" data-timeframe="1D">1D</button>
                         </div>
                     </div>
                 </div>
                 
                 <div id="tradingChart" class="chart-area">
-                    <!-- Advanced chart will be rendered here -->
+                    <!-- Chart will be rendered here by JavaScript -->
                 </div>
-                
-                <!-- Market Depth -->
-                <div class="market-depth">
-                    <div class="depth-header">
-                        <h4>Market Depth</h4>
-                        <span class="spread">Spread: 1.2 pips</span>
-                    </div>
-                    <div class="depth-content">
-                        <div class="order-book">
-                            <div class="book-side asks">
-                                <div class="book-header">ASK</div>
-                                <div class="book-row">
-                                    <span class="price">1.0858</span>
-                                    <span class="volume">2.5M</span>
-                                </div>
-                                <div class="book-row">
-                                    <span class="price">1.0857</span>
-                                    <span class="volume">1.8M</span>
-                                </div>
-                            </div>
-                            <div class="book-side bids">
-                                <div class="book-header">BID</div>
-                                <div class="book-row">
-                                    <span class="price">1.0856</span>
-                                    <span class="volume">3.2M</span>
-                                </div>
-                                <div class="book-row">
-                                    <span class="price">1.0855</span>
-                                    <span class="volume">2.1M</span>
-                                </div>
-                            </div>
+            </section>
+
+            <!-- Order Form -->
+            <section class="order-section">
+                <div class="order-form">
+                    <div class="order-header">
+                        <h3>Place Order</h3>
+                        <div class="order-mode-toggle">
+                            <button class="mode-btn active" data-mode="simple">Simple</button>
+                            <button class="mode-btn" data-mode="advanced">Advanced</button>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Enhanced Trading Panels -->
-            <div class="trading-panels">
-                <!-- Tabbed Panel System -->
-                <div class="panel-tabs">
-                    <button class="panel-tab active" data-panel="positions">
-                        <i class="fas fa-chart-pie"></i> Positions (2)
-                    </button>
-                    <button class="panel-tab" data-panel="orders">
-                        <i class="fas fa-list-ul"></i> Orders (1)
-                    </button>
-                    <button class="panel-tab" data-panel="history">
-                        <i class="fas fa-history"></i> History
-                    </button>
-                    <button class="panel-tab" data-panel="analytics">
-                        <i class="fas fa-chart-bar"></i> Analytics
-                    </button>
-                </div>
-
-                <!-- Positions Panel -->
-                <div class="panel positions-panel active" id="positionsPanel">
-                    <div class="panel-header">
-                        <h3>Open Positions</h3>
-                        <div class="panel-actions">
-                            <button class="action-btn" title="Close All">
-                                <i class="fas fa-times-circle"></i> Close All
+                    
+                    <form id="orderForm">
+                        <div class="order-type-buttons">
+                            <button type="button" class="order-type-btn buy active" data-type="buy">
+                                <i class="fas fa-arrow-up"></i> BUY
                             </button>
-                            <button class="action-btn" title="Export">
-                                <i class="fas fa-download"></i>
+                            <button type="button" class="order-type-btn sell" data-type="sell">
+                                <i class="fas fa-arrow-down"></i> SELL
                             </button>
-                        </div>
-                    </div>
-                    <div class="positions-table">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Symbol</th>
-                                    <th>Type</th>
-                                    <th>Volume</th>
-                                    <th>Open Price</th>
-                                    <th>Current Price</th>
-                                    <th>P&L</th>
-                                    <th>Swap</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="positionsTableBody">
-                                <tr data-position-id="1">
-                                    <td>
-                                        <div class="symbol-cell">
-                                            <span class="symbol">EUR/USD</span>
-                                            <span class="symbol-desc">Euro / US Dollar</span>
-                                        </div>
-                                    </td>
-                                    <td><span class="position-type buy">BUY</span></td>
-                                    <td>1.50</td>
-                                    <td>1.0834</td>
-                                    <td class="current-price">1.0856</td>
-                                    <td class="pnl positive">+$330.00</td>
-                                    <td class="swap">-$2.50</td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button class="modify-btn" title="Modify">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="close-btn" title="Close">
-                                                <i class="fas fa-times"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr data-position-id="2">
-                                    <td>
-                                        <div class="symbol-cell">
-                                            <span class="symbol">GBP/USD</span>
-                                            <span class="symbol-desc">British Pound / US Dollar</span>
-                                        </div>
-                                    </td>
-                                    <td><span class="position-type sell">SELL</span></td>
-                                    <td>2.00</td>
-                                    <td>1.2756</td>
-                                    <td class="current-price">1.2734</td>
-                                    <td class="pnl positive">+$440.00</td>
-                                    <td class="swap">+$1.20</td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button class="modify-btn" title="Modify">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="close-btn" title="Close">
-                                                <i class="fas fa-times"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Orders Panel -->
-                <div class="panel orders-panel" id="ordersPanel" style="display: none;">
-                    <div class="panel-header">
-                        <h3>Pending Orders</h3>
-                        <div class="panel-actions">
-                            <button class="action-btn" title="Cancel All">
-                                <i class="fas fa-ban"></i> Cancel All
-                            </button>
-                        </div>
-                    </div>
-                    <div class="orders-table">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Symbol</th>
-                                    <th>Type</th>
-                                    <th>Volume</th>
-                                    <th>Price</th>
-                                    <th>Current Price</th>
-                                    <th>Distance</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ordersTableBody">
-                                <tr data-order-id="1">
-                                    <td>
-                                        <div class="symbol-cell">
-                                            <span class="symbol">USD/JPY</span>
-                                            <span class="symbol-desc">US Dollar / Japanese Yen</span>
-                                        </div>
-                                    </td>
-                                    <td><span class="order-type buy-limit">BUY LIMIT</span></td>
-                                    <td>1.00</td>
-                                    <td>149.50</td>
-                                    <td>149.82</td>
-                                    <td class="distance">32 pips</td>
-                                    <td><span class="status pending">Pending</span></td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button class="modify-btn" title="Modify">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="cancel-btn" title="Cancel">
-                                                <i class="fas fa-ban"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- History Panel -->
-                <div class="panel history-panel" id="historyPanel" style="display: none;">
-                    <div class="panel-header">
-                        <h3>Trade History</h3>
-                        <div class="history-filters">
-                            <select class="filter-select">
-                                <option value="today">Today</option>
-                                <option value="week">This Week</option>
-                                <option value="month">This Month</option>
-                                <option value="all">All Time</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="history-table">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Time</th>
-                                    <th>Symbol</th>
-                                    <th>Type</th>
-                                    <th>Volume</th>
-                                    <th>Open Price</th>
-                                    <th>Close Price</th>
-                                    <th>P&L</th>
-                                    <th>Duration</th>
-                                </tr>
-                            </thead>
-                            <tbody id="historyTableBody">
-                                <!-- Trade history will be populated here -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Analytics Panel -->
-                <div class="panel analytics-panel" id="analyticsPanel" style="display: none;">
-                    <div class="panel-header">
-                        <h3>Performance Analytics</h3>
-                    </div>
-                    <div class="analytics-content">
-                        <div class="analytics-grid">
-                            <div class="analytics-card">
-                                <h4>Total Return</h4>
-                                <div class="metric-value positive">+15.8%</div>
-                                <div class="metric-change">+2.3% this month</div>
-                            </div>
-                            <div class="analytics-card">
-                                <h4>Win Rate</h4>
-                                <div class="metric-value">68.5%</div>
-                                <div class="metric-change">+3.2% vs last month</div>
-                            </div>
-                            <div class="analytics-card">
-                                <h4>Avg. Trade</h4>
-                                <div class="metric-value">$127.50</div>
-                                <div class="metric-change">-$15.20 vs last month</div>
-                            </div>
-                            <div class="analytics-card">
-                                <h4>Max Drawdown</h4>
-                                <div class="metric-value negative">-8.2%</div>
-                                <div class="metric-change">Improved from -12.1%</div>
-                            </div>
                         </div>
                         
-                        <div class="performance-chart">
-                            <h4>Equity Curve</h4>
-                            <canvas id="equityChart" width="400" height="200"></canvas>
+                        <div class="form-group">
+                            <label>Volume</label>
+                            <input type="number" name="volume" value="0.01" step="0.01" min="0.01">
                         </div>
-                    </div>
+                        
+                        <div class="form-group">
+                            <label>Order Type</label>
+                            <select name="orderType">
+                                <option value="market">Market Order</option>
+                                <option value="limit">Limit Order</option>
+                                <option value="stop">Stop Order</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="submit-order-btn">
+                            Place Buy Order
+                        </button>
+                    </form>
                 </div>
-            </div>
+            </section>
         </main>
     <!-- Enhanced Scripts -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/firebase-auth.js"></script>
+    <script src="js/auth-integration.js"></script>
     <script src="js/error-handler.js"></script>
-    <script src="js/api-config.js"></script>
     <script src="js/market-data-service.js"></script>
     <script src="js/trading-service.js"></script>
     <script src="js/api-testing.js"></script>
