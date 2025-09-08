@@ -298,7 +298,9 @@
         </main>
     </div>
 
-    <script src="js/admin.js"></script>
+    <!-- Remove duplicate admin.js loading -->
+    <!-- <script src="js/admin.js"></script> -->
+    
     <!-- Firebase Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -307,6 +309,7 @@
     <script type="module" src="js/firebase-auth.js"></script>
     <script type="module" src="js/firebase-database.js"></script>
     <script type="module" src="js/auth-integration.js"></script>
+    <!-- Keep only module version -->
     <script type="module" src="js/admin.js"></script>
     <script>
         // Proper logout function that uses Firebase auth
