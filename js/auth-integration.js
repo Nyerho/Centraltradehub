@@ -46,15 +46,34 @@ class AuthManager {
     const result = await FirebaseAuthService.signIn(email, password);
     
     if (result.success) {
+      // Update user state
+      this.isLoggedIn = true;
+      this.currentUser = result.user;
+      
       this.showMessage('Login successful!', 'success');
       // Fix: Use global closeModal function instead of this.closeModal
       if (typeof closeModal === 'function') {
         closeModal('loginModal');
       }
       
+      // Update UI immediately to hide login buttons
+      this.updateUI();
+      
+      // Check if user is admin and redirect accordingly
+      const adminEmails = [
+        'admin@centraltradehub.com',
+        'owner@centraltradehub.com'
+      ];
+      
+      const isAdmin = adminEmails.includes(result.user.email);
+      
       // Add redirect logic after successful login
       setTimeout(() => {
-        window.location.href = 'index.html';
+        if (isAdmin) {
+          window.location.href = 'admin.html';
+        } else {
+          window.location.href = 'index.html';
+        }
       }, 1500);
       
       return true;
