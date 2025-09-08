@@ -429,7 +429,9 @@ document.addEventListener('DOMContentLoaded', () => {
 // Enhanced error handling for extension messages and Firebase
 window.addEventListener('error', function(e) {
     // Suppress extension message port errors
-    if (e.message && e.message.includes('message port closed')) {
+    if (e.message && (e.message.includes('message port closed') || 
+                      e.message.includes('Could not establish connection') ||
+                      e.message.includes('Receiving end does not exist'))) {
         e.preventDefault();
         return false;
     }
@@ -440,6 +442,14 @@ window.addEventListener('error', function(e) {
 
 // Handle unhandled promise rejections
 window.addEventListener('unhandledrejection', function(e) {
+    // Suppress extension-related promise rejections
+    if (e.reason && e.reason.message && 
+        (e.reason.message.includes('message port closed') ||
+         e.reason.message.includes('Could not establish connection'))) {
+        e.preventDefault();
+        return;
+    }
+    
     console.error('Unhandled promise rejection:', e.reason);
     e.preventDefault();
 });

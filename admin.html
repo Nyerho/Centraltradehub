@@ -303,100 +303,55 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script type="module" src="js/firebase-config.js"></script>
-    <script type="module">
-        import authManager from './js/auth-integration.js';
-        
-        // Wait for AuthManager to be fully initialized
-        const waitForAuthManager = () => {
-            return new Promise((resolve) => {
-                const checkAuth = () => {
-                    if (window.authManager && window.authManager.firebaseAuth) {
-                        resolve(window.authManager);
-                    } else {
-                        setTimeout(checkAuth, 100);
-                    }
-                };
-                checkAuth();
-            });
-        };
-        
-        // Make logout function globally available
-        window.handleAdminLogout = async function() {
+    <script type="module" src="js/firebase-auth.js"></script>
+    <script type="module" src="js/auth-integration.js"></script>
+    <script src="js/admin.js"></script>
+    <script>
+        // Proper logout function that uses Firebase auth
+        window.handleSimpleLogout = async function() {
             if (confirm('Are you sure you want to logout?')) {
                 try {
-                    const auth = await waitForAuthManager();
-                    console.log('Attempting logout...');
-                    const result = await auth.firebaseAuth.signOut();
-                    console.log('Logout result:', result);
-                    
-                    if (result.success) {
-                        alert('Logged out successfully!');
-                        window.location.href = 'index.html';
+                    // Wait for auth manager to be available
+                    if (window.authManager) {
+                        await window.authManager.logout();
                     } else {
-                        console.error('Logout failed:', result.message);
-                        // Force redirect anyway
+                        // Fallback if auth manager not available
+                        localStorage.clear();
+                        sessionStorage.clear();
                         window.location.href = 'index.html';
                     }
                 } catch (error) {
                     console.error('Logout error:', error);
-                    // Force redirect as fallback
-                    alert('Logout completed. Redirecting...');
+                    // Fallback logout
+                    localStorage.clear();
+                    sessionStorage.clear();
                     window.location.href = 'index.html';
                 }
             }
         };
-        
-        // Check if user is admin on page load with proper timing
-        const checkAdminAuth = async () => {
-            try {
-                const auth = await waitForAuthManager();
-                
-                // Wait a bit more for Firebase auth state to be determined
-                setTimeout(() => {
-                    const currentUser = auth.getCurrentUser();
-                    console.log('Current user:', currentUser);
-                    console.log('Is logged in:', auth.isLoggedIn);
-                    console.log('Is admin:', auth.isAdmin());
-                    
-                    if (!auth.isLoggedIn) {
-                        alert('Please log in to access the admin panel.');
-                        window.location.href = 'auth.html';
-                        return;
-                    }
-                    
-                    if (!auth.isAdmin()) {
+        // Wait for page load and then check authentication
+        window.addEventListener('load', () => {
+            // Wait for auth manager to be available
+            const checkAuth = () => {
+                if (window.authManager) {
+                    const user = window.authManager.getCurrentUser();
+                    if (!user || !window.authManager.isAdmin(user.email)) {
                         alert('Access denied. Admin privileges required.');
                         window.location.href = 'index.html';
                         return;
                     }
-                    
-                    // User is authenticated admin
-                    console.log('Admin access granted');
-                }, 1500);
-                
-            } catch (error) {
-                console.error('Auth check error:', error);
-                window.location.href = 'index.html';
-            }
-        };
-        
-        // Wait for page load and then check authentication
-        window.addEventListener('load', () => {
-            checkAdminAuth();
+                    // Update welcome message with actual user email
+                    const welcomeSpan = document.querySelector('.admin-user span');
+                    if (welcomeSpan) {
+                        welcomeSpan.textContent = `Welcome, ${user.email}`;
+                    }
+                } else {
+                    // Retry after a short delay
+                    setTimeout(checkAuth, 100);
+                }
+            };
+            checkAuth();
         });
-    </script>
-    <script>
-        // Simple logout function that works immediately
-        window.handleSimpleLogout = function() {
-            if (confirm('Are you sure you want to logout?')) {
-                // Clear any stored auth data
-                localStorage.clear();
-                sessionStorage.clear();
-                
-                // Force redirect
-                window.location.href = 'index.html';
-            }
-        };
     </script>
 </body>
 </html>
