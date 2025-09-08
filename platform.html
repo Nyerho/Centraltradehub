@@ -13,6 +13,28 @@
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body class="platform-body">
+    <!-- Authentication Protection -->
+    <script>
+        // Check authentication before loading platform
+        (function() {
+            // Wait for Firebase and authManager to be available
+            function checkAuth() {
+                if (typeof firebase !== 'undefined' && window.authManager) {
+                    firebase.auth().onAuthStateChanged((user) => {
+                        if (!user) {
+                            // User is not logged in, redirect to login page
+                            window.location.href = 'index.html';
+                        }
+                    });
+                } else {
+                    // Retry after a short delay
+                    setTimeout(checkAuth, 100);
+                }
+            }
+            checkAuth();
+        })();
+    </script>
+    
     <!-- Enhanced Navigation -->
     <nav class="navbar platform-nav">
         <div class="nav-container">
@@ -51,6 +73,10 @@
                         <i class="fas fa-bell"></i>
                         <span class="notification-badge">3</span>
                     </button>
+                    <a href="funding.html" class="action-btn fund-btn" title="Fund Account">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Fund Account</span>
+                    </a>
                     <button class="action-btn" title="Settings">
                         <i class="fas fa-cog"></i>
                     </button>
@@ -65,15 +91,7 @@
                     <i class="fas fa-chevron-down"></i>
                 </div>
                 
-                <!-- Add to navigation menu -->
-                <a href="funding.html" class="nav-link">
-                    <i class="fas fa-wallet"></i> Fund Account
-                </a>
-                
-                <!-- Add to navigation menu -->
-                <a href="funding.html" class="nav-link">
-                    <i class="fas fa-wallet"></i> Fund Account
-                </a>
+
             </div>
         </div>
     </nav>
@@ -676,113 +694,7 @@
         });
     </script>
     
-    <!-- Authentication Protection Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script type="module" src="js/firebase-config.js"></script>
-    <script type="module" src="js/auth-integration.js"></script>
-    
-    <script>
-        // Platform Authentication Protection
-        window.addEventListener('load', async () => {
-            console.log('Platform page loading - checking authentication...');
-            
-            // Wait for auth manager to be available
-            let attempts = 0;
-            while (!window.authManager && attempts < 50) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                attempts++;
-            }
-            
-            if (window.authManager) {
-                // Wait for Firebase auth state to be restored
-                await new Promise((resolve) => {
-                    const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
-                        unsubscribe();
-                        resolve();
-                    });
-                });
-                
-                // Additional delay to ensure auth state is fully loaded
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
-                // Check if user is authenticated
-                const user = window.authManager.getCurrentUser();
-                if (!user || !window.authManager.isLoggedIn) {
-                    alert('🔒 Please log in to access the trading platform.');
-                    window.location.href = 'auth.html';
-                    return;
-                }
-                
-                // User is authenticated - show welcome message
-                console.log('✅ Platform access granted for:', user.email);
-                
-                // Update any user-specific elements
-                const userElements = document.querySelectorAll('.user-email');
-                userElements.forEach(el => {
-                    el.textContent = user.email;
-                });
-                
-            } else {
-                alert('❌ Authentication system not available. Please try again.');
-                window.location.href = 'index.html';
-            }
-        });
-    </script>
-    
-    <!-- Authentication Protection Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script type="module" src="js/firebase-config.js"></script>
-    <script type="module" src="js/auth-integration.js"></script>
-    
-    <script>
-        // Platform Authentication Protection
-        window.addEventListener('load', async () => {
-            console.log('Platform page loading - checking authentication...');
-            
-            // Wait for auth manager to be available
-            let attempts = 0;
-            while (!window.authManager && attempts < 50) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                attempts++;
-            }
-            
-            if (window.authManager) {
-                // Wait for Firebase auth state to be restored
-                await new Promise((resolve) => {
-                    const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
-                        unsubscribe();
-                        resolve();
-                    });
-                });
-                
-                // Additional delay to ensure auth state is fully loaded
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
-                // Check if user is authenticated
-                const user = window.authManager.getCurrentUser();
-                if (!user || !window.authManager.isLoggedIn) {
-                    alert('🔒 Please log in to access the trading platform.');
-                    window.location.href = 'auth.html';
-                    return;
-                }
-                
-                // User is authenticated - show welcome message
-                console.log('✅ Platform access granted for:', user.email);
-                
-                // Update any user-specific elements
-                const userElements = document.querySelectorAll('.user-email');
-                userElements.forEach(el => {
-                    el.textContent = user.email;
-                });
-                
-            } else {
-                alert('❌ Authentication system not available. Please try again.');
-                window.location.href = 'index.html';
-            }
-        });
-    </script>
+
 </body>
 </html>
 
