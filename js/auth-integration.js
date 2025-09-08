@@ -260,6 +260,11 @@ class AuthManager {
         if (logoutBtn) {
             logoutBtn.remove();
         }
+        // Redirect to auth page instead of closing modal
+        if (user) {
+            // User is logged in, redirect to platform
+            window.location.href = 'platform.html';
+        }
     }
   }
   // Add missing getCurrentUser method

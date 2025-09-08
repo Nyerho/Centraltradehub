@@ -108,8 +108,13 @@ function isValidPhone(phone) {
     return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''));
 }
 
-// Enhanced Modal functionality
+// Enhanced Modal functionality (keep only for contact modal)
 function openModal(modalId) {
+    // Only allow contact modal
+    if (modalId !== 'contactModal') {
+        return;
+    }
+    
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'flex';
@@ -347,23 +352,24 @@ document.addEventListener('DOMContentLoaded', () => {
     new ContentManager();
     
     // Setup login/register button handlers
-    const loginBtn = document.querySelector('.btn-login');
-    const registerBtn = document.querySelector('.btn-register');
+    // Remove these lines that open login/register modals:
+    // const loginBtn = document.querySelector('.btn-login');
+    // const registerBtn = document.querySelector('.btn-register');
+    // 
+    // if (loginBtn) {
+    //     loginBtn.addEventListener('click', (e) => {
+    //         e.preventDefault();
+    //         openModal('loginModal');
+    //     });
+    // }
+    // 
+    // if (registerBtn) {
+    //     registerBtn.addEventListener('click', (e) => {
+    //         e.preventDefault();
+    //         openModal('registerModal');
+    //     });
+    // }
     const adminBtn = document.querySelector('.btn-admin');
-    
-    if (loginBtn) {
-        loginBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            openModal('loginModal');
-        });
-    }
-    
-    if (registerBtn) {
-        registerBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            openModal('registerModal');
-        });
-    }
     
     if (adminBtn) {
         adminBtn.addEventListener('click', (e) => {
