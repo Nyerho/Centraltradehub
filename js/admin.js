@@ -93,12 +93,15 @@ class AdminDashboard {
     }
 
     async loadInitialData() {
-        await Promise.all([
-            this.updateDashboardStats(),
-            this.loadUsers(),
-            this.loadTradingSettings(),
-            this.loadSiteSettings()
-        ]);
+        try {
+            await this.updateDashboardStats();
+            await this.loadUsers();
+            await this.loadTradingSettings();
+            await this.loadSiteSettings();
+        } catch (error) {
+            console.error('Error loading initial data:', error);
+            this.showNotification('Some data failed to load: ' + error.message, 'warning');
+        }
     }
 
     async updateDashboardStats() {
@@ -158,14 +161,47 @@ class AdminDashboard {
             const tbody = document.querySelector('#users tbody');
             tbody.innerHTML = '';
 
-            usersSnapshot.forEach((doc, index) => {
-                const user = doc.data();
-                const row = this.createUserRow(doc.id, user, index + 1);
-                tbody.appendChild(row);
-            });
+            if (usersSnapshot.empty) {
+                // Show sample data if no users exist
+                const sampleUsers = [
+                    { id: 'sample1', email: 'john.doe@example.com', displayName: 'John Doe', status: 'active', balance: 5000 },
+                    { id: 'sample2', email: 'jane.smith@example.com', displayName: 'Jane Smith', status: 'active', balance: 7500 },
+                    { id: 'sample3', email: 'mike.wilson@example.com', displayName: 'Mike Wilson', status: 'inactive', balance: 2300 }
+                ];
+                
+                sampleUsers.forEach((user, index) => {
+                    const row = this.createUserRow(user.id, user, index + 1);
+                    tbody.appendChild(row);
+                });
+                
+                this.showNotification('No users found in database. Showing sample data.', 'warning');
+            } else {
+                usersSnapshot.forEach((doc, index) => {
+                    const user = doc.data();
+                    const row = this.createUserRow(doc.id, user, index + 1);
+                    tbody.appendChild(row);
+                });
+                
+                this.showNotification(`Loaded ${usersSnapshot.size} users successfully`, 'success');
+            }
         } catch (error) {
             console.error('Error loading users:', error);
-            this.showNotification('Failed to load users', 'error');
+            
+            // Show sample data as fallback
+            const tbody = document.querySelector('#users tbody');
+            tbody.innerHTML = '';
+            
+            const sampleUsers = [
+                { id: 'fallback1', email: 'demo.user@example.com', displayName: 'Demo User', status: 'active', balance: 10000 },
+                { id: 'fallback2', email: 'test.trader@example.com', displayName: 'Test Trader', status: 'active', balance: 15000 }
+            ];
+            
+            sampleUsers.forEach((user, index) => {
+                const row = this.createUserRow(user.id, user, index + 1);
+                tbody.appendChild(row);
+            });
+            
+            this.showNotification('Failed to load users from database. Showing demo data. Error: ' + error.message, 'error');
         }
     }
 
