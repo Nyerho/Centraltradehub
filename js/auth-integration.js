@@ -54,7 +54,7 @@ class AuthManager {
       
       // Add redirect logic after successful login
       setTimeout(() => {
-        window.location.href = 'platform.html';
+        window.location.href = 'index.html';
       }, 1500);
       
       return true;
