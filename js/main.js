@@ -453,3 +453,20 @@ window.addEventListener('unhandledrejection', function(e) {
     console.error('Unhandled promise rejection:', e.reason);
     e.preventDefault();
 });
+
+// Force UI update after auth manager is ready
+document.addEventListener('DOMContentLoaded', async () => {
+    // Wait for auth manager
+    let attempts = 0;
+    while (!window.authManager && attempts < 50) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+    }
+    
+    if (window.authManager) {
+        // Wait a bit more for Firebase auth state
+        setTimeout(() => {
+            window.authManager.updateUI();
+        }, 1000);
+    }
+});
