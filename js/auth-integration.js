@@ -60,14 +60,32 @@ class AuthManager {
 
   async register(formData) {
     try {
+      // Validate required fields
+      if (!formData.email || !formData.password) {
+        this.showMessage('Email and password are required.', 'error');
+        return false;
+      }
+
+      if (!formData.firstName || !formData.lastName) {
+        this.showMessage('First name and last name are required.', 'error');
+        return false;
+      }
+
+      // Check password strength
+      if (formData.password.length < 6) {
+        this.showMessage('Password must be at least 6 characters long.', 'error');
+        return false;
+      }
+
       const result = await FirebaseAuthService.register(
         formData.email,
         formData.password,
         {
           firstName: formData.firstName,
           lastName: formData.lastName,
-          phone: formData.phone,
-          country: formData.country
+          phone: formData.phone || '',
+          country: formData.country || 'Not specified',
+          displayName: `${formData.firstName} ${formData.lastName}`
         }
       );
       
@@ -79,12 +97,36 @@ class AuthManager {
         }
         return true;
       } else {
-        this.showMessage(result.message, 'error');
+        // Show specific error message from Firebase
+        this.showMessage(result.message || 'Registration failed. Please try again.', 'error');
+        console.error('Registration error details:', result);
         return false;
       }
     } catch (error) {
       console.error('Registration error:', error);
-      this.showMessage('Registration failed. Please try again.', 'error');
+      // Show more specific error message
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      if (error.code) {
+        switch (error.code) {
+          case 'auth/email-already-in-use':
+            errorMessage = 'This email is already registered. Please use a different email or try logging in.';
+            break;
+          case 'auth/invalid-email':
+            errorMessage = 'Please enter a valid email address.';
+            break;
+          case 'auth/weak-password':
+            errorMessage = 'Password is too weak. Please use at least 6 characters.';
+            break;
+          case 'auth/network-request-failed':
+            errorMessage = 'Network error. Please check your internet connection.';
+            break;
+          default:
+            errorMessage = `Registration failed: ${error.message}`;
+        }
+      }
+      
+      this.showMessage(errorMessage, 'error');
       return false;
     }
   }

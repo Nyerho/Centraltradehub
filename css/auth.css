@@ -257,6 +257,7 @@
     font-size: 1rem;
     transition: all 0.3s ease;
     background: white;
+    color: #333;
 }
 
 .form-group input:focus,
@@ -264,6 +265,26 @@
     outline: none;
     border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    color: #333;
+}
+
+.form-group input::placeholder,
+.form-group select::placeholder {
+    color: #999;
+    opacity: 1;
+}
+
+.form-group input::-webkit-input-placeholder {
+    color: #999;
+}
+
+.form-group input::-moz-placeholder {
+    color: #999;
+    opacity: 1;
+}
+
+.form-group input:-ms-input-placeholder {
+    color: #999;
 }
 
 .password-input {
@@ -694,6 +715,7 @@
     font-size: 1rem;
     transition: all 0.3s ease;
     background: white;
+    color: #333;
 }
 
 .form-group input:focus,
@@ -701,6 +723,7 @@
     outline: none;
     border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    color: #333;
 }
 
 .password-input {
