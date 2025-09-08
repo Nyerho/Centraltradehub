@@ -201,6 +201,19 @@ class AuthManager {
         }
     }
   }
+  // Add missing getCurrentUser method
+  getCurrentUser() {
+    return this.currentUser;
+  }
+
+  // Add method to check if user is admin
+  isAdmin() {
+    const adminEmails = [
+      'admin@centraltradehub.com',
+      'owner@centraltradehub.com'
+    ];
+    return this.isLoggedIn && this.currentUser && adminEmails.includes(this.currentUser.email);
+  }
 }
 
 // Initialize AuthManager and make it globally available
