@@ -157,18 +157,46 @@ class AuthManager {
   }
 
   async logout() {
-    const result = await FirebaseAuthService.signOut();
-    
-    if (result.success) {
-      this.showMessage('Logged out successfully!', 'success');
-      // Redirect to home page
+    try {
+      const result = await FirebaseAuthService.signOut();
+      
+      if (result.success) {
+        // Update local state
+        this.isLoggedIn = false;
+        this.currentUser = null;
+        
+        // Update UI immediately
+        this.updateUI();
+        
+        this.showMessage('Logged out successfully!', 'success');
+        
+        // Clear any stored data
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Redirect to home page after a short delay
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 1000);
+      } else {
+        throw new Error('Logout failed');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force logout even if Firebase fails
+      this.isLoggedIn = false;
+      this.currentUser = null;
+      this.updateUI();
+      localStorage.clear();
+      sessionStorage.clear();
       window.location.href = 'index.html';
     }
   }
 
   updateUI() {
-    const loginBtn = document.querySelector('.btn-login');
-    const registerBtn = document.querySelector('.btn-register');
+    // Get all login-related buttons with different classes
+    const loginButtons = document.querySelectorAll('.btn-login, .btn-login-account, .login-btn');
+    const registerButtons = document.querySelectorAll('.btn-register, .btn-primary[href="auth.html"]');
     const adminBtn = document.querySelector('.btn-admin');
     const userMenu = document.querySelector('.user-menu');
     const userName = document.querySelector('.user-name');
@@ -181,9 +209,13 @@ class AuthManager {
     ];
     
     if (this.isLoggedIn && this.currentUser) {
-        // User is logged in - HIDE login and register buttons
-        if (loginBtn) loginBtn.style.display = 'none';
-        if (registerBtn) registerBtn.style.display = 'none';
+        // User is logged in - HIDE ALL login and register buttons
+        loginButtons.forEach(btn => {
+            if (btn) btn.style.display = 'none';
+        });
+        registerButtons.forEach(btn => {
+            if (btn) btn.style.display = 'none';
+        });
         
         // Show admin button only for authorized admins
         if (adminBtn) {
@@ -214,8 +246,12 @@ class AuthManager {
         
     } else {
         // User is NOT logged in - SHOW login and register buttons
-        if (loginBtn) loginBtn.style.display = 'inline-block';
-        if (registerBtn) registerBtn.style.display = 'inline-block';
+        loginButtons.forEach(btn => {
+            if (btn) btn.style.display = 'inline-block';
+        });
+        registerButtons.forEach(btn => {
+            if (btn) btn.style.display = 'inline-block';
+        });
         if (adminBtn) adminBtn.style.display = 'none';
         if (userMenu) userMenu.style.display = 'none';
         

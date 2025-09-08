@@ -304,6 +304,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script type="module" src="js/firebase-config.js"></script>
     <script type="module" src="js/firebase-auth.js"></script>
+    <script type="module" src="js/firebase-database.js"></script>
     <script type="module" src="js/auth-integration.js"></script>
     <script src="js/admin.js"></script>
     <script>
@@ -312,6 +313,12 @@
             if (confirm('Are you sure you want to logout?')) {
                 try {
                     // Wait for auth manager to be available
+                    let attempts = 0;
+                    while (!window.authManager && attempts < 50) {
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        attempts++;
+                    }
+                    
                     if (window.authManager) {
                         await window.authManager.logout();
                     } else {
@@ -329,28 +336,32 @@
                 }
             }
         };
+        
         // Wait for page load and then check authentication
-        window.addEventListener('load', () => {
+        window.addEventListener('load', async () => {
             // Wait for auth manager to be available
-            const checkAuth = () => {
-                if (window.authManager) {
-                    const user = window.authManager.getCurrentUser();
-                    if (!user || !window.authManager.isAdmin(user.email)) {
-                        alert('Access denied. Admin privileges required.');
-                        window.location.href = 'index.html';
-                        return;
-                    }
-                    // Update welcome message with actual user email
-                    const welcomeSpan = document.querySelector('.admin-user span');
-                    if (welcomeSpan) {
-                        welcomeSpan.textContent = `Welcome, ${user.email}`;
-                    }
-                } else {
-                    // Retry after a short delay
-                    setTimeout(checkAuth, 100);
+            let attempts = 0;
+            while (!window.authManager && attempts < 50) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
+            if (window.authManager) {
+                const user = window.authManager.getCurrentUser();
+                if (!user || !window.authManager.isAdmin(user.email)) {
+                    alert('Access denied. Admin privileges required.');
+                    window.location.href = 'index.html';
+                    return;
                 }
-            };
-            checkAuth();
+                // Update welcome message with actual user email
+                const welcomeSpan = document.querySelector('.admin-user span');
+                if (welcomeSpan) {
+                    welcomeSpan.textContent = `Welcome, ${user.email}`;
+                }
+            } else {
+                alert('Authentication system not available.');
+                window.location.href = 'index.html';
+            }
         });
     </script>
 </body>
