@@ -18,7 +18,7 @@
             </div>
             <div class="admin-user">
                 <span>Welcome, Admin</span>
-                <a href="#" class="btn-logout" onclick="handleAdminLogout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                <a href="#" class="btn-logout" onclick="handleSimpleLogout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
         </div>
     </header>
@@ -384,6 +384,19 @@
         window.addEventListener('load', () => {
             checkAdminAuth();
         });
+    </script>
+    <script>
+        // Simple logout function that works immediately
+        window.handleSimpleLogout = function() {
+            if (confirm('Are you sure you want to logout?')) {
+                // Clear any stored auth data
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                // Force redirect
+                window.location.href = 'index.html';
+            }
+        };
     </script>
 </body>
 </html>
