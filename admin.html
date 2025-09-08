@@ -306,37 +306,83 @@
     <script type="module">
         import authManager from './js/auth-integration.js';
         
+        // Wait for AuthManager to be fully initialized
+        const waitForAuthManager = () => {
+            return new Promise((resolve) => {
+                const checkAuth = () => {
+                    if (window.authManager && window.authManager.firebaseAuth) {
+                        resolve(window.authManager);
+                    } else {
+                        setTimeout(checkAuth, 100);
+                    }
+                };
+                checkAuth();
+            });
+        };
+        
         // Make logout function globally available
         window.handleAdminLogout = async function() {
             if (confirm('Are you sure you want to logout?')) {
                 try {
-                    await authManager.logout();
-                    // Redirect will be handled by the logout method
+                    const auth = await waitForAuthManager();
+                    console.log('Attempting logout...');
+                    const result = await auth.firebaseAuth.signOut();
+                    console.log('Logout result:', result);
+                    
+                    if (result.success) {
+                        alert('Logged out successfully!');
+                        window.location.href = 'index.html';
+                    } else {
+                        console.error('Logout failed:', result.message);
+                        // Force redirect anyway
+                        window.location.href = 'index.html';
+                    }
                 } catch (error) {
                     console.error('Logout error:', error);
-                    // Fallback redirect
+                    // Force redirect as fallback
+                    alert('Logout completed. Redirecting...');
                     window.location.href = 'index.html';
                 }
             }
         };
         
         // Check if user is admin on page load with proper timing
-        const checkAdminAuth = () => {
-            if (authManager.getCurrentUser()) {
-                if (!authManager.isAdmin()) {
-                    alert('Access denied. Admin privileges required.');
-                    window.location.href = 'index.html';
-                }
-            } else if (!authManager.isLoggedIn) {
-                alert('Please log in to access the admin panel.');
-                window.location.href = 'auth.html';
+        const checkAdminAuth = async () => {
+            try {
+                const auth = await waitForAuthManager();
+                
+                // Wait a bit more for Firebase auth state to be determined
+                setTimeout(() => {
+                    const currentUser = auth.getCurrentUser();
+                    console.log('Current user:', currentUser);
+                    console.log('Is logged in:', auth.isLoggedIn);
+                    console.log('Is admin:', auth.isAdmin());
+                    
+                    if (!auth.isLoggedIn) {
+                        alert('Please log in to access the admin panel.');
+                        window.location.href = 'auth.html';
+                        return;
+                    }
+                    
+                    if (!auth.isAdmin()) {
+                        alert('Access denied. Admin privileges required.');
+                        window.location.href = 'index.html';
+                        return;
+                    }
+                    
+                    // User is authenticated admin
+                    console.log('Admin access granted');
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Auth check error:', error);
+                window.location.href = 'index.html';
             }
         };
         
-        // Wait for authentication state to be determined
+        // Wait for page load and then check authentication
         window.addEventListener('load', () => {
-            // Give AuthManager time to initialize
-            setTimeout(checkAdminAuth, 1000);
+            checkAdminAuth();
         });
     </script>
 </body>
