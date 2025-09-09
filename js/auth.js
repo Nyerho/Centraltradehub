@@ -338,7 +338,7 @@ function handleRegister(e) {
                         showNotification('Account created successfully! Please check your email for verification.', 'success');
                         // Optionally redirect or close modal
                         setTimeout(() => {
-                            window.location.href = 'platform.html';
+                            window.location.href = 'index.html';
                         }, 2000);
                     } else {
                         showNotification('Registration failed. Please try again.', 'error');
@@ -401,20 +401,25 @@ function handleForgotPassword(e) {
 }
 
 // Utility functions
-function togglePassword(fieldId) {
-    const field = document.getElementById(fieldId);
-    const toggle = field.nextElementSibling;
-    const icon = toggle.querySelector('i');
+// Password visibility toggle function
+function togglePassword(inputId) {
+    const passwordInput = document.getElementById(inputId);
+    const toggleButton = passwordInput.nextElementSibling;
+    const icon = toggleButton.querySelector('i');
     
-    if (field.type === 'password') {
-        field.type = 'text';
-        icon.className = 'fas fa-eye-slash';
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
     } else {
-        field.type = 'password';
-        icon.className = 'fas fa-eye';
+        passwordInput.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
     }
 }
 
+// Make togglePassword globally available
+window.togglePassword = togglePassword;
 function showForgotPassword() {
     const modal = document.getElementById('forgotPasswordModal');
     modal.classList.add('show');
@@ -660,3 +665,40 @@ function initializeGoogleSignIn() {
         );
     }
 }
+
+// ... Country code mapping
+const countryCodeMap = {
+    'AF': '+93', 'AL': '+355', 'DZ': '+213', 'AR': '+54', 'AU': '+61',
+    'AT': '+43', 'BD': '+880', 'BE': '+32', 'BR': '+55', 'BG': '+359',
+    'CA': '+1', 'CL': '+56', 'CN': '+86', 'CO': '+57', 'CR': '+506',
+    'HR': '+385', 'CZ': '+420', 'DK': '+45', 'EG': '+20', 'EE': '+372',
+    'FI': '+358', 'FR': '+33', 'DE': '+49', 'GH': '+233', 'GR': '+30',
+    'HK': '+852', 'HU': '+36', 'IS': '+354', 'IN': '+91', 'ID': '+62',
+    'IE': '+353', 'IL': '+972', 'IT': '+39', 'JP': '+81', 'KE': '+254',
+    'KR': '+82', 'LV': '+371', 'LT': '+370', 'MY': '+60', 'MX': '+52',
+    'NL': '+31', 'NZ': '+64', 'NG': '+234', 'NO': '+47', 'PK': '+92',
+    'PE': '+51', 'PH': '+63', 'PL': '+48', 'PT': '+351', 'RO': '+40',
+    'RU': '+7', 'SA': '+966', 'SG': '+65', 'SK': '+421', 'SI': '+386',
+    'ZA': '+27', 'ES': '+34', 'LK': '+94', 'SE': '+46', 'CH': '+41',
+    'TW': '+886', 'TH': '+66', 'TR': '+90', 'UA': '+380', 'AE': '+971',
+    'GB': '+44', 'US': '+1', 'VE': '+58', 'VN': '+84'
+};
+
+// Update country code when country is selected
+function updateCountryCode() {
+    const countrySelect = document.getElementById('country');
+    const countryCodeInput = document.getElementById('countryCode');
+    const countryCodeGroup = document.getElementById('countryCodeGroup');
+    
+    if (countrySelect.value) {
+        const countryCode = countryCodeMap[countrySelect.value];
+        countryCodeInput.value = countryCode;
+        countryCodeGroup.style.display = 'block';
+    } else {
+        countryCodeInput.value = '';
+        countryCodeGroup.style.display = 'none';
+    }
+}
+
+// Make function globally available
+window.updateCountryCode = updateCountryCode;
