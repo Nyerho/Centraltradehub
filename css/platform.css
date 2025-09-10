@@ -4,6 +4,7 @@
     color: #ffffff;
     margin: 0;
     font-family: 'Inter', sans-serif;
+    padding-top: 70px; /* Add padding to account for fixed navbar */
 }
 
 /* Trading Container Layout */
@@ -13,6 +14,7 @@
     background: #0f0f23;
     gap: 1rem;
     padding: 1rem;
+    margin-top: 0; /* Remove margin-top since we added padding to body */
 }
 
 /* Sidebar Styles */
@@ -131,9 +133,9 @@
 }
 
 .comprehensive-dropdown {
-    position: absolute;
-    top: 100%;
-    right: 0;
+    position: relative; /* Changed from absolute to relative */
+    top: 0; /* Reset top positioning */
+    right: auto; /* Reset right positioning */
     width: 320px;
     background: #1a1a2e;
     border: 1px solid #2d2d44;
@@ -142,17 +144,18 @@
     z-index: 1000;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(-10px);
+    max-height: 0; /* Start with 0 height */
+    overflow: hidden; /* Hide content when collapsed */
     transition: all 0.3s ease;
-    max-height: 80vh;
-    overflow-y: auto;
     backdrop-filter: blur(10px);
+    margin-top: 0.5rem; /* Add some spacing from the user info */
 }
 
 .comprehensive-dropdown.show {
     opacity: 1;
     visibility: visible;
-    transform: translateY(0);
+    max-height: 80vh; /* Expand to full height */
+    overflow-y: auto; /* Allow scrolling when expanded */
 }
 
 .dropdown-section {
@@ -233,6 +236,26 @@
     color: #ff6b6b !important;
 }
 
+/* Adjust navbar to accommodate dropdown expansion */
+.navbar {
+    transition: all 0.3s ease;
+}
+
+.navbar.dropdown-open {
+    position: relative; /* Change from fixed to relative when dropdown is open */
+}
+
+/* Adjust body padding when dropdown is open */
+.platform-body.dropdown-open {
+    padding-top: 0; /* Remove padding when navbar becomes relative */
+}
+
+/* Alternative approach: Keep navbar fixed but add space for dropdown */
+.navbar.dropdown-expanded {
+    height: auto; /* Allow navbar to expand */
+    min-height: 70px;
+}
+
 /* Custom Scrollbar for Dropdown */
 .comprehensive-dropdown::-webkit-scrollbar {
     width: 6px;
@@ -255,7 +278,7 @@
 .trading-interface {
     display: flex;
     height: calc(100vh - 70px);
-    margin-top: 70px;
+    margin-top: 0; /* Remove margin-top to prevent double spacing */
 }
 
 .trading-sidebar {

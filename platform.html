@@ -708,26 +708,49 @@
     </script>
 
     <script>
-    // Enhanced dropdown functionality
+    // Enhanced dropdown functionality with content shifting
     function toggleUserDropdown() {
         const dropdown = document.getElementById('userDropdown');
-        dropdown.classList.toggle('show');
+        const navbar = document.querySelector('.navbar');
+        const body = document.querySelector('.platform-body');
+        
+        if (dropdown.classList.contains('show')) {
+            // Closing dropdown
+            dropdown.classList.remove('show');
+            navbar.classList.remove('dropdown-expanded');
+            body.classList.remove('dropdown-open');
+        } else {
+            // Opening dropdown
+            dropdown.classList.add('show');
+            navbar.classList.add('dropdown-expanded');
+            body.classList.add('dropdown-open');
+        }
     }
     
     // Close dropdown when clicking outside
     document.addEventListener('click', function(event) {
         const userMenu = document.querySelector('.user-menu');
         const dropdown = document.getElementById('userDropdown');
+        const navbar = document.querySelector('.navbar');
+        const body = document.querySelector('.platform-body');
         
         if (!userMenu.contains(event.target)) {
             dropdown.classList.remove('show');
+            navbar.classList.remove('dropdown-expanded');
+            body.classList.remove('dropdown-open');
         }
     });
     
     // Close dropdown on escape key
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
-            document.getElementById('userDropdown').classList.remove('show');
+            const dropdown = document.getElementById('userDropdown');
+            const navbar = document.querySelector('.navbar');
+            const body = document.querySelector('.platform-body');
+            
+            dropdown.classList.remove('show');
+            navbar.classList.remove('dropdown-expanded');
+            body.classList.remove('dropdown-open');
         }
     });
     
