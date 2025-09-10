@@ -6,6 +6,7 @@ import FirebaseDatabaseService from './firebase-database.js';
 class AuthManager {
   constructor() {
     this.firebaseAuth = FirebaseAuthService;
+    this.databaseService = FirebaseDatabaseService; // Add missing databaseService
     this.currentUser = null;
     this.isLoggedIn = false;
     this.initializeFirebaseAuth();
@@ -33,12 +34,13 @@ class AuthManager {
       }
     }, 5000);
   }
+
   initializeFirebaseAuth() {
     // Listen for authentication state changes
     FirebaseAuthService.addAuthStateListener((user) => {
       this.isLoggedIn = !!user;
       this.currentUser = user;
-      this.updateUI();
+      this.updateUI(); // This calls the main updateUI method
     });
   }
 
@@ -56,15 +58,21 @@ class AuthManager {
             modal.style.display = 'none';
         }
         
-        // Update UI
-        this.updateUIForAuthenticatedUser(result.user);
+        // Update UI immediately
+        this.updateUI();
         
-        // Redirect based on user role
-        const userDoc = await this.databaseService.getUserProfile(result.user.uid);
-        if (userDoc && userDoc.role === 'admin') {
-            window.location.href = 'admin.html';
-        } else {
-            // Redirect to dashboard instead of platform
+        // Redirect based on user role with proper error handling
+        try {
+            const userDoc = await this.databaseService.getUserProfile(result.user.uid);
+            if (userDoc && userDoc.role === 'admin') {
+                window.location.href = 'admin.html';
+            } else {
+                // Redirect to dashboard instead of platform
+                window.location.href = 'dashboard.html';
+            }
+        } catch (dbError) {
+            console.warn('Could not fetch user profile, redirecting to dashboard:', dbError);
+            // Default redirect to dashboard if profile fetch fails
             window.location.href = 'dashboard.html';
         }
         
@@ -179,8 +187,9 @@ class AuthManager {
     return errorMessages[errorCode] || 'An unexpected error occurred. Please try again.';
   }
 
-  updateUIForAuthenticatedUser(user) {
-    // Get all login-related buttons with different classes - EXPANDED SELECTORS
+  // Add the main updateUI method to fix admin button visibility
+  updateUI() {
+    // Get all login-related buttons with different classes
     const loginButtons = document.querySelectorAll('.btn-login, .btn-login-account, .login-btn, .btn-secondary[href="auth.html"], .trade-btn[href="auth.html"]');
     const registerButtons = document.querySelectorAll('.btn-register, .btn-primary[href="auth.html#register"], .btn-start-trading, .btn-primary[href="auth.html"], .trade-btn, a[href="auth.html#register"]');
     const adminBtn = document.querySelector('.btn-admin');
@@ -203,7 +212,7 @@ class AuthManager {
             if (btn) btn.style.display = 'none';
         });
         
-        // Show admin button only for authorized admins
+        // Show admin button ONLY for authorized admins
         if (adminBtn) {
             adminBtn.style.display = adminEmails.includes(this.currentUser.email) ? 'inline-block' : 'none';
         }
@@ -231,14 +240,17 @@ class AuthManager {
         }
         
     } else {
-        // User is NOT logged in - SHOW login and register buttons
+        // User is NOT logged in - SHOW login and register buttons, HIDE admin button
         loginButtons.forEach(btn => {
             if (btn) btn.style.display = 'inline-block';
         });
         registerButtons.forEach(btn => {
             if (btn) btn.style.display = 'inline-block';
         });
+        
+        // ALWAYS hide admin button when not logged in
         if (adminBtn) adminBtn.style.display = 'none';
+        
         if (userMenu) userMenu.style.display = 'none';
         
         // Remove logout button if it exists
@@ -247,7 +259,7 @@ class AuthManager {
             logoutBtn.remove();
         }
     }
-}
+  }
   // Add missing getCurrentUser method
   getCurrentUser() {
     return this.currentUser;
