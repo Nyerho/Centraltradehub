@@ -196,76 +196,69 @@ class AuthManager {
 
   // Add the main updateUI method to fix admin button visibility
   updateUI() {
-    // Get all login-related buttons with different classes
-    const loginButtons = document.querySelectorAll('.btn-login, .btn-login-account, .login-btn, .btn-secondary[href="auth.html"], .trade-btn[href="auth.html"]');
-    const registerButtons = document.querySelectorAll('.btn-register, .btn-primary[href="auth.html#register"], .btn-start-trading, .btn-primary[href="auth.html"], .trade-btn, a[href="auth.html#register"]');
-    const adminBtn = document.querySelector('.btn-admin');
-    const userMenu = document.querySelector('.user-menu');
-    const userName = document.querySelector('.user-name');
-    const navButtons = document.querySelector('.nav-buttons');
-    
-    // Define admin emails
-    const adminEmails = [
-        'admin@centraltradehub.com',
-        'owner@centraltradehub.com'
-    ];
-    
-    if (this.isLoggedIn && this.currentUser) {
-        // User is logged in - HIDE ALL login and register buttons
-        loginButtons.forEach(btn => {
-            if (btn) btn.style.display = 'none';
-        });
-        registerButtons.forEach(btn => {
-            if (btn) btn.style.display = 'none';
-        });
-        
-        // Show admin button ONLY for authorized admins
-        if (adminBtn) {
-            adminBtn.style.display = adminEmails.includes(this.currentUser.email) ? 'inline-block' : 'none';
-        }
-        
-        // Show user menu
-        if (userMenu) {
-            userMenu.style.display = 'flex';
-            if (userName) {
-                userName.textContent = this.currentUser.displayName || this.currentUser.email.split('@')[0];
-            }
-        }
-        
-        // Add logout button if it doesn't exist
-        if (navButtons && !document.querySelector('.btn-logout')) {
-            const logoutBtn = document.createElement('a');
-            logoutBtn.href = '#';
-            logoutBtn.className = 'btn-logout';
-            logoutBtn.textContent = 'Logout';
-            logoutBtn.style.cssText = 'background: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-left: 10px;';
-            logoutBtn.onclick = (e) => {
-                e.preventDefault();
-                this.logout();
-            };
-            navButtons.appendChild(logoutBtn);
-        }
-        
-    } else {
-        // User is NOT logged in - SHOW login and register buttons, HIDE admin button
-        loginButtons.forEach(btn => {
-            if (btn) btn.style.display = 'inline-block';
-        });
-        registerButtons.forEach(btn => {
-            if (btn) btn.style.display = 'inline-block';
-        });
-        
-        // ALWAYS hide admin button when not logged in
-        if (adminBtn) adminBtn.style.display = 'none';
-        
-        if (userMenu) userMenu.style.display = 'none';
-        
-        // Remove logout button if it exists
-        const logoutBtn = document.querySelector('.btn-logout');
-        if (logoutBtn) {
-            logoutBtn.remove();
-        }
-    }
+      const loginButtons = document.querySelectorAll('.btn-login, .btn-login-account, .login-btn, .btn-secondary[href="auth.html"], .trade-btn[href="auth.html"]');
+      const registerButtons = document.querySelectorAll('.btn-register, .btn-primary[href="auth.html#register"], .btn-start-trading, .btn-primary[href="auth.html"], .trade-btn, a[href="auth.html#register"]');
+      const adminButton = document.querySelector('.btn-admin');
+      const userMenu = document.querySelector('.user-menu');
+      
+      // Update navigation buttons on home page
+      const loginBtn = document.getElementById('loginBtn');
+      const getStartedBtn = document.getElementById('getStartedBtn');
+      const dashboardBtn = document.getElementById('dashboardBtn');
+  
+      if (this.isLoggedIn) {
+          // Hide login/register buttons
+          loginButtons.forEach(btn => {
+              if (btn && btn.id !== 'loginBtn') btn.style.display = 'none';
+          });
+          registerButtons.forEach(btn => {
+              if (btn && btn.id !== 'getStartedBtn') btn.style.display = 'none';
+          });
+          
+          // Update home page navigation
+          if (loginBtn) loginBtn.style.display = 'none';
+          if (getStartedBtn) getStartedBtn.style.display = 'none';
+          if (dashboardBtn) dashboardBtn.style.display = 'inline-block';
+  
+          // Show admin button ONLY for authorized admins
+          if (adminButton) {
+              this.checkAdminStatus().then(isAdmin => {
+                  adminButton.style.display = isAdmin ? 'inline-block' : 'none';
+              });
+          }
+  
+          // Show user menu if available
+          if (userMenu) {
+              userMenu.style.display = 'block';
+              const userName = userMenu.querySelector('.user-name');
+              if (userName && this.currentUser) {
+                  userName.textContent = this.currentUser.displayName || this.currentUser.email;
+              }
+          }
+  
+          // Add logout functionality
+          const logoutBtn = document.querySelector('.btn-logout');
+          if (logoutBtn) {
+              logoutBtn.onclick = () => this.logout();
+          }
+      } else {
+          // Show login/register buttons
+          loginButtons.forEach(btn => {
+              if (btn) btn.style.display = 'inline-block';
+          });
+          registerButtons.forEach(btn => {
+              if (btn) btn.style.display = 'inline-block';
+          });
+          
+          // Update home page navigation
+          if (loginBtn) loginBtn.style.display = 'inline-block';
+          if (getStartedBtn) getStartedBtn.style.display = 'inline-block';
+          if (dashboardBtn) dashboardBtn.style.display = 'none';
+  
+          // Hide admin button and user menu
+          if (adminButton) adminButton.style.display = 'none';
+          if (userMenu) userMenu.style.display = 'none';
+      }
   }
   // Add missing getCurrentUser method
   getCurrentUser() {

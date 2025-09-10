@@ -433,18 +433,62 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Enhanced error handling for extension messages and Firebase
-window.addEventListener('error', function(e) {
-    // Suppress extension message port errors
-    if (e.message && (e.message.includes('message port closed') || 
-                      e.message.includes('Could not establish connection') ||
-                      e.message.includes('Receiving end does not exist'))) {
-        e.preventDefault();
-        return false;
+window.addEventListener('error', (event) => {
+    // Suppress extension-related errors
+    if (event.message && (
+        event.message.includes('Extension context invalidated') ||
+        event.message.includes('chrome-extension') ||
+        event.message.includes('moz-extension')
+    )) {
+        event.preventDefault();
+        return;
+    }
+});
+
+// Force UI update after auth manager is ready
+window.addEventListener('load', async () => {
+    // Wait for auth manager
+    let attempts = 0;
+    while (!window.authManager && attempts < 50) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
     }
     
-    // Log other errors for debugging
-    console.error('Application error:', e.error);
+    if (window.authManager) {
+        // Wait a bit more for Firebase auth state
+        setTimeout(() => {
+            window.authManager.updateUI();
+            updateNavigationForAuthState();
+        }, 500);
+    }
 });
+
+// Function to update navigation based on authentication state
+function updateNavigationForAuthState() {
+    const loginBtn = document.getElementById('loginBtn');
+    const getStartedBtn = document.getElementById('getStartedBtn');
+    const dashboardBtn = document.getElementById('dashboardBtn');
+    
+    if (window.authManager && window.authManager.isLoggedIn) {
+        // User is logged in - show dashboard button, hide login buttons
+        if (loginBtn) loginBtn.style.display = 'none';
+        if (getStartedBtn) getStartedBtn.style.display = 'none';
+        if (dashboardBtn) dashboardBtn.style.display = 'inline-block';
+    } else {
+        // User is not logged in - show login buttons, hide dashboard button
+        if (loginBtn) loginBtn.style.display = 'inline-block';
+        if (getStartedBtn) getStartedBtn.style.display = 'inline-block';
+        if (dashboardBtn) dashboardBtn.style.display = 'none';
+    }
+}
+
+// Listen for authentication state changes
+if (window.authManager) {
+    // Add listener for auth state changes
+    window.authManager.firebaseAuth.addAuthStateListener((user) => {
+        updateNavigationForAuthState();
+    });
+}
 
 // Handle unhandled promise rejections
 window.addEventListener('unhandledrejection', function(e) {
@@ -458,21 +502,4 @@ window.addEventListener('unhandledrejection', function(e) {
     
     console.error('Unhandled promise rejection:', e.reason);
     e.preventDefault();
-});
-
-// Force UI update after auth manager is ready
-document.addEventListener('DOMContentLoaded', async () => {
-    // Wait for auth manager
-    let attempts = 0;
-    while (!window.authManager && attempts < 50) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        attempts++;
-    }
-    
-    if (window.authManager) {
-        // Wait a bit more for Firebase auth state
-        setTimeout(() => {
-            window.authManager.updateUI();
-        }, 1000);
-    }
 });
