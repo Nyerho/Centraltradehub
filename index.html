@@ -23,12 +23,13 @@
             </div>
             <ul class="nav-menu">
                 <li><a href="#home" class="nav-link active">Home</a></li>
-                <li><a href="auth.html" class="nav-link">Platform</a></li>
+                <li><a href="#" class="nav-link" onclick="handlePlatformClick(event)">Platform</a></li>
                 <li><a href="#markets" class="nav-link">Markets</a></li>
                 <li><a href="#about" class="nav-link">About</a></li>
                 <li><a href="#contact" class="nav-link">Contact</a></li>
             </ul>
             <div class="nav-buttons">
+                <a href="funding.html" class="btn-funding" style="background: #28a745; color: white; padding: 8px 16px; text-decoration: none; border-radius: 5px; margin-right: 10px; font-size: 14px; display: none;">💰 Fund Account</a>
                 <a href="auth.html" class="btn-secondary btn-login">Login</a>
                 <a href="auth.html#register" class="btn-primary btn-register">Get Started</a>
                 <a href="admin.html" class="btn-secondary btn-admin">Admin</a>
@@ -1070,6 +1071,22 @@
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/main.js"></script>
     <script src="js/performance-optimizer.js"></script>
+
+    <script>
+    // Handle Platform navigation click
+    function handlePlatformClick(event) {
+        event.preventDefault();
+        
+        // Check if user is logged in
+        if (window.authManager && window.authManager.isLoggedIn) {
+            // User is logged in, redirect to platform
+            window.location.href = 'platform.html';
+        } else {
+            // User is not logged in, redirect to auth page
+            window.location.href = 'auth.html';
+        }
+    }
+    </script>
 
     <!-- Login Modal -->
     <div id="loginModal" class="modal">
