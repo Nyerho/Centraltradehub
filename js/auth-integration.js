@@ -48,7 +48,14 @@ class AuthManager {
     try {
         this.showMessage('Signing in...', 'info');
         
-        const result = await this.firebaseAuth.signInWithEmailAndPassword(email, password);
+        // Fix: Use the correct method name 'signIn' instead of 'signInWithEmailAndPassword'
+        const result = await this.firebaseAuth.signIn(email, password);
+        
+        // Check if login was successful
+        if (!result.success) {
+            this.showMessage(result.message || 'Login failed', 'error');
+            return;
+        }
         
         this.showMessage('Login successful!', 'success');
         
