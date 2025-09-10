@@ -316,9 +316,8 @@
             </div>
             <div id="trading-chart" class="trading-chart">
                 <!-- TradingView Widget BEGIN -->
-                <div class="tradingview-widget-container" style="height:100%;width:100%">
-                  <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                  <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div>
+                <div class="tradingview-widget-container" style="height:100%;width:100%;border:none;outline:none;">
+                  <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%;border:none;outline:none;"></div>
                   <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
                   {
                   "autosize": true,
@@ -329,14 +328,15 @@
                   "style": "1",
                   "locale": "en",
                   "enable_publishing": false,
-                  "backgroundColor": "rgba(19, 23, 34, 1)",
+                  "backgroundColor": "rgba(15, 15, 35, 1)",
                   "gridColor": "rgba(42, 46, 57, 0.5)",
                   "hide_top_toolbar": false,
                   "hide_legend": false,
                   "save_image": false,
                   "calendar": false,
                   "hide_volume": false,
-                  "support_host": "https://www.tradingview.com"
+                  "support_host": "https://www.tradingview.com",
+                  "container_id": "tradingview_chart"
                   }
                   </script>
                 </div>

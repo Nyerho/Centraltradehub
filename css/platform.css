@@ -44,6 +44,8 @@
     border-radius: 8px;
     padding: 1rem;
     border: 1px solid #2d2d44;
+    /* Ensure no overflow issues */
+    overflow: hidden;
 }
 
 .platform-nav {
@@ -502,6 +504,8 @@
     align-items: center;
     justify-content: center;
     border: 1px solid #2d2d44;
+    position: relative;
+    overflow: hidden;
 }
 
 .trading-panels {
@@ -1256,6 +1260,15 @@
     .quick-actions {
         flex-wrap: wrap;
     }
+    
+    #trading-chart {
+        height: 300px;
+        min-height: 300px;
+    }
+    
+    .tradingview-widget-container__widget {
+        height: calc(100% - 20px) !important;
+    }
 }
 
 /* Loading States */
@@ -1434,6 +1447,9 @@
     border-radius: 5px;
     border: 1px solid #2d2d44;
     margin-bottom: 1rem;
+    position: relative;
+    overflow: hidden;
+    min-height: 400px;
 }
 
 .trading-chart {
@@ -1443,21 +1459,55 @@
     overflow: hidden;
     position: relative;
     min-height: 400px;
+    /* Fix for line artifacts */
+    border: none;
+    outline: none;
 }
 
 .tradingview-widget-container {
     height: 100% !important;
     width: 100% !important;
+    position: relative;
+    overflow: hidden;
+    /* Remove any potential borders or outlines */
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
 }
 
+.tradingview-widget-container__widget {
+    height: calc(100% - 32px) !important;
+    width: 100% !important;
+    border: none !important;
+    outline: none !important;
+    /* Ensure no unwanted lines */
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
+/* Hide TradingView branding and fix potential line issues */
 .tradingview-widget-copyright {
+    display: none !important;
     font-size: 10px !important;
     opacity: 0.7;
+    border: none !important;
+    outline: none !important;
 }
 
-/* Hide TradingView branding if needed */
-.tradingview-widget-copyright {
-    display: none;
+/* Remove any pseudo-elements that might cause lines */
+.tradingview-widget-container::before,
+.tradingview-widget-container::after,
+.tradingview-widget-container__widget::before,
+.tradingview-widget-container__widget::after {
+    display: none !important;
+    content: none !important;
+}
+
+/* Ensure iframe has no borders */
+iframe[src*="tradingview"] {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 /* Price Info Panel */
