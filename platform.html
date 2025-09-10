@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trading Platform - CentralTradeHub</title>
+    <!-- Load base styles first -->
     <link rel="stylesheet" href="css/style.css">
+    <!-- Load platform-specific styles -->
     <link rel="stylesheet" href="css/platform.css">
+    <!-- Load responsive styles last to ensure proper overrides -->
     <link rel="stylesheet" href="css/responsive.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -20,20 +23,20 @@
 <body class="platform-body">
     <!-- Authentication Protection -->
     <script>
-        // Check authentication before loading platform
         (function() {
-            // Wait for Firebase to be available
             function checkAuth() {
                 if (typeof firebase !== 'undefined') {
                     firebase.auth().onAuthStateChanged((user) => {
                         if (!user) {
-                            // User is not logged in, redirect to login page
                             alert('Please log in to access the trading platform.');
                             window.location.href = 'auth.html';
+                        } else {
+                            // Show funding button for authenticated users
+                            const fundingBtn = document.querySelector('.btn-funding');
+                            if (fundingBtn) fundingBtn.style.display = 'inline-block';
                         }
                     });
                 } else {
-                    // Retry after a short delay
                     setTimeout(checkAuth, 100);
                 }
             }
@@ -49,10 +52,23 @@
                 <span class="logo-text">CentralTradeHub</span>
             </div>
             
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="platform.html" class="nav-link active">Platform</a></li>
+                <li><a href="index.html#markets" class="nav-link">Markets</a></li>
+                <li><a href="funding.html" class="nav-link">About</a></li>
+                <li><a href="index.html#contact" class="nav-link">Support</a></li>
+            </ul>
+            
             <!-- Market Status -->
             <div class="market-status">
                 <span class="status-indicator active"></span>
                 <span class="status-text">Markets Open</span>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="nav-buttons">
+                <a href="funding.html" class="btn-funding">💰 Fund Account</a>
             </div>
 
             <!-- User Menu -->
@@ -74,6 +90,13 @@
                     </a>
                 </div>
             </div>
+            
+            <!-- Mobile Menu Toggle -->
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
         </div>
     </nav>
 
@@ -87,19 +110,19 @@
                 <div class="balance-info">
                     <div class="balance-item">
                         <span class="label">Balance:</span>
-                        <span class="value">$10,000.00</span>
+                        <span class="value" id="account-balance">$10,000.00</span>
                     </div>
                     <div class="balance-item">
                         <span class="label">Equity:</span>
-                        <span class="value">$10,250.00</span>
+                        <span class="value" id="account-equity">$10,250.00</span>
                     </div>
                     <div class="balance-item">
                         <span class="label">Margin:</span>
-                        <span class="value">$500.00</span>
+                        <span class="value" id="account-margin">$500.00</span>
                     </div>
                     <div class="balance-item">
                         <span class="label">Free Margin:</span>
-                        <span class="value">$9,750.00</span>
+                        <span class="value" id="free-margin">$9,750.00</span>
                     </div>
                 </div>
             </div>
@@ -107,7 +130,7 @@
             <!-- Market Overview -->
             <div class="market-overview">
                 <h3><i class="fas fa-chart-line"></i> Market Overview</h3>
-                <div class="market-indices">
+                <div class="market-indices" id="market-indices">
                     <div class="index-item">
                         <span class="index-name">S&P 500</span>
                         <span class="index-value">4,234.56</span>
@@ -139,27 +162,27 @@
                     <button class="watchlist-tab" data-category="crypto">Crypto</button>
                     <button class="watchlist-tab" data-category="stocks">Stocks</button>
                 </div>
-                <div class="watchlist-content">
+                <div class="watchlist-content" id="watchlist-content">
                     <div class="watchlist-item active" data-symbol="EURUSD">
                         <div class="symbol-info">
                             <span class="symbol">EUR/USD</span>
-                            <span class="price">1.0845</span>
+                            <span class="price" id="price-EURUSD">1.0845</span>
                         </div>
-                        <span class="change positive">+0.0012</span>
+                        <span class="change positive" id="change-EURUSD">+0.0012</span>
                     </div>
                     <div class="watchlist-item" data-symbol="GBPUSD">
                         <div class="symbol-info">
                             <span class="symbol">GBP/USD</span>
-                            <span class="price">1.2634</span>
+                            <span class="price" id="price-GBPUSD">1.2634</span>
                         </div>
-                        <span class="change negative">-0.0023</span>
+                        <span class="change negative" id="change-GBPUSD">-0.0023</span>
                     </div>
                     <div class="watchlist-item" data-symbol="USDJPY">
                         <div class="symbol-info">
                             <span class="symbol">USD/JPY</span>
-                            <span class="price">149.85</span>
+                            <span class="price" id="price-USDJPY">149.85</span>
                         </div>
-                        <span class="change positive">+0.45</span>
+                        <span class="change positive" id="change-USDJPY">+0.45</span>
                     </div>
                 </div>
             </div>
@@ -174,6 +197,8 @@
                         <option value="GBPUSD">GBP/USD</option>
                         <option value="USDJPY">USD/JPY</option>
                         <option value="BTCUSD">BTC/USD</option>
+                        <option value="ETHUSD">ETH/USD</option>
+                        <option value="XAUUSD">XAU/USD</option>
                     </select>
                 </div>
                 <div class="timeframe-selector">
@@ -197,6 +222,28 @@
                 </div>
             </div>
             <div id="trading-chart" class="trading-chart"></div>
+            
+            <!-- Price Info Panel -->
+            <div class="price-info-panel">
+                <div class="current-price">
+                    <span class="price-label">Current Price:</span>
+                    <span class="price-value" id="current-price">1.0845</span>
+                </div>
+                <div class="price-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">High:</span>
+                        <span class="stat-value" id="high-price">1.0867</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Low:</span>
+                        <span class="stat-value" id="low-price">1.0823</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Change:</span>
+                        <span class="stat-value positive" id="price-change">+0.0012</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Right Sidebar -->
@@ -227,12 +274,12 @@
                     
                     <div class="form-group">
                         <label>Stop Loss</label>
-                        <input type="number" id="sl-input" step="0.00001">
+                        <input type="number" id="sl-input" step="0.00001" placeholder="Optional">
                     </div>
                     
                     <div class="form-group">
                         <label>Take Profit</label>
-                        <input type="number" id="tp-input" step="0.00001">
+                        <input type="number" id="tp-input" step="0.00001" placeholder="Optional">
                     </div>
                     
                     <button class="place-order-btn" id="place-order-btn">
@@ -264,6 +311,7 @@
             </div>
         </div>
     </div>
+
     <!-- Load JavaScript Files -->
     <script src="js/firebase-config.js"></script>
     <script src="js/firebase-auth.js"></script>
@@ -277,8 +325,14 @@
     <script src="js/market-data.js"></script>
 
     <script>
-        // Initialize platform when DOM is loaded
+        // Enhanced Platform Initialization
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize chart
+            initializeChart();
+            
+            // Initialize real-time data
+            initializeRealTimeData();
+            
             // Initialize trading platform
             if (typeof initializePlatform === 'function') {
                 initializePlatform();
@@ -288,7 +342,283 @@
             if (typeof initializeMarketData === 'function') {
                 initializeMarketData();
             }
+            
+            // Setup responsive handlers
+            setupResponsiveHandlers();
         });
+
+        // Initialize TradingView Chart
+        function initializeChart() {
+            const chart = LightweightCharts.createChart(document.getElementById('trading-chart'), {
+                width: document.getElementById('trading-chart').clientWidth,
+                height: 400,
+                layout: {
+                    backgroundColor: '#1a1a1a',
+                    textColor: '#ffffff',
+                },
+                grid: {
+                    vertLines: {
+                        color: '#2B2B43',
+                    },
+                    horzLines: {
+                        color: '#2B2B43',
+                    },
+                },
+                crosshair: {
+                    mode: LightweightCharts.CrosshairMode.Normal,
+                },
+                rightPriceScale: {
+                    borderColor: '#485c7b',
+                },
+                timeScale: {
+                    borderColor: '#485c7b',
+                    timeVisible: true,
+                    secondsVisible: false,
+                },
+            });
+
+            const candlestickSeries = chart.addCandlestickSeries({
+                upColor: '#00d4ff',
+                downColor: '#ff4757',
+                borderDownColor: '#ff4757',
+                borderUpColor: '#00d4ff',
+                wickDownColor: '#ff4757',
+                wickUpColor: '#00d4ff',
+            });
+
+            // Sample data - replace with real data
+            const sampleData = generateSampleData();
+            candlestickSeries.setData(sampleData);
+
+            // Make chart responsive
+            window.addEventListener('resize', () => {
+                chart.applyOptions({ width: document.getElementById('trading-chart').clientWidth });
+            });
+
+            // Store chart reference globally
+            window.tradingChart = chart;
+            window.candlestickSeries = candlestickSeries;
+        }
+
+        // Generate sample candlestick data
+        function generateSampleData() {
+            const data = [];
+            const basePrice = 1.0845;
+            let currentPrice = basePrice;
+            const now = new Date();
+            
+            for (let i = 100; i >= 0; i--) {
+                const time = Math.floor((now.getTime() - i * 15 * 60 * 1000) / 1000);
+                const change = (Math.random() - 0.5) * 0.01;
+                currentPrice += change;
+                
+                const high = currentPrice + Math.random() * 0.005;
+                const low = currentPrice - Math.random() * 0.005;
+                const close = low + Math.random() * (high - low);
+                
+                data.push({
+                    time: time,
+                    open: currentPrice,
+                    high: high,
+                    low: low,
+                    close: close
+                });
+                
+                currentPrice = close;
+            }
+            
+            return data;
+        }
+
+        // Initialize real-time data updates
+        function initializeRealTimeData() {
+            // Simulate real-time price updates
+            setInterval(() => {
+                updatePrices();
+                updateChart();
+            }, 1000);
+        }
+
+        // Update prices in watchlist and current price display
+        function updatePrices() {
+            const symbols = ['EURUSD', 'GBPUSD', 'USDJPY'];
+            
+            symbols.forEach(symbol => {
+                const priceElement = document.getElementById(`price-${symbol}`);
+                const changeElement = document.getElementById(`change-${symbol}`);
+                
+                if (priceElement) {
+                    const currentPrice = parseFloat(priceElement.textContent);
+                    const change = (Math.random() - 0.5) * 0.01;
+                    const newPrice = (currentPrice + change).toFixed(symbol === 'USDJPY' ? 2 : 4);
+                    
+                    priceElement.textContent = newPrice;
+                    
+                    if (changeElement) {
+                        const changeValue = (change > 0 ? '+' : '') + change.toFixed(4);
+                        changeElement.textContent = changeValue;
+                        changeElement.className = change > 0 ? 'change positive' : 'change negative';
+                    }
+                }
+            });
+            
+            // Update current price display
+            const currentPriceElement = document.getElementById('current-price');
+            if (currentPriceElement) {
+                const currentPrice = parseFloat(currentPriceElement.textContent);
+                const change = (Math.random() - 0.5) * 0.01;
+                const newPrice = (currentPrice + change).toFixed(4);
+                currentPriceElement.textContent = newPrice;
+            }
+        }
+
+        // Update chart with new data point
+        function updateChart() {
+            if (window.candlestickSeries) {
+                const now = Math.floor(Date.now() / 1000);
+                const currentPrice = parseFloat(document.getElementById('current-price').textContent);
+                const change = (Math.random() - 0.5) * 0.005;
+                const newPrice = currentPrice + change;
+                
+                const high = newPrice + Math.random() * 0.002;
+                const low = newPrice - Math.random() * 0.002;
+                const close = low + Math.random() * (high - low);
+                
+                window.candlestickSeries.update({
+                    time: now,
+                    open: currentPrice,
+                    high: high,
+                    low: low,
+                    close: close
+                });
+            }
+        }
+
+        // Setup responsive handlers
+        function setupResponsiveHandlers() {
+            const hamburger = document.querySelector('.hamburger');
+            const navMenu = document.querySelector('.nav-menu');
+            
+            if (hamburger && navMenu) {
+                hamburger.addEventListener('click', () => {
+                    hamburger.classList.toggle('active');
+                    navMenu.classList.toggle('active');
+                });
+            }
+            
+            // Handle sidebar collapse on mobile
+            const leftSidebar = document.querySelector('.left-sidebar');
+            const rightSidebar = document.querySelector('.right-sidebar');
+            
+            function handleResize() {
+                if (window.innerWidth <= 768) {
+                    leftSidebar?.classList.add('collapsed');
+                    rightSidebar?.classList.add('collapsed');
+                } else {
+                    leftSidebar?.classList.remove('collapsed');
+                    rightSidebar?.classList.remove('collapsed');
+                }
+            }
+            
+            window.addEventListener('resize', handleResize);
+            handleResize(); // Initial check
+        }
+
+        // Order form functionality
+        document.addEventListener('click', function(e) {
+            // Order type buttons
+            if (e.target.classList.contains('order-type-btn')) {
+                document.querySelectorAll('.order-type-btn').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+            }
+            
+            // Order tabs
+            if (e.target.classList.contains('order-tab')) {
+                document.querySelectorAll('.order-tab').forEach(tab => tab.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                const limitOrder = document.querySelector('.limit-order');
+                if (e.target.dataset.type === 'limit' || e.target.dataset.type === 'stop') {
+                    limitOrder.style.display = 'block';
+                } else {
+                    limitOrder.style.display = 'none';
+                }
+            }
+            
+            // Timeframe buttons
+            if (e.target.classList.contains('timeframe-btn')) {
+                document.querySelectorAll('.timeframe-btn').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+            }
+            
+            // Watchlist items
+            if (e.target.closest('.watchlist-item')) {
+                document.querySelectorAll('.watchlist-item').forEach(item => item.classList.remove('active'));
+                e.target.closest('.watchlist-item').classList.add('active');
+                
+                const symbol = e.target.closest('.watchlist-item').dataset.symbol;
+                document.getElementById('symbol-select').value = symbol;
+            }
+        });
+
+        // Place order functionality
+        document.getElementById('place-order-btn')?.addEventListener('click', function() {
+            const orderType = document.querySelector('.order-type-btn.active').dataset.type;
+            const volume = document.getElementById('volume-input').value;
+            const symbol = document.getElementById('symbol-select').value;
+            
+            // Simulate order placement
+            alert(`${orderType.toUpperCase()} order placed for ${volume} lots of ${symbol}`);
+            
+            // Add to positions (simulation)
+            addPosition({
+                symbol: symbol,
+                type: orderType,
+                volume: volume,
+                price: document.getElementById('current-price').textContent,
+                time: new Date().toLocaleTimeString()
+            });
+        });
+
+        // Add position to positions panel
+        function addPosition(position) {
+            const positionsList = document.getElementById('positions-list');
+            const emptyState = positionsList.querySelector('.empty-state');
+            
+            if (emptyState) {
+                emptyState.style.display = 'none';
+            }
+            
+            const positionElement = document.createElement('div');
+            positionElement.className = 'position-item';
+            positionElement.innerHTML = `
+                <div class="position-header">
+                    <span class="position-symbol">${position.symbol}</span>
+                    <span class="position-type ${position.type}">${position.type.toUpperCase()}</span>
+                </div>
+                <div class="position-details">
+                    <span class="position-volume">${position.volume} lots</span>
+                    <span class="position-price">${position.price}</span>
+                    <span class="position-time">${position.time}</span>
+                </div>
+                <button class="close-position-btn" onclick="closePosition(this)">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            positionsList.appendChild(positionElement);
+        }
+
+        // Close position
+        function closePosition(button) {
+            const positionItem = button.closest('.position-item');
+            positionItem.remove();
+            
+            const positionsList = document.getElementById('positions-list');
+            if (positionsList.children.length === 1) {
+                positionsList.querySelector('.empty-state').style.display = 'block';
+            }
+        }
     </script>
 </body>
 </html>
