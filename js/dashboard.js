@@ -77,8 +77,12 @@ class DashboardManager {
             if (typeof firebase !== 'undefined') {
                 firebase.auth().onAuthStateChanged(async (user) => {
                     if (user) {
-                        document.getElementById('dashboard-user-name').textContent = user.displayName || 'User';
-                        document.getElementById('dashboard-user-email').textContent = user.email;
+                        // Set user name immediately without loading state
+                        const displayName = user.displayName || user.email.split('@')[0] || 'User';
+                        const userNameElement = document.getElementById('dashboard-user-name');
+                        if (userNameElement) {
+                            userNameElement.textContent = displayName;
+                        }
                         
                         // Load additional user data from Firestore
                         await this.loadAccountData(user.uid);
@@ -87,6 +91,11 @@ class DashboardManager {
             }
         } catch (error) {
             console.error('Error loading user data:', error);
+            // Set fallback user name
+            const userNameElement = document.getElementById('dashboard-user-name');
+            if (userNameElement) {
+                userNameElement.textContent = 'User';
+            }
         }
     }
 

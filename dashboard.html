@@ -69,8 +69,8 @@
                     <div class="user-info" onclick="toggleUserDropdown()">
                         <img src="assets/images/user-avatar.png" alt="User" class="user-avatar">
                         <div class="user-details">
-                            <span class="user-name" id="dashboard-user-name">Loading...</span>
-                            <span class="user-email" id="dashboard-user-email">Loading...</span>
+                            <span class="user-name" id="dashboard-user-name">User</span>
+                            <span class="user-status">Online</span>
                         </div>
                         <i class="fas fa-chevron-down"></i>
                     </div>
@@ -360,40 +360,19 @@
         <!-- Portfolio Section -->
         <section id="portfolio-section" class="dashboard-section">
             <div class="section-header">
-                <h2>Portfolio Management</h2>
-                <p>Manage your investment portfolio and track performance</p>
+                <h2>Portfolio Overview</h2>
+                <p>Track your trading performance and positions</p>
             </div>
             <div class="portfolio-content">
                 <div class="portfolio-summary">
                     <div class="summary-card">
-                        <h3>Total Portfolio Value</h3>
-                        <div class="portfolio-value">$12,500.00</div>
-                        <div class="portfolio-change positive">+$350.00 (2.88%)</div>
-                    </div>
-                </div>
-                <div class="portfolio-holdings">
-                    <h3>Current Holdings</h3>
-                    <div class="holdings-table">
-                        <div class="table-header">
-                            <span>Asset</span>
-                            <span>Quantity</span>
-                            <span>Current Price</span>
-                            <span>Total Value</span>
-                            <span>P&L</span>
+                        <div class="card-header">
+                            <h3>Total Portfolio Value</h3>
+                            <i class="fas fa-chart-pie"></i>
                         </div>
-                        <div class="holding-row">
-                            <span>EUR/USD</span>
-                            <span>0.50 lots</span>
-                            <span>1.0875</span>
-                            <span>$5,437.50</span>
-                            <span class="positive">+$125.00</span>
-                        </div>
-                        <div class="holding-row">
-                            <span>GBP/USD</span>
-                            <span>0.30 lots</span>
-                            <span>1.2635</span>
-                            <span>$3,790.50</span>
-                            <span class="negative">-$45.00</span>
+                        <div class="card-content">
+                            <div class="portfolio-value">$10,250.00</div>
+                            <div class="portfolio-change positive">+$125.00 (1.2%)</div>
                         </div>
                     </div>
                 </div>
@@ -404,37 +383,16 @@
         <section id="markets-section" class="dashboard-section">
             <div class="section-header">
                 <h2>Market Overview</h2>
-                <p>Real-time market data and analysis</p>
+                <p>Live market data and trading opportunities</p>
             </div>
             <div class="markets-content">
-                <div class="market-categories">
-                    <div class="category-tabs">
-                        <button class="tab-btn active" data-market="forex">Forex</button>
-                        <button class="tab-btn" data-market="stocks">Stocks</button>
-                        <button class="tab-btn" data-market="crypto">Crypto</button>
-                        <button class="tab-btn" data-market="commodities">Commodities</button>
-                    </div>
-                </div>
-                <div class="market-data">
-                    <div class="market-grid">
-                        <div class="market-card">
-                            <div class="market-symbol">EUR/USD</div>
-                            <div class="market-price">1.0875</div>
-                            <div class="market-change positive">+0.0025 (+0.23%)</div>
-                            <button class="trade-btn" onclick="window.open('platform.html', '_blank')">Trade</button>
+                <div class="market-pairs">
+                    <div class="pair-card">
+                        <div class="pair-info">
+                            <span class="pair-name">EUR/USD</span>
+                            <span class="pair-price">1.0875</span>
                         </div>
-                        <div class="market-card">
-                            <div class="market-symbol">GBP/USD</div>
-                            <div class="market-price">1.2635</div>
-                            <div class="market-change negative">-0.0015 (-0.12%)</div>
-                            <button class="trade-btn" onclick="window.open('platform.html', '_blank')">Trade</button>
-                        </div>
-                        <div class="market-card">
-                            <div class="market-symbol">USD/JPY</div>
-                            <div class="market-price">149.85</div>
-                            <div class="market-change positive">+0.45 (+0.30%)</div>
-                            <button class="trade-btn" onclick="window.open('platform.html', '_blank')">Trade</button>
-                        </div>
+                        <div class="pair-change positive">+0.0025 (+0.23%)</div>
                     </div>
                 </div>
             </div>
@@ -444,46 +402,11 @@
         <section id="history-section" class="dashboard-section">
             <div class="section-header">
                 <h2>Trading History</h2>
-                <p>View your complete trading history and performance</p>
+                <p>Review your past trades and transactions</p>
             </div>
             <div class="history-content">
-                <div class="history-filters">
-                    <select class="filter-select">
-                        <option value="all">All Trades</option>
-                        <option value="profitable">Profitable Only</option>
-                        <option value="losses">Losses Only</option>
-                    </select>
-                    <input type="date" class="date-filter" placeholder="From Date">
-                    <input type="date" class="date-filter" placeholder="To Date">
-                </div>
                 <div class="history-table">
-                    <div class="table-header">
-                        <span>Date</span>
-                        <span>Symbol</span>
-                        <span>Type</span>
-                        <span>Volume</span>
-                        <span>Open Price</span>
-                        <span>Close Price</span>
-                        <span>P&L</span>
-                    </div>
-                    <div class="history-row">
-                        <span>2024-01-15</span>
-                        <span>EUR/USD</span>
-                        <span>BUY</span>
-                        <span>0.10</span>
-                        <span>1.0850</span>
-                        <span>1.0875</span>
-                        <span class="positive">+$25.00</span>
-                    </div>
-                    <div class="history-row">
-                        <span>2024-01-14</span>
-                        <span>GBP/USD</span>
-                        <span>SELL</span>
-                        <span>0.05</span>
-                        <span>1.2650</span>
-                        <span>1.2635</span>
-                        <span class="positive">+$7.50</span>
-                    </div>
+                    <p>Trading history will be displayed here</p>
                 </div>
             </div>
         </section>
@@ -491,34 +414,12 @@
         <!-- Analytics Section -->
         <section id="analytics-section" class="dashboard-section">
             <div class="section-header">
-                <h2>Performance Analytics</h2>
-                <p>Detailed analysis of your trading performance</p>
+                <h2>Analytics & Reports</h2>
+                <p>Detailed performance analysis and insights</p>
             </div>
             <div class="analytics-content">
-                <div class="analytics-cards">
-                    <div class="analytics-card">
-                        <h3>Win Rate</h3>
-                        <div class="metric-value">68.5%</div>
-                        <div class="metric-change positive">+2.3%</div>
-                    </div>
-                    <div class="analytics-card">
-                        <h3>Average Profit</h3>
-                        <div class="metric-value">$45.20</div>
-                        <div class="metric-change positive">+$5.10</div>
-                    </div>
-                    <div class="analytics-card">
-                        <h3>Risk/Reward Ratio</h3>
-                        <div class="metric-value">1:2.4</div>
-                        <div class="metric-change positive">Improved</div>
-                    </div>
-                </div>
                 <div class="analytics-charts">
-                    <div class="chart-container">
-                        <h3>Monthly Performance</h3>
-                        <div class="chart-placeholder">
-                            <p>Performance chart will be displayed here</p>
-                        </div>
-                    </div>
+                    <p>Analytics charts will be displayed here</p>
                 </div>
             </div>
         </section>
@@ -527,40 +428,11 @@
         <section id="education-section" class="dashboard-section">
             <div class="section-header">
                 <h2>Trading Education</h2>
-                <p>Enhance your trading skills with our educational resources</p>
+                <p>Learn and improve your trading skills</p>
             </div>
             <div class="education-content">
-                <div class="education-categories">
-                    <div class="category-card">
-                        <h3>Beginner Courses</h3>
-                        <p>Start your trading journey with fundamental concepts</p>
-                        <ul>
-                            <li>Introduction to Forex Trading</li>
-                            <li>Understanding Market Analysis</li>
-                            <li>Risk Management Basics</li>
-                        </ul>
-                        <button class="course-btn">Start Learning</button>
-                    </div>
-                    <div class="category-card">
-                        <h3>Advanced Strategies</h3>
-                        <p>Master advanced trading techniques and strategies</p>
-                        <ul>
-                            <li>Technical Analysis Mastery</li>
-                            <li>Algorithmic Trading</li>
-                            <li>Portfolio Optimization</li>
-                        </ul>
-                        <button class="course-btn">Explore Advanced</button>
-                    </div>
-                    <div class="category-card">
-                        <h3>Market Insights</h3>
-                        <p>Stay updated with market trends and analysis</p>
-                        <ul>
-                            <li>Daily Market Reports</li>
-                            <li>Economic Calendar</li>
-                            <li>Expert Analysis</li>
-                        </ul>
-                        <button class="course-btn">View Insights</button>
-                    </div>
+                <div class="education-modules">
+                    <p>Educational content will be displayed here</p>
                 </div>
             </div>
         </section>
