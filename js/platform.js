@@ -1243,6 +1243,9 @@ class TradingPlatform {
             });
         }
 
+        // Setup responsive handlers with enhanced mobile support
+        this.setupResponsiveHandlers();
+        
         // Stop loss and take profit toggles
         document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
             checkbox.addEventListener('change', (e) => {
@@ -2017,6 +2020,9 @@ class TradingPlatform {
             });
         }
 
+        // Setup responsive handlers with enhanced mobile support
+        this.setupResponsiveHandlers();
+        
         // Stop loss and take profit toggles
         document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
             checkbox.addEventListener('change', (e) => {

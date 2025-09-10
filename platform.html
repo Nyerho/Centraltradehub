@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="css/style.css">
     <!-- Load platform-specific styles -->
     <link rel="stylesheet" href="css/platform.css">
-    <!-- Load responsive styles last to ensure proper overrides -->
+    <link rel="stylesheet" href="css/platform-mobile.css">
     <link rel="stylesheet" href="css/responsive.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -47,6 +47,18 @@
     <!-- Enhanced Navigation -->
     <nav class="navbar platform-nav">
         <div class="nav-container">
+            <div class="nav-left">
+                <div class="hamburger" id="hamburger">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </div>
+                <div class="nav-logo">
+                    <a href="index.html">
+                        <img src="assets/images/logo-white.png" alt="CentralTradeHub" class="logo-img">
+                    </a>
+                </div>
+            </div>
             <div class="nav-logo">
                 <a href="index.html">
                     <img src="assets/images/logo.png" alt="CentralTradeHub">
@@ -197,8 +209,17 @@
 
     <!-- Main Trading Interface -->
     <div class="trading-container">
-        <!-- Left Sidebar -->
-        <div class="sidebar left-sidebar">
+        <!-- Mobile sidebar toggles -->
+        <div class="mobile-controls" style="display: none;">
+            <button class="mobile-sidebar-toggle" onclick="toggleSidebar('left')">
+                📊 Markets & Tools
+            </button>
+            <button class="mobile-sidebar-toggle" onclick="toggleSidebar('right')">
+                💼 Portfolio & Orders
+            </button>
+        </div>
+        
+        <div class="left-sidebar" id="leftSidebar">
             <!-- Account Summary -->
             <div class="account-summary">
                 <h3><i class="fas fa-wallet"></i> Account Summary</h3>
@@ -646,24 +667,48 @@
             handleResize(); // Initial check
         }
 
-        // Order form functionality
+        // Order form functionality with enhanced debugging
         document.addEventListener('click', function(e) {
             // Order type buttons
             if (e.target.classList.contains('order-type-btn')) {
                 document.querySelectorAll('.order-type-btn').forEach(btn => btn.classList.remove('active'));
                 e.target.classList.add('active');
+                console.log('Order type changed to:', e.target.dataset.type);
             }
             
-            // Order tabs
+            // Order tabs - Enhanced functionality
             if (e.target.classList.contains('order-tab')) {
                 document.querySelectorAll('.order-tab').forEach(tab => tab.classList.remove('active'));
                 e.target.classList.add('active');
                 
                 const limitOrder = document.querySelector('.limit-order');
-                if (e.target.dataset.type === 'limit' || e.target.dataset.type === 'stop') {
+                const orderType = e.target.dataset.type;
+                
+                console.log('Order tab changed to:', orderType);
+                
+                if (orderType === 'limit' || orderType === 'stop') {
                     limitOrder.style.display = 'block';
+                    // Make price field required for limit and stop orders
+                    const priceInput = document.getElementById('price-input');
+                    if (priceInput) {
+                        priceInput.required = true;
+                        priceInput.placeholder = orderType === 'limit' ? 'Enter limit price' : 'Enter stop price';
+                    }
                 } else {
                     limitOrder.style.display = 'none';
+                    // Remove price requirement for market orders
+                    const priceInput = document.getElementById('price-input');
+                    if (priceInput) {
+                        priceInput.required = false;
+                        priceInput.value = '';
+                    }
+                }
+                
+                // Update place order button text
+                const placeOrderBtn = document.getElementById('place-order-btn');
+                if (placeOrderBtn) {
+                    const actionType = document.querySelector('.order-type-btn.active')?.dataset.type || 'buy';
+                    placeOrderBtn.innerHTML = `<i class="fas fa-plus"></i> Place ${orderType.charAt(0).toUpperCase() + orderType.slice(1)} ${actionType.charAt(0).toUpperCase() + actionType.slice(1)} Order`;
                 }
             }
             

@@ -1214,9 +1214,43 @@
 }
 
 @media (max-width: 768px) {
+    .dashboard-body {
+        overflow-x: hidden;
+    }
+    
+    .dashboard-navbar {
+        padding: 0 1rem;
+    }
+    
+    .nav-container {
+        padding: 0;
+    }
+    
+    .nav-center {
+        display: none;
+    }
+    
+    .nav-actions {
+        gap: 0.5rem;
+    }
+    
+    .nav-actions .action-btn {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+    }
+    
     .dashboard-sidebar {
+        position: fixed;
+        top: 70px;
+        left: 0;
+        height: calc(100vh - 70px);
+        width: 280px;
         transform: translateX(-100%);
         transition: transform 0.3s ease;
+        z-index: 1000;
+        background: #1a1a2e;
+        border-right: 1px solid #2d2d44;
     }
     
     .dashboard-sidebar.mobile-open {
@@ -1225,44 +1259,91 @@
     
     .dashboard-main {
         margin-left: 0;
-        padding: 1.5rem;
-    }
-    
-    .nav-container {
-        padding: 0 1rem;
-    }
-    
-    .nav-center {
-        display: none;
+        padding: 1rem;
+        width: 100%;
+        min-height: calc(100vh - 70px);
     }
     
     .summary-cards {
         grid-template-columns: 1fr;
-        gap: 1.5rem;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .summary-card {
+        padding: 1.5rem;
     }
     
     .action-buttons {
         grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .action-btn {
+        padding: 1rem;
+        font-size: 0.9rem;
     }
     
     .section-header h2 {
-        font-size: 2rem;
+        font-size: 1.8rem;
+    }
+    
+    .portfolio-chart {
+        height: 300px;
+    }
+    
+    .positions-table {
+        font-size: 0.85rem;
+    }
+    
+    .positions-table th,
+    .positions-table td {
+        padding: 0.5rem 0.25rem;
+    }
+    
+    .market-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
     }
     
     .notification-panel {
         width: 100%;
         right: 0;
+        left: 0;
         border-radius: 0;
+        max-height: 70vh;
     }
 }
 
 @media (max-width: 480px) {
     .dashboard-main {
+        padding: 0.5rem;
+    }
+    
+    .summary-card {
         padding: 1rem;
     }
     
     .action-buttons {
         grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .section-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .portfolio-chart {
+        height: 250px;
+    }
+    
+    .positions-table {
+        font-size: 0.8rem;
+    }
+    
+    .balance-amount,
+    .equity-amount {
+        font-size: 1.5rem;
     }
     
     .market-grid {
@@ -1276,8 +1357,21 @@
     .analytics-cards {
         grid-template-columns: 1fr;
     }
-    
-    .section-header h2 {
-        font-size: 1.8rem;
+}
+
+/* Mobile Navigation Toggle */
+.mobile-menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: #ffffff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .mobile-menu-toggle {
+        display: block;
     }
 }
