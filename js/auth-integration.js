@@ -43,50 +43,36 @@ class AuthManager {
   }
 
   async login(email, password) {
-    const result = await FirebaseAuthService.signIn(email, password);
-    
-    if (result.success) {
-      // Update user state
-      this.isLoggedIn = true;
-      this.currentUser = result.user;
-      
-      this.showMessage('Login successful!', 'success');
-      // Fix: Use global closeModal function instead of this.closeModal
-      if (typeof closeModal === 'function') {
-        closeModal('loginModal');
-      }
-      
-      // Update UI immediately to hide login buttons
-      this.updateUI();
-      
-      // Check if user is admin and redirect accordingly
-      if (userData.isAdmin || userData.role === 'admin') {
-          console.log('Admin user detected, redirecting to admin panel');
-          // Show success message
-          this.showNotification('Welcome back, Admin!', 'success');
-          // Add redirect logic after successful login
-          setTimeout(() => {
-              window.location.href = 'admin.html';
-          }, 1500);
-      } else {
-          console.log('Regular user detected, redirecting to platform');
-          // Show success message
-          this.showNotification('Login successful! Redirecting to platform...', 'success');
-          // Redirect to platform page for regular users
-          setTimeout(() => {
-              window.location.href = 'platform.html';
-          }, 1500);
-      }
-      // Fix: Use global closeModal function instead of this.closeModal
-      if (typeof closeModal === 'function') {
-        closeModal('registerModal');
-      }
-      return true;
-    } else {
-      this.showMessage(result.message, 'error');
-      return false;
+    try {
+        this.showMessage('Signing in...', 'info');
+        
+        const result = await this.firebaseAuth.signInWithEmailAndPassword(email, password);
+        
+        this.showMessage('Login successful!', 'success');
+        
+        // Close modal if it exists
+        const modal = document.getElementById('authModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        
+        // Update UI
+        this.updateUIForAuthenticatedUser(result.user);
+        
+        // Redirect based on user role
+        const userDoc = await this.databaseService.getUserProfile(result.user.uid);
+        if (userDoc && userDoc.role === 'admin') {
+            window.location.href = 'admin.html';
+        } else {
+            // Redirect to dashboard instead of platform
+            window.location.href = 'dashboard.html';
+        }
+        
+    } catch (error) {
+        console.error('Login error:', error);
+        this.showMessage(this.getErrorMessage(error.code), 'error');
     }
-  }
+}
 
   async register(formData) {
     try {
