@@ -60,22 +60,27 @@ class AuthManager {
       this.updateUI();
       
       // Check if user is admin and redirect accordingly
-      const adminEmails = [
-        'admin@centraltradehub.com',
-        'owner@centraltradehub.com'
-      ];
-      
-      const isAdmin = adminEmails.includes(result.user.email);
-      
-      // Add redirect logic after successful login
-      setTimeout(() => {
-        if (isAdmin) {
-          window.location.href = 'admin.html';
-        } else {
-          window.location.href = 'index.html';
-        }
-      }, 1500);
-      
+      if (userData.isAdmin || userData.role === 'admin') {
+          console.log('Admin user detected, redirecting to admin panel');
+          // Show success message
+          this.showNotification('Welcome back, Admin!', 'success');
+          // Add redirect logic after successful login
+          setTimeout(() => {
+              window.location.href = 'admin.html';
+          }, 1500);
+      } else {
+          console.log('Regular user detected, redirecting to platform');
+          // Show success message
+          this.showNotification('Login successful! Redirecting to platform...', 'success');
+          // Redirect to platform page for regular users
+          setTimeout(() => {
+              window.location.href = 'platform.html';
+          }, 1500);
+      }
+      // Fix: Use global closeModal function instead of this.closeModal
+      if (typeof closeModal === 'function') {
+        closeModal('registerModal');
+      }
       return true;
     } else {
       this.showMessage(result.message, 'error');

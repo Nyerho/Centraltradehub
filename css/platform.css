@@ -133,9 +133,9 @@
 }
 
 .comprehensive-dropdown {
-    position: relative; /* Changed from absolute to relative */
-    top: 0; /* Reset top positioning */
-    right: auto; /* Reset right positioning */
+    position: absolute;
+    top: 100%;
+    right: 0;
     width: 320px;
     background: #1a1a2e;
     border: 1px solid #2d2d44;
@@ -144,18 +144,16 @@
     z-index: 1000;
     opacity: 0;
     visibility: hidden;
-    max-height: 0; /* Start with 0 height */
-    overflow: hidden; /* Hide content when collapsed */
+    transform: translateY(-10px);
     transition: all 0.3s ease;
     backdrop-filter: blur(10px);
-    margin-top: 0.5rem; /* Add some spacing from the user info */
+    margin-top: 0.5rem;
 }
 
 .comprehensive-dropdown.show {
     opacity: 1;
     visibility: visible;
-    max-height: 80vh; /* Expand to full height */
-    overflow-y: auto; /* Allow scrolling when expanded */
+    transform: translateY(0);
 }
 
 .dropdown-section {

@@ -79,6 +79,7 @@ body {
     display: flex;
     gap: 0.75rem;
     align-items: center;
+    position: relative;
 }
 
 .btn-login {
@@ -124,13 +125,10 @@ body {
 }
 
 .user-menu {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 15px;
-    padding: 8px 16px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 25px;
-    backdrop-filter: blur(10px);
+    gap: 0.5rem;
 }
 
 .user-welcome {
@@ -142,6 +140,20 @@ body {
 .user-name {
     font-weight: 600;
     color: #00d4ff;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+
+.user-info:hover {
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 .btn-logout {
@@ -1061,45 +1073,53 @@ body {
     margin: 0 auto;
 }
 
-.next-card {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 20px;
-    padding: 40px 30px;
+.nnext-card {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border: 1px solid #2d2d44;
+    border-radius: 12px;
+    padding: 2rem;
     text-align: center;
     transition: all 0.3s ease;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
+    cursor: pointer;
+    display: block;
+    text-decoration: none;
+    color: inherit;
 }
 
 .next-card:hover {
-    transform: translateY(-10px);
-    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-5px);
     border-color: #00d4ff;
-    box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
+    box-shadow: 0 10px 30px rgba(0, 212, 255, 0.2);
+    background: linear-gradient(135deg, #003d4d, #001a1f);
 }
 
 .next-card .card-icon {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #00d4ff, #0099cc);
+    margin-bottom: 1.5rem;
 }
 
 .next-card .card-image {
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
     object-fit: contain;
+    filter: brightness(0) invert(1);
+    transition: all 0.3s ease;
+}
+
+.next-card:hover .card-image {
+    filter: brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(180deg);
+    transform: scale(1.1);
 }
 
 .next-card h3 {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     color: #ffffff;
     margin: 0;
     font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.next-card:hover h3 {
+    color: #00d4ff;
 }
 
 @media (max-width: 768px) {
