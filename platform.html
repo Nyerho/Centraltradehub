@@ -68,24 +68,110 @@
 
             <!-- Navigation Buttons -->
             <div class="nav-buttons">
-                <a href="funding.html" class="btn-funding">💰 Fund Account</a>
+                <!-- Remove standalone funding button -->
             </div>
 
-            <!-- User Menu -->
+            <!-- Enhanced User Menu with Comprehensive Dropdown -->
             <div class="user-menu">
-                <div class="user-info">
+                <div class="user-info" onclick="toggleUserDropdown()">
                     <img src="assets/images/user-avatar.png" alt="User" class="user-avatar">
                     <span class="user-name">John Doe</span>
-                    <i class="fas fa-chevron-down"></i>
+                    <div class="hamburger-icon">
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                    </div>
                 </div>
-                <div class="dropdown-menu">
-                    <a href="#" class="dropdown-item">
-                        <i class="fas fa-user"></i> Profile
-                    </a>
-                    <a href="#" class="dropdown-item">
-                        <i class="fas fa-cog"></i> Settings
-                    </a>
-                    <a href="#" class="dropdown-item" id="logout-btn">
+                <div class="comprehensive-dropdown" id="userDropdown">
+                    <!-- Account Section -->
+                    <div class="dropdown-section">
+                        <div class="section-header">
+                            <i class="fas fa-user-circle"></i>
+                            <span>Account</span>
+                        </div>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-user"></i> My Profile
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-chart-line"></i> Account Statement
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-history"></i> Trading History
+                        </a>
+                    </div>
+                    
+                    <!-- Funding Section -->
+                    <div class="dropdown-section">
+                        <div class="section-header">
+                            <i class="fas fa-wallet"></i>
+                            <span>Funding</span>
+                        </div>
+                        <a href="funding.html" class="dropdown-item highlight">
+                            <i class="fas fa-plus-circle"></i> Fund Account
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-minus-circle"></i> Withdraw Funds
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-exchange-alt"></i> Transfer Funds
+                        </a>
+                    </div>
+                    
+                    <!-- Trading Section -->
+                    <div class="dropdown-section">
+                        <div class="section-header">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Trading</span>
+                        </div>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-list-alt"></i> Open Positions
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-clock"></i> Pending Orders
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-calculator"></i> Trading Calculator
+                        </a>
+                    </div>
+                    
+                    <!-- Tools Section -->
+                    <div class="dropdown-section">
+                        <div class="section-header">
+                            <i class="fas fa-tools"></i>
+                            <span>Tools & Settings</span>
+                        </div>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-cog"></i> Platform Settings
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-bell"></i> Notifications
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-download"></i> Download Reports
+                        </a>
+                    </div>
+                    
+                    <!-- Support Section -->
+                    <div class="dropdown-section">
+                        <div class="section-header">
+                            <i class="fas fa-life-ring"></i>
+                            <span>Support</span>
+                        </div>
+                        <a href="index.html#contact" class="dropdown-item">
+                            <i class="fas fa-headset"></i> Contact Support
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-question-circle"></i> Help Center
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-book"></i> Trading Guide
+                        </a>
+                    </div>
+                    
+                    <div class="dropdown-divider"></div>
+                    
+                    <!-- Logout -->
+                    <a href="#" class="dropdown-item logout-item" id="logout-btn">
                         <i class="fas fa-sign-out-alt"></i> Logout
                     </a>
                 </div>
@@ -619,6 +705,43 @@
                 positionsList.querySelector('.empty-state').style.display = 'block';
             }
         }
+    </script>
+
+    <script>
+    // Enhanced dropdown functionality
+    function toggleUserDropdown() {
+        const dropdown = document.getElementById('userDropdown');
+        dropdown.classList.toggle('show');
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        const userMenu = document.querySelector('.user-menu');
+        const dropdown = document.getElementById('userDropdown');
+        
+        if (!userMenu.contains(event.target)) {
+            dropdown.classList.remove('show');
+        }
+    });
+    
+    // Close dropdown on escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            document.getElementById('userDropdown').classList.remove('show');
+        }
+    });
+    
+    // Enhanced logout functionality
+    document.getElementById('logout-btn').addEventListener('click', function(e) {
+        e.preventDefault();
+        if (confirm('Are you sure you want to logout?')) {
+            firebase.auth().signOut().then(() => {
+                window.location.href = 'auth.html';
+            }).catch((error) => {
+                console.error('Logout error:', error);
+            });
+        }
+    });
     </script>
 </body>
 </html>
