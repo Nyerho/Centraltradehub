@@ -1048,7 +1048,64 @@ class TradingPlatform {
         this.currentSymbol = symbol;
         document.querySelector('.chart-header h2').textContent = symbol;
         this.updateOrderButton();
-        this.renderChart();
+        this.updateChartSymbol(symbol);
+    }
+    
+    // Function to update chart symbol
+    updateChartSymbol(symbol) {
+        // For TradingView widget, we need to reload with new symbol
+        const chartContainer = document.getElementById('trading-chart');
+        const symbolMap = {
+            'EURUSD': 'FX:EURUSD',
+            'GBPUSD': 'FX:GBPUSD',
+            'USDJPY': 'FX:USDJPY',
+            'USDCHF': 'FX:USDCHF',
+            'AUDUSD': 'FX:AUDUSD',
+            'USDCAD': 'FX:USDCAD',
+            'NZDUSD': 'FX:NZDUSD'
+        };
+        
+        const tvSymbol = symbolMap[symbol] || 'FX:EURUSD';
+        
+        // Recreate TradingView widget with new symbol
+        chartContainer.innerHTML = `
+            <div class="tradingview-widget-container" style="height:100%;width:100%">
+              <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+              {
+              "autosize": true,
+              "symbol": "${tvSymbol}",
+              "interval": "15",
+              "timezone": "Etc/UTC",
+              "theme": "dark",
+              "style": "1",
+              "locale": "en",
+              "enable_publishing": false,
+              "backgroundColor": "rgba(19, 23, 34, 1)",
+              "gridColor": "rgba(42, 46, 57, 0.5)",
+              "hide_top_toolbar": false,
+              "hide_legend": false,
+              "save_image": false,
+              "calendar": false,
+              "hide_volume": false,
+              "support_host": "https://www.tradingview.com"
+              }
+              </script>
+            </div>
+        `;
+    }
+    
+    // Update symbol selector event listener
+    setupSymbolSelector() {
+        const symbolSelector = document.getElementById('symbol-selector');
+        if (symbolSelector) {
+            symbolSelector.addEventListener('change', (e) => {
+                const selectedSymbol = e.target.value;
+                this.currentSymbol = selectedSymbol;
+                this.updateChartSymbol(selectedSymbol);
+                this.loadMarketData(selectedSymbol);
+            });
+        }
     }
 
     updateOrderButton() {
