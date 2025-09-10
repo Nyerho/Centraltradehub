@@ -140,8 +140,8 @@
     background: #1a1a2e;
     border: 1px solid #2d2d44;
     border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    z-index: 1000;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    z-index: 9999;
     opacity: 0;
     visibility: hidden;
     transform: translateY(-10px);
@@ -159,6 +159,7 @@
 .dropdown-section {
     padding: 0.75rem 0;
     border-bottom: 1px solid rgba(45, 45, 68, 0.5);
+    background: transparent;
 }
 
 .dropdown-section:last-child {
@@ -176,6 +177,7 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 0.25rem;
+    background: transparent;
 }
 
 .dropdown-item {
@@ -189,6 +191,7 @@
     font-size: 0.9rem;
     margin: 0 0.5rem;
     border-radius: 6px;
+    background: transparent;
 }
 
 .dropdown-item:hover {
@@ -234,24 +237,41 @@
     color: #ff6b6b !important;
 }
 
-/* Adjust navbar to accommodate dropdown expansion */
+/* Fix navbar positioning - ensure it stays fixed */
 .navbar {
-    transition: all 0.3s ease;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    background: #1a1a2e !important;
+    z-index: 1000;
+    transition: none;
 }
 
+.platform-nav {
+    background: #1a1a2e !important;
+    border-bottom: 1px solid #2d2d44;
+}
+
+/* Remove the problematic dropdown-open classes */
 .navbar.dropdown-open {
-    position: relative; /* Change from fixed to relative when dropdown is open */
+    position: fixed !important; /* Keep fixed positioning always */
 }
 
-/* Adjust body padding when dropdown is open */
 .platform-body.dropdown-open {
-    padding-top: 0; /* Remove padding when navbar becomes relative */
+    padding-top: 70px !important; /* Maintain padding always */
 }
 
-/* Alternative approach: Keep navbar fixed but add space for dropdown */
-.navbar.dropdown-expanded {
-    height: auto; /* Allow navbar to expand */
-    min-height: 70px;
+/* Ensure nav container maintains proper layout */
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: transparent;
 }
 
 /* Custom Scrollbar for Dropdown */
@@ -708,16 +728,21 @@
     gap: 0.5rem;
     padding: 0.5rem 1rem;
     background: rgba(40, 167, 69, 0.1);
+    border: 1px solid rgba(40, 167, 69, 0.3);
     border-radius: 20px;
-    border: 1px solid #28a745;
+    font-size: 0.85rem;
 }
 
-.status-dot {
+.status-indicator {
     width: 8px;
     height: 8px;
     border-radius: 50%;
     background: #28a745;
     animation: pulse 2s infinite;
+}
+
+.status-indicator.active {
+    background: #28a745;
 }
 
 @keyframes pulse {
@@ -729,7 +754,6 @@
 .status-text {
     color: #28a745;
     font-weight: 500;
-    font-size: 0.9rem;
 }
 
 /* Quick Actions */
