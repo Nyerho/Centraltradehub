@@ -19,6 +19,13 @@ class DashboardManager {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
                 const section = item.dataset.section;
+                
+                // Special handling for trading section
+                if (section === 'trading') {
+                    window.open('platform.html', '_blank');
+                    return;
+                }
+                
                 this.switchSection(section);
             });
         });
@@ -213,12 +220,19 @@ window.closePosition = (symbol) => {
 
 window.handleLogout = async () => {
     try {
-        if (typeof firebase !== 'undefined') {
-            await firebase.auth().signOut();
+        if (window.authManager) {
+            await window.authManager.logout();
+        } else {
+            // Fallback if authManager is not available
+            if (typeof firebase !== 'undefined') {
+                await firebase.auth().signOut();
+            }
             window.location.href = 'index.html';
         }
     } catch (error) {
         console.error('Error logging out:', error);
+        // Force redirect even if logout fails
+        window.location.href = 'index.html';
     }
 };
 
