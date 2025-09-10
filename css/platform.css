@@ -88,6 +88,7 @@
     align-items: center;
     gap: 0.5rem;
     cursor: pointer;
+    z-index: 1001;
 }
 
 .user-info {
@@ -133,9 +134,9 @@
 }
 
 .comprehensive-dropdown {
-    position: absolute;
-    top: 100%;
-    right: 0;
+    position: fixed;
+    top: 70px;
+    right: 20px;
     width: 320px;
     background: #1a1a2e;
     border: 1px solid #2d2d44;
@@ -247,6 +248,7 @@
     background: #1a1a2e !important;
     z-index: 1000;
     transition: none;
+    height: 70px;
 }
 
 .platform-nav {
@@ -272,6 +274,7 @@
     justify-content: space-between;
     align-items: center;
     background: transparent;
+    height: 100%;
 }
 
 /* Custom Scrollbar for Dropdown */
