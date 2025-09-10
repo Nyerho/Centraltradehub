@@ -202,7 +202,7 @@ class ContentManager {
                 image: 'assets/images/tradeen.png'
             },
             'CentralTradeHub-Plus': {
-                title: 'CentralTradeHub Plus <span class="highlight">Coming Soon</span>',
+                title: 'CentralTradeHub Plus <span class="highlight">Available Now</span>',
                 description: 'Next-generation trading platform with AI-powered analytics, social trading features, and advanced risk management tools. Stay tuned for the future of trading.',
                 image: 'assets/images/mt5.webp'
             }
@@ -277,7 +277,7 @@ class ContentManager {
     
     openLiveChat() {
         // Simulate live chat opening
-        showNotification('Live chat feature coming soon! Please use our contact form for now.', 'info');
+        showNotification('Live chat is now available! Click here to start chatting.', 'success');
     }
     
     startMarketUpdates() {

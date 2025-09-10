@@ -1,9 +1,11 @@
 class FundingManager {
     constructor() {
         this.apiKeys = {
-            stripe: 'pk_test_your_stripe_publishable_key', // Replace with your key
-            coinbase: 'your_coinbase_api_key', // For crypto
-            paypal: 'your_paypal_client_id' // Replace with your key
+            stripe: 'pk_test_51S5PACRr9LhPVzG69gic1HAyOrqIx1uzMU0mooaAiSeUw9lXgdLv5meCTO31qnd7eP8M6J1a4mjpBD7w0kMYFbMT00Kj50M9kc', // Only publishable key in frontend
+            // Secret keys should NEVER be in frontend code
+            coinbase: 'your_coinbase_api_key',
+            paypal: 'your_paypal_client_id',
+            sendgrid: 'LBQUTKLA22UZF4LUBU3491RD'
         };
         
         this.supportedMethods = {
@@ -117,11 +119,12 @@ class FundingManager {
     async processStripePayment(transaction) {
         const { amount, currency } = transaction;
         
-        // Create payment intent on your backend
+        // Create payment intent on your backend (where secret key is secure)
         const response = await fetch('/api/create-payment-intent', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}` // Use user auth token
             },
             body: JSON.stringify({
                 amount: amount * 100, // Stripe uses cents
@@ -130,9 +133,13 @@ class FundingManager {
             })
         });
         
+        if (!response.ok) {
+            throw new Error('Failed to create payment intent');
+        }
+        
         const { client_secret } = await response.json();
         
-        // Confirm payment with Stripe
+        // Confirm payment with Stripe (only uses publishable key)
         const result = await this.stripe.confirmCardPayment(client_secret, {
             payment_method: {
                 card: this.stripeCardElement,

@@ -4,7 +4,7 @@ class APIConfig {
         this.apis = {
             alphaVantage: {
                 baseUrl: 'https://www.alphavantage.co/query',
-                apiKey: 'LE40KTV79FF43Z0I', // Direct API key
+                apiKey: 'ADRGNOMDU7WHDIST', // Updated with your real API key
                 rateLimit: 5, // requests per minute for free tier
                 endpoints: {
                     quote: 'GLOBAL_QUOTE',
@@ -15,7 +15,7 @@ class APIConfig {
             },
             polygon: {
                 baseUrl: 'https://api.polygon.io',
-                apiKey: '3YvkpVuZ9UWlVYGcpEYCnHqNWVt2UQtG', // Direct API key
+                apiKey: '3YvkpVuZ9UWlVYGcpEYCnHqNWVt2UQtG', // Updated with your real API key
                 rateLimit: 1000, // requests per minute
                 endpoints: {
                     quote: '/v2/last/trade',
@@ -27,13 +27,21 @@ class APIConfig {
             finnhub: {
                 baseUrl: 'https://finnhub.io/api/v1',
                 wsUrl: 'wss://ws.finnhub.io',
-                apiKey: 'd2t106pr01qkuv3iqti0d2t106pr01qkuv3iqtig', // Direct API key
+                apiKey: 'd2t106pr01qkuv3iqti0d2t106pr01qkuv3iqtig', // Updated with your real API key
                 rateLimit: 60, // requests per minute for free tier
                 endpoints: {
                     quote: '/quote',
                     candles: '/stock/candle',
                     forex: '/forex/rates',
                     crypto: '/crypto/candle'
+                }
+            },
+            sendgrid: {
+                baseUrl: 'https://api.sendgrid.com/v3',
+                apiKey: 'LBQUTKLA22UZF4LUBU3491RD', // Added SendGrid API key
+                endpoints: {
+                    send: '/mail/send',
+                    templates: '/templates'
                 }
             },
             metaApi: {
@@ -50,9 +58,16 @@ class APIConfig {
 
     // Secure API key retrieval
     getApiKey(keyName) {
-        // For Alpha Vantage, return the provided key directly
-        if (keyName === 'ALPHA_VANTAGE_API_KEY') {
-            return 'LE40KTV79FF43Z0I';
+        // Updated API key mappings
+        const keyMappings = {
+            'ALPHA_VANTAGE_API_KEY': 'ADRGNOMDU7WHDIST',
+            'FINNHUB_API_KEY': 'd2t106pr01qkuv3iqti0d2t106pr01qkuv3iqtig',
+            'POLYGON_API_KEY': '3YvkpVuZ9UWlVYGcpEYCnHqNWVt2UQtG',
+            'SENDGRID_API_KEY': 'LBQUTKLA22UZF4LUBU3491RD'
+        };
+        
+        if (keyMappings[keyName]) {
+            return keyMappings[keyName];
         }
         
         // In production, use environment variables or secure storage

@@ -11,12 +11,22 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# API Keys and Secrets
+*.key
+*.pem
+config/secrets.json
+
+# Build outputs
+build/
+dist/
+*.tgz
+*.tar.gz
+
 # IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
 
 # OS generated files
 .DS_Store
