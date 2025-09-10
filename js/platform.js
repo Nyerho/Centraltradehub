@@ -1,4 +1,6 @@
 // Advanced Trading Platform JavaScript
+import userProfileService from './user-profile-service.js';
+
 class TradingPlatform {
     constructor() {
         this.currentSymbol = 'EUR/USD';
@@ -28,6 +30,7 @@ class TradingPlatform {
         // Initialize market data service
         this.marketDataService = new MarketDataService();
         this.realTimeData = new Map();
+        this.userProfileService = userProfileService;
     }
 
     async init() {
@@ -48,6 +51,9 @@ class TradingPlatform {
         
         // Subscribe to current symbol updates
         this.subscribeToSymbol(this.currentSymbol);
+        
+        // Initialize user profile integration
+        await this.initializeUserProfile();
     }
     
     // Load initial market data
@@ -1113,6 +1119,30 @@ class TradingPlatform {
                 document.body.removeChild(notification);
             }, 300);
         }, 3000);
+    }
+    
+    // New method for user profile integration
+    async initializeUserProfile() {
+        // Wait for user to be loaded
+        if (userProfileService.isUserLoggedIn()) {
+            const profile = userProfileService.getCurrentUserProfile();
+            if (profile) {
+                // Update portfolio with real user data
+                this.portfolio = {
+                    balance: profile.balance || 0,
+                    equity: profile.equity || 0,
+                    margin: profile.margin || 0,
+                    freeMargin: profile.freeMargin || 0,
+                    marginLevel: profile.marginLevel || 0,
+                    totalPnL: profile.totalPnL || 0
+                };
+                
+                this.updatePortfolioDisplay();
+            }
+        } else {
+            // Redirect to login if not authenticated
+            window.location.href = 'auth.html';
+        }
     }
 
     // Enhanced order form handling

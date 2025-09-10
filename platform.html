@@ -89,13 +89,16 @@
                             <i class="fas fa-user-circle"></i>
                             <span>Account</span>
                         </div>
-                        <a href="#" class="dropdown-item">
+                        <a href="profile.html" class="dropdown-item">
                             <i class="fas fa-user"></i> My Profile
                         </a>
-                        <a href="#" class="dropdown-item">
-                            <i class="fas fa-chart-line"></i> Account Statement
+                        <a href="profile.html#account-settings" class="dropdown-item">
+                            <i class="fas fa-cog"></i> Account Settings
                         </a>
-                        <a href="#" class="dropdown-item">
+                        <a href="profile.html#transaction-history" class="dropdown-item">
+                            <i class="fas fa-receipt"></i> Account Statement
+                        </a>
+                        <a href="profile.html#trading-history" class="dropdown-item">
                             <i class="fas fa-history"></i> Trading History
                         </a>
                     </div>
@@ -109,10 +112,10 @@
                         <a href="funding.html" class="dropdown-item highlight">
                             <i class="fas fa-plus-circle"></i> Fund Account
                         </a>
-                        <a href="#" class="dropdown-item">
+                        <a href="#" class="dropdown-item" onclick="openWithdrawalModal()">
                             <i class="fas fa-minus-circle"></i> Withdraw Funds
                         </a>
-                        <a href="#" class="dropdown-item">
+                        <a href="#" class="dropdown-item" onclick="openTransferModal()">
                             <i class="fas fa-exchange-alt"></i> Transfer Funds
                         </a>
                     </div>
@@ -120,36 +123,40 @@
                     <!-- Trading Section -->
                     <div class="dropdown-section">
                         <div class="section-header">
-                            <i class="fas fa-chart-bar"></i>
+                            <i class="fas fa-chart-line"></i>
                             <span>Trading</span>
                         </div>
-                        <a href="#" class="dropdown-item">
-                            <i class="fas fa-list-alt"></i> Open Positions
+                        <a href="#" class="dropdown-item" onclick="showOpenPositions()">
+                            <i class="fas fa-chart-area"></i> Open Positions
                         </a>
-                        <a href="#" class="dropdown-item">
+                        <a href="#" class="dropdown-item" onclick="showPendingOrders()">
                             <i class="fas fa-clock"></i> Pending Orders
                         </a>
-                        <a href="#" class="dropdown-item">
+                        <a href="#" class="dropdown-item" onclick="openTradingCalculator()">
                             <i class="fas fa-calculator"></i> Trading Calculator
                         </a>
                     </div>
                     
-                    <!-- Tools Section -->
+                    <!-- Tools & Settings Section -->
                     <div class="dropdown-section">
                         <div class="section-header">
                             <i class="fas fa-tools"></i>
                             <span>Tools & Settings</span>
                         </div>
-                        <a href="#" class="dropdown-item">
-                            <i class="fas fa-cog"></i> Platform Settings
+                        <a href="profile.html#account-settings" class="dropdown-item">
+                            <i class="fas fa-sliders-h"></i> Platform Settings
                         </a>
-                        <a href="#" class="dropdown-item">
+                        <a href="#" class="dropdown-item" onclick="toggleNotifications()">
                             <i class="fas fa-bell"></i> Notifications
                         </a>
-                        <a href="#" class="dropdown-item">
+                        <a href="#" class="dropdown-item" onclick="downloadReports()">
                             <i class="fas fa-download"></i> Download Reports
                         </a>
+                        <a href="#" class="dropdown-item" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
                     </div>
+                </div>
                     
                     <!-- Support Section -->
                     <div class="dropdown-section">
