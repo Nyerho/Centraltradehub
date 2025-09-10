@@ -149,42 +149,37 @@ class AuthManager {
 
   async logout() {
     try {
-      const result = await FirebaseAuthService.signOut();
+      await FirebaseAuthService.logout();
+      this.showMessage('Logged out successfully!', 'success');
       
-      if (result.success) {
-        // Update local state
-        this.isLoggedIn = false;
-        this.currentUser = null;
-        
-        // Update UI immediately
-        this.updateUI();
-        
-        this.showMessage('Logged out successfully!', 'success');
-        
-        // Clear any stored data
-        localStorage.clear();
-        sessionStorage.clear();
-        
-        // Redirect to home page after a short delay
-        setTimeout(() => {
-          window.location.href = 'index.html';
-        }, 1000);
-      } else {
-        throw new Error('Logout failed');
-      }
+      // Redirect to home page
+      window.location.href = 'index.html';
     } catch (error) {
       console.error('Logout error:', error);
-      // Force logout even if Firebase fails
-      this.isLoggedIn = false;
-      this.currentUser = null;
-      this.updateUI();
-      localStorage.clear();
-      sessionStorage.clear();
-      window.location.href = 'index.html';
+      this.showMessage('Error logging out. Please try again.', 'error');
     }
   }
 
-  updateUI() {
+  // Add the missing getErrorMessage method
+  getErrorMessage(errorCode) {
+    const errorMessages = {
+      'auth/user-not-found': 'No account found with this email address.',
+      'auth/wrong-password': 'Incorrect password. Please try again.',
+      'auth/invalid-email': 'Please enter a valid email address.',
+      'auth/user-disabled': 'This account has been disabled.',
+      'auth/too-many-requests': 'Too many failed attempts. Please try again later.',
+      'auth/network-request-failed': 'Network error. Please check your internet connection.',
+      'auth/invalid-credential': 'Invalid email or password. Please check your credentials.',
+      'auth/email-already-in-use': 'This email is already registered.',
+      'auth/weak-password': 'Password is too weak. Please use at least 6 characters.',
+      'auth/operation-not-allowed': 'Email/password accounts are not enabled.',
+      'auth/requires-recent-login': 'Please log in again to complete this action.'
+    };
+    
+    return errorMessages[errorCode] || 'An unexpected error occurred. Please try again.';
+  }
+
+  updateUIForAuthenticatedUser(user) {
     // Get all login-related buttons with different classes - EXPANDED SELECTORS
     const loginButtons = document.querySelectorAll('.btn-login, .btn-login-account, .login-btn, .btn-secondary[href="auth.html"], .trade-btn[href="auth.html"]');
     const registerButtons = document.querySelectorAll('.btn-register, .btn-primary[href="auth.html#register"], .btn-start-trading, .btn-primary[href="auth.html"], .trade-btn, a[href="auth.html#register"]');
