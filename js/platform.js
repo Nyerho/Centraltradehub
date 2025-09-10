@@ -49,6 +49,64 @@ class TradingPlatform {
         // Subscribe to current symbol updates
         this.subscribeToSymbol(this.currentSymbol);
     }
+    
+    // Load initial market data
+    async loadInitialData() {
+        try {
+            // Load real market data for watchlist symbols
+            const symbols = ['EUR/USD', 'GBP/USD', 'USD/JPY', 'BTC/USD', 'ETH/USD', 'XAU/USD'];
+            
+            for (const symbol of symbols) {
+                await this.loadSymbolData(symbol);
+            }
+            
+            // Update market overview with real data
+            await this.updateMarketOverview();
+            
+        } catch (error) {
+            console.error('Error loading initial data:', error);
+            this.showNotification('Using demo data - API connection failed', 'warning');
+        }
+    }
+    
+    // Load real data for a specific symbol
+    async loadSymbolData(symbol) {
+        try {
+            const data = await this.marketDataService.getQuote(symbol);
+            if (data) {
+                this.realTimeData.set(symbol, data);
+                this.updateWatchlistItem(data);
+            }
+        } catch (error) {
+            console.error(`Error loading data for ${symbol}:`, error);
+        }
+    }
+    
+    // Update market overview with real indices data
+    async updateMarketOverview() {
+        try {
+            const indices = {
+                'SPX': 'sp500',
+                'IXIC': 'nasdaq', 
+                'DJI': 'dow',
+                'VIX': 'vix'
+            };
+            
+            for (const [symbol, key] of Object.entries(indices)) {
+                const data = await this.marketDataService.getQuote(symbol);
+                if (data) {
+                    this.marketOverview[key] = {
+                        value: data.price,
+                        change: data.changePercent
+                    };
+                }
+            }
+            
+            this.updateMarketOverviewDisplay();
+        } catch (error) {
+            console.error('Error updating market overview:', error);
+        }
+    }
 
     // Subscribe to real-time updates for a symbol
     subscribeToSymbol(symbol) {
@@ -832,25 +890,152 @@ class TradingPlatform {
         this.showNotification('All orders cancelled', 'info');
     }
 
-    updateAccountInfo() {
-        // Update balance display
-        const balanceEl = document.querySelector('.balance .value');
-        if (balanceEl) {
-            balanceEl.textContent = `$${this.portfolio.balance.toLocaleString()}`;
+    async updateAccountInfo() {
+        try {
+            // Get user data from authentication service
+            const userData = await this.getUserData();
+            const accountData = await this.getAccountData();
+            
+            // Update user name
+            const userNameEl = document.getElementById('current-user-name');
+            if (userNameEl && userData) {
+                userNameEl.textContent = userData.displayName || userData.firstName + ' ' + userData.lastName;
+            }
+            
+            // Update account balance and portfolio data
+            if (accountData) {
+                this.portfolio = {
+                    balance: accountData.balance || 0,
+                    equity: accountData.equity || accountData.balance || 0,
+                    margin: accountData.margin || 0,
+                    freeMargin: accountData.freeMargin || accountData.balance || 0,
+                    marginLevel: accountData.marginLevel || 0,
+                    totalPnL: accountData.totalPnL || 0
+                };
+                
+                this.updatePortfolioDisplay();
+            }
+        } catch (error) {
+            console.error('Error updating account info:', error);
+            // Fallback to demo data
+            this.setDemoAccountData();
         }
-
+    }
+    
+    // Get user data from authentication service
+    async getUserData() {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            return this.getDemoUserData();
+        }
+        
+        try {
+            const response = await fetch('/api/user/profile', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                return await response.json();
+            }
+        } catch (error) {
+            console.error('Error fetching user data:', error);
+        }
+        
+        return this.getDemoUserData();
+    }
+    
+    // Get account data from trading service
+    async getAccountData() {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            return this.portfolio; // Use demo data
+        }
+        
+        try {
+            const response = await fetch('/api/account/summary', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                return await response.json();
+            }
+        } catch (error) {
+            console.error('Error fetching account data:', error);
+        }
+        
+        return this.portfolio; // Fallback to demo data
+    }
+    
+    // Demo user data for development/testing
+    getDemoUserData() {
+        return {
+            displayName: 'Demo Trader',
+            firstName: 'Demo',
+            lastName: 'Trader',
+            email: 'demo@centraltrading.com',
+            accountType: 'Demo'
+        };
+    }
+    
+    // Set demo account data
+    setDemoAccountData() {
+        const userNameEl = document.getElementById('current-user-name');
+        if (userNameEl) {
+            userNameEl.textContent = 'Demo Trader';
+        }
+        
+        this.updatePortfolioDisplay();
+    }
+    
+    // Update portfolio display with current data
+    updatePortfolioDisplay() {
+        const elements = {
+            'account-balance': this.formatCurrency(this.portfolio.balance),
+            'account-equity': this.formatCurrency(this.portfolio.equity),
+            'account-margin': this.formatCurrency(this.portfolio.margin),
+            'account-free-margin': this.formatCurrency(this.portfolio.freeMargin)
+        };
+        
+        Object.entries(elements).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value;
+                element.classList.remove('loading');
+            }
+        });
+        
         // Update P&L display
         const pnlEl = document.querySelector('.pnl .value');
         if (pnlEl) {
             pnlEl.textContent = `$${this.portfolio.totalPnL.toFixed(2)}`;
             pnlEl.className = `value ${this.portfolio.totalPnL >= 0 ? 'positive' : 'negative'}`;
         }
-
-        // Update equity display
+        
+        // Update legacy elements for backward compatibility
+        const balanceEl = document.querySelector('.balance .value');
+        if (balanceEl) {
+            balanceEl.textContent = `$${this.portfolio.balance.toLocaleString()}`;
+        }
+        
         const equityEl = document.querySelector('.equity .value');
         if (equityEl) {
             equityEl.textContent = `$${this.portfolio.equity.toLocaleString()}`;
         }
+    }
+    
+    // Format currency values
+    formatCurrency(amount) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 2
+        }).format(amount || 0);
     }
 
     switchSymbol(symbol) {

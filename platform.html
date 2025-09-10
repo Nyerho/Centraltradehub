@@ -75,7 +75,7 @@
             <div class="user-menu">
                 <div class="user-info" onclick="toggleUserDropdown()">
                     <img src="assets/images/user-avatar.png" alt="User" class="user-avatar">
-                    <span class="user-name">John Doe</span>
+                    <span class="user-name" id="current-user-name">Loading...</span>
                     <div class="hamburger-icon">
                         <span class="bar"></span>
                         <span class="bar"></span>
@@ -768,4 +768,25 @@
     </script>
 </body>
 </html>
+
+<!-- Account Summary with Real Data -->
+<div class="account-summary">
+    <h3>Account Summary</h3>
+    <div class="summary-item">
+        <span class="label">Balance:</span>
+        <span class="value" id="account-balance">Loading...</span>
+    </div>
+    <div class="summary-item">
+        <span class="label">Equity:</span>
+        <span class="value" id="account-equity">Loading...</span>
+    </div>
+    <div class="summary-item">
+        <span class="label">Margin:</span>
+        <span class="value" id="account-margin">Loading...</span>
+    </div>
+    <div class="summary-item">
+        <span class="label">Free Margin:</span>
+        <span class="value" id="account-free-margin">Loading...</span>
+    </div>
+</div>
 
