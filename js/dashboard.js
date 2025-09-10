@@ -1,16 +1,89 @@
-// Dashboard functionality
+// Dashboard functionality with real user data
 class DashboardManager {
     constructor() {
         this.currentSection = 'overview';
         this.portfolioChart = null;
+        this.userProfileService = null;
         this.init();
     }
 
     init() {
+        this.initializeUserProfileService();
         this.setupEventListeners();
-        this.loadUserData();
         this.initializeChart();
         this.startRealTimeUpdates();
+    }
+
+    async initializeUserProfileService() {
+        // Import and initialize user profile service
+        try {
+            const { UserProfileService } = await import('./user-profile-service.js');
+            this.userProfileService = new UserProfileService();
+            
+            // Listen for auth state changes
+            if (typeof firebase !== 'undefined') {
+                firebase.auth().onAuthStateChanged(async (user) => {
+                    if (user) {
+                        await this.loadRealUserData(user);
+                    } else {
+                        window.location.href = 'auth.html';
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error initializing user profile service:', error);
+        }
+    }
+
+    async loadRealUserData(user) {
+        try {
+            // Set user name immediately
+            const displayName = user.displayName || user.email.split('@')[0] || 'User';
+            const userNameElement = document.getElementById('dashboard-user-name');
+            if (userNameElement) {
+                userNameElement.textContent = displayName;
+            }
+            
+            // Load real account data from Firebase
+            const userRef = firebase.firestore().collection('users').doc(user.uid);
+            const userDoc = await userRef.get();
+            
+            let accountData;
+            if (userDoc.exists) {
+                accountData = userDoc.data();
+            } else {
+                // Create new user account with zero balance
+                accountData = {
+                    balance: 0.00,
+                    equity: 0.00,
+                    margin: 0.00,
+                    freeMargin: 0.00,
+                    todayPnL: 0.00,
+                    totalDeposits: 0.00,
+                    totalWithdrawals: 0.00,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                // Save to Firebase
+                await userRef.set(accountData);
+            }
+            
+            this.updateAccountSummary(accountData);
+            await this.loadTransactionHistory(user.uid);
+            await this.loadOpenPositions(user.uid);
+            
+        } catch (error) {
+            console.error('Error loading real user data:', error);
+            // Show zero balance for new users
+            this.updateAccountSummary({
+                balance: 0.00,
+                equity: 0.00,
+                margin: 0.00,
+                freeMargin: 0.00,
+                todayPnL: 0.00
+            });
+        }
     }
 
     setupEventListeners() {
@@ -20,7 +93,6 @@ class DashboardManager {
                 e.preventDefault();
                 const section = item.dataset.section;
                 
-                // Special handling for trading section
                 if (section === 'trading') {
                     window.open('platform.html', '_blank');
                     return;
@@ -39,6 +111,21 @@ class DashboardManager {
             });
         });
 
+        // Fixed notification button
+        document.querySelector('button[title="Notifications"]').addEventListener('click', () => {
+            this.showNotifications();
+        });
+
+        // Fixed mail button
+        document.querySelector('button[title="Messages"]').addEventListener('click', () => {
+            this.openMessages();
+        });
+
+        // Fixed settings button
+        document.querySelector('button[title="Settings"]').addEventListener('click', () => {
+            window.location.href = 'profile.html#account-settings';
+        });
+
         // User dropdown toggle
         window.toggleUserDropdown = () => {
             const dropdown = document.getElementById('userDropdown');
@@ -55,73 +142,173 @@ class DashboardManager {
         });
     }
 
-    switchSection(sectionName) {
-        // Update active menu item
-        document.querySelectorAll('.menu-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
-
-        // Update active section
-        document.querySelectorAll('.dashboard-section').forEach(section => {
-            section.classList.remove('active');
-        });
-        document.getElementById(`${sectionName}-section`).classList.add('active');
-
-        this.currentSection = sectionName;
-    }
-
-    async loadUserData() {
-        try {
-            // Load user profile data
-            if (typeof firebase !== 'undefined') {
-                firebase.auth().onAuthStateChanged(async (user) => {
-                    if (user) {
-                        // Set user name immediately without loading state
-                        const displayName = user.displayName || user.email.split('@')[0] || 'User';
-                        const userNameElement = document.getElementById('dashboard-user-name');
-                        if (userNameElement) {
-                            userNameElement.textContent = displayName;
-                        }
-                        
-                        // Load additional user data from Firestore
-                        await this.loadAccountData(user.uid);
-                    }
-                });
-            }
-        } catch (error) {
-            console.error('Error loading user data:', error);
-            // Set fallback user name
-            const userNameElement = document.getElementById('dashboard-user-name');
-            if (userNameElement) {
-                userNameElement.textContent = 'User';
-            }
-        }
-    }
-
-    async loadAccountData(userId) {
-        try {
-            // This would typically fetch from your database
-            // For now, we'll use mock data
-            const accountData = {
-                balance: 10000.00,
-                equity: 10250.00,
-                margin: 500.00,
-                freeMargin: 9750.00,
-                todayPnL: 125.00
-            };
-
-            this.updateAccountSummary(accountData);
-        } catch (error) {
-            console.error('Error loading account data:', error);
-        }
-    }
-
     updateAccountSummary(data) {
-        document.querySelector('.balance-amount').textContent = `$${data.balance.toFixed(2)}`;
-        document.querySelector('.equity-amount').textContent = `$${data.equity.toFixed(2)}`;
-        document.querySelector('.margin-amount').textContent = `$${data.freeMargin.toFixed(2)}`;
-        document.querySelector('.pnl-amount').textContent = `+$${data.todayPnL.toFixed(2)}`;
+        // Update with real user data
+        document.querySelector('.balance-amount').textContent = `$${data.balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.querySelector('.equity-amount').textContent = `$${data.equity.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.querySelector('.margin-amount').textContent = `$${data.freeMargin.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        
+        const pnlElement = document.querySelector('.pnl-amount');
+        const pnlValue = data.todayPnL || 0;
+        pnlElement.textContent = `${pnlValue >= 0 ? '+' : ''}$${Math.abs(pnlValue).toFixed(2)}`;
+        pnlElement.className = `pnl-amount ${pnlValue >= 0 ? 'positive' : 'negative'}`;
+        
+        // Update percentage changes based on real data
+        const balanceChange = document.querySelector('.balance-change');
+        const equityChange = document.querySelector('.equity-change');
+        
+        if (data.totalDeposits > 0) {
+            const balanceChangePercent = ((data.balance - data.totalDeposits) / data.totalDeposits * 100).toFixed(2);
+            balanceChange.textContent = `${balanceChangePercent >= 0 ? '+' : ''}$${(data.balance - data.totalDeposits).toFixed(2)} (${balanceChangePercent}%)`;
+            balanceChange.className = `balance-change ${balanceChangePercent >= 0 ? 'positive' : 'negative'}`;
+        } else {
+            balanceChange.textContent = '$0.00 (0.0%)';
+            balanceChange.className = 'balance-change';
+        }
+    }
+
+    async loadTransactionHistory(userId) {
+        try {
+            const transactionsRef = firebase.firestore().collection('transactions')
+                .where('userId', '==', userId)
+                .orderBy('createdAt', 'desc')
+                .limit(10);
+            
+            const snapshot = await transactionsRef.get();
+            const transactions = [];
+            
+            snapshot.forEach(doc => {
+                transactions.push({ id: doc.id, ...doc.data() });
+            });
+            
+            this.displayTransactionHistory(transactions);
+        } catch (error) {
+            console.error('Error loading transaction history:', error);
+        }
+    }
+
+    async loadOpenPositions(userId) {
+        try {
+            const positionsRef = firebase.firestore().collection('positions')
+                .where('userId', '==', userId)
+                .where('status', '==', 'open');
+            
+            const snapshot = await positionsRef.get();
+            const positions = [];
+            
+            snapshot.forEach(doc => {
+                positions.push({ id: doc.id, ...doc.data() });
+            });
+            
+            this.displayOpenPositions(positions);
+        } catch (error) {
+            console.error('Error loading open positions:', error);
+            // Show empty positions table for new users
+            this.displayOpenPositions([]);
+        }
+    }
+
+    displayOpenPositions(positions) {
+        const tbody = document.getElementById('positionsTableBody');
+        if (!tbody) return;
+        
+        if (positions.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="no-positions">
+                        <div class="empty-state">
+                            <i class="fas fa-chart-line"></i>
+                            <p>No open positions</p>
+                            <button class="btn-primary" onclick="window.open('platform.html', '_blank')">
+                                Start Trading
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        tbody.innerHTML = positions.map(position => `
+            <tr>
+                <td>
+                    <div class="symbol-info">
+                        <span class="symbol">${position.symbol}</span>
+                    </div>
+                </td>
+                <td><span class="position-type ${position.type}">${position.type.toUpperCase()}</span></td>
+                <td>${position.volume}</td>
+                <td>$${position.openPrice.toFixed(4)}</td>
+                <td class="current-price">$${position.currentPrice.toFixed(4)}</td>
+                <td class="pnl ${position.pnl >= 0 ? 'positive' : 'negative'}">
+                    ${position.pnl >= 0 ? '+' : ''}$${position.pnl.toFixed(2)}
+                </td>
+                <td>
+                    <button class="btn-close" onclick="closePosition('${position.id}')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    showNotifications() {
+        // Create notification panel
+        const notificationPanel = document.createElement('div');
+        notificationPanel.className = 'notification-panel';
+        notificationPanel.innerHTML = `
+            <div class="notification-header">
+                <h3>Notifications</h3>
+                <button class="close-btn" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="notification-content">
+                <div class="notification-item">
+                    <i class="fas fa-info-circle"></i>
+                    <div>
+                        <p>Welcome to CentralTradeHub!</p>
+                        <small>Just now</small>
+                    </div>
+                </div>
+                <div class="notification-item">
+                    <i class="fas fa-chart-line"></i>
+                    <div>
+                        <p>Market analysis tools are now available</p>
+                        <small>2 hours ago</small>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(notificationPanel);
+        
+        // Auto-remove after 10 seconds
+        setTimeout(() => {
+            if (notificationPanel.parentElement) {
+                notificationPanel.remove();
+            }
+        }, 10000);
+    }
+
+    openMessages() {
+        // Redirect to messages or open modal
+        window.open('mailto:support@centraltradeHub.com?subject=Support Request', '_blank');
+    }
+
+    startRealTimeUpdates() {
+        // Update account data every 30 seconds
+        setInterval(async () => {
+            const user = firebase.auth().currentUser;
+            if (user) {
+                await this.loadRealUserData(user);
+            }
+        }, 30000);
+        
+        // Update market prices every 5 seconds
+        setInterval(() => {
+            this.updateMarketPrices();
+        }, 5000);
     }
 
     initializeChart() {
@@ -181,13 +368,6 @@ class DashboardManager {
         console.log('Updating chart for period:', period);
     }
 
-    startRealTimeUpdates() {
-        // Update market prices every 5 seconds
-        setInterval(() => {
-            this.updateMarketPrices();
-        }, 5000);
-    }
-
     updateMarketPrices() {
         // Simulate real-time price updates
         const priceElements = document.querySelectorAll('.current-price');
@@ -200,10 +380,9 @@ class DashboardManager {
     }
 }
 
-// Global functions for button actions
+// Updated global functions
 window.openTradingModal = () => {
-    alert('Opening trading modal...');
-    // Implement trading modal
+    window.open('platform.html', '_blank');
 };
 
 window.showDeposit = () => {
@@ -211,8 +390,66 @@ window.showDeposit = () => {
 };
 
 window.showWithdraw = () => {
-    alert('Opening withdrawal form...');
-    // Implement withdrawal functionality
+    // Create withdrawal modal
+    const modal = document.createElement('div');
+    modal.className = 'withdrawal-modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Withdraw Funds</h3>
+                <button class="close-btn" onclick="this.closest('.withdrawal-modal').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form class="withdrawal-form" onsubmit="processWithdrawal(event)">
+                <div class="form-group">
+                    <label>Withdrawal Method</label>
+                    <select name="method" required>
+                        <option value="">Select Method</option>
+                        <option value="bank">Bank Transfer</option>
+                        <option value="paypal">PayPal</option>
+                        <option value="crypto">Cryptocurrency</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Amount (USD)</label>
+                    <input type="number" name="amount" min="10" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Account Details</label>
+                    <textarea name="details" placeholder="Enter your account details" required></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" onclick="this.closest('.withdrawal-modal').remove()">Cancel</button>
+                    <button type="submit" class="btn-primary">Submit Withdrawal</button>
+                </div>
+            </form>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+};
+
+window.processWithdrawal = async (event) => {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const withdrawalData = {
+        method: formData.get('method'),
+        amount: parseFloat(formData.get('amount')),
+        details: formData.get('details'),
+        userId: firebase.auth().currentUser.uid,
+        status: 'pending',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    
+    try {
+        await firebase.firestore().collection('withdrawals').add(withdrawalData);
+        alert('Withdrawal request submitted successfully! We will process it within 1-2 business days.');
+        event.target.closest('.withdrawal-modal').remove();
+    } catch (error) {
+        console.error('Error submitting withdrawal:', error);
+        alert('Error submitting withdrawal request. Please try again.');
+    }
 };
 
 window.goToAnalytics = () => {
