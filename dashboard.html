@@ -284,42 +284,42 @@
         
         .balance-cards {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 0.8rem;
+            margin-bottom: 1.2rem;
         }
         
         .balance-card {
             background: rgba(26, 26, 46, 0.8);
-            border-radius: 12px;
-            padding: 1.5rem;
+            border-radius: 10px;
+            padding: 1rem;
             border: 1px solid rgba(0, 212, 255, 0.2);
             transition: transform 0.3s ease;
         }
         
         .balance-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-3px);
             border-color: #00d4ff;
         }
         
         .balance-card h4 {
             color: rgba(255, 255, 255, 0.7);
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+            margin-bottom: 0.4rem;
         }
         
         .balance-amount {
-            font-size: 1.8rem;
+            font-size: 1.4rem;
             font-weight: 700;
             color: #00d4ff;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
         }
         
         .balance-change {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             display: flex;
             align-items: center;
-            gap: 0.25rem;
+            gap: 0.2rem;
         }
         
         .positive {
@@ -1009,10 +1009,14 @@
                         </div>
                     </section>
                     
-                    <!-- Portfolio Chart -->
-                    <div class="chart-container">
-                        <h3>Portfolio Performance</h3>
-                        <canvas id="portfolioChart" width="200" height="100"></canvas>
+                    <!-- Live Market Ticker -->
+                    <div class="market-ticker-container">
+                        <h3>Live Market Data</h3>
+                        <div class="market-ticker">
+                            <div class="ticker-content" id="tickerContent">
+                                <!-- Market data will be populated here -->
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- Live Market Ticker -->
