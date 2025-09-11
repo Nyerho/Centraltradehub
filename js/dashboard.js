@@ -115,169 +115,179 @@ class DashboardManager {
     }
 
     setupEventListeners() {
-        // Sidebar navigation
-        document.querySelectorAll('.menu-item[data-section]').forEach(item => {
+        // Setup navigation menu listeners
+        this.setupNavigationListeners();
+        
+        // Setup other event listeners
+        this.setupActionButtons();
+        this.setupUserDropdown();
+    }
+
+    setupNavigationListeners() {
+        const menuItems = document.querySelectorAll('.menu-item');
+        const sections = document.querySelectorAll('.dashboard-section');
+        
+        menuItems.forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
-                const section = item.dataset.section;
                 
-                if (section === 'trading') {
-                    window.open('platform.html', '_blank');
-                    return;
+                // Remove active class from all menu items
+                menuItems.forEach(menuItem => menuItem.classList.remove('active'));
+                
+                // Add active class to clicked item
+                item.classList.add('active');
+                
+                // Get the target section
+                const targetSection = item.getAttribute('data-section');
+                this.currentSection = targetSection;
+                
+                // Hide all sections
+                sections.forEach(section => section.classList.remove('active'));
+                
+                // Show target section
+                const targetSectionElement = document.getElementById(targetSection + '-section');
+                if (targetSectionElement) {
+                    targetSectionElement.classList.add('active');
+                } else {
+                    // Create section if it doesn't exist
+                    this.createSection(targetSection);
                 }
                 
-                this.switchSection(section);
+                // Update page title
+                const sectionName = item.querySelector('span').textContent;
+                document.title = `${sectionName} - CentralTradeHub`;
+                
+                // Close mobile menu if open
+                const sidebar = document.querySelector('.dashboard-sidebar');
+                if (sidebar) {
+                    sidebar.classList.remove('mobile-open');
+                }
             });
-        });
-
-        // Time filter buttons
-        document.querySelectorAll('.time-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                this.updateChart(btn.dataset.period);
-            });
-        });
-
-        // Fixed notification button
-        document.querySelector('button[title="Notifications"]').addEventListener('click', () => {
-            this.showNotifications();
-        });
-
-        // Fixed mail button
-        document.querySelector('button[title="Messages"]').addEventListener('click', () => {
-            this.openMessages();
-        });
-
-        // Fixed settings button
-        document.querySelector('button[title="Settings"]').addEventListener('click', () => {
-            window.location.href = 'profile.html#account-settings';
-        });
-
-        // User dropdown toggle
-        window.toggleUserDropdown = () => {
-            const dropdown = document.getElementById('userDropdown');
-            dropdown.classList.toggle('show');
-        };
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            const userMenu = document.querySelector('.user-menu');
-            const dropdown = document.getElementById('userDropdown');
-            if (!userMenu.contains(e.target)) {
-                dropdown.classList.remove('show');
-            }
         });
     }
 
-    updateAccountSummary(data) {
-        // Update with real user data
-        document.querySelector('.balance-amount').textContent = `$${data.balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-        document.querySelector('.equity-amount').textContent = `$${data.equity.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-        document.querySelector('.margin-amount').textContent = `$${data.freeMargin.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    createSection(sectionName) {
+        const main = document.querySelector('.dashboard-main');
+        const section = document.createElement('section');
+        section.id = sectionName + '-section';
+        section.className = 'dashboard-section active';
         
-        const pnlElement = document.querySelector('.pnl-amount');
-        const pnlValue = data.todayPnL || 0;
-        pnlElement.textContent = `${pnlValue >= 0 ? '+' : ''}$${Math.abs(pnlValue).toFixed(2)}`;
-        pnlElement.className = `pnl-amount ${pnlValue >= 0 ? 'positive' : 'negative'}`;
+        const sectionContent = this.getSectionContent(sectionName);
+        section.innerHTML = sectionContent;
         
-        // Update percentage changes based on real data
-        const balanceChange = document.querySelector('.balance-change');
-        const equityChange = document.querySelector('.equity-change');
-        
-        if (data.totalDeposits > 0) {
-            const balanceChangePercent = ((data.balance - data.totalDeposits) / data.totalDeposits * 100).toFixed(2);
-            balanceChange.textContent = `${balanceChangePercent >= 0 ? '+' : ''}$${(data.balance - data.totalDeposits).toFixed(2)} (${balanceChangePercent}%)`;
-            balanceChange.className = `balance-change ${balanceChangePercent >= 0 ? 'positive' : 'negative'}`;
-        } else {
-            balanceChange.textContent = '$0.00 (0.0%)';
-            balanceChange.className = 'balance-change';
-        }
+        main.appendChild(section);
     }
 
-    async loadTransactionHistory(userId) {
-        try {
-            const transactionsRef = firebase.firestore().collection('transactions')
-                .where('userId', '==', userId)
-                .orderBy('createdAt', 'desc')
-                .limit(10);
-            
-            const snapshot = await transactionsRef.get();
-            const transactions = [];
-            
-            snapshot.forEach(doc => {
-                transactions.push({ id: doc.id, ...doc.data() });
-            });
-            
-            this.displayTransactionHistory(transactions);
-        } catch (error) {
-            console.error('Error loading transaction history:', error);
-        }
-    }
-
-    async loadOpenPositions(userId) {
-        try {
-            const positionsRef = firebase.firestore().collection('positions')
-                .where('userId', '==', userId)
-                .where('status', '==', 'open');
-            
-            const snapshot = await positionsRef.get();
-            const positions = [];
-            
-            snapshot.forEach(doc => {
-                positions.push({ id: doc.id, ...doc.data() });
-            });
-            
-            this.displayOpenPositions(positions);
-        } catch (error) {
-            console.error('Error loading open positions:', error);
-            // Show empty positions table for new users
-            this.displayOpenPositions([]);
-        }
-    }
-
-    displayOpenPositions(positions) {
-        const tbody = document.getElementById('positionsTableBody');
-        if (!tbody) return;
-        
-        if (positions.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="7" class="no-positions">
-                        <div class="empty-state">
-                            <i class="fas fa-chart-line"></i>
-                            <p>No open positions</p>
-                            <button class="btn-primary" onclick="window.open('platform.html', '_blank')">
-                                Start Trading
-                            </button>
+    getSectionContent(sectionName) {
+        const contentMap = {
+            portfolio: `
+                <div class="section-header">
+                    <h2>Portfolio</h2>
+                    <p>Manage your trading portfolio and positions</p>
+                </div>
+                <div class="portfolio-content">
+                    <div class="portfolio-summary">
+                        <div class="summary-card">
+                            <h3>Open Positions</h3>
+                            <div class="stat-value">0</div>
                         </div>
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-        
-        tbody.innerHTML = positions.map(position => `
-            <tr>
-                <td>
-                    <div class="symbol-info">
-                        <span class="symbol">${position.symbol}</span>
+                        <div class="summary-card">
+                            <h3>Total P&L</h3>
+                            <div class="stat-value positive">$0.00</div>
+                        </div>
                     </div>
-                </td>
-                <td><span class="position-type ${position.type}">${position.type.toUpperCase()}</span></td>
-                <td>${position.volume}</td>
-                <td>$${position.openPrice.toFixed(4)}</td>
-                <td class="current-price">$${position.currentPrice.toFixed(4)}</td>
-                <td class="pnl ${position.pnl >= 0 ? 'positive' : 'negative'}">
-                    ${position.pnl >= 0 ? '+' : ''}$${position.pnl.toFixed(2)}
-                </td>
-                <td>
-                    <button class="btn-close" onclick="closePosition('${position.id}')">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
+                    <div class="positions-table">
+                        <p>No open positions</p>
+                    </div>
+                </div>
+            `,
+            markets: `
+                <div class="section-header">
+                    <h2>Markets</h2>
+                    <p>Live market data and trading opportunities</p>
+                </div>
+                <div class="markets-content">
+                    <div class="market-grid">
+                        <div class="market-card">
+                            <h3>EUR/USD</h3>
+                            <div class="price">1.0845</div>
+                            <div class="change positive">+0.0012</div>
+                        </div>
+                        <div class="market-card">
+                            <h3>GBP/USD</h3>
+                            <div class="price">1.2634</div>
+                            <div class="change negative">-0.0023</div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            history: `
+                <div class="section-header">
+                    <h2>Trading History</h2>
+                    <p>View your past trades and transactions</p>
+                </div>
+                <div class="history-content">
+                    <div class="history-filters">
+                        <select class="filter-select">
+                            <option>All Trades</option>
+                            <option>Profitable</option>
+                            <option>Losses</option>
+                        </select>
+                    </div>
+                    <div class="history-table">
+                        <p>No trading history available</p>
+                    </div>
+                </div>
+            `,
+            analytics: `
+                <div class="section-header">
+                    <h2>Analytics</h2>
+                    <p>Performance analytics and insights</p>
+                </div>
+                <div class="analytics-content">
+                    <div class="analytics-grid">
+                        <div class="analytics-card">
+                            <h3>Win Rate</h3>
+                            <div class="stat-value">0%</div>
+                        </div>
+                        <div class="analytics-card">
+                            <h3>Profit Factor</h3>
+                            <div class="stat-value">0.00</div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            education: `
+                <div class="section-header">
+                    <h2>Education</h2>
+                    <p>Trading resources and learning materials</p>
+                </div>
+                <div class="education-content">
+                    <div class="education-grid">
+                        <div class="education-card">
+                            <h3>Forex Basics</h3>
+                            <p>Learn the fundamentals of forex trading</p>
+                            <button class="btn-primary">Start Learning</button>
+                        </div>
+                        <div class="education-card">
+                            <h3>Technical Analysis</h3>
+                            <p>Master chart patterns and indicators</p>
+                            <button class="btn-primary">Start Learning</button>
+                        </div>
+                    </div>
+                </div>
+            `
+        };
+        
+        return contentMap[sectionName] || `
+            <div class="section-header">
+                <h2>${sectionName.charAt(0).toUpperCase() + sectionName.slice(1)}</h2>
+                <p>Content for ${sectionName} section</p>
+            </div>
+            <div class="section-content">
+                <p>This section is under development.</p>
+            </div>
+        `;
     }
 
     showNotifications() {

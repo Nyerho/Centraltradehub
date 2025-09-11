@@ -418,33 +418,68 @@
 
 .section-header {
     margin-bottom: 2rem;
-    text-align: center;
 }
 
 .section-header h2 {
     color: #ffffff;
     font-size: 1.8rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, #ffffff, #00d4ff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
     margin-bottom: 0.5rem;
-    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .section-header p {
     color: #cccccc;
     font-size: 1rem;
-    font-weight: 400;
-    max-width: 600px;
-    margin: 0 auto;
-    line-height: 1.6;
 }
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* Section Content Styles */
+.portfolio-summary, .analytics-grid, .education-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.market-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.market-card, .education-card {
+    background: #16213e;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid #2d2d44;
+}
+
+.market-card h3, .education-card h3 {
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+}
+
+.price {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 0.25rem;
+}
+
+.change {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.change.positive {
+    color: #28a745;
+}
+
+.change.negative {
+    color: #dc3545;
 }
 
 /* Modern Summary Cards */
