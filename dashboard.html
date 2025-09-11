@@ -6,6 +6,7 @@
     <title>Dashboard - CentralTradeHub</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/dashboard-sections.css">
     <link rel="stylesheet" href="css/responsive.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -361,7 +362,16 @@
                 <p>Manage your trading portfolio and positions</p>
             </div>
             <div class="portfolio-content">
-                <p>Portfolio content will be loaded here...</p>
+                <div class="portfolio-summary">
+                    <div class="summary-card">
+                        <h3>Open Positions</h3>
+                        <div class="stat-value">0</div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Total P&L</h3>
+                        <div class="stat-value positive">$0.00</div>
+                    </div>
+                </div>
             </div>
         </section>
         
@@ -372,7 +382,18 @@
                 <p>Live market data and trading opportunities</p>
             </div>
             <div class="markets-content">
-                <p>Markets content will be loaded here...</p>
+                <div class="market-grid">
+                    <div class="market-card">
+                        <h3>EUR/USD</h3>
+                        <div class="price">1.0845</div>
+                        <div class="change positive">+0.0012</div>
+                    </div>
+                    <div class="market-card">
+                        <h3>GBP/USD</h3>
+                        <div class="price">1.2634</div>
+                        <div class="change negative">-0.0023</div>
+                    </div>
+                </div>
             </div>
         </section>
         
@@ -383,7 +404,16 @@
                 <p>View your past trades and transactions</p>
             </div>
             <div class="history-content">
-                <p>History content will be loaded here...</p>
+                <div class="history-filters">
+                    <select class="filter-select">
+                        <option>All Trades</option>
+                        <option>Profitable</option>
+                        <option>Losses</option>
+                    </select>
+                </div>
+                <div class="history-table">
+                    <p>No trading history available</p>
+                </div>
             </div>
         </section>
         
@@ -394,7 +424,16 @@
                 <p>Performance analytics and insights</p>
             </div>
             <div class="analytics-content">
-                <p>Analytics content will be loaded here...</p>
+                <div class="analytics-grid">
+                    <div class="analytics-card">
+                        <h3>Win Rate</h3>
+                        <div class="stat-value">0%</div>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Profit Factor</h3>
+                        <div class="stat-value">0.00</div>
+                    </div>
+                </div>
             </div>
         </section>
         
@@ -405,7 +444,18 @@
                 <p>Trading resources and learning materials</p>
             </div>
             <div class="education-content">
-                <p>Education content will be loaded here...</p>
+                <div class="education-grid">
+                    <div class="education-card">
+                        <h3>Forex Basics</h3>
+                        <p>Learn the fundamentals of forex trading</p>
+                        <button class="btn-primary">Start Learning</button>
+                    </div>
+                    <div class="education-card">
+                        <h3>Technical Analysis</h3>
+                        <p>Master chart patterns and indicators</p>
+                        <button class="btn-primary">Start Learning</button>
+                    </div>
+                </div>
             </div>
         </section>
     </main>

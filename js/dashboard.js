@@ -554,9 +554,11 @@ function initializeDashboardNavigation() {
     });
 }
 
-// Initialize navigation when DOM is loaded
+// Remove the entire initializeDashboardNavigation function
+
+// Update this part at the end of the file:
 document.addEventListener('DOMContentLoaded', function() {
-    initializeDashboardNavigation();
+    // Remove this line: initializeDashboardNavigation();
     new DashboardManager();
 });
 
