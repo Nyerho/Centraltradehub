@@ -1080,6 +1080,119 @@
     <script type="module" src="js/main.js"></script>
     <script src="js/performance-optimizer.js"></script>
 
+    <!-- Firebase Authentication Integration -->
+    <script type="module">
+        import { auth } from './js/firebase-config.js';
+        import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        
+        // Wait for DOM to be ready
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginBtn = document.getElementById('loginBtn');
+            const getStartedBtn = document.getElementById('getStartedBtn');
+            const dashboardBtn = document.getElementById('dashboardBtn');
+            const userMenu = document.querySelector('.user-menu');
+            const userName = document.querySelector('.user-name');
+            const logoutBtn = document.querySelector('.btn-logout');
+            
+            // Firebase Auth State Listener
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    // User is signed in
+                    console.log('User is logged in:', user.email);
+                    
+                    // Hide login/register buttons
+                    if (loginBtn) loginBtn.style.display = 'none';
+                    if (getStartedBtn) getStartedBtn.style.display = 'none';
+                    
+                    // Show dashboard button and user menu
+                    if (dashboardBtn) dashboardBtn.style.display = 'inline-block';
+                    if (userMenu) userMenu.style.display = 'flex';
+                    
+                    // Set user name
+                    if (userName) {
+                        userName.textContent = user.displayName || user.email.split('@')[0];
+                    }
+                } else {
+                    // User is signed out
+                    console.log('User is logged out');
+                    
+                    // Show login/register buttons
+                    if (loginBtn) loginBtn.style.display = 'inline-block';
+                    if (getStartedBtn) getStartedBtn.style.display = 'inline-block';
+                    
+                    // Hide dashboard button and user menu
+                    if (dashboardBtn) dashboardBtn.style.display = 'none';
+                    if (userMenu) userMenu.style.display = 'none';
+                }
+            });
+            
+            // Logout functionality
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async () => {
+                    try {
+                        await auth.signOut();
+                        console.log('User signed out successfully');
+                        // Redirect to home page
+                        window.location.href = 'index.html';
+                    } catch (error) {
+                        console.error('Error signing out:', error);
+                    }
+                });
+            }
+            
+            // Enhanced mobile navigation
+            const hamburger = document.querySelector('.hamburger');
+            const navMenu = document.querySelector('.nav-menu');
+            const navButtons = document.querySelector('.nav-buttons');
+            
+            if (hamburger) {
+                hamburger.addEventListener('click', () => {
+                    hamburger.classList.toggle('active');
+                    navMenu.classList.toggle('active');
+                    navButtons.classList.toggle('active');
+                });
+            }
+            
+            // Smooth scrolling for navigation links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+            
+            // Live market data simulation
+            function updateMarketData() {
+                const tickers = document.querySelectorAll('.ticker-item');
+                tickers.forEach(ticker => {
+                    const priceElement = ticker.querySelector('.price');
+                    const changeElement = ticker.querySelector('.change');
+                    
+                    if (priceElement && changeElement) {
+                        // Simulate price changes
+                        const currentPrice = parseFloat(priceElement.textContent.replace(/[^0-9.-]/g, ''));
+                        const change = (Math.random() - 0.5) * 0.02; // ±1% change
+                        const newPrice = currentPrice * (1 + change);
+                        const changePercent = (change * 100).toFixed(2);
+                        
+                        priceElement.textContent = newPrice.toFixed(4);
+                        changeElement.textContent = `${change >= 0 ? '+' : ''}${changePercent}%`;
+                        changeElement.className = `change ${change >= 0 ? 'positive' : 'negative'}`;
+                    }
+                });
+            }
+            
+            // Update market data every 3 seconds
+            setInterval(updateMarketData, 3000);
+        });
+    </script>
+
     <script>
     // Handle Platform navigation click
     function handlePlatformClick(event) {
