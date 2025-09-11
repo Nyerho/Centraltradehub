@@ -554,127 +554,125 @@ function initializeDashboardNavigation() {
     });
 }
 
-// Remove the entire initializeDashboardNavigation function
+// Remove any duplicate initializeDashboardNavigation function if it exists
 
-// Update this part at the end of the file:
+// Initialize dashboard when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Remove this line: initializeDashboardNavigation();
+    console.log('Dashboard initializing...');
     new DashboardManager();
 });
 
 
-// ...
-    async loadAccountData() {
-        try {
-            const user = auth.currentUser;
-            if (!user) {
-                console.error('No authenticated user found');
-                return;
-            }
-
-            // Load real user profile data from Firebase
-            const userProfile = await this.userProfileService.loadUserProfile(user.uid);
-            
-            if (userProfile) {
-                // Update account data with real values from Firebase
-                this.accountData = {
-                    balance: userProfile.balance || 0,
-                    equity: userProfile.equity || 0,
-                    margin: userProfile.margin || 0,
-                    freeMargin: userProfile.freeMargin || 0,
-                    marginLevel: userProfile.marginLevel || 0,
-                    pnl: userProfile.todaysPnL || 0
-                };
-            } else {
-                // Fallback to default values if no profile exists
-                this.accountData = {
-                    balance: 10000,
-                    equity: 10000,
-                    margin: 0,
-                    freeMargin: 10000,
-                    marginLevel: 0,
-                    pnl: 0
-                };
-                
-                // Create initial profile in Firebase
-                await this.userProfileService.updateUserProfile(user.uid, this.accountData);
-            }
-            
-            this.updateAccountSummary();
-        } catch (error) {
-            console.error('Error loading account data:', error);
-            // Show error state
-            this.showErrorState();
+async loadAccountData() {
+    try {
+        const user = auth.currentUser;
+        if (!user) {
+            console.error('No authenticated user found');
+            return;
         }
+
+        // Load real user profile data from Firebase
+        const userProfile = await this.userProfileService.loadUserProfile(user.uid);
+        
+        if (userProfile) {
+            // Update account data with real values from Firebase
+            this.accountData = {
+                balance: userProfile.balance || 0,
+                equity: userProfile.equity || 0,
+                margin: userProfile.margin || 0,
+                freeMargin: userProfile.freeMargin || 0,
+                marginLevel: userProfile.marginLevel || 0,
+                pnl: userProfile.todaysPnL || 0
+            };
+        } else {
+            // Fallback to default values if no profile exists
+            this.accountData = {
+                balance: 10000,
+                equity: 10000,
+                margin: 0,
+                freeMargin: 10000,
+                marginLevel: 0,
+                pnl: 0
+            };
+            
+            // Create initial profile in Firebase
+            await this.userProfileService.updateUserProfile(user.uid, this.accountData);
+        }
+        
+        this.updateAccountSummary();
+    } catch (error) {
+        console.error('Error loading account data:', error);
+        // Show error state
+        this.showErrorState();
     }
+}
 
-    updateAccountSummary() {
-        // Update balance
-        const balanceElement = document.getElementById('account-balance');
-        if (balanceElement) {
-            balanceElement.textContent = `$${this.accountData.balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-        }
-        
-        // Update equity
-        const equityElement = document.getElementById('account-equity');
-        if (equityElement) {
-            equityElement.textContent = `$${this.accountData.equity.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-        }
-        
-        // Update free margin
-        const marginElement = document.getElementById('free-margin');
-        if (marginElement) {
-            marginElement.textContent = `$${this.accountData.freeMargin.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-        }
-        
-        // Update margin level
-        const marginLevelElement = document.getElementById('margin-level');
-        if (marginLevelElement) {
-            marginLevelElement.textContent = `Margin Level: ${this.accountData.marginLevel.toFixed(2)}%`;
-        }
-        
-        // Calculate and display changes
-        this.updateChangeIndicators();
+updateAccountSummary() {
+    // Update balance
+    const balanceElement = document.getElementById('account-balance');
+    if (balanceElement) {
+        balanceElement.textContent = `$${this.accountData.balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
     }
     
-    updateChangeIndicators() {
-        // Calculate balance change (you can store previous values in localStorage or Firebase)
-        const previousBalance = parseFloat(localStorage.getItem('previousBalance')) || this.accountData.balance;
-        const balanceChange = this.accountData.balance - previousBalance;
-        const balanceChangePercent = previousBalance > 0 ? (balanceChange / previousBalance) * 100 : 0;
-        
-        const balanceChangeElement = document.getElementById('balance-change');
-        if (balanceChangeElement) {
-            const changeText = `${balanceChange >= 0 ? '+' : ''}$${Math.abs(balanceChange).toFixed(2)} (${balanceChangePercent.toFixed(1)}%)`;
-            balanceChangeElement.textContent = changeText;
-            balanceChangeElement.className = `balance-change ${balanceChange >= 0 ? 'positive' : 'negative'}`;
-        }
-        
-        // Similar for equity
-        const previousEquity = parseFloat(localStorage.getItem('previousEquity')) || this.accountData.equity;
-        const equityChange = this.accountData.equity - previousEquity;
-        const equityChangePercent = previousEquity > 0 ? (equityChange / previousEquity) * 100 : 0;
-        
-        const equityChangeElement = document.getElementById('equity-change');
-        if (equityChangeElement) {
-            const changeText = `${equityChange >= 0 ? '+' : ''}$${Math.abs(equityChange).toFixed(2)} (${equityChangePercent.toFixed(1)}%)`;
-            equityChangeElement.textContent = changeText;
-            equityChangeElement.className = `equity-change ${equityChange >= 0 ? 'positive' : 'negative'}`;
-        }
-        
-        // Store current values for next comparison
-        localStorage.setItem('previousBalance', this.accountData.balance.toString());
-        localStorage.setItem('previousEquity', this.accountData.equity.toString());
+    // Update equity
+    const equityElement = document.getElementById('account-equity');
+    if (equityElement) {
+        equityElement.textContent = `$${this.accountData.equity.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
     }
     
-    showErrorState() {
-        const elements = ['account-balance', 'account-equity', 'free-margin', 'margin-level'];
-        elements.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.textContent = 'Error loading data';
-                element.style.color = '#dc3545';
-            }
-        });
+    // Update free margin
+    const marginElement = document.getElementById('free-margin');
+    if (marginElement) {
+        marginElement.textContent = `$${this.accountData.freeMargin.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
     }
+    
+    // Update margin level
+    const marginLevelElement = document.getElementById('margin-level');
+    if (marginLevelElement) {
+        marginLevelElement.textContent = `Margin Level: ${this.accountData.marginLevel.toFixed(2)}%`;
+    }
+    
+    // Calculate and display changes
+    this.updateChangeIndicators();
+}
+
+updateChangeIndicators() {
+    // Calculate balance change (you can store previous values in localStorage or Firebase)
+    const previousBalance = parseFloat(localStorage.getItem('previousBalance')) || this.accountData.balance;
+    const balanceChange = this.accountData.balance - previousBalance;
+    const balanceChangePercent = previousBalance > 0 ? (balanceChange / previousBalance) * 100 : 0;
+    
+    const balanceChangeElement = document.getElementById('balance-change');
+    if (balanceChangeElement) {
+        const changeText = `${balanceChange >= 0 ? '+' : ''}$${Math.abs(balanceChange).toFixed(2)} (${balanceChangePercent.toFixed(1)}%)`;
+        balanceChangeElement.textContent = changeText;
+        balanceChangeElement.className = `balance-change ${balanceChange >= 0 ? 'positive' : 'negative'}`;
+    }
+    
+    // Similar for equity
+    const previousEquity = parseFloat(localStorage.getItem('previousEquity')) || this.accountData.equity;
+    const equityChange = this.accountData.equity - previousEquity;
+    const equityChangePercent = previousEquity > 0 ? (equityChange / previousEquity) * 100 : 0;
+    
+    const equityChangeElement = document.getElementById('equity-change');
+    if (equityChangeElement) {
+        const changeText = `${equityChange >= 0 ? '+' : ''}$${Math.abs(equityChange).toFixed(2)} (${equityChangePercent.toFixed(1)}%)`;
+        equityChangeElement.textContent = changeText;
+        equityChangeElement.className = `equity-change ${equityChange >= 0 ? 'positive' : 'negative'}`;
+    }
+    
+    // Store current values for next comparison
+    localStorage.setItem('previousBalance', this.accountData.balance.toString());
+    localStorage.setItem('previousEquity', this.accountData.equity.toString());
+}
+showErrorState() {
+    const elements = ['account-balance', 'account-equity', 'free-margin', 'margin-level'];
+    elements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = 'Error loading data';
+            element.style.color = '#dc3545';
+        }
+    });
+}
 }

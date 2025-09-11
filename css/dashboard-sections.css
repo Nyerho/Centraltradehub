@@ -127,3 +127,23 @@
         transform: translateY(0);
     }
 }
+
+/* Debug styles */
+.dashboard-section {
+    display: none !important;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.dashboard-section.active {
+    display: block !important;
+}
+
+/* Ensure menu items are clickable */
+.menu-item {
+    cursor: pointer;
+    pointer-events: all;
+}
+
+.menu-item:hover {
+    background-color: rgba(0, 212, 255, 0.1);
+}

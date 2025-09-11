@@ -365,12 +365,15 @@
                 <div class="portfolio-summary">
                     <div class="summary-card">
                         <h3>Open Positions</h3>
-                        <div class="stat-value">0</div>
+                        <div class="stat-value">2</div>
                     </div>
                     <div class="summary-card">
                         <h3>Total P&L</h3>
-                        <div class="stat-value positive">$0.00</div>
+                        <div class="stat-value positive">+$32.50</div>
                     </div>
+                </div>
+                <div class="positions-table">
+                    <p>View your open positions and manage your portfolio</p>
                 </div>
             </div>
         </section>
@@ -385,13 +388,23 @@
                 <div class="market-grid">
                     <div class="market-card">
                         <h3>EUR/USD</h3>
-                        <div class="price">1.0845</div>
-                        <div class="change positive">+0.0012</div>
+                        <div class="price">1.0875</div>
+                        <div class="change positive">+0.0025</div>
                     </div>
                     <div class="market-card">
                         <h3>GBP/USD</h3>
-                        <div class="price">1.2634</div>
-                        <div class="change negative">-0.0023</div>
+                        <div class="price">1.2635</div>
+                        <div class="change negative">-0.0015</div>
+                    </div>
+                    <div class="market-card">
+                        <h3>USD/JPY</h3>
+                        <div class="price">149.85</div>
+                        <div class="change positive">+0.12</div>
+                    </div>
+                    <div class="market-card">
+                        <h3>AUD/USD</h3>
+                        <div class="price">0.6542</div>
+                        <div class="change negative">-0.0008</div>
                     </div>
                 </div>
             </div>
@@ -467,5 +480,36 @@
     <script type="module" src="js/auth-integration.js"></script>
     <script type="module" src="js/user-profile-service.js"></script>
     <script src="js/dashboard.js"></script>
-</body>
+    <script>
+    // Simple navigation fix
+    document.addEventListener('DOMContentLoaded', function() {
+        const menuItems = document.querySelectorAll('.menu-item');
+        const sections = document.querySelectorAll('.dashboard-section');
+        
+        menuItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Menu item clicked:', this.getAttribute('data-section'));
+                
+                // Remove active from all menu items
+                menuItems.forEach(mi => mi.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Hide all sections
+                sections.forEach(section => section.classList.remove('active'));
+                
+                // Show target section
+                const targetSection = this.getAttribute('data-section');
+                const targetElement = document.getElementById(targetSection + '-section');
+                if (targetElement) {
+                    targetElement.classList.add('active');
+                    console.log('Showing section:', targetSection);
+                } else {
+                    console.log('Section not found:', targetSection + '-section');
+                }
+            });
+        });
+    });
+    </script>
+    </body>
 </html>
