@@ -652,7 +652,7 @@
                 <!-- Left Sidebar -->
                 <aside class="sidebar" id="sidebar">
                     <h3>Navigation</h3>
-                    <a href="#" class="nav-item active">
+                    <a href="#" class="nav-item active" onclick="showDashboardSection('dashboard')">
                         <i class="fas fa-tachometer-alt"></i>
                         <span>Dashboard</span>
                     </a>
@@ -660,23 +660,23 @@
                         <i class="fas fa-chart-candlestick"></i>
                         <span>Trading Platform</span>
                     </a>
-                    <a href="#" class="nav-item">
+                    <a href="#" class="nav-item" onclick="showDashboardSection('portfolio')">
                         <i class="fas fa-briefcase"></i>
                         <span>Portfolio</span>
                     </a>
-                    <a href="#" class="nav-item">
+                    <a href="platform.html" class="nav-item">
                         <i class="fas fa-chart-line"></i>
                         <span>Markets</span>
                     </a>
-                    <a href="#" class="nav-item">
+                    <a href="#" class="nav-item" onclick="showDashboardSection('history')">
                         <i class="fas fa-history"></i>
                         <span>Trade History</span>
                     </a>
-                    <a href="#" class="nav-item">
+                    <a href="#" class="nav-item" onclick="showDashboardSection('analytics')">
                         <i class="fas fa-chart-bar"></i>
                         <span>Analytics</span>
                     </a>
-                    <a href="#" class="nav-item">
+                    <a href="#education" class="nav-item" onclick="scrollToSection('education')">
                         <i class="fas fa-graduation-cap"></i>
                         <span>Education</span>
                     </a>
@@ -731,7 +731,7 @@
                                 <i class="fas fa-arrow-up"></i>
                                 <h4>Withdraw</h4>
                             </a>
-                            <a href="#" class="action-card analytics">
+                            <a href="#" class="action-card analytics" onclick="showDashboardSection('analytics')">
                                 <i class="fas fa-chart-bar"></i>
                                 <h4>Analytics</h4>
                             </a>
@@ -741,7 +741,7 @@
                     <!-- Portfolio Chart -->
                     <div class="chart-container">
                         <h3>Portfolio Performance</h3>
-                        <canvas id="portfolioChart" width="400" height="200"></canvas>
+                        <canvas id="portfolioChart" width="300" height="150"></canvas>
                     </div>
                 </div>
 
@@ -827,34 +827,44 @@
                     backgroundColor: 'rgba(0, 212, 255, 0.1)',
                     borderWidth: 2,
                     fill: true,
-                    tension: 0.4
+                    tension: 0.4,
+                    pointRadius: 3,
+                    pointHoverRadius: 5
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: {
+                    duration: 800
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
                 plugins: {
                     legend: {
-                        labels: {
-                            color: '#ffffff'
-                        }
+                        display: false
                     }
                 },
                 scales: {
                     y: {
                         ticks: {
-                            color: '#ffffff'
+                            color: '#ffffff',
+                            maxTicksLimit: 5
                         },
                         grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
+                            color: 'rgba(255, 255, 255, 0.1)',
+                            drawBorder: false
                         }
                     },
                     x: {
                         ticks: {
-                            color: '#ffffff'
+                            color: '#ffffff',
+                            maxTicksLimit: 6
                         },
                         grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
+                            display: false
                         }
                     }
                 }
@@ -904,3 +914,244 @@
     </script>
 </body>
 </html>
+
+        // Dashboard Section Management
+        function showDashboardSection(section) {
+            // Hide all sections first
+            const sections = ['dashboard', 'portfolio', 'history', 'analytics'];
+            sections.forEach(s => {
+                const element = document.getElementById(s + 'Section');
+                if (element) element.style.display = 'none';
+            });
+            
+            // Update active nav item
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.closest('.nav-item').classList.add('active');
+            
+            // Show selected section or create content
+            switch(section) {
+                case 'portfolio':
+                    showPortfolioSection();
+                    break;
+                case 'history':
+                    showHistorySection();
+                    break;
+                case 'analytics':
+                    showAnalyticsSection();
+                    break;
+                default:
+                    // Show main dashboard
+                    document.querySelector('.welcome-section').style.display = 'block';
+                    document.querySelector('.chart-container').style.display = 'block';
+            }
+        }
+        
+        function showPortfolioSection() {
+            const mainContent = document.querySelector('.main-content');
+            mainContent.innerHTML = `
+                <section class="portfolio-section">
+                    <h2>Portfolio Overview</h2>
+                    <div class="portfolio-summary">
+                        <div class="portfolio-card">
+                            <h4>Total Portfolio Value</h4>
+                            <div class="portfolio-value">$15,247.83</div>
+                            <div class="portfolio-change positive">+$247.83 (+1.65%)</div>
+                        </div>
+                        <div class="portfolio-card">
+                            <h4>Available Cash</h4>
+                            <div class="portfolio-value">$2,847.21</div>
+                        </div>
+                        <div class="portfolio-card">
+                            <h4>Invested Amount</h4>
+                            <div class="portfolio-value">$12,400.62</div>
+                        </div>
+                    </div>
+                    <div class="positions-table">
+                        <h3>Current Positions</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Quantity</th>
+                                    <th>Entry Price</th>
+                                    <th>Current Price</th>
+                                    <th>P&L</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>EUR/USD</td>
+                                    <td>10,000</td>
+                                    <td>1.0845</td>
+                                    <td>1.0856</td>
+                                    <td class="positive">+$11.00</td>
+                                </tr>
+                                <tr>
+                                    <td>GBP/USD</td>
+                                    <td>5,000</td>
+                                    <td>1.2650</td>
+                                    <td>1.2634</td>
+                                    <td class="negative">-$8.00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            `;
+        }
+        
+        function showHistorySection() {
+            const mainContent = document.querySelector('.main-content');
+            mainContent.innerHTML = `
+                <section class="history-section">
+                    <h2>Trade History</h2>
+                    <div class="history-filters">
+                        <select>
+                            <option>All Trades</option>
+                            <option>This Week</option>
+                            <option>This Month</option>
+                            <option>Last 3 Months</option>
+                        </select>
+                        <select>
+                            <option>All Instruments</option>
+                            <option>Forex</option>
+                            <option>Stocks</option>
+                            <option>Crypto</option>
+                        </select>
+                    </div>
+                    <div class="history-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Symbol</th>
+                                    <th>Type</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>P&L</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>2024-01-15 14:30</td>
+                                    <td>EUR/USD</td>
+                                    <td>Buy</td>
+                                    <td>10,000</td>
+                                    <td>1.0845</td>
+                                    <td class="positive">+$11.00</td>
+                                    <td><span class="status open">Open</span></td>
+                                </tr>
+                                <tr>
+                                    <td>2024-01-14 09:15</td>
+                                    <td>GBP/USD</td>
+                                    <td>Sell</td>
+                                    <td>5,000</td>
+                                    <td>1.2680</td>
+                                    <td class="positive">+$25.50</td>
+                                    <td><span class="status closed">Closed</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            `;
+        }
+        
+        function showAnalyticsSection() {
+            const mainContent = document.querySelector('.main-content');
+            mainContent.innerHTML = `
+                <section class="analytics-section">
+                    <h2>Trading Analytics</h2>
+                    <div class="analytics-grid">
+                        <div class="analytics-card">
+                            <h4>Win Rate</h4>
+                            <div class="analytics-value">68.5%</div>
+                            <div class="analytics-change positive">+2.1% vs last month</div>
+                        </div>
+                        <div class="analytics-card">
+                            <h4>Average Profit</h4>
+                            <div class="analytics-value">$24.67</div>
+                            <div class="analytics-change positive">+$3.21 vs last month</div>
+                        </div>
+                        <div class="analytics-card">
+                            <h4>Total Trades</h4>
+                            <div class="analytics-value">147</div>
+                            <div class="analytics-change positive">+12 this month</div>
+                        </div>
+                        <div class="analytics-card">
+                            <h4>Risk/Reward Ratio</h4>
+                            <div class="analytics-value">1:2.3</div>
+                            <div class="analytics-change positive">Improved</div>
+                        </div>
+                    </div>
+                    <div class="performance-chart">
+                        <h3>Performance Over Time</h3>
+                        <canvas id="performanceChart" width="250" height="120"></canvas>
+                    </div>
+                </section>
+            `;
+            
+            // Initialize performance chart with optimized settings
+            setTimeout(() => {
+                const ctx = document.getElementById('performanceChart');
+                if (ctx) {
+                    new Chart(ctx.getContext('2d'), {
+                        type: 'line',
+                        data: {
+                            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                            datasets: [{
+                                label: 'Profit/Loss',
+                                data: [120, 190, 300, 250],
+                                borderColor: '#00d4ff',
+                                backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                pointRadius: 2,
+                                pointHoverRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: {
+                                duration: 600
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    ticks: { 
+                                        color: '#ffffff',
+                                        maxTicksLimit: 4
+                                    },
+                                    grid: { 
+                                        color: 'rgba(255, 255, 255, 0.1)',
+                                        drawBorder: false
+                                    }
+                                },
+                                x: {
+                                    ticks: { 
+                                        color: '#ffffff',
+                                        maxTicksLimit: 4
+                                    },
+                                    grid: { 
+                                        display: false
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }, 100);
+        }
+        
+        function scrollToSection(sectionId) {
+            // For education, scroll to education section on index page
+            window.location.href = 'index.html#education';
+        }
