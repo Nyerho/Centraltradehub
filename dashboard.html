@@ -1015,6 +1015,28 @@
                             <p>Loading latest crypto news...</p>
                         </div>
                     </div>
+                    
+                    <!-- Live Market Ticker -->
+                    <div class="market-ticker-container">
+                        <h3>Live Market Data</h3>
+                        <div class="market-ticker">
+                            <div class="ticker-content" id="tickerContent">
+                                <!-- Market data will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Crypto News Section -->
+                    <div class="crypto-news-section">
+                        <h3>Latest Cryptocurrency News</h3>
+                        <div class="news-container" id="newsContainer">
+                            <!-- News articles will be populated here -->
+                        </div>
+                        <div class="news-loading" id="newsLoading">
+                            <div class="loading-spinner"></div>
+                            <p>Loading latest crypto news...</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Right Sidebar -->
@@ -1436,6 +1458,7 @@
             setTimeout(() => {
                 fetchMarketData();
                 fetchCryptoNews();
+                initializePortfolioChart();
             }, 500);
             
             // Refresh market data every 30 seconds
@@ -1444,6 +1467,416 @@
             // Refresh news every 5 minutes
             setInterval(fetchCryptoNews, 300000);
         });
+
+        // Initialize Portfolio Chart
+        function initializePortfolioChart() {
+            const ctx = document.getElementById('portfolioChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr'],
+                    datasets: [{
+                        label: 'Portfolio Value',
+                        data: [10000, 12500, 11800, 15200],
+                        borderColor: '#00d4ff',
+                        backgroundColor: 'rgba(0, 212, 255, 0.05)',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.4,
+                        pointRadius: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#ffffff', font: { size: 10 }, maxTicksLimit: 3 }
+                        },
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#ffffff', font: { size: 10 }, maxTicksLimit: 4 }
+                        }
+                    },
+                    animation: { duration: 300 }
+                }
+            });
+        }
+
+        // Dashboard Section Management
+        function showDashboardSection(section) {
+            // Remove active class from all nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Add active class to clicked item
+            event.target.closest('.nav-item').classList.add('active');
+            
+            // Show appropriate section
+            const mainContent = document.querySelector('.main-content');
+            if (!mainContent) return;
+            
+            switch(section) {
+                case 'dashboard':
+                    showMainDashboard();
+                    break;
+                case 'portfolio':
+                    showPortfolioSection();
+                    break;
+                case 'history':
+                    showHistorySection();
+                    break;
+                case 'analytics':
+                    showAnalyticsSection();
+                    break;
+            }
+        }
+
+        function showMainDashboard() {
+            const mainContent = document.querySelector('.main-content');
+            if (!mainContent) return;
+            
+            mainContent.innerHTML = `
+                <!-- Welcome Section -->
+                <section class="welcome-section">
+                    <h2>Welcome back, <span id="welcomeName">Trader</span>!</h2>
+                    <p>Here's your trading overview for today. Monitor your positions and stay updated with market movements.</p>
+                    
+                    <!-- Balance Cards -->
+                    <div class="balance-cards">
+                        <div class="balance-card">
+                            <h4>Total Balance</h4>
+                            <div class="balance-amount" id="totalBalance">$0</div>
+                            <div class="balance-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+2.5% today</span>
+                            </div>
+                        </div>
+                        <div class="balance-card">
+                            <h4>Available Balance</h4>
+                            <div class="balance-amount" id="availableBalance">$0</div>
+                            <div class="balance-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>Ready to trade</span>
+                            </div>
+                        </div>
+                        <div class="balance-card">
+                            <h4>Profit/Loss</h4>
+                            <div class="balance-amount" id="profitLoss">$0</div>
+                            <div class="balance-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+1.2% this week</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="quick-actions">
+                        <a href="platform.html" class="action-card">
+                            <i class="fas fa-plus"></i>
+                            <h4>New Trade</h4>
+                        </a>
+                        <a href="funding.html" class="action-card deposit">
+                            <i class="fas fa-arrow-down"></i>
+                            <h4>Deposit</h4>
+                        </a>
+                        <a href="funding.html" class="action-card withdraw">
+                            <i class="fas fa-arrow-up"></i>
+                            <h4>Withdraw</h4>
+                        </a>
+                        <a href="#" class="action-card analytics" onclick="showDashboardSection('analytics')">
+                            <i class="fas fa-chart-bar"></i>
+                            <h4>Analytics</h4>
+                        </a>
+                    </div>
+                </section>
+                
+                <!-- Portfolio Chart -->
+                <div class="chart-container">
+                    <h3>Portfolio Performance</h3>
+                    <canvas id="portfolioChart" width="200" height="100"></canvas>
+                </div>
+                
+                <!-- Live Market Ticker -->
+                <div class="market-ticker-container">
+                    <h3>Live Market Data</h3>
+                    <div class="market-ticker">
+                        <div class="ticker-content" id="tickerContent">
+                            <!-- Market data will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Crypto News Section -->
+                <div class="crypto-news-section">
+                    <h3>Latest Cryptocurrency News</h3>
+                    <div class="news-container" id="newsContainer">
+                        <!-- News articles will be populated here -->
+                    </div>
+                    <div class="news-loading" id="newsLoading">
+                        <div class="loading-spinner"></div>
+                        <p>Loading latest crypto news...</p>
+                    </div>
+                </div>
+            `;
+            
+            // Reload user data and market data
+            loadUserData();
+            setTimeout(() => {
+                fetchMarketData();
+                fetchCryptoNews();
+                initializePortfolioChart();
+            }, 100);
+        }
+
+        function showPortfolioSection() {
+            const mainContent = document.querySelector('.main-content');
+            if (!mainContent) return;
+            
+            mainContent.innerHTML = `
+                <div class="portfolio-section">
+                    <h2>Portfolio Overview</h2>
+                    <div class="portfolio-summary">
+                        <div class="portfolio-card">
+                            <h4>Total Portfolio Value</h4>
+                            <div class="portfolio-value">$25,847.32</div>
+                            <div class="portfolio-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+5.2% ($1,284.50)</span>
+                            </div>
+                        </div>
+                        <div class="portfolio-card">
+                            <h4>Today's P&L</h4>
+                            <div class="portfolio-value">+$342.18</div>
+                            <div class="portfolio-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+1.34%</span>
+                            </div>
+                        </div>
+                        <div class="portfolio-card">
+                            <h4>Open Positions</h4>
+                            <div class="portfolio-value">7</div>
+                            <div class="portfolio-change">
+                                <span>Active trades</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="positions-table">
+                        <h3>Current Positions</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Type</th>
+                                    <th>Size</th>
+                                    <th>Entry Price</th>
+                                    <th>Current Price</th>
+                                    <th>P&L</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>EUR/USD</td>
+                                    <td>Buy</td>
+                                    <td>1.5 lots</td>
+                                    <td>1.0845</td>
+                                    <td>1.0856</td>
+                                    <td class="positive">+$165.00</td>
+                                </tr>
+                                <tr>
+                                    <td>GBP/USD</td>
+                                    <td>Sell</td>
+                                    <td>1.0 lot</td>
+                                    <td>1.2650</td>
+                                    <td>1.2634</td>
+                                    <td class="positive">+$160.00</td>
+                                </tr>
+                                <tr>
+                                    <td>USD/JPY</td>
+                                    <td>Buy</td>
+                                    <td>2.0 lots</td>
+                                    <td>149.50</td>
+                                    <td>149.82</td>
+                                    <td class="positive">+$427.20</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showHistorySection() {
+            const mainContent = document.querySelector('.main-content');
+            if (!mainContent) return;
+            
+            mainContent.innerHTML = `
+                <div class="history-section">
+                    <h2>Trade History</h2>
+                    <div class="history-filters">
+                        <select>
+                            <option>All Trades</option>
+                            <option>This Week</option>
+                            <option>This Month</option>
+                            <option>Last 3 Months</option>
+                        </select>
+                        <select>
+                            <option>All Symbols</option>
+                            <option>EUR/USD</option>
+                            <option>GBP/USD</option>
+                            <option>USD/JPY</option>
+                        </select>
+                    </div>
+                    
+                    <div class="history-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Symbol</th>
+                                    <th>Type</th>
+                                    <th>Size</th>
+                                    <th>Entry</th>
+                                    <th>Exit</th>
+                                    <th>P&L</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>2024-01-15</td>
+                                    <td>EUR/USD</td>
+                                    <td>Buy</td>
+                                    <td>1.0 lot</td>
+                                    <td>1.0820</td>
+                                    <td>1.0845</td>
+                                    <td class="positive">+$250.00</td>
+                                    <td><span class="status closed">Closed</span></td>
+                                </tr>
+                                <tr>
+                                    <td>2024-01-14</td>
+                                    <td>GBP/USD</td>
+                                    <td>Sell</td>
+                                    <td>0.5 lot</td>
+                                    <td>1.2680</td>
+                                    <td>1.2650</td>
+                                    <td class="positive">+$150.00</td>
+                                    <td><span class="status closed">Closed</span></td>
+                                </tr>
+                                <tr>
+                                    <td>2024-01-14</td>
+                                    <td>USD/JPY</td>
+                                    <td>Buy</td>
+                                    <td>1.5 lots</td>
+                                    <td>149.20</td>
+                                    <td>-</td>
+                                    <td class="positive">+$186.50</td>
+                                    <td><span class="status open">Open</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showAnalyticsSection() {
+            const mainContent = document.querySelector('.main-content');
+            if (!mainContent) return;
+            
+            mainContent.innerHTML = `
+                <div class="analytics-section">
+                    <h2>Trading Analytics</h2>
+                    <div class="analytics-grid">
+                        <div class="analytics-card">
+                            <h4>Win Rate</h4>
+                            <div class="analytics-value">73.5%</div>
+                            <div class="analytics-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+2.1% this month</span>
+                            </div>
+                        </div>
+                        <div class="analytics-card">
+                            <h4>Average Profit</h4>
+                            <div class="analytics-value">$284.50</div>
+                            <div class="analytics-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+12.3%</span>
+                            </div>
+                        </div>
+                        <div class="analytics-card">
+                            <h4>Total Trades</h4>
+                            <div class="analytics-value">156</div>
+                            <div class="analytics-change">
+                                <span>This month</span>
+                            </div>
+                        </div>
+                        <div class="analytics-card">
+                            <h4>Risk/Reward</h4>
+                            <div class="analytics-value">1:2.4</div>
+                            <div class="analytics-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>Excellent</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="performance-chart">
+                        <h3>Performance Overview</h3>
+                        <canvas id="analyticsChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            `;
+            
+            // Initialize analytics chart
+            setTimeout(() => {
+                const ctx = document.getElementById('analyticsChart');
+                if (ctx) {
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                            datasets: [{
+                                label: 'Profit/Loss',
+                                data: [1200, 1850, 1650, 2100],
+                                borderColor: '#00d4ff',
+                                backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                    ticks: { color: '#ffffff' }
+                                },
+                                x: {
+                                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                    ticks: { color: '#ffffff' }
+                                }
+                            }
+                        }
+                    });
+                }
+            }, 100);
+        }
 
         // UI Functions
         function toggleUserMenu() {
