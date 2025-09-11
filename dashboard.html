@@ -499,6 +499,256 @@
                 grid-template-columns: 1fr;
             }
         }
+        
+        /* Portfolio Section Styles */
+        .portfolio-section {
+            background: rgba(26, 26, 46, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+        
+        .portfolio-section h2 {
+            color: #00d4ff;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+        
+        .portfolio-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .portfolio-card {
+            background: rgba(26, 26, 46, 0.8);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .portfolio-card:hover {
+            transform: translateY(-5px);
+            border-color: #00d4ff;
+        }
+        
+        .portfolio-card h4 {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .portfolio-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #00d4ff;
+            margin-bottom: 0.5rem;
+        }
+        
+        .portfolio-change {
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .positions-table {
+            background: rgba(26, 26, 46, 0.4);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(0, 212, 255, 0.1);
+        }
+        
+        .positions-table h3 {
+            color: #00d4ff;
+            margin-bottom: 1rem;
+        }
+        
+        .positions-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .positions-table th,
+        .positions-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+        
+        .positions-table th {
+            background: rgba(0, 212, 255, 0.1);
+            color: #00d4ff;
+            font-weight: 600;
+        }
+        
+        /* History Section Styles */
+        .history-section {
+            background: rgba(26, 26, 46, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+        
+        .history-section h2 {
+            color: #00d4ff;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+        
+        .history-filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .history-filters select {
+            background: rgba(26, 26, 46, 0.8);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            color: #ffffff;
+            font-size: 0.9rem;
+        }
+        
+        .history-table {
+            background: rgba(26, 26, 46, 0.4);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(0, 212, 255, 0.1);
+            overflow-x: auto;
+        }
+        
+        .history-table table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+        }
+        
+        .history-table th,
+        .history-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+        
+        .history-table th {
+            background: rgba(0, 212, 255, 0.1);
+            color: #00d4ff;
+            font-weight: 600;
+        }
+        
+        .status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .status.open {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+        
+        .status.closed {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+        }
+        
+        /* Analytics Section Styles */
+        .analytics-section {
+            background: rgba(26, 26, 46, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+        
+        .analytics-section h2 {
+            color: #00d4ff;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+        
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .analytics-card {
+            background: rgba(26, 26, 46, 0.8);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .analytics-card:hover {
+            transform: translateY(-5px);
+            border-color: #00d4ff;
+        }
+        
+        .analytics-card h4 {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .analytics-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #00d4ff;
+            margin-bottom: 0.5rem;
+        }
+        
+        .analytics-change {
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .performance-chart {
+            background: rgba(26, 26, 46, 0.4);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(0, 212, 255, 0.1);
+        }
+        
+        .performance-chart h3 {
+            color: #00d4ff;
+            margin-bottom: 1rem;
+        }
+        
+        /* Mobile Responsive for New Sections */
+        @media (max-width: 768px) {
+            .portfolio-summary,
+            .analytics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .history-filters {
+                flex-direction: column;
+            }
+            
+            .history-table {
+                padding: 1rem;
+            }
+            
+            .portfolio-section,
+            .history-section,
+            .analytics-section {
+                padding: 1.5rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -741,7 +991,7 @@
                     <!-- Portfolio Chart -->
                     <div class="chart-container">
                         <h3>Portfolio Performance</h3>
-                        <canvas id="portfolioChart" width="300" height="150"></canvas>
+                        <canvas id="portfolioChart" width="200" height="100"></canvas>
                     </div>
                 </div>
 
@@ -814,33 +1064,33 @@
 
     <!-- JavaScript Functions -->
     <script>
-        // Initialize Chart
+        // Initialize Chart with optimized settings
         const ctx = document.getElementById('portfolioChart').getContext('2d');
         const portfolioChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                labels: ['Jan', 'Feb', 'Mar', 'Apr'],
                 datasets: [{
                     label: 'Portfolio Value',
-                    data: [10000, 12000, 11500, 13000, 14500, 15200],
+                    data: [10000, 12000, 13000, 15200],
                     borderColor: '#00d4ff',
-                    backgroundColor: 'rgba(0, 212, 255, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 3,
-                    pointHoverRadius: 5
+                    backgroundColor: 'rgba(0, 212, 255, 0.05)',
+                    borderWidth: 1,
+                    fill: false,
+                    tension: 0.2,
+                    pointRadius: 1,
+                    pointHoverRadius: 2
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 animation: {
-                    duration: 800
+                    duration: 300
                 },
                 interaction: {
                     intersect: false,
-                    mode: 'index'
+                    mode: 'nearest'
                 },
                 plugins: {
                     legend: {
@@ -851,17 +1101,23 @@
                     y: {
                         ticks: {
                             color: '#ffffff',
-                            maxTicksLimit: 5
+                            maxTicksLimit: 3,
+                            font: {
+                                size: 10
+                            }
                         },
                         grid: {
-                            color: 'rgba(255, 255, 255, 0.1)',
+                            color: 'rgba(255, 255, 255, 0.05)',
                             drawBorder: false
                         }
                     },
                     x: {
                         ticks: {
                             color: '#ffffff',
-                            maxTicksLimit: 6
+                            maxTicksLimit: 4,
+                            font: {
+                                size: 10
+                            }
                         },
                         grid: {
                             display: false
@@ -942,9 +1198,7 @@
                     showAnalyticsSection();
                     break;
                 default:
-                    // Show main dashboard
-                    document.querySelector('.welcome-section').style.display = 'block';
-                    document.querySelector('.chart-container').style.display = 'block';
+                    showMainDashboard();
             }
         }
         
@@ -1058,6 +1312,148 @@
                     </div>
                 </section>
             `;
+        }
+        
+        function showMainDashboard() {
+            const mainContent = document.querySelector('.main-content');
+            mainContent.innerHTML = `
+                <!-- Welcome Section -->
+                <section class="welcome-section">
+                    <h2>Welcome back, <span id="welcomeName">Trader</span>!</h2>
+                    <p>Here's your trading overview for today. Monitor your positions and stay updated with market movements.</p>
+                    
+                    <!-- Balance Cards -->
+                    <div class="balance-cards">
+                        <div class="balance-card">
+                            <h4>Total Balance</h4>
+                            <div class="balance-amount" id="totalBalance">$15,247.83</div>
+                            <div class="balance-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+2.5% today</span>
+                            </div>
+                        </div>
+                        <div class="balance-card">
+                            <h4>Available Balance</h4>
+                            <div class="balance-amount" id="availableBalance">$2,847.21</div>
+                            <div class="balance-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>Ready to trade</span>
+                            </div>
+                        </div>
+                        <div class="balance-card">
+                            <h4>Profit/Loss</h4>
+                            <div class="balance-amount" id="profitLoss">+$247.83</div>
+                            <div class="balance-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+1.2% this week</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="quick-actions">
+                        <a href="platform.html" class="action-card">
+                            <i class="fas fa-plus"></i>
+                            <h4>New Trade</h4>
+                        </a>
+                        <a href="funding.html" class="action-card deposit">
+                            <i class="fas fa-arrow-down"></i>
+                            <h4>Deposit</h4>
+                        </a>
+                        <a href="funding.html" class="action-card withdraw">
+                            <i class="fas fa-arrow-up"></i>
+                            <h4>Withdraw</h4>
+                        </a>
+                        <a href="#" class="action-card analytics" onclick="showDashboardSection('analytics')">
+                            <i class="fas fa-chart-bar"></i>
+                            <h4>Analytics</h4>
+                        </a>
+                    </div>
+                </section>
+                
+                <!-- Portfolio Chart -->
+                <div class="chart-container">
+                    <h3>Portfolio Performance</h3>
+                    <canvas id="portfolioChart" width="200" height="100"></canvas>
+                </div>
+            `;
+            
+            // Reinitialize the portfolio chart with optimized settings
+            setTimeout(() => {
+                const ctx = document.getElementById('portfolioChart');
+                if (ctx) {
+                    new Chart(ctx.getContext('2d'), {
+                        type: 'line',
+                        data: {
+                            labels: ['Jan', 'Feb', 'Mar', 'Apr'],
+                            datasets: [{
+                                label: 'Portfolio Value',
+                                data: [10000, 12000, 13000, 15200],
+                                borderColor: '#00d4ff',
+                                backgroundColor: 'rgba(0, 212, 255, 0.05)',
+                                borderWidth: 1,
+                                fill: false,
+                                tension: 0.2,
+                                pointRadius: 1,
+                                pointHoverRadius: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: {
+                                duration: 300
+                            },
+                            interaction: {
+                                intersect: false,
+                                mode: 'nearest'
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    ticks: {
+                                        color: '#ffffff',
+                                        maxTicksLimit: 3,
+                                        font: {
+                                            size: 10
+                                        }
+                                    },
+                                    grid: {
+                                        color: 'rgba(255, 255, 255, 0.05)',
+                                        drawBorder: false
+                                    }
+                                },
+                                x: {
+                                    ticks: {
+                                        color: '#ffffff',
+                                        maxTicksLimit: 4,
+                                        font: {
+                                            size: 10
+                                        }
+                                    },
+                                    grid: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }, 50);
+            
+            // Update welcome name
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    const welcomeElement = document.getElementById('welcomeName');
+                    if (welcomeElement) {
+                        welcomeElement.textContent = user.displayName || 'Trader';
+                    }
+                }
+            });
         }
         
         function showAnalyticsSection() {
