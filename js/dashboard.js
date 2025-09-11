@@ -510,8 +510,43 @@ window.handleLogout = async () => {
     }
 };
 
-// Initialize dashboard when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+// Dashboard Navigation Functionality
+function initializeDashboardNavigation() {
+    const menuItems = document.querySelectorAll('.menu-item');
+    const sections = document.querySelectorAll('.dashboard-section');
+    
+    menuItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Remove active class from all menu items
+            menuItems.forEach(menuItem => menuItem.classList.remove('active'));
+            
+            // Add active class to clicked item
+            this.classList.add('active');
+            
+            // Get the target section
+            const targetSection = this.getAttribute('data-section');
+            
+            // Hide all sections
+            sections.forEach(section => section.classList.remove('active'));
+            
+            // Show target section
+            const targetSectionElement = document.getElementById(targetSection + '-section');
+            if (targetSectionElement) {
+                targetSectionElement.classList.add('active');
+            }
+            
+            // Update page title
+            const sectionName = this.querySelector('span').textContent;
+            document.title = `${sectionName} - CentralTradeHub`;
+        });
+    });
+}
+
+// Initialize navigation when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    initializeDashboardNavigation();
     new DashboardManager();
 });
 
