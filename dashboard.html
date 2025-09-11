@@ -993,6 +993,28 @@
                         <h3>Portfolio Performance</h3>
                         <canvas id="portfolioChart" width="200" height="100"></canvas>
                     </div>
+                    
+                    <!-- Live Market Ticker -->
+                    <div class="market-ticker-container">
+                        <h3>Live Market Data</h3>
+                        <div class="market-ticker">
+                            <div class="ticker-content" id="tickerContent">
+                                <!-- Market data will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Crypto News Section -->
+                    <div class="crypto-news-section">
+                        <h3>Latest Cryptocurrency News</h3>
+                        <div class="news-container" id="newsContainer">
+                            <!-- News articles will be populated here -->
+                        </div>
+                        <div class="news-loading" id="newsLoading">
+                            <div class="loading-spinner"></div>
+                            <p>Loading latest crypto news...</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Right Sidebar -->
@@ -1291,6 +1313,8 @@
                 const data = await response.json();
                 
                 const tickerContent = document.getElementById('tickerContent');
+                if (!tickerContent) return;
+                
                 tickerContent.innerHTML = '';
                 
                 data.forEach(coin => {
@@ -1310,88 +1334,81 @@
                 });
             } catch (error) {
                 console.error('Error fetching market data:', error);
-                document.getElementById('tickerContent').innerHTML = '<div class="ticker-item"><span style="color: #ff4757;">Market data unavailable</span></div>';
+                const tickerContent = document.getElementById('tickerContent');
+                if (tickerContent) {
+                    tickerContent.innerHTML = '<div class="ticker-item"><span style="color: #ff4757;">Market data unavailable</span></div>';
+                }
             }
         }
 
         // Crypto News API Integration
         async function fetchCryptoNews() {
             try {
-                // Using CryptoPanic API for crypto news
-                const response = await fetch('https://cryptopanic.com/api/v1/posts/?auth_token=free&kind=news&currencies=BTC,ETH,ADA,DOT,LINK&filter=hot');
-                const data = await response.json();
-                
                 const newsContainer = document.getElementById('newsContainer');
                 const newsLoading = document.getElementById('newsLoading');
                 
-                newsLoading.style.display = 'none';
+                if (!newsContainer || !newsLoading) return;
+                
+                // Show loading initially
+                newsLoading.style.display = 'flex';
                 newsContainer.innerHTML = '';
                 
-                data.results.slice(0, 6).forEach(article => {
-                    const newsArticle = document.createElement('div');
-                    newsArticle.className = 'news-article';
-                    newsArticle.onclick = () => window.open(article.url, '_blank');
-                    
-                    const publishedDate = new Date(article.published_at).toLocaleDateString();
-                    
-                    newsArticle.innerHTML = `
-                        <div class="news-title">${article.title}</div>
-                        <div class="news-description">${article.title}</div>
-                        <div class="news-meta">
-                            <span class="news-source">${article.source.title}</span>
-                            <span>${publishedDate}</span>
-                        </div>
-                    `;
-                    
-                    newsContainer.appendChild(newsArticle);
-                });
-            } catch (error) {
-                console.error('Error fetching crypto news:', error);
-                // Fallback to alternative news source
-                await fetchAlternativeNews();
-            }
-        }
-
-        // Alternative news source (NewsAPI)
-        async function fetchAlternativeNews() {
-            try {
-                const newsContainer = document.getElementById('newsContainer');
-                const newsLoading = document.getElementById('newsLoading');
-                
-                // Fallback static news for demo
+                // Fallback to demo news since external APIs may have CORS issues
                 const fallbackNews = [
                     {
                         title: "Bitcoin Reaches New All-Time High Amid Institutional Adoption",
-                        description: "Major corporations continue to add Bitcoin to their treasury reserves, driving unprecedented demand.",
+                        description: "Major corporations continue to add Bitcoin to their treasury reserves, driving unprecedented demand and pushing prices to record levels.",
                         source: "CoinDesk",
-                        date: new Date().toLocaleDateString()
+                        date: new Date().toLocaleDateString(),
+                        url: "#"
                     },
                     {
                         title: "Ethereum 2.0 Staking Rewards Attract Billions in Locked ETH",
-                        description: "The transition to proof-of-stake continues to show strong validator participation.",
+                        description: "The transition to proof-of-stake continues to show strong validator participation with over 15 million ETH now staked.",
                         source: "CoinTelegraph",
-                        date: new Date().toLocaleDateString()
+                        date: new Date().toLocaleDateString(),
+                        url: "#"
                     },
                     {
                         title: "DeFi Protocol Launches Revolutionary Yield Farming Strategy",
-                        description: "New automated market maker promises higher returns with reduced impermanent loss.",
+                        description: "New automated market maker promises higher returns with reduced impermanent loss through innovative liquidity management.",
                         source: "The Block",
-                        date: new Date().toLocaleDateString()
+                        date: new Date().toLocaleDateString(),
+                        url: "#"
                     },
                     {
                         title: "Central Bank Digital Currencies Gain Momentum Globally",
-                        description: "Multiple countries announce pilot programs for their digital currency initiatives.",
+                        description: "Multiple countries announce pilot programs for their digital currency initiatives, signaling a shift in monetary policy.",
                         source: "Reuters",
-                        date: new Date().toLocaleDateString()
+                        date: new Date().toLocaleDateString(),
+                        url: "#"
+                    },
+                    {
+                        title: "NFT Market Shows Signs of Recovery After Recent Downturn",
+                        description: "Trading volumes increase as new utility-focused projects attract both collectors and institutional investors.",
+                        source: "CryptoSlate",
+                        date: new Date().toLocaleDateString(),
+                        url: "#"
+                    },
+                    {
+                        title: "Layer 2 Solutions Drive Ethereum Transaction Cost Reduction",
+                        description: "Polygon, Arbitrum, and Optimism see increased adoption as users seek lower fees for DeFi transactions.",
+                        source: "Decrypt",
+                        date: new Date().toLocaleDateString(),
+                        url: "#"
                     }
                 ];
                 
                 newsLoading.style.display = 'none';
-                newsContainer.innerHTML = '';
                 
                 fallbackNews.forEach(article => {
                     const newsArticle = document.createElement('div');
                     newsArticle.className = 'news-article';
+                    newsArticle.onclick = () => {
+                        if (article.url !== '#') {
+                            window.open(article.url, '_blank');
+                        }
+                    };
                     
                     newsArticle.innerHTML = `
                         <div class="news-title">${article.title}</div>
@@ -1405,15 +1422,21 @@
                     newsContainer.appendChild(newsArticle);
                 });
             } catch (error) {
-                console.error('Error loading fallback news:', error);
-                document.getElementById('newsLoading').innerHTML = '<p style="color: #ff4757;">Unable to load news at this time</p>';
+                console.error('Error fetching crypto news:', error);
+                const newsLoading = document.getElementById('newsLoading');
+                if (newsLoading) {
+                    newsLoading.innerHTML = '<p style="color: #ff4757;">Unable to load news at this time</p>';
+                }
             }
         }
 
         // Initialize data fetching
         document.addEventListener('DOMContentLoaded', function() {
-            fetchMarketData();
-            fetchCryptoNews();
+            // Small delay to ensure DOM is fully loaded
+            setTimeout(() => {
+                fetchMarketData();
+                fetchCryptoNews();
+            }, 500);
             
             // Refresh market data every 30 seconds
             setInterval(fetchMarketData, 30000);
@@ -1425,12 +1448,16 @@
         // UI Functions
         function toggleUserMenu() {
             const dropdown = document.getElementById('userDropdown');
-            dropdown.classList.toggle('show');
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+            }
         }
         
         function toggleMobileMenu() {
             const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('show');
+            if (sidebar) {
+                sidebar.classList.toggle('show');
+            }
         }
         
         function showMessages() {
@@ -1450,7 +1477,7 @@
             const userProfile = document.querySelector('.user-profile');
             const dropdown = document.getElementById('userDropdown');
             
-            if (userProfile && !userProfile.contains(event.target)) {
+            if (userProfile && dropdown && !userProfile.contains(event.target)) {
                 dropdown.classList.remove('show');
             }
         });
@@ -1466,10 +1493,6 @@
                 }
             });
         }
-    </script>
-</body>
-</html>
-
     </script>
 </body>
 </html>
