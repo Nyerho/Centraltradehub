@@ -84,7 +84,11 @@
 
             <!-- Navigation Buttons -->
             <div class="nav-buttons">
-                <!-- Remove standalone funding button -->
+                <a href="dashboard.html" class="btn-dashboard">
+                    <i class="fas fa-tachometer-alt"></i> Go to Dashboard
+                </a>
+            </div>
+            <!-- Remove standalone funding button -->
             </div>
 
             <!-- Enhanced User Menu with Comprehensive Dropdown -->
@@ -632,4 +636,43 @@
         <span class="value" id="account-free-margin">Loading...</span>
     </div>
 </div>
+    <style>
+        .btn-dashboard {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-dashboard:hover {
+            background: linear-gradient(135deg, #0099cc 0%, #007399 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn-dashboard i {
+            font-size: 16px;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .btn-dashboard {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+            
+            .btn-dashboard span {
+                display: none;
+            }
+        }
+    </style>
 
