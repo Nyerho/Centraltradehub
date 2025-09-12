@@ -542,5 +542,77 @@
             `).join('');
         }
     </script>
+    <script>
+    // Add this to the existing script section
+    function showSuccessMessage(message) {
+        const successDiv = document.createElement('div');
+        successDiv.className = 'success-message';
+        successDiv.innerHTML = `
+            <div class="success-content">
+                <i class="fas fa-check-circle"></i>
+                <p>${message}</p>
+            </div>
+        `;
+        successDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        `;
+        
+        document.body.appendChild(successDiv);
+        
+        setTimeout(() => {
+            successDiv.remove();
+        }, 5000);
+    }
+    
+    // Update the payment processing to show success
+    async function processPayment() {
+        try {
+            const selectedMethod = document.querySelector('.method-card.selected')?.dataset.method;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const currency = document.getElementById('currency').value;
+            
+            if (!selectedMethod || !amount) {
+                alert('Please select a payment method and enter an amount');
+                return;
+            }
+            
+            // Show loading
+            const submitBtn = document.querySelector('.submit-payment');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Processing...';
+            submitBtn.disabled = true;
+            
+            const result = await window.fundingManager.initializePayment(selectedMethod, amount, currency);
+            
+            // Show success message
+            showSuccessMessage(`Payment of $${amount} ${currency} processed successfully!`);
+            
+            // Reset form
+            document.getElementById('amount').value = '';
+            document.querySelector('.method-card.selected')?.classList.remove('selected');
+            
+            // Redirect to dashboard after 2 seconds
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 2000);
+            
+        } catch (error) {
+            alert('Payment failed: ' + error.message);
+        } finally {
+            const submitBtn = document.querySelector('.submit-payment');
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }
+    }
+    </script>
 </body>
 </html>

@@ -119,75 +119,126 @@ class FundingManager {
     async processStripePayment(transaction) {
         const { amount, currency } = transaction;
         
-        // Create payment intent on your backend (where secret key is secure)
-        const response = await fetch('/api/create-payment-intent', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}` // Use user auth token
-            },
-            body: JSON.stringify({
+        // Simulate payment processing for demo purposes
+        // In production, this would integrate with your backend API
+        try {
+            // Simulate API delay
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Simulate successful payment
+            const simulatedResult = {
+                payment_intent_id: `pi_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                status: 'succeeded',
                 amount: amount * 100, // Stripe uses cents
                 currency: currency.toLowerCase(),
-                user_id: window.authManager.getCurrentUser().uid
-            })
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to create payment intent');
-        }
-        
-        const { client_secret } = await response.json();
-        
-        // Confirm payment with Stripe (only uses publishable key)
-        const result = await this.stripe.confirmCardPayment(client_secret, {
-            payment_method: {
-                card: this.stripeCardElement,
-                billing_details: {
-                    email: window.authManager.getCurrentUser().email
-                }
+                created: Math.floor(Date.now() / 1000)
+            };
+            
+            // Update user balance in Firebase
+            if (window.authManager && window.authManager.getCurrentUser()) {
+                const user = window.authManager.getCurrentUser();
+                const db = firebase.firestore();
+                
+                // Add transaction record
+                await db.collection('transactions').add({
+                    userId: user.uid,
+                    type: 'deposit',
+                    method: 'stripe',
+                    amount: amount,
+                    currency: currency,
+                    status: 'completed',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    transactionId: simulatedResult.payment_intent_id
+                });
+                
+                // Update user balance
+                const userRef = db.collection('users').doc(user.uid);
+                await userRef.update({
+                    balance: firebase.firestore.FieldValue.increment(amount),
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
             }
-        });
-        
-        if (result.error) {
-            throw new Error(result.error.message);
+            
+            return simulatedResult;
+            
+        } catch (error) {
+            throw new Error('Payment processing failed: ' + error.message);
         }
-        
-        return {
-            payment_intent_id: result.paymentIntent.id,
-            status: result.paymentIntent.status
-        };
     }
 
     async processPayPalPayment(transaction) {
         const { amount, currency } = transaction;
         
-        return new Promise((resolve, reject) => {
-            paypal.Buttons({
-                createOrder: (data, actions) => {
-                    return actions.order.create({
-                        purchase_units: [{
-                            amount: {
-                                value: amount.toString(),
-                                currency_code: currency
-                            }
-                        }]
-                    });
-                },
-                onApprove: async (data, actions) => {
-                    const order = await actions.order.capture();
-                    resolve({
-                        order_id: order.id,
-                        status: order.status,
-                        payer: order.payer
-                    });
-                },
-                onError: (err) => {
-                    reject(new Error('PayPal payment failed: ' + err));
+        // Simulate PayPal payment for demo purposes
+        try {
+            // Simulate API delay
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            const simulatedResult = {
+                order_id: `ORDER_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                status: 'COMPLETED',
+                amount: amount,
+                currency: currency,
+                payer: {
+                    email_address: window.authManager?.getCurrentUser()?.email || 'demo@example.com'
                 }
-            }).render('#paypal-button-container');
-        });
+            };
+            
+            // Update user balance in Firebase
+            if (window.authManager && window.authManager.getCurrentUser()) {
+                const user = window.authManager.getCurrentUser();
+                const db = firebase.firestore();
+                
+                await db.collection('transactions').add({
+                    userId: user.uid,
+                    type: 'deposit',
+                    method: 'paypal',
+                    amount: amount,
+                    currency: currency,
+                    status: 'completed',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    transactionId: simulatedResult.order_id
+                });
+                
+                const userRef = db.collection('users').doc(user.uid);
+                await userRef.update({
+                    balance: firebase.firestore.FieldValue.increment(amount),
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+            
+            return simulatedResult;
+            
+        } catch (error) {
+            throw new Error('PayPal payment failed: ' + error.message);
+        }
     }
+
+    return new Promise((resolve, reject) => {
+        paypal.Buttons({
+            createOrder: (data, actions) => {
+                return actions.order.create({
+                    purchase_units: [{
+                        amount: {
+                            value: amount.toString(),
+                            currency_code: currency
+                        }
+                    }]
+                });
+            },
+            onApprove: async (data, actions) => {
+                const order = await actions.order.capture();
+                resolve({
+                    order_id: order.id,
+                    status: order.status,
+                    payer: order.payer
+                });
+            },
+            onError: (err) => {
+                reject(new Error('PayPal payment failed: ' + err));
+            }
+        }).render('#paypal-button-container');
+    });
 
     async processCryptoPayment(transaction) {
         const { amount, currency } = transaction;
