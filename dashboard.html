@@ -67,6 +67,41 @@
             color: #e8eaf6;
         }
 
+        /* Add navigation styles */
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-link {
+            color: #e8eaf6;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 16px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-link.active {
+            color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        /* Responsive navigation */
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+        }
         .status-indicator {
             width: 12px;
             height: 12px;
@@ -319,6 +354,12 @@
                     <div class="company-name">Central Trade Hub</div>
                 </a>
             </div>
+            <ul class="nav-menu">
+                <li><a href="index.html#home" class="nav-link">Home</a></li>
+                <li><a href="index.html#markets" class="nav-link">Markets</a></li>
+                <li><a href="index.html#about" class="nav-link">About</a></li>
+                <li><a href="index.html#contact" class="nav-link">Contact</a></li>
+            </ul>
             <div class="user-info">
                 <div class="status-indicator"></div>
                 <span id="userEmail">Loading...</span>
