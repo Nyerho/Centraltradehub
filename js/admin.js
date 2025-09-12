@@ -157,10 +157,20 @@ class AdminDashboard {
 
     async loadUsers() {
         try {
+            // Add connection check
+            if (!this.db) {
+                throw new Error('Database connection not available');
+            }
+            
             const usersSnapshot = await getDocs(collection(this.db, 'users'));
             const tbody = document.querySelector('#users tbody');
+            
+            if (!tbody) {
+                throw new Error('Users table not found in DOM');
+            }
+            
             tbody.innerHTML = '';
-
+        
             if (usersSnapshot.empty) {
                 // Show sample data if no users exist
                 const sampleUsers = [
@@ -187,21 +197,24 @@ class AdminDashboard {
         } catch (error) {
             console.error('Error loading users:', error);
             
+            // Show detailed error message
+            this.showNotification(`Failed to load users: ${error.message}. Showing sample data.`, 'error');
+            
             // Show sample data as fallback
             const tbody = document.querySelector('#users tbody');
-            tbody.innerHTML = '';
-            
-            const sampleUsers = [
-                { id: 'fallback1', email: 'demo.user@example.com', displayName: 'Demo User', status: 'active', balance: 10000 },
-                { id: 'fallback2', email: 'test.trader@example.com', displayName: 'Test Trader', status: 'active', balance: 15000 }
-            ];
-            
-            sampleUsers.forEach((user, index) => {
-                const row = this.createUserRow(user.id, user, index + 1);
-                tbody.appendChild(row);
-            });
-            
-            this.showNotification('Failed to load users from database. Showing demo data. Error: ' + error.message, 'error');
+            if (tbody) {
+                tbody.innerHTML = '';
+                
+                const sampleUsers = [
+                    { id: 'fallback1', email: 'demo.user@example.com', displayName: 'Demo User', status: 'active', balance: 10000 },
+                    { id: 'fallback2', email: 'test.trader@example.com', displayName: 'Test Trader', status: 'active', balance: 15000 }
+                ];
+                
+                sampleUsers.forEach((user, index) => {
+                    const row = this.createUserRow(user.id, user, index + 1);
+                    tbody.appendChild(row);
+                });
+            }
         }
     }
 

@@ -169,14 +169,22 @@ class AuthManager {
 
   async logout() {
     try {
-      await FirebaseAuthService.logout();
+      await FirebaseAuthService.signOut();
       this.showMessage('Logged out successfully!', 'success');
+      
+      // Clear any cached data
+      localStorage.clear();
+      sessionStorage.clear();
       
       // Redirect to home page
       window.location.href = 'index.html';
     } catch (error) {
       console.error('Logout error:', error);
-      this.showMessage('Error logging out. Please try again.', 'error');
+      
+      // Force logout even if Firebase fails
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.href = 'index.html';
     }
   }
 

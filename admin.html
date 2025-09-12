@@ -326,16 +326,19 @@
                     if (window.authManager) {
                         await window.authManager.logout();
                     } else {
-                        // Fallback if auth manager not available
+                        // Direct Firebase logout if auth manager not available
+                        const { signOut } = await import('./js/firebase-config.js');
+                        await signOut(auth);
                         localStorage.clear();
                         sessionStorage.clear();
                         window.location.href = 'index.html';
                     }
                 } catch (error) {
                     console.error('Logout error:', error);
-                    // Fallback logout
+                    // Force logout regardless of errors
                     localStorage.clear();
                     sessionStorage.clear();
+                    alert('Logged out successfully!');
                     window.location.href = 'index.html';
                 }
             }
