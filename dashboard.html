@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - AlphaTrade</title>
+    <title>Dashboard - Central Trade Hub</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -17,97 +17,118 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1a237e 0%, #283593 25%, #3949ab 50%, #5c6bc0 100%);
             min-height: 100vh;
-            color: #333;
+            color: #ffffff;
         }
 
         .dashboard-container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
         }
 
         .header {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
+            background: rgba(26, 35, 126, 0.9);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 25px 30px;
             margin-bottom: 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
-        .logo {
-            font-size: 24px;
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-img {
+            width: 45px;
+            height: 45px;
+            border-radius: 8px;
+        }
+
+        .company-name {
+            font-size: 28px;
             font-weight: 700;
-            color: white;
+            color: #ffffff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .user-info {
             display: flex;
             align-items: center;
-            gap: 15px;
-            color: white;
+            gap: 20px;
+            color: #e8eaf6;
         }
 
         .status-indicator {
-            width: 10px;
-            height: 10px;
-            background: #4CAF50;
+            width: 12px;
+            height: 12px;
+            background: #4caf50;
             border-radius: 50%;
             animation: pulse 2s infinite;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
         }
 
         @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+            100% { opacity: 1; transform: scale(1); }
         }
 
         .main-content {
             display: grid;
             grid-template-columns: 2fr 1fr;
             gap: 30px;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
 
         .balance-section {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(26, 35, 126, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         .balance-title {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 16px;
-            margin-bottom: 10px;
+            color: #c5cae9;
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .balance-amount {
-            color: white;
-            font-size: 36px;
+            color: #ffffff;
+            font-size: 42px;
             font-weight: 700;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
 
         .quick-actions {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
+            gap: 20px;
         }
 
         .action-btn {
-            background: rgba(255, 255, 255, 0.2);
+            background: linear-gradient(135deg, #3949ab 0%, #5c6bc0 100%);
             border: none;
-            border-radius: 10px;
-            padding: 15px;
+            border-radius: 15px;
+            padding: 20px;
             color: white;
             font-weight: 600;
+            font-size: 16px;
             cursor: pointer;
             transition: all 0.3s ease;
             text-decoration: none;
@@ -115,57 +136,67 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
         }
 
         .action-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
+            background: linear-gradient(135deg, #5c6bc0 0%, #7986cb 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
         }
 
         .market-widget {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(26, 35, 126, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         .widget-title {
-            color: white;
-            font-size: 18px;
+            color: #ffffff;
+            font-size: 22px;
             font-weight: 600;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            text-align: center;
         }
 
         .market-ticker {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 25px;
             overflow: hidden;
             position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .ticker-content {
             display: flex;
-            animation: scroll 30s linear infinite;
+            animation: scroll 25s linear infinite;
             white-space: nowrap;
         }
 
         .ticker-item {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            margin-right: 40px;
+            margin-right: 50px;
             color: white;
             font-size: 14px;
+            min-width: 80px;
         }
 
         .ticker-symbol {
-            font-weight: 600;
-            margin-right: 10px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #e8eaf6;
         }
 
         .ticker-price {
-            color: #4CAF50;
+            color: #4caf50;
+            font-weight: 600;
         }
 
         @keyframes scroll {
@@ -175,50 +206,75 @@
 
         .navigation-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
         }
 
         .nav-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 25px;
+            background: rgba(26, 35, 126, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 35px;
             text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         .nav-card:hover {
-            transform: translateY(-5px);
-            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-8px);
+            background: rgba(26, 35, 126, 0.9);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
         }
 
         .nav-card h3 {
-            color: white;
-            font-size: 20px;
-            margin-bottom: 10px;
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 15px;
         }
 
         .nav-card p {
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 20px;
+            color: #c5cae9;
+            margin-bottom: 25px;
+            font-size: 16px;
+            line-height: 1.5;
         }
 
         .nav-card a {
-            background: linear-gradient(45deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, #3949ab 0%, #5c6bc0 100%);
             color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
+            padding: 15px 30px;
+            border-radius: 12px;
             text-decoration: none;
             font-weight: 600;
+            font-size: 16px;
             display: inline-block;
             transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .nav-card a:hover {
+            background: linear-gradient(135deg, #5c6bc0 0%, #7986cb 100%);
             transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, #f44336 0%, #e57373 100%);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .logout-btn:hover {
+            background: linear-gradient(135deg, #e57373 0%, #ffab91 100%);
+            transform: translateY(-2px);
         }
 
         @media (max-width: 768px) {
@@ -235,7 +291,19 @@
             }
             
             .balance-amount {
-                font-size: 28px;
+                font-size: 32px;
+            }
+            
+            .company-name {
+                font-size: 22px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .balance-section, .market-widget {
+                padding: 25px;
             }
         }
     </style>
@@ -243,11 +311,14 @@
 <body>
     <div class="dashboard-container">
         <header class="header">
-            <div class="logo">AlphaTrade</div>
+            <div class="logo-section">
+                <img src="assets/images/logo.png" alt="Central Trade Hub" class="logo-img">
+                <div class="company-name">Central Trade Hub</div>
+            </div>
             <div class="user-info">
                 <div class="status-indicator"></div>
                 <span id="userEmail">Loading...</span>
-                <button onclick="logout()" class="action-btn" style="padding: 8px 16px; font-size: 14px;">Logout</button>
+                <button onclick="logout()" class="logout-btn">Logout</button>
             </div>
         </header>
 
@@ -264,7 +335,7 @@
             </div>
 
             <div class="market-widget">
-                <div class="widget-title">Live Market</div>
+                <div class="widget-title">Live Market Data</div>
                 <div class="market-ticker">
                     <div class="ticker-content" id="marketTicker">
                         <div class="ticker-item">
@@ -291,17 +362,17 @@
         <div class="navigation-grid">
             <div class="nav-card">
                 <h3>Trading Platform</h3>
-                <p>Access advanced trading tools and charts</p>
+                <p>Access advanced trading tools, real-time charts, and execute trades with professional-grade features</p>
                 <a href="platform.html">Start Trading</a>
             </div>
             <div class="nav-card">
-                <h3>Funding</h3>
-                <p>Deposit and withdraw funds securely</p>
+                <h3>Account Funding</h3>
+                <p>Securely deposit and withdraw funds using multiple payment methods with instant processing</p>
                 <a href="funding.html">Manage Funds</a>
             </div>
             <div class="nav-card">
-                <h3>Profile</h3>
-                <p>View analytics and account settings</p>
+                <h3>Profile & Analytics</h3>
+                <p>View detailed trading analytics, account settings, and performance metrics</p>
                 <a href="profile.html">View Profile</a>
             </div>
         </div>
@@ -330,7 +401,7 @@
             });
         }
 
-        // Market ticker code stays the same
+        // Market ticker with more realistic data
         function updateMarketTicker() {
             const pairs = [
                 {symbol: 'EUR/USD', price: (1.0800 + Math.random() * 0.01).toFixed(4)},
@@ -338,7 +409,9 @@
                 {symbol: 'USD/JPY', price: (149.00 + Math.random() * 2).toFixed(2)},
                 {symbol: 'AUD/USD', price: (0.6700 + Math.random() * 0.01).toFixed(4)},
                 {symbol: 'USD/CAD', price: (1.3500 + Math.random() * 0.01).toFixed(4)},
-                {symbol: 'NZD/USD', price: (0.6200 + Math.random() * 0.01).toFixed(4)}
+                {symbol: 'NZD/USD', price: (0.6200 + Math.random() * 0.01).toFixed(4)},
+                {symbol: 'USD/CHF', price: (0.9100 + Math.random() * 0.01).toFixed(4)},
+                {symbol: 'EUR/GBP', price: (0.8500 + Math.random() * 0.01).toFixed(4)}
             ];
 
             const tickerContent = document.getElementById('marketTicker');
@@ -352,7 +425,7 @@
             }
         }
 
-        setInterval(updateMarketTicker, 5000);
+        setInterval(updateMarketTicker, 3000);
         updateMarketTicker();
     </script>
 </body>
