@@ -7,24 +7,36 @@
         const isOldAndroid = /Android [1-4]\./i.test(ua);
         const isLowRAM = navigator.deviceMemory && navigator.deviceMemory < 4;
         
-        return isMobile || isOldAndroid || isLowRAM;
+        return isOldAndroid || isLowRAM; // Removed general mobile detection
     };
     
-    // Apply performance optimizations
+    // Apply performance optimizations only for truly low-performance devices
     if (isLowPerformance()) {
         document.documentElement.classList.add('low-performance');
         
-        // Disable smooth scrolling
-        document.documentElement.style.scrollBehavior = 'auto';
+        // Don't disable smooth scrolling on mobile
+        // document.documentElement.style.scrollBehavior = 'auto';
         
-        // Reduce animation frame rate
+        // Reduce animation frame rate only for very low-end devices
         const style = document.createElement('style');
         style.textContent = `
             .low-performance * {
-                animation-duration: 0.01ms !important;
-                transition-duration: 0.1s !important;
+                animation-duration: 0.2s !important;
+                transition-duration: 0.2s !important;
             }
         `;
         document.head.appendChild(style);
     }
+    
+    // Ensure layout stability after DOM load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Force layout recalculation to prevent reversion
+        setTimeout(() => {
+            const sections = document.querySelectorAll('section');
+            sections.forEach(section => {
+                section.style.width = '100vw';
+                section.style.marginLeft = 'calc(-50vw + 50%)';
+            });
+        }, 100);
+    });
 })();
