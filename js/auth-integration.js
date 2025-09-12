@@ -126,6 +126,12 @@ class AuthManager {
         if (typeof closeModal === 'function') {
           closeModal('registerModal');
         }
+        
+        // Add redirect to dashboard after successful registration
+        setTimeout(() => {
+          window.location.href = 'dashboard.html';
+        }, 1500); // Small delay to show success message
+        
         return true;
       } else {
         // Show specific error message from Firebase
