@@ -252,6 +252,116 @@ class FirebaseDatabaseService {
     return unsubscribe;
   }
 
+  // Account Balance Operations
+  async getUserBalance(uid) {
+    try {
+      const userRef = doc(db, 'users', uid);
+      const userDoc = await getDoc(userRef);
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        return {
+          success: true,
+          balance: userData.accountBalance || 0
+        };
+      } else {
+        // Initialize user with default balance if profile doesn't exist
+        await this.initializeUserAccount(uid);
+        return {
+          success: true,
+          balance: 1000 // Default starting balance
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  async updateUserBalance(uid, newBalance) {
+    try {
+      const userRef = doc(db, 'users', uid);
+      await updateDoc(userRef, {
+        accountBalance: newBalance,
+        balanceUpdatedAt: new Date().toISOString()
+      });
+      
+      return {
+        success: true,
+        message: 'Balance updated successfully'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  async initializeUserAccount(uid, initialBalance = 1000) {
+    try {
+      const userRef = doc(db, 'users', uid);
+      await setDoc(userRef, {
+        accountBalance: initialBalance,
+        createdAt: new Date().toISOString(),
+        balanceUpdatedAt: new Date().toISOString()
+      }, { merge: true });
+      
+      return {
+        success: true,
+        message: 'User account initialized'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  async addFunds(uid, amount) {
+    try {
+      const balanceResult = await this.getUserBalance(uid);
+      if (!balanceResult.success) {
+        return balanceResult;
+      }
+      
+      const newBalance = balanceResult.balance + amount;
+      return await this.updateUserBalance(uid, newBalance);
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  async withdrawFunds(uid, amount) {
+    try {
+      const balanceResult = await this.getUserBalance(uid);
+      if (!balanceResult.success) {
+        return balanceResult;
+      }
+      
+      if (balanceResult.balance < amount) {
+        return {
+          success: false,
+          error: 'Insufficient funds'
+        };
+      }
+      
+      const newBalance = balanceResult.balance - amount;
+      return await this.updateUserBalance(uid, newBalance);
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
   // Cleanup listeners
   unsubscribeAll() {
     this.listeners.forEach((unsubscribe) => {
