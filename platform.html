@@ -48,15 +48,15 @@
     <nav class="navbar platform-nav">
         <div class="nav-container">
             <div class="nav-left">
-                <div class="hamburger" id="hamburger">
-                    <span class="bar"></span>
-                    <span class="bar"></span>
-                    <span class="bar"></span>
-                </div>
-                <div class="nav-logo">
-                    <a href="index.html">
-                        <img src="assets/images/logo-white.png" alt="CentralTradeHub" class="logo-img">
+                <div class="logo">
+                    <a href="index.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit;">
+                        <img src="assets/images/logo.png" alt="Central Trade Hub" style="width: 35px; height: 35px; border-radius: 6px;">
+                        <span style="font-size: 20px; font-weight: 600; color: #ffffff;">Central Trade Hub</span>
                     </a>
+                </div>
+                <div class="market-status">
+                    <span class="status-indicator"></span>
+                    <span>Markets Open</span>
                 </div>
             </div>
             <div class="nav-logo">
@@ -467,324 +467,80 @@
     <script src="js/main.js"></script>
     <script src="js/market-data.js"></script>
 
-    <script>
-        // Enhanced Platform Initialization
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize chart
-            initializeChart();
-            
-            // Initialize real-time data
-            initializeRealTimeData();
-            
-            // Initialize trading platform
-            if (typeof initializePlatform === 'function') {
-                initializePlatform();
-            }
-            
-            // Initialize market data
-            if (typeof initializeMarketData === 'function') {
-                initializeMarketData();
-            }
-            
-            // Setup responsive handlers
-            setupResponsiveHandlers();
-        });
+    <script type="module">
+        import { auth } from './js/firebase-config.js';
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import FirebaseDatabaseService from './js/firebase-database.js';
 
-        // Initialize TradingView Chart
-        function initializeChart() {
-            const chart = LightweightCharts.createChart(document.getElementById('trading-chart'), {
-                width: document.getElementById('trading-chart').clientWidth,
-                height: 400,
-                layout: {
-                    backgroundColor: '#1a1a1a',
-                    textColor: '#ffffff',
-                },
-                grid: {
-                    vertLines: {
-                        color: '#2B2B43',
-                    },
-                    horzLines: {
-                        color: '#2B2B43',
-                    },
-                },
-                crosshair: {
-                    mode: LightweightCharts.CrosshairMode.Normal,
-                },
-                rightPriceScale: {
-                    borderColor: '#485c7b',
-                },
-                timeScale: {
-                    borderColor: '#485c7b',
-                    timeVisible: true,
-                    secondsVisible: false,
-                },
-            });
-
-            const candlestickSeries = chart.addCandlestickSeries({
-                upColor: '#00d4ff',
-                downColor: '#ff4757',
-                borderDownColor: '#ff4757',
-                borderUpColor: '#00d4ff',
-                wickDownColor: '#ff4757',
-                wickUpColor: '#00d4ff',
-            });
-
-            // Sample data - replace with real data
-            const sampleData = generateSampleData();
-            candlestickSeries.setData(sampleData);
-
-            // Make chart responsive
-            window.addEventListener('resize', () => {
-                chart.applyOptions({ width: document.getElementById('trading-chart').clientWidth });
-            });
-
-            // Store chart reference globally
-            window.tradingChart = chart;
-            window.candlestickSeries = candlestickSeries;
+        // Function to format currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2
+            }).format(amount);
         }
 
-        // Generate sample candlestick data
-        function generateSampleData() {
-            const data = [];
-            const basePrice = 1.0845;
-            let currentPrice = basePrice;
-            const now = new Date();
-            
-            for (let i = 100; i >= 0; i--) {
-                const time = Math.floor((now.getTime() - i * 15 * 60 * 1000) / 1000);
-                const change = (Math.random() - 0.5) * 0.01;
-                currentPrice += change;
-                
-                const high = currentPrice + Math.random() * 0.005;
-                const low = currentPrice - Math.random() * 0.005;
-                const close = low + Math.random() * (high - low);
-                
-                data.push({
-                    time: time,
-                    open: currentPrice,
-                    high: high,
-                    low: low,
-                    close: close
-                });
-                
-                currentPrice = close;
-            }
-            
-            return data;
-        }
-
-        // Initialize real-time data updates
-        function initializeRealTimeData() {
-            // Simulate real-time price updates
-            setInterval(() => {
-                updatePrices();
-                updateChart();
-            }, 1000);
-        }
-
-        // Update prices in watchlist and current price display
-        function updatePrices() {
-            const symbols = ['EURUSD', 'GBPUSD', 'USDJPY'];
-            
-            symbols.forEach(symbol => {
-                const priceElement = document.getElementById(`price-${symbol}`);
-                const changeElement = document.getElementById(`change-${symbol}`);
-                
-                if (priceElement) {
-                    const currentPrice = parseFloat(priceElement.textContent);
-                    const change = (Math.random() - 0.5) * 0.01;
-                    const newPrice = (currentPrice + change).toFixed(symbol === 'USDJPY' ? 2 : 4);
+        // Function to load user balance and account data
+        async function loadUserAccountData(user) {
+            try {
+                const balanceResult = await FirebaseDatabaseService.getUserBalance(user.uid);
+                if (balanceResult.success) {
+                    const balance = balanceResult.balance;
+                    document.getElementById('account-balance').textContent = formatCurrency(balance);
                     
-                    priceElement.textContent = newPrice;
+                    // Calculate other account metrics based on balance
+                    const equity = balance * 1.025; // 2.5% equity gain example
+                    const margin = balance * 0.05; // 5% margin usage
+                    const freeMargin = balance - margin;
                     
-                    if (changeElement) {
-                        const changeValue = (change > 0 ? '+' : '') + change.toFixed(4);
-                        changeElement.textContent = changeValue;
-                        changeElement.className = change > 0 ? 'change positive' : 'change negative';
-                    }
-                }
-            });
-            
-            // Update current price display
-            const currentPriceElement = document.getElementById('current-price');
-            if (currentPriceElement) {
-                const currentPrice = parseFloat(currentPriceElement.textContent);
-                const change = (Math.random() - 0.5) * 0.01;
-                const newPrice = (currentPrice + change).toFixed(4);
-                currentPriceElement.textContent = newPrice;
-            }
-        }
-
-        // Update chart with new data point
-        function updateChart() {
-            if (window.candlestickSeries) {
-                const now = Math.floor(Date.now() / 1000);
-                const currentPrice = parseFloat(document.getElementById('current-price').textContent);
-                const change = (Math.random() - 0.5) * 0.005;
-                const newPrice = currentPrice + change;
-                
-                const high = newPrice + Math.random() * 0.002;
-                const low = newPrice - Math.random() * 0.002;
-                const close = low + Math.random() * (high - low);
-                
-                window.candlestickSeries.update({
-                    time: now,
-                    open: currentPrice,
-                    high: high,
-                    low: low,
-                    close: close
-                });
-            }
-        }
-
-        // Setup responsive handlers
-        function setupResponsiveHandlers() {
-            const hamburger = document.querySelector('.hamburger');
-            const navMenu = document.querySelector('.nav-menu');
-            
-            if (hamburger && navMenu) {
-                hamburger.addEventListener('click', () => {
-                    hamburger.classList.toggle('active');
-                    navMenu.classList.toggle('active');
-                });
-            }
-            
-            // Handle sidebar collapse on mobile
-            const leftSidebar = document.querySelector('.left-sidebar');
-            const rightSidebar = document.querySelector('.right-sidebar');
-            
-            function handleResize() {
-                if (window.innerWidth <= 768) {
-                    leftSidebar?.classList.add('collapsed');
-                    rightSidebar?.classList.add('collapsed');
+                    document.getElementById('account-equity').textContent = formatCurrency(equity);
+                    document.getElementById('account-margin').textContent = formatCurrency(margin);
+                    document.getElementById('free-margin').textContent = formatCurrency(freeMargin);
                 } else {
-                    leftSidebar?.classList.remove('collapsed');
-                    rightSidebar?.classList.remove('collapsed');
+                    console.error('Failed to load balance:', balanceResult.error);
+                    // Set default values if balance loading fails
+                    document.getElementById('account-balance').textContent = '$0.00';
+                    document.getElementById('account-equity').textContent = '$0.00';
+                    document.getElementById('account-margin').textContent = '$0.00';
+                    document.getElementById('free-margin').textContent = '$0.00';
                 }
+            } catch (error) {
+                console.error('Error loading account data:', error);
+                // Set default values on error
+                document.getElementById('account-balance').textContent = '$0.00';
+                document.getElementById('account-equity').textContent = '$0.00';
+                document.getElementById('account-margin').textContent = '$0.00';
+                document.getElementById('free-margin').textContent = '$0.00';
             }
-            
-            window.addEventListener('resize', handleResize);
-            handleResize(); // Initial check
         }
 
-        // Order form functionality with enhanced debugging
-        document.addEventListener('click', function(e) {
-            // Order type buttons
-            if (e.target.classList.contains('order-type-btn')) {
-                document.querySelectorAll('.order-type-btn').forEach(btn => btn.classList.remove('active'));
-                e.target.classList.add('active');
-                console.log('Order type changed to:', e.target.dataset.type);
-            }
-            
-            // Order tabs - Enhanced functionality
-            if (e.target.classList.contains('order-tab')) {
-                document.querySelectorAll('.order-tab').forEach(tab => tab.classList.remove('active'));
-                e.target.classList.add('active');
+        // Check authentication and load user data
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                console.log('User authenticated:', user.email);
                 
-                const limitOrder = document.querySelector('.limit-order');
-                const orderType = e.target.dataset.type;
-                
-                console.log('Order tab changed to:', orderType);
-                
-                if (orderType === 'limit' || orderType === 'stop') {
-                    limitOrder.style.display = 'block';
-                    // Make price field required for limit and stop orders
-                    const priceInput = document.getElementById('price-input');
-                    if (priceInput) {
-                        priceInput.required = true;
-                        priceInput.placeholder = orderType === 'limit' ? 'Enter limit price' : 'Enter stop price';
-                    }
-                } else {
-                    limitOrder.style.display = 'none';
-                    // Remove price requirement for market orders
-                    const priceInput = document.getElementById('price-input');
-                    if (priceInput) {
-                        priceInput.required = false;
-                        priceInput.value = '';
-                    }
+                // Update user name in navigation
+                const userNameElement = document.getElementById('user-name');
+                if (userNameElement) {
+                    userNameElement.textContent = user.email.split('@')[0];
                 }
                 
-                // Update place order button text
-                const placeOrderBtn = document.getElementById('place-order-btn');
-                if (placeOrderBtn) {
-                    const actionType = document.querySelector('.order-type-btn.active')?.dataset.type || 'buy';
-                    placeOrderBtn.innerHTML = `<i class="fas fa-plus"></i> Place ${orderType.charAt(0).toUpperCase() + orderType.slice(1)} ${actionType.charAt(0).toUpperCase() + actionType.slice(1)} Order`;
-                }
-            }
-            
-            // Timeframe buttons
-            if (e.target.classList.contains('timeframe-btn')) {
-                document.querySelectorAll('.timeframe-btn').forEach(btn => btn.classList.remove('active'));
-                e.target.classList.add('active');
-            }
-            
-            // Watchlist items
-            if (e.target.closest('.watchlist-item')) {
-                document.querySelectorAll('.watchlist-item').forEach(item => item.classList.remove('active'));
-                e.target.closest('.watchlist-item').classList.add('active');
-                
-                const symbol = e.target.closest('.watchlist-item').dataset.symbol;
-                document.getElementById('symbol-select').value = symbol;
+                // Load real user account data
+                await loadUserAccountData(user);
+            } else {
+                console.log('No user found, redirecting to auth page');
+                window.location.href = 'auth.html';
             }
         });
 
-        // Place order functionality
-        document.getElementById('place-order-btn')?.addEventListener('click', function() {
-            const orderType = document.querySelector('.order-type-btn.active').dataset.type;
-            const volume = document.getElementById('volume-input').value;
-            const symbol = document.getElementById('symbol-select').value;
-            
-            // Simulate order placement
-            alert(`${orderType.toUpperCase()} order placed for ${volume} lots of ${symbol}`);
-            
-            // Add to positions (simulation)
-            addPosition({
-                symbol: symbol,
-                type: orderType,
-                volume: volume,
-                price: document.getElementById('current-price').textContent,
-                time: new Date().toLocaleTimeString()
+        // Logout function
+        window.logout = function() {
+            auth.signOut().then(() => {
+                window.location.href = 'index.html';
+            }).catch((error) => {
+                console.error('Logout error:', error);
             });
-        });
-
-        // Add position to positions panel
-        function addPosition(position) {
-            const positionsList = document.getElementById('positions-list');
-            const emptyState = positionsList.querySelector('.empty-state');
-            
-            if (emptyState) {
-                emptyState.style.display = 'none';
-            }
-            
-            const positionElement = document.createElement('div');
-            positionElement.className = 'position-item';
-            positionElement.innerHTML = `
-                <div class="position-header">
-                    <span class="position-symbol">${position.symbol}</span>
-                    <span class="position-type ${position.type}">${position.type.toUpperCase()}</span>
-                </div>
-                <div class="position-details">
-                    <span class="position-volume">${position.volume} lots</span>
-                    <span class="position-price">${position.price}</span>
-                    <span class="position-time">${position.time}</span>
-                </div>
-                <button class="close-position-btn" onclick="closePosition(this)">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-            
-            positionsList.appendChild(positionElement);
-        }
-
-        // Close position
-        function closePosition(button) {
-            const positionItem = button.closest('.position-item');
-            positionItem.remove();
-            
-            const positionsList = document.getElementById('positions-list');
-            if (positionsList.children.length === 1) {
-                positionsList.querySelector('.empty-state').style.display = 'block';
-            }
         }
     </script>
 

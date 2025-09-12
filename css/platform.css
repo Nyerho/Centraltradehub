@@ -4,7 +4,7 @@
     color: #ffffff;
     margin: 0;
     font-family: 'Inter', sans-serif;
-    padding-top: 70px; /* Add padding to account for fixed navbar */
+    padding-top: 0; /* Remove padding since navbar is no longer fixed */
 }
 
 /* Trading Container Layout */
@@ -240,12 +240,12 @@
     color: #ff6b6b !important;
 }
 
-/* Fix navbar positioning - ensure it stays fixed */
+/* Fix navbar positioning - remove fixed positioning */
 .navbar {
-    position: fixed !important;
-    top: 0;
-    left: 0;
-    right: 0;
+    position: static !important;
+    top: auto;
+    left: auto;
+    right: auto;
     width: 100%;
     background: #1a1a2e !important;
     z-index: 1000;
@@ -260,11 +260,11 @@
 
 /* Remove the problematic dropdown-open classes */
 .navbar.dropdown-open {
-    position: fixed !important; /* Keep fixed positioning always */
+    position: static !important;
 }
 
 .platform-body.dropdown-open {
-    padding-top: 70px !important; /* Maintain padding always */
+    padding-top: 0 !important;
 }
 
 /* Ensure nav container maintains proper layout */
