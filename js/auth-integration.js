@@ -68,18 +68,17 @@ class AuthManager {
         // Update UI immediately
         this.updateUI();
         
-        // Redirect based on user role with proper error handling
-        try {
-            const userDoc = await this.databaseService.getUserProfile(result.user.uid);
-            if (userDoc && userDoc.role === 'admin') {
-                window.location.href = 'admin.html';
-            } else {
-                // Redirect to dashboard instead of platform
-                window.location.href = 'dashboard.html';
-            }
-        } catch (dbError) {
-            console.warn('Could not fetch user profile, redirecting to dashboard:', dbError);
-            // Default redirect to dashboard if profile fetch fails
+        // Check if user is admin by email address
+        const adminEmails = [
+            'admin@centraltradehub.com',
+            'owner@centraltradehub.com'
+        ];
+        
+        if (adminEmails.includes(email.toLowerCase())) {
+            // Redirect admin users to admin portal
+            window.location.href = 'admin.html';
+        } else {
+            // Redirect regular users to dashboard
             window.location.href = 'dashboard.html';
         }
         
