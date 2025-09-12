@@ -222,9 +222,8 @@ class AuthManager {
   
           // Show admin button ONLY for authorized admins
           if (adminButton) {
-              this.checkAdminStatus().then(isAdmin => {
-                  adminButton.style.display = isAdmin ? 'inline-block' : 'none';
-              });
+              const isAdmin = this.isAdmin();
+              adminButton.style.display = isAdmin ? 'inline-block' : 'none';
           }
   
           // Show user menu if available
@@ -272,6 +271,21 @@ class AuthManager {
       'owner@centraltradehub.com'
     ];
     return this.isLoggedIn && this.currentUser && adminEmails.includes(this.currentUser.email);
+  }
+
+  // Add the missing checkAdminStatus method
+  async checkAdminStatus() {
+    if (!this.isLoggedIn || !this.currentUser) {
+      return false;
+    }
+    
+    const adminEmails = [
+      'admin@centraltradehub.com',
+      'owner@centraltradehub.com',
+      'neroesiso@gmail.com' // Add your current email as admin for testing
+    ];
+    
+    return adminEmails.includes(this.currentUser.email);
   }
 }
 
