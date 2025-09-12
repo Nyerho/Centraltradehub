@@ -428,6 +428,11 @@ window.showDeposit = () => {
 };
 
 window.showWithdraw = () => {
+    // Redirect to funding page with withdrawal tab
+    window.location.href = 'funding.html#withdraw';
+};
+
+window.createWithdrawalModal = () => {
     // Create withdrawal modal
     const modal = document.createElement('div');
     modal.className = 'withdrawal-modal';
