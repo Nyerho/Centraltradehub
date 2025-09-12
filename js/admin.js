@@ -221,18 +221,22 @@ class AdminDashboard {
     createUserRow(userId, user, index) {
         const row = document.createElement('tr');
         row.dataset.userId = userId;
+        
+        const balance = user.accountBalance || user.balance || 0;  // Check both fields for compatibility
+        
         row.innerHTML = `
             <td>#${String(index).padStart(3, '0')}</td>
-            <td>${user.displayName || user.email?.split('@')[0] || 'Unknown'}</td>
-            <td>${user.email || 'No email'}</td>
+            <td>${user.displayName || 'N/A'}</td>
+            <td>${user.email || 'N/A'}</td>
             <td><span class="status ${user.status || 'active'}">${(user.status || 'active').charAt(0).toUpperCase() + (user.status || 'active').slice(1)}</span></td>
-            <td>$${(user.balance || 0).toLocaleString()}</td>
-            <td>${user.createdAt ? new Date(user.createdAt.toDate()).toLocaleDateString() : 'Unknown'}</td>
+            <td>$${balance.toLocaleString()}</td>
+            <td>${user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</td>
             <td>
-                <button class="btn-edit"><i class="fas fa-edit"></i></button>
-                <button class="btn-delete"><i class="fas fa-trash"></i></button>
+                <button class="btn-edit" title="Edit User"><i class="fas fa-edit"></i></button>
+                <button class="btn-delete" title="Delete User"><i class="fas fa-trash"></i></button>
             </td>
         `;
+        
         return row;
     }
 
@@ -332,10 +336,11 @@ class AdminDashboard {
             const updateData = {
                 displayName: formData.get('displayName'),
                 email: formData.get('email'),
-                balance: parseFloat(formData.get('balance')) || 0,
-                status: formData.get('status')
+                accountBalance: parseFloat(formData.get('balance')) || 0,  // Changed from 'balance' to 'accountBalance'
+                status: formData.get('status'),
+                balanceUpdatedAt: new Date().toISOString()  // Add timestamp for tracking
             };
-
+        
             try {
                 await updateDoc(doc(this.db, 'users', userId), updateData);
                 this.showNotification('User updated successfully', 'success');

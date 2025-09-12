@@ -453,7 +453,19 @@
             }
         }
 
-        // Check authentication using the main auth system
+        // Add this after the loadUserBalance function
+        function setupBalanceListener(user) {
+            const userRef = doc(db, 'users', user.uid);
+            onSnapshot(userRef, (doc) => {
+                if (doc.exists()) {
+                    const userData = doc.data();
+                    const balance = userData.accountBalance || 0;
+                    document.getElementById('accountBalance').textContent = formatCurrency(balance);
+                }
+            });
+        }
+        
+        // Update the onAuthStateChanged callback
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 console.log('User authenticated:', user.email);
@@ -461,6 +473,9 @@
                 
                 // Load real user balance instead of hardcoded value
                 await loadUserBalance(user);
+                
+                // Set up real-time balance updates
+                setupBalanceListener(user);
             } else {
                 console.log('No user found, redirecting to index');
                 window.location.href = 'index.html';
