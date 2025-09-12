@@ -346,16 +346,41 @@
         let selectedAmount = 0;
         let selectedCurrency = 'USD';
         
-        // Wait for funding manager to load
         window.addEventListener('load', async () => {
-            // Authentication check
+            // Wait for auth manager to load
             let attempts = 0;
             while (!window.authManager && attempts < 50) {
                 await new Promise(resolve => setTimeout(resolve, 100));
                 attempts++;
             }
             
-            if (!window.authManager?.isLoggedIn) {
+            // Wait for Firebase auth state to be properly synchronized
+            attempts = 0;
+            while (attempts < 100) { // Increased timeout for auth state
+                // Check if Firebase auth has a current user
+                const firebaseUser = window.authManager?.firebaseAuth?.getCurrentUser();
+                if (firebaseUser || window.authManager?.isLoggedIn) {
+                    break; // User is authenticated
+                }
+                
+                // If we've waited long enough and still no auth, check one more time
+                if (attempts > 50) {
+                    // Final check - if Firebase thinks user is logged in but authManager doesn't
+                    if (firebaseUser && !window.authManager.isLoggedIn) {
+                        // Force update the auth manager state
+                        window.authManager.isLoggedIn = true;
+                        window.authManager.currentUser = firebaseUser;
+                        break;
+                    }
+                }
+                
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
+            // Final authentication check
+            const firebaseUser = window.authManager?.firebaseAuth?.getCurrentUser();
+            if (!window.authManager?.isLoggedIn && !firebaseUser) {
                 alert('Please log in to access funding.');
                 window.location.href = 'auth.html';
                 return;
