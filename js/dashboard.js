@@ -36,21 +36,16 @@ class DashboardManager {
 
     async loadUserData(user) {
         try {
-            // Set user name and email
-            const displayName = user.displayName || user.email.split('@')[0] || 'User';
-            const userNameElement = document.getElementById('dashboard-user-name');
-            const userEmailElement = document.getElementById('userEmail');
-            
-            if (userNameElement) {
-                userNameElement.textContent = displayName;
-            }
-            if (userEmailElement) {
-                userEmailElement.textContent = user.email;
-            }
+            const displayName = user.displayName || user.email || 'User';
+            const userEmail = user.email || 'No email';
             
             // Update user profile section
             const profileName = document.querySelector('.user-name');
             const avatarInitial = document.querySelector('.avatar-initial');
+            
+            // Fix: Update dashboard-specific elements
+            const dashboardUserName = document.getElementById('dashboard-user-name');
+            const userEmailElement = document.getElementById('userEmail');
             
             if (profileName) {
                 profileName.textContent = displayName;
@@ -59,8 +54,32 @@ class DashboardManager {
                 avatarInitial.textContent = displayName.charAt(0).toUpperCase();
             }
             
+            // Update dashboard header elements
+            if (dashboardUserName) {
+                dashboardUserName.textContent = displayName;
+            }
+            if (userEmailElement) {
+                userEmailElement.textContent = userEmail;
+            }
+            
+            // Update sidebar user name as well
+            const sidebarUserName = document.querySelector('.sidebar .user-name');
+            if (sidebarUserName) {
+                sidebarUserName.textContent = displayName;
+            }
+            
         } catch (error) {
             console.error('Error loading user data:', error);
+            // Show error state instead of loading
+            const dashboardUserName = document.getElementById('dashboard-user-name');
+            const userEmailElement = document.getElementById('userEmail');
+            
+            if (dashboardUserName) {
+                dashboardUserName.textContent = 'Error loading name';
+            }
+            if (userEmailElement) {
+                userEmailElement.textContent = 'Error loading email';
+            }
         }
     }
 
