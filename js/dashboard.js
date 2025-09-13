@@ -121,7 +121,7 @@ class DashboardManager {
     }
 
     updateAccountSummary() {
-        // Update wallet balance
+        // Update wallet balance (this exists in dashboard.html)
         const walletBalanceElement = document.getElementById('walletBalance');
         if (walletBalanceElement) {
             walletBalanceElement.textContent = this.accountData.balance?.toLocaleString('en-US', {
@@ -130,38 +130,17 @@ class DashboardManager {
             }) || '0.00';
         }
         
-        // Update account balance
-        const balanceElement = document.getElementById('account-balance');
-        if (balanceElement) {
-            balanceElement.textContent = `$${this.accountData.balance?.toLocaleString('en-US', {
+        // Update account balance (this exists in dashboard.html)
+        const accountBalanceElement = document.getElementById('accountBalance');
+        if (accountBalanceElement) {
+            accountBalanceElement.textContent = this.accountData.balance?.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
-            }) || '0.00'}`;
+            }) || '0.00';
         }
         
-        // Update equity
-        const equityElement = document.getElementById('account-equity');
-        if (equityElement) {
-            equityElement.textContent = `$${this.accountData.equity?.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            }) || '0.00'}`;
-        }
-        
-        // Update free margin
-        const marginElement = document.getElementById('free-margin');
-        if (marginElement) {
-            marginElement.textContent = `$${this.accountData.freeMargin?.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            }) || '0.00'}`;
-        }
-        
-        // Update margin level
-        const marginLevelElement = document.getElementById('margin-level');
-        if (marginLevelElement) {
-            marginLevelElement.textContent = `Margin Level: ${this.accountData.marginLevel?.toFixed(2) || '0.00'}%`;
-        }
+        // Remove references to elements that don't exist in dashboard.html
+        // (account-balance, account-equity, account-margin, free-margin, margin-level)
         
         this.updateChangeIndicators();
     }
@@ -185,7 +164,8 @@ class DashboardManager {
     }
 
     showErrorState() {
-        const elements = ['account-balance', 'account-equity', 'free-margin', 'margin-level', 'walletBalance'];
+        // Update to target correct dashboard elements
+        const elements = ['accountBalance', 'walletBalance'];
         elements.forEach(id => {
             const element = document.getElementById(id);
             if (element) {
@@ -193,6 +173,17 @@ class DashboardManager {
                 element.style.color = '#dc3545';
             }
         });
+        
+        // Also update user elements if they failed to load
+        const dashboardUserName = document.getElementById('dashboard-user-name');
+        const userEmailElement = document.getElementById('userEmail');
+        
+        if (dashboardUserName && dashboardUserName.textContent === 'Loading...') {
+            dashboardUserName.textContent = 'Error loading name';
+        }
+        if (userEmailElement && userEmailElement.textContent === 'Loading...') {
+            userEmailElement.textContent = 'Error loading email';
+        }
     }
 
     setupMobileMenu() {
