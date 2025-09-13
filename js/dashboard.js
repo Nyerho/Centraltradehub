@@ -212,28 +212,46 @@ class DashboardManager {
 
     setupButtonListeners() {
         // Connect wallet button
-        const connectWalletBtn = document.querySelector('.connect-wallet-btn');
+        const connectWalletBtn = document.getElementById('connectWalletBtn');
         if (connectWalletBtn) {
-            connectWalletBtn.addEventListener('click', this.handleConnectWallet.bind(this));
+            connectWalletBtn.addEventListener('click', () => this.handleConnectWallet());
         }
-        
+
         // Buy crypto button
-        const buyCryptoBtn = document.querySelector('.buy-crypto-btn');
+        const buyCryptoBtn = document.getElementById('buyCryptoBtn');
         if (buyCryptoBtn) {
-            buyCryptoBtn.addEventListener('click', this.handleBuyCrypto.bind(this));
+            buyCryptoBtn.addEventListener('click', () => this.handleBuyCrypto());
         }
-        
+
         // Download button
         const downloadBtn = document.querySelector('.download-btn');
         if (downloadBtn) {
-            downloadBtn.addEventListener('click', this.handleDownload.bind(this));
+            downloadBtn.addEventListener('click', () => this.handleDownload());
         }
-        
-        // Logout button
-        const logoutBtn = document.querySelector('.logout-btn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', this.handleLogout.bind(this));
-        }
+
+        // Add deposit button functionality
+        const depositButtons = document.querySelectorAll('.deposit-btn, [data-action="deposit"]');
+        depositButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                window.location.href = 'funding.html';
+            });
+        });
+
+        // Add payout button functionality
+        const payoutButtons = document.querySelectorAll('.payout-btn, [data-action="payout"]');
+        payoutButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                window.location.href = 'funding.html#withdrawal';
+            });
+        });
+
+        // Add support button functionality
+        const supportButtons = document.querySelectorAll('.support-btn, [data-action="support"]');
+        supportButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                window.location.href = 'index.html#contact';
+            });
+        });
     }
 
     setupNavigationListeners() {
@@ -567,3 +585,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Export for use in other modules
 export default DashboardManager;
+
+
+    // Add new methods for button actions
+    goToTrading() {
+        window.location.href = 'platform.html';
+    }
+
+    goToWithdrawal() {
+        window.location.href = 'funding.html#withdrawal';
+    }
+
+    goToDeposit() {
+        window.location.href = 'funding.html';
+    }
+
+    goToSupport() {
+        window.location.href = 'index.html#contact';
+    }
+
+    goToAnalytics() {
+        window.location.href = 'platform.html#analytics';
+    }

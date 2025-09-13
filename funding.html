@@ -332,6 +332,34 @@
                 <p>No transactions yet. Make your first deposit above!</p>
             </div>
         </div>
+
+        <!-- Withdrawal Section -->
+        <div id="withdrawal" class="withdrawal-section" style="background: #2d2d2d; border-radius: 12px; padding: 30px; margin: 30px 0;">
+            <h3><i class="fas fa-money-bill-wave"></i> Withdraw Funds</h3>
+            <div class="withdrawal-methods">
+                <div class="method-card" data-method="bank">
+                    <div class="method-icon"><i class="fas fa-university"></i></div>
+                    <h4>Bank Transfer</h4>
+                    <p>Withdraw to your bank account</p>
+                    <p><strong>Processing:</strong> 1-3 business days</p>
+                    <p><strong>Fees:</strong> $25 per transfer</p>
+                </div>
+                <div class="method-card" data-method="crypto">
+                    <div class="method-icon"><i class="fab fa-bitcoin"></i></div>
+                    <h4>Cryptocurrency</h4>
+                    <p>Withdraw to your crypto wallet</p>
+                    <p><strong>Processing:</strong> 30 minutes</p>
+                    <p><strong>Fees:</strong> Network fees apply</p>
+                </div>
+            </div>
+            <div class="withdrawal-form">
+                <div class="form-group">
+                    <label for="withdrawal-amount">Withdrawal Amount</label>
+                    <input type="number" id="withdrawal-amount" placeholder="Enter amount" min="50">
+                </div>
+                <button class="btn-fund" onclick="processWithdrawal()">Request Withdrawal</button>
+            </div>
+        </div>
     </div>
     
     <!-- Scripts -->
