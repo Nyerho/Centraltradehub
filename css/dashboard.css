@@ -6,7 +6,7 @@
     box-sizing: border-box;
 }
 
-.dashboard-body {
+body {
     background: #0f0f23;
     color: #ffffff;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -16,7 +16,7 @@
 }
 
 /* Navigation Bar */
-.dashboard-navbar {
+.navbar {
     background: #1a1a2e;
     border-bottom: 1px solid #2d2d44;
     position: fixed;
@@ -38,35 +38,24 @@
     margin: 0 auto;
 }
 
-.nav-logo {
+.nav-left {
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
-.nav-logo img {
-    height: 40px;
-    width: auto;
-}
-
-.logo-text {
+.logo {
     font-size: 1.4rem;
     font-weight: 700;
     color: #ffffff;
 }
 
-.nav-center {
-    flex: 1;
-    max-width: 400px;
-    margin: 0 2rem;
-}
-
-.search-bar {
+.search-container {
     position: relative;
     width: 100%;
 }
 
-.search-bar i {
+.search-icon {
     position: absolute;
     left: 1rem;
     top: 50%;
@@ -75,7 +64,7 @@
     font-size: 1rem;
 }
 
-.search-bar input {
+.search-input {
     width: 100%;
     padding: 0.75rem 1rem 0.75rem 2.8rem;
     background: #16213e;
@@ -86,14 +75,14 @@
     transition: all 0.3s ease;
 }
 
-.search-bar input:focus {
+.search-input:focus {
     outline: none;
     border-color: #4f46e5;
     background: #1e293b;
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
-.search-bar input::placeholder {
+.search-input::placeholder {
     color: rgba(255, 255, 255, 0.4);
 }
 
@@ -103,12 +92,12 @@
     gap: 1rem;
 }
 
-.nav-actions {
+.nav-btn {
     display: flex;
     gap: 0.5rem;
 }
 
-.action-btn {
+.nav-btn {
     position: relative;
     background: #16213e;
     border: 1px solid #2d2d44;
@@ -123,7 +112,7 @@
     justify-content: center;
 }
 
-.action-btn:hover {
+.nav-btn:hover {
     background: #1e293b;
     border-color: #4f46e5;
     color: #4f46e5;
@@ -149,54 +138,36 @@
     position: relative;
 }
 
-.user-info {
+.user-menu {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 0.8rem;
-    padding: 0.4rem 0.8rem;
-    background: #16213e;
-    border: 1px solid #2d2d44;
-    border-radius: 8px;
+    gap: 1rem;
+}
+
+.user-email {
+    color: #8b9dc3;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.logout-btn {
+    background: #dc2626;
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
     cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     transition: all 0.3s ease;
 }
 
-.user-info:hover {
-    background: #1e293b;
-    border-color: #4f46e5;
-}
-
-.user-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: #4f46e5;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    color: white;
-    font-size: 0.9rem;
-}
-
-.user-details {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-}
-
-.user-name {
-    font-weight: 600;
-    font-size: 0.85rem;
-    color: #ffffff;
-    line-height: 1.2;
-}
-
-.user-status {
-    font-size: 0.7rem;
-    color: #10b981;
-    font-weight: 500;
-    line-height: 1;
+.logout-btn:hover {
+    background: #b91c1c;
+    transform: translateY(-1px);
 }
 
 .user-dropdown {
@@ -262,7 +233,7 @@
 }
 
 /* Sidebar */
-.dashboard-sidebar {
+.sidebar {
     position: fixed;
     left: 0;
     top: 70px;
@@ -350,7 +321,7 @@
 }
 
 /* Main Content */
-.dashboard-main {
+.main-content {
     margin-left: 250px;
     margin-top: 70px;
     padding: 1.5rem;
