@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TradetrendPro Dashboard</title>
+    <title>Tradetrendpro - Dashboard</title>
     
-    <!-- Optimized Modular CSS -->
+    <!-- Authentic TradetrendPro Styling -->
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/utilities.css">
     <link rel="stylesheet" href="css/navigation.css">
@@ -18,445 +18,196 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Top Navigation -->
-    <nav class="top-nav">
-        <div class="nav-container">
-            <div class="nav-left">
-                <button class="menu-toggle" id="menuToggle">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <div class="logo">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Tradetrendpro</span>
-                </div>
+    <!-- Authentic TradetrendPro Header -->
+    <header class="tradetrendpro-header">
+        <div class="header-container">
+            <div class="logo-section">
+                <h1 class="brand-logo">Tradetrendpro</h1>
+                <p class="brand-tagline">Trade bigger and get paid faster.</p>
             </div>
-            <div class="nav-center">
-                <span class="account-status">Account Unverified</span>
-                <span class="login-time">Logged in: <span id="loginTime">Loading...</span></span>
-            </div>
-            <div class="nav-right">
-                <button class="settings-btn">Settings</button>
+            <div class="user-info">
+                <span class="user-email" id="userEmail">Loading...</span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
             </div>
         </div>
-    </nav>
+    </header>
 
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-content">
+    <!-- Main Dashboard Container -->
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <aside class="dashboard-sidebar">
             <nav class="sidebar-nav">
                 <a href="#" class="nav-item active">
-                    <i class="fas fa-home"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="funding.html" class="nav-item">
-                    <i class="fas fa-chart-bar"></i>
-                    <span>Fund Account</span>
-                </a>
-                <a href="#" class="nav-item">
-                    <i class="fas fa-money-bill-wave"></i>
-                    <span>Withdraw</span>
+                    <i class="fas fa-wallet"></i>
+                    <span>Wallet</span>
                 </a>
                 <a href="#" class="nav-item">
                     <i class="fas fa-chart-line"></i>
-                    <span>Upgrade Plan</span>
+                    <span>Trading</span>
                 </a>
                 <a href="#" class="nav-item">
-                    <i class="fas fa-signal"></i>
-                    <span>Buy Signal</span>
+                    <i class="fas fa-history"></i>
+                    <span>History</span>
                 </a>
                 <a href="#" class="nav-item">
-                    <i class="fas fa-exchange-alt"></i>
-                    <span>Exchange</span>
-                </a>
-                <a href="profile.html" class="nav-item">
-                    <i class="fas fa-user"></i>
-                    <span>Profile</span>
+                    <i class="fas fa-credit-card"></i>
+                    <span>Payouts</span>
                 </a>
                 <a href="#" class="nav-item">
-                    <i class="fas fa-lock"></i>
-                    <span>Change Password</span>
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
                 </a>
                 <a href="#" class="nav-item">
                     <i class="fas fa-question-circle"></i>
                     <span>Support</span>
                 </a>
-                <a href="#" class="nav-item" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Logout</span>
-                </a>
             </nav>
-        </div>
-    </aside>
+        </aside>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- User Welcome Section -->
-        <div class="user-welcome">
-            <div class="user-avatar">
-                <span>E</span>
+        <!-- Main Content Area -->
+        <main class="dashboard-main">
+            <!-- Welcome Message -->
+            <div class="welcome-section">
+                <h2>Welcome back!</h2>
+                <p>Please enter your details to continue trading.</p>
             </div>
-            <span class="user-name" id="userName">Eaiso Oghemenyerhowvo</span>
-            <button class="download-btn">
-                <i class="fas fa-download"></i>
-            </button>
-        </div>
 
-        <!-- Wallet Balance Section -->
-        <div class="wallet-section">
-            <div class="wallet-balance">
-                <h2>Wallet Balance</h2>
-                <div class="balance-amount">
-                    <span class="currency">USD</span>
-                    <span class="amount" id="walletBalance">0.00</span>
-                </div>
-                <div class="market-tickers">
-                    <div class="ticker">
-                        <span class="symbol">US 100 Cash CFD</span>
-                        <span class="price">24,095.0</span>
-                        <span class="change negative">-0.05% (-1.01%)</span>
+            <!-- Key Features Banner -->
+            <div class="features-banner">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-percentage"></i>
                     </div>
-                    <div class="ticker">
-                        <span class="symbol">EUR to USD</span>
-                        <span class="price">1.17331</span>
-                        <span class="change negative">-0.00009 (-0.01%)</span>
-                    </div>
-                    <div class="ticker">
-                        <span class="symbol">Bitcoin</span>
-                        <span class="price">116,080</span>
-                        <span class="change negative">-28.0</span>
+                    <div class="feature-content">
+                        <h3>100% Profit Split</h3>
+                        <p>Keep all your profits</p>
                     </div>
                 </div>
-                <div class="greeting">Good Afternoon</div>
-            </div>
-
-            <!-- Received/Deposit Cards -->
-            <div class="balance-cards">
-                <div class="balance-card received">
-                    <h3>Received</h3>
-                    <div class="card-amount">0.00 USD</div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="feature-content">
+                        <h3>No Time Limits</h3>
+                        <p>Trade at your own pace</p>
+                    </div>
                 </div>
-                <div class="balance-card deposit">
-                    <h3>Deposit</h3>
-                    <div class="card-amount">0.00 USD</div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-calendar-week"></i>
+                    </div>
+                    <div class="feature-content">
+                        <h3>7 Day Payouts</h3>
+                        <p>Get paid faster</p>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Market Chart Section -->
-        <div class="chart-section">
-            <div class="chart-tabs">
-                <button class="tab-btn">Indices</button>
-                <button class="tab-btn">Futures</button>
-                <button class="tab-btn">Bonds</button>
-                <button class="tab-btn">Forex</button>
-                <button class="tab-btn active">Crypto</button>
+            <!-- Wallet Section -->
+            <div class="wallet-section">
+                <div class="wallet-header">
+                    <h3>Account Balance</h3>
+                    <button class="refresh-btn">
+                        <i class="fas fa-sync-alt"></i>
+                        Refresh
+                    </button>
+                </div>
+                <div class="balance-display">
+                    <div class="balance-amount">
+                        <span class="currency">$</span>
+                        <span class="amount" id="accountBalance">0.00</span>
+                    </div>
+                    <div class="balance-status">
+                        <span class="status-indicator"></span>
+                        <span class="status-text">Account Active</span>
+                    </div>
+                </div>
             </div>
-            <div class="chart-container">
-                <canvas id="marketChart"></canvas>
-            </div>
-            <div class="chart-controls">
-                <button class="time-btn">1D</button>
-                <button class="time-btn">1M</button>
-                <button class="time-btn">3M</button>
-                <button class="time-btn active">1Y</button>
-                <button class="time-btn">5Y</button>
-                <button class="time-btn">All</button>
-            </div>
-        </div>
 
-        <!-- Crypto Portfolio Section -->
-        <div class="portfolio-section">
-            <div class="crypto-list">
-                <div class="crypto-item">
-                    <div class="crypto-info">
-                        <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png" alt="Bitcoin" class="crypto-icon">
-                        <div class="crypto-details">
-                            <span class="crypto-name">BTCUSD</span>
-                            <span class="crypto-desc">bitcoin</span>
+            <!-- Trading Actions -->
+            <div class="trading-actions">
+                <button class="action-btn primary">
+                    <i class="fas fa-plus"></i>
+                    Start Trading
+                </button>
+                <button class="action-btn secondary">
+                    <i class="fas fa-download"></i>
+                    Request Payout
+                </button>
+                <button class="action-btn secondary">
+                    <i class="fas fa-chart-bar"></i>
+                    View Analytics
+                </button>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="activity-section">
+                <h3>Recent Activity</h3>
+                <div class="activity-list">
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-arrow-up text-success"></i>
+                        </div>
+                        <div class="activity-details">
+                            <span class="activity-type">Profit Earned</span>
+                            <span class="activity-time">2 hours ago</span>
+                        </div>
+                        <div class="activity-amount text-success">
+                            +$0.00
                         </div>
                     </div>
-                    <div class="crypto-price">
-                        <span class="price">116,083</span>
-                        <span class="change negative">-0.02%</span>
-                        <span class="change-amount">-25.00</span>
-                    </div>
-                </div>
-                <div class="crypto-item">
-                    <div class="crypto-info">
-                        <img src="https://cryptologos.cc/logos/ripple-xrp-logo.png" alt="XRP" class="crypto-icon">
-                        <div class="crypto-details">
-                            <span class="crypto-name">XRPUSDT</span>
-                            <span class="crypto-desc"></span>
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-chart-line text-primary"></i>
+                        </div>
+                        <div class="activity-details">
+                            <span class="activity-type">Trade Opened</span>
+                            <span class="activity-time">5 hours ago</span>
+                        </div>
+                        <div class="activity-amount">
+                            EUR/USD
                         </div>
                     </div>
-                    <div class="crypto-price">
-                        <span class="price">3.1668</span>
-                        <span class="change positive">+1.96%</span>
-                        <span class="change-amount">+0.06</span>
-                    </div>
                 </div>
             </div>
+        </main>
+    </div>
 
-            <!-- Trade Analysis -->
-            <div class="trade-analysis">
-                <h3>Trade Analysis</h3>
-                <div class="no-trade">No trade available</div>
-                <div class="trade-buttons">
-                    <button class="connect-wallet-btn">
-                        <i class="fas fa-wallet"></i>
-                        Connect wallet
-                    </button>
-                    <button class="buy-crypto-btn">
-                        <i class="fas fa-plus"></i>
-                        Buy Crypto
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Crypto Portfolio Table -->
-        <div class="portfolio-table-section">
-            <h2>Crypto Portfolio</h2>
-            <div class="portfolio-table">
-                <div class="table-header">
-                    <div class="col-amount">AMOUNT</div>
-                    <div class="col-coin">COIN</div>
-                    <div class="col-status">STATUS</div>
-                </div>
-                <div class="table-row">
-                    <div class="col-amount">0.00</div>
-                    <div class="col-coin">
-                        <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png" alt="Bitcoin" class="coin-icon">
-                        <span>Bitcoin</span>
-                    </div>
-                    <div class="col-status">
-                        <span class="status-badge high">High</span>
-                    </div>
-                </div>
-                <div class="table-row">
-                    <div class="col-amount">0.00</div>
-                    <div class="col-coin">
-                        <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png" alt="Ethereum" class="coin-icon">
-                        <span>Ethereum</span>
-                    </div>
-                    <div class="col-status">
-                        <span class="status-badge high">High</span>
-                    </div>
-                </div>
-                <div class="table-row">
-                    <div class="col-amount">0.00</div>
-                    <div class="col-coin">
-                        <img src="https://cryptologos.cc/logos/tether-usdt-logo.png" alt="USDT" class="coin-icon">
-                        <span>Usdt(Tether)</span>
-                    </div>
-                    <div class="col-status">
-                        <span class="status-badge high">High</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Trading Interface -->
-        <div class="trading-section">
-            <div class="trading-header">
-                <h2>Total Deposit Amount</h2>
-                <button class="buy-crypto-btn">Buy Crypto</button>
-            </div>
-            <div class="deposit-amount">
-                <span class="currency">USD</span>
-                <span class="amount">0.00</span>
-                <i class="fas fa-chart-line"></i>
-            </div>
-            <div class="trading-form">
-                <div class="form-row">
-                    <select class="asset-select">
-                        <option>Asset</option>
-                        <option>Bitcoin</option>
-                        <option>Ethereum</option>
-                        <option>USDT</option>
-                    </select>
-                    <select class="action-select">
-                        <option>Buy</option>
-                        <option>Sell</option>
-                    </select>
-                </div>
-                <div class="amount-input">
-                    <span class="currency-symbol">$</span>
-                    <input type="number" placeholder="Amount" class="amount-field">
-                    <span class="amount-suffix">.00</span>
-                </div>
-                <button class="trade-btn">Trade Asset</button>
-                <div class="action-buttons">
-                    <button class="topup-btn">
-                        <i class="fas fa-plus"></i>
-                        Topup
-                    </button>
-                    <button class="withdraw-btn">
-                        <i class="fas fa-minus"></i>
-                        Withdraw
-                    </button>
-                </div>
-            </div>
-            <button class="buy-signal-btn">Buy Signal</button>
-        </div>
-
-        <!-- Signal Strength Section -->
-        <div class="signal-section">
-            <div class="upgrade-notice">
-                <p>Your account status is currently low. Please verify to elevate your level. If you encounter any issues, please contact support.</p>
-                <button class="get-support-btn">Get Support</button>
-                <p class="verify-link">Click here to Verify your Account Now.</p>
-            </div>
-            <div class="signal-strength">
-                <div class="signal-header">
-                    <span>Signal Strength</span>
-                    <button class="upgrade-btn">Click to Upgrade</button>
-                </div>
-                <div class="signal-bar">
-                    <div class="signal-progress"></div>
-                </div>
-            </div>
-            <div class="signal-tabs">
-                <button class="signal-tab active">Active</button>
-                <button class="signal-tab">Gainers</button>
-                <button class="signal-tab">Losers</button>
-            </div>
-            <div class="signal-chart">
-                <canvas id="signalChart"></canvas>
-            </div>
-        </div>
-
-        <!-- Track Details -->
-        <div class="track-section">
-            <h2>Track Details</h2>
-            <div class="browser-info">
-                <div class="browser-icon">
-                    <i class="fab fa-chrome"></i>
-                </div>
-                <div class="browser-details">
-                    <span class="browser-label">Browser</span>
-                    <div class="browser-bar">
-                        <span class="browser-name">Chrome</span>
-                        <div class="browser-progress"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Recent Transactions -->
-        <div class="transactions-section">
-            <h2>Most Recent Transactions</h2>
-            <div class="transaction-list">
-                <div class="transaction-item">
-                    <div class="transaction-info">
-                        <span class="transaction-type">NCMTK Swapped</span>
-                    </div>
-                    <div class="transaction-amount positive">$ 66,493</div>
-                    <div class="transaction-time">Just Now</div>
-                </div>
-                <div class="transaction-item">
-                    <div class="transaction-info">
-                        <span class="transaction-type">83393 Received</span>
-                    </div>
-                    <div class="transaction-amount positive">$ 13,366</div>
-                    <div class="transaction-time">Just Now</div>
-                </div>
-                <div class="transaction-item">
-                    <div class="transaction-info">
-                        <span class="transaction-type">R77P2 traded</span>
-                    </div>
-                    <div class="transaction-amount positive">$ 97,119</div>
-                    <div class="transaction-time">Just Now</div>
-                </div>
-                <div class="transaction-item">
-                    <div class="transaction-info">
-                        <span class="transaction-type">SHBVL deposited</span>
-                    </div>
-                    <div class="transaction-amount positive">$ 21,575</div>
-                    <div class="transaction-time">Just Now</div>
-                </div>
-                <div class="transaction-item">
-                    <div class="transaction-info">
-                        <span class="transaction-type">BID6O traded</span>
-                    </div>
-                    <div class="transaction-amount positive">$ 14,776</div>
-                    <div class="transaction-time">Just Now</div>
-                </div>
-                <div class="transaction-item">
-                    <div class="transaction-info">
-                        <span class="transaction-type">Q9JQN Swapped</span>
-                    </div>
-                    <div class="transaction-amount positive">$ 68,199</div>
-                    <div class="transaction-time">Just Now</div>
-                </div>
-                <div class="transaction-item">
-                    <div class="transaction-info">
-                        <span class="transaction-type">6XVD8 Swapped</span>
-                    </div>
-                    <div class="transaction-amount positive">$ 59,282</div>
-                    <div class="transaction-time">Just Now</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- My Recent Deposit -->
-        <div class="deposit-section">
-            <h2>My Recent Deposit</h2>
-            <div class="deposit-table">
-                <div class="table-header">
-                    <div class="col-method">Method</div>
-                    <div class="col-invoice">Invoice</div>
-                    <div class="col-amount">Amount</div>
-                    <div class="col-status">Status</div>
-                </div>
-                <!-- Deposit rows will be populated by JavaScript -->
-            </div>
-        </div>
-    </main>
+    <!-- Footer -->
+    <footer class="dashboard-footer">
+        <p>&copy; Tradetrendpro 2024</p>
+    </footer>
 
     <!-- Scripts -->
     <script src="js/firebase-config.js"></script>
     <script src="js/dashboard.js"></script>
     <script>
-        // Initialize dashboard
+        // Initialize authentic TradetrendPro dashboard
         document.addEventListener('DOMContentLoaded', function() {
-            // Set login time
-            const now = new Date();
-            const loginTime = now.toLocaleDateString('en-US', {
-                weekday: 'short',
-                month: 'short',
-                day: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-            document.getElementById('loginTime').textContent = loginTime;
-
-            // Mobile menu toggle
-            const menuToggle = document.getElementById('menuToggle');
-            const sidebar = document.getElementById('sidebar');
-            
-            menuToggle.addEventListener('click', function() {
-                sidebar.classList.toggle('active');
-            });
-
-            // Load user data from Firebase
             loadUserData();
-            loadBalance();
+            loadAccountBalance();
+            initializeTrading();
         });
 
-        // Firebase functions (preserve existing functionality)
         function loadUserData() {
-            // Your existing Firebase user loading code
+            // Load user email and account info
+            const userEmail = localStorage.getItem('userEmail') || 'user@example.com';
+            document.getElementById('userEmail').textContent = userEmail;
         }
 
-        function loadBalance() {
-            // Your existing Firebase balance loading code
+        function loadAccountBalance() {
+            // Load account balance from TradetrendPro API
+            document.getElementById('accountBalance').textContent = '0.00';
+        }
+
+        function initializeTrading() {
+            // Initialize trading functionality
+            console.log('TradetrendPro dashboard initialized');
         }
 
         function logout() {
-            // Your existing logout functionality
+            // Redirect to login page
+            window.location.href = 'auth.html';
         }
     </script>
 </body>
