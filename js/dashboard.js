@@ -240,6 +240,15 @@ class DashboardManager {
         const navItems = document.querySelectorAll('.nav-item');
         navItems.forEach(item => {
             item.addEventListener('click', (e) => {
+                const href = item.getAttribute('href');
+                const section = item.getAttribute('data-section');
+                
+                // If it's an external link, let it navigate normally
+                if (href && href !== '#') {
+                    return; // Allow normal navigation
+                }
+                
+                // Handle internal sections
                 e.preventDefault();
                 
                 // Remove active class from all items
@@ -248,17 +257,222 @@ class DashboardManager {
                 // Add active class to clicked item
                 item.classList.add('active');
                 
-                // Get section name from the span text
-                const sectionName = item.querySelector('span').textContent.toLowerCase();
-                this.showSection(sectionName);
+                // Show the appropriate section
+                this.showSection(section);
             });
         });
     }
 
     showSection(sectionName) {
         console.log(`Navigating to ${sectionName} section`);
-        // Add your section switching logic here
+        
+        // Hide all sections first
+        const sections = document.querySelectorAll('.dashboard-section');
+        sections.forEach(section => section.style.display = 'none');
+        
+        // Show the requested section
+        switch(sectionName) {
+            case 'wallet':
+                this.showWalletSection();
+                break;
+            case 'history':
+                this.showHistorySection();
+                break;
+            case 'support':
+                this.showSupportSection();
+                break;
+            default:
+                this.showWalletSection(); // Default to wallet
+        }
+        
         this.currentSection = sectionName;
+    }
+
+    showWalletSection() {
+        // Show the main trading interface (current default view)
+        const tradingInterface = document.querySelector('.trading-interface');
+        const cryptoPortfolio = document.querySelector('.crypto-portfolio-section');
+        
+        if (tradingInterface) tradingInterface.style.display = 'block';
+        if (cryptoPortfolio) cryptoPortfolio.style.display = 'block';
+    }
+
+    showHistorySection() {
+        // Create and show history section
+        const mainContent = document.querySelector('.dashboard-main');
+        let historySection = document.getElementById('historySection');
+        
+        if (!historySection) {
+            historySection = document.createElement('div');
+            historySection.id = 'historySection';
+            historySection.className = 'dashboard-section history-section';
+            historySection.innerHTML = `
+                <div class="section-header">
+                    <h2><i class="fas fa-history"></i> Transaction History</h2>
+                    <div class="section-controls">
+                        <select class="filter-select">
+                            <option value="all">All Transactions</option>
+                            <option value="deposits">Deposits</option>
+                            <option value="withdrawals">Withdrawals</option>
+                            <option value="trades">Trades</option>
+                        </select>
+                        <button class="refresh-btn"><i class="fas fa-sync-alt"></i> Refresh</button>
+                    </div>
+                </div>
+                
+                <div class="history-content">
+                    <div class="history-table">
+                        <div class="table-header">
+                            <div class="col-date">Date</div>
+                            <div class="col-type">Type</div>
+                            <div class="col-amount">Amount</div>
+                            <div class="col-status">Status</div>
+                            <div class="col-details">Details</div>
+                        </div>
+                        <div class="table-body" id="historyTableBody">
+                            <div class="history-row">
+                                <div class="col-date">2024-01-15 14:30</div>
+                                <div class="col-type"><span class="type-badge deposit">Deposit</span></div>
+                                <div class="col-amount">+$1,000.00</div>
+                                <div class="col-status"><span class="status-badge completed">Completed</span></div>
+                                <div class="col-details">Bank Transfer</div>
+                            </div>
+                            <div class="history-row">
+                                <div class="col-date">2024-01-14 09:15</div>
+                                <div class="col-type"><span class="type-badge trade">Trade</span></div>
+                                <div class="col-amount">+$250.50</div>
+                                <div class="col-status"><span class="status-badge completed">Completed</span></div>
+                                <div class="col-details">EUR/USD Buy</div>
+                            </div>
+                            <div class="history-row">
+                                <div class="col-date">2024-01-13 16:45</div>
+                                <div class="col-type"><span class="type-badge withdrawal">Withdrawal</span></div>
+                                <div class="col-amount">-$500.00</div>
+                                <div class="col-status"><span class="status-badge pending">Pending</span></div>
+                                <div class="col-details">Bank Transfer</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            mainContent.appendChild(historySection);
+        }
+        
+        // Hide other sections and show history
+        document.querySelector('.trading-interface').style.display = 'none';
+        document.querySelector('.crypto-portfolio-section').style.display = 'none';
+        historySection.style.display = 'block';
+    }
+
+    showSupportSection() {
+        // Create and show support section
+        const mainContent = document.querySelector('.dashboard-main');
+        let supportSection = document.getElementById('supportSection');
+        
+        if (!supportSection) {
+            supportSection = document.createElement('div');
+            supportSection.id = 'supportSection';
+            supportSection.className = 'dashboard-section support-section';
+            supportSection.innerHTML = `
+                <div class="section-header">
+                    <h2><i class="fas fa-question-circle"></i> Contact Support</h2>
+                </div>
+                
+                <div class="support-content">
+                    <div class="support-grid">
+                        <div class="support-card">
+                            <div class="support-icon">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <h3>Email Support</h3>
+                            <p>Get help via email within 24 hours</p>
+                            <a href="mailto:support@centraltradehub.com" class="support-btn">
+                                <i class="fas fa-paper-plane"></i> Send Email
+                            </a>
+                        </div>
+                        
+                        <div class="support-card">
+                            <div class="support-icon">
+                                <i class="fas fa-comments"></i>
+                            </div>
+                            <h3>Live Chat</h3>
+                            <p>Chat with our support team in real-time</p>
+                            <button class="support-btn" onclick="openLiveChat()">
+                                <i class="fas fa-comment-dots"></i> Start Chat
+                            </button>
+                        </div>
+                        
+                        <div class="support-card">
+                            <div class="support-icon">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <h3>Phone Support</h3>
+                            <p>Call us during business hours</p>
+                            <a href="tel:+1-800-TRADE-HUB" class="support-btn">
+                                <i class="fas fa-phone-alt"></i> Call Now
+                            </a>
+                        </div>
+                        
+                        <div class="support-card">
+                            <div class="support-icon">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <h3>Knowledge Base</h3>
+                            <p>Find answers in our help center</p>
+                            <button class="support-btn" onclick="openKnowledgeBase()">
+                                <i class="fas fa-search"></i> Browse Articles
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-form">
+                        <h3>Send us a Message</h3>
+                        <form id="supportForm">
+                            <div class="form-group">
+                                <label for="supportSubject">Subject</label>
+                                <select id="supportSubject" required>
+                                    <option value="">Select a topic</option>
+                                    <option value="account">Account Issues</option>
+                                    <option value="trading">Trading Questions</option>
+                                    <option value="deposits">Deposits & Withdrawals</option>
+                                    <option value="technical">Technical Support</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="supportMessage">Message</label>
+                                <textarea id="supportMessage" rows="5" placeholder="Describe your issue or question..." required></textarea>
+                            </div>
+                            <button type="submit" class="submit-btn">
+                                <i class="fas fa-paper-plane"></i> Send Message
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            `;
+            mainContent.appendChild(supportSection);
+            
+            // Add form submission handler
+            document.getElementById('supportForm').addEventListener('submit', this.handleSupportForm.bind(this));
+        }
+        
+        // Hide other sections and show support
+        document.querySelector('.trading-interface').style.display = 'none';
+        document.querySelector('.crypto-portfolio-section').style.display = 'none';
+        supportSection.style.display = 'block';
+    }
+
+    handleSupportForm(e) {
+        e.preventDefault();
+        const subject = document.getElementById('supportSubject').value;
+        const message = document.getElementById('supportMessage').value;
+        
+        // Here you would typically send the form data to your backend
+        console.log('Support form submitted:', { subject, message });
+        alert('Thank you for contacting us! We\'ll get back to you within 24 hours.');
+        
+        // Reset form
+        document.getElementById('supportForm').reset();
     }
 
     // Event handlers
