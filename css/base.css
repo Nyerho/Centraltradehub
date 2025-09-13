@@ -554,6 +554,7 @@ body {
     transition: all 0.2s ease;
     border: none;
     font-size: 0.875rem;
+    user-select: none;
 }
 
 .action-btn.primary {
@@ -564,6 +565,12 @@ body {
 .action-btn.primary:hover {
     background: var(--brand-secondary);
     transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.action-btn.primary:active {
+    transform: translateY(0);
+    transition: all 0.1s ease;
 }
 
 .action-btn.secondary {
@@ -575,6 +582,20 @@ body {
 .action-btn.secondary:hover {
     background: #e9ecef;
     color: var(--tradetrendpro-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.action-btn.secondary:active {
+    transform: translateY(0);
+    transition: all 0.1s ease;
+}
+
+/* Prevent double-click issues */
+.action-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 /* Activity Section */

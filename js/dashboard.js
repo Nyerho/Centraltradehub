@@ -13,11 +13,12 @@ class DashboardManager {
     }
 
     init() {
-        this.setupEventListeners();
+        // Remove duplicate event listener setup
         this.setupMobileMenu();
         this.initializeAuth();
         this.initializeChart();
         this.startRealTimeUpdates();
+        // Don't call setupEventListeners() to avoid conflicts
     }
 
     // Initialize authentication and load user data
@@ -203,55 +204,14 @@ class DashboardManager {
     }
 
     setupEventListeners() {
-        // Setup navigation listeners
+        // Only setup navigation listeners, not button listeners
         this.setupNavigationListeners();
-        
-        // Setup button event listeners
-        this.setupButtonListeners();
+        // Remove setupButtonListeners() call
     }
 
     setupButtonListeners() {
-        // Connect wallet button
-        const connectWalletBtn = document.getElementById('connectWalletBtn');
-        if (connectWalletBtn) {
-            connectWalletBtn.addEventListener('click', () => this.handleConnectWallet());
-        }
-
-        // Buy crypto button
-        const buyCryptoBtn = document.getElementById('buyCryptoBtn');
-        if (buyCryptoBtn) {
-            buyCryptoBtn.addEventListener('click', () => this.handleBuyCrypto());
-        }
-
-        // Download button
-        const downloadBtn = document.querySelector('.download-btn');
-        if (downloadBtn) {
-            downloadBtn.addEventListener('click', () => this.handleDownload());
-        }
-
-        // Add deposit button functionality
-        const depositButtons = document.querySelectorAll('.deposit-btn, [data-action="deposit"]');
-        depositButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                window.location.href = 'funding.html';
-            });
-        });
-
-        // Add payout button functionality
-        const payoutButtons = document.querySelectorAll('.payout-btn, [data-action="payout"]');
-        payoutButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                window.location.href = 'funding.html#withdrawal';
-            });
-        });
-
-        // Add support button functionality
-        const supportButtons = document.querySelectorAll('.support-btn, [data-action="support"]');
-        supportButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                window.location.href = 'index.html#contact';
-            });
-        });
+        // Remove all button event listeners since HTML onclick handlers work fine
+        // This prevents conflicts and lag
     }
 
     setupNavigationListeners() {
@@ -547,21 +507,21 @@ class DashboardManager {
     }
 }
 
-// Global functions for backward compatibility
+// Keep global functions for backward compatibility
 window.openTradingModal = () => {
-    console.log('Opening trading modal...');
+    window.location.href = 'platform.html';
 };
 
 window.showDeposit = () => {
-    console.log('Opening deposit modal...');
+    window.location.href = 'funding.html';
 };
 
 window.showWithdraw = () => {
-    console.log('Opening withdraw modal...');
+    window.location.href = 'funding.html#withdrawal';
 };
 
 window.goToAnalytics = () => {
-    console.log('Navigating to analytics...');
+    window.location.href = 'platform.html#analytics';
 };
 
 window.closePosition = (symbol) => {
