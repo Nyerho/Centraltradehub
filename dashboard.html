@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tradetrendpro - Dashboard</title>
+    <title>Central Trade Hub - Dashboard</title>
     
-    <!-- Authentic TradetrendPro Styling -->
+    <!-- Central Trade Hub Styling -->
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/utilities.css">
     <link rel="stylesheet" href="css/navigation.css">
@@ -18,11 +18,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Authentic TradetrendPro Header -->
-    <header class="tradetrendpro-header">
+    <!-- Central Trade Hub Header -->
+    <header class="centraltradehub-header">
         <div class="header-container">
             <div class="logo-section">
-                <h1 class="brand-logo">Tradetrendpro</h1>
+                <h1 class="brand-logo">Central Trade Hub</h1>
                 <p class="brand-tagline">Trade bigger and get paid faster.</p>
             </div>
             <div class="user-info">
@@ -66,6 +66,63 @@
 
         <!-- Main Content Area -->
         <main class="dashboard-main">
+            <!-- Trading Interface Section - New Addition -->
+            <div class="trading-interface">
+                <div class="user-profile">
+                    <div class="profile-avatar">
+                        <span class="avatar-initial">E</span>
+                    </div>
+                    <span class="user-name">Esiso Oghenenerhowo</span>
+                    <button class="download-btn">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </div>
+                
+                <div class="wallet-balance-section">
+                    <h2 class="balance-title">Wallet Balance</h2>
+                    <div class="balance-amount-large">
+                        <span class="currency-large">USD</span>
+                        <span class="amount-large" id="walletBalance">0.00</span>
+                    </div>
+                </div>
+                
+                <div class="trading-pairs">
+                    <div class="pair-item">
+                        <span class="pair-name">US 100 Cash CFD</span>
+                        <span class="pair-price">24,095.0</span>
+                        <span class="pair-change negative">-110.5 (-0.45%)</span>
+                    </div>
+                    <div class="pair-item">
+                        <span class="pair-name">EUR to USD</span>
+                        <span class="pair-price">1.17331</span>
+                        <span class="pair-change negative">-0.00009 (-0.01%)</span>
+                    </div>
+                </div>
+                
+                <div class="greeting-section">
+                    <p class="greeting-text">Good Afternoon</p>
+                </div>
+                
+                <div class="transaction-cards">
+                    <div class="transaction-card received">
+                        <h4>Received</h4>
+                        <div class="transaction-amount positive">0.00 USD</div>
+                    </div>
+                    <div class="transaction-card deposit">
+                        <h4>Deposit</h4>
+                        <div class="transaction-amount negative">0.00 USD</div>
+                    </div>
+                </div>
+                
+                <div class="trading-tabs">
+                    <button class="tab-btn active">Indices</button>
+                    <button class="tab-btn">Futures</button>
+                    <button class="tab-btn">Bonds</button>
+                    <button class="tab-btn">Forex</button>
+                    <button class="tab-btn">Crypto</button>
+                </div>
+            </div>
+
             <!-- Welcome Message -->
             <div class="welcome-section">
                 <h2>Welcome back!</h2>
@@ -175,14 +232,14 @@
 
     <!-- Footer -->
     <footer class="dashboard-footer">
-        <p>&copy; Tradetrendpro 2024</p>
+        <p>&copy; Central Trade Hub 2024</p>
     </footer>
 
     <!-- Scripts -->
     <script src="js/firebase-config.js"></script>
     <script src="js/dashboard.js"></script>
     <script>
-        // Initialize authentic TradetrendPro dashboard
+        // Initialize Central Trade Hub dashboard
         document.addEventListener('DOMContentLoaded', function() {
             loadUserData();
             loadAccountBalance();
@@ -196,13 +253,14 @@
         }
 
         function loadAccountBalance() {
-            // Load account balance from TradetrendPro API
+            // Load account balance from Central Trade Hub API
             document.getElementById('accountBalance').textContent = '0.00';
+            document.getElementById('walletBalance').textContent = '0.00';
         }
 
         function initializeTrading() {
             // Initialize trading functionality
-            console.log('TradetrendPro dashboard initialized');
+            console.log('Central Trade Hub dashboard initialized');
         }
 
         function logout() {

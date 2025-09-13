@@ -53,15 +53,227 @@
     box-sizing: border-box;
 }
 
+/* Central Trade Hub Base Styles */
+:root {
+--centraltradehub-primary: #007bff;
+--centraltradehub-secondary: #6c757d;
+--centraltradehub-success: #28a745;
+--centraltradehub-danger: #dc3545;
+--centraltradehub-warning: #ffc107;
+--centraltradehub-info: #17a2b8;
+--centraltradehub-light: #f8f9fa;
+--centraltradehub-dark: #343a40;
+--centraltradehub-white: #ffffff;
+--centraltradehub-black: #000000;
+
+/* Central Trade Hub Brand Colors */
+--brand-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+--trading-bg: #1a1d29;
+--trading-card: #252836;
+--positive-green: #00d4aa;
+--negative-red: #ff6b6b;
+}
+
+/* Trading Interface Styles */
+.trading-interface {
+    background: var(--trading-bg);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    color: white;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.profile-avatar {
+    width: 40px;
+    height: 40px;
+    background: var(--brand-gradient);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+}
+
+.avatar-initial {
+    color: white;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.user-name {
+    flex: 1;
+    font-weight: 500;
+    margin-left: 12px;
+}
+
+.download-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: white;
+    cursor: pointer;
+}
+
+.wallet-balance-section {
+    margin-bottom: 24px;
+}
+
+.balance-title {
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: white;
+}
+
+.balance-amount-large {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.currency-large {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--positive-green);
+}
+
+.amount-large {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--positive-green);
+}
+
+.trading-pairs {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+}
+
+.pair-item {
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+.pair-name {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 4px;
+}
+
+.pair-price {
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 4px;
+}
+
+.pair-change {
+    font-size: 12px;
+}
+
+.pair-change.positive {
+    color: var(--positive-green);
+}
+
+.pair-change.negative {
+    color: var(--negative-red);
+}
+
+.greeting-section {
+    text-align: center;
+    margin: 24px 0;
+}
+
+.greeting-text {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.transaction-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.transaction-card {
+    background: var(--trading-card);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+}
+
+.transaction-card h4 {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.transaction-amount {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.transaction-amount.positive {
+    color: var(--positive-green);
+}
+
+.transaction-amount.negative {
+    color: var(--negative-red);
+}
+
+.trading-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+}
+
+.tab-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 20px;
+    padding: 8px 16px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+}
+
+.tab-btn.active {
+    background: var(--brand-gradient);
+    color: white;
+}
+
+.tab-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.tab-btn.active:hover {
+    background: var(--brand-gradient);
+}
+
 body {
-    font-family: var(--font-family);
-    font-size: var(--font-size-base);
-    font-weight: var(--font-weight-normal);
-    line-height: 1.5;
-    color: var(--tradetrendpro-dark);
-    background-color: var(--tradetrendpro-light);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+    color: var(--centraltradehub-dark);
+    background-color: var(--centraltradehub-light);
 }
 
 /* TradetrendPro Header */
