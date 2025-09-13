@@ -326,127 +326,109 @@
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="js/firebase-config.js"></script>
-    <script src="js/firebase-database.js"></script>
-    <script src="js/crypto-service.js"></script>
-    <script src="js/wallet-service.js"></script>
-    <script src="js/dashboard.js"></script>
-    <script>
-        // Initialize Central Trade Hub dashboard with real data
-        document.addEventListener('DOMContentLoaded', function() {
-            loadUserData();
-            loadAccountBalance();
-            initializeCryptoPortfolio();
-            initializeRealTimeData();
-            initializeWalletConnection();
-            initializeBuyCrypto();
-        });
-
-        async function loadUserData() {
-            const userEmail = localStorage.getItem('userEmail') || 'user@example.com';
-            document.getElementById('userEmail').textContent = userEmail;
-        }
-
-        async function loadAccountBalance() {
+    <!-- Firebase and JavaScript Dependencies -->
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/firebase-database.js"></script>
+    <script type="module" src="js/crypto-service.js"></script>
+    <script type="module" src="js/wallet-service.js"></script>
+    <script type="module" src="js/dashboard.js"></script>
+    
+    <!-- Inline Scripts -->
+    <script type="module">
+        import { auth } from './js/firebase-config.js';
+        
+        // Global logout function
+        window.logout = async function() {
             try {
-                const uid = localStorage.getItem('uid') || 'demo-user';
-                const balanceResult = await window.firebaseDB.getUserBalance(uid);
-                
-                if (balanceResult.success) {
-                    document.getElementById('accountBalance').textContent = balanceResult.balance.toFixed(2);
-                    document.getElementById('walletBalance').textContent = balanceResult.balance.toFixed(2);
-                }
+                await auth.signOut();
+                window.location.href = 'auth.html';
             } catch (error) {
-                console.error('Error loading balance:', error);
+                console.error('Error logging out:', error);
+                // Fallback redirect
+                window.location.href = 'auth.html';
             }
-        }
-
+        };
+        
+        // Initialize crypto portfolio when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCryptoPortfolio();
+        });
+        
+        // Crypto Portfolio Initialization
         async function initializeCryptoPortfolio() {
             try {
-                const uid = localStorage.getItem('uid') || 'demo-user';
+                const { CryptoService } = await import('./js/crypto-service.js');
+                const { WalletService } = await import('./js/wallet-service.js');
                 
-                // Load crypto portfolio
-                const portfolioResult = await window.cryptoService.getUserCryptoPortfolio(uid);
-                if (portfolioResult.success) {
-                    updateCryptoPortfolioUI(portfolioResult.data);
-                }
+                window.cryptoService = new CryptoService();
+                window.walletService = new WalletService();
                 
-                // Load crypto data
-                const cryptoDataResult = await window.cryptoService.getAllCryptoData();
-                if (cryptoDataResult.success) {
-                    updateCryptoDataUI(cryptoDataResult.data);
-                }
+                // Initialize connect wallet functionality
+                initializeConnectWallet();
+                
+                // Initialize buy crypto functionality
+                initializeBuyCrypto();
+                
+                // Load and display crypto portfolio
+                await loadCryptoPortfolio();
+                
             } catch (error) {
-                console.error('Error initializing crypto portfolio:', error);
+                console.error('Error initializing crypto services:', error);
             }
         }
-
-        function updateCryptoPortfolioUI(portfolio) {
-            const portfolioBody = document.getElementById('cryptoPortfolioBody');
-            portfolioBody.innerHTML = '';
-            
-            const cryptos = ['bitcoin', 'ethereum', 'tether'];
-            const cryptoNames = {
-                bitcoin: 'Bitcoin',
-                ethereum: 'Ethereum', 
-                tether: 'Usdt(Tether)'
-            };
-            
-            cryptos.forEach(crypto => {
-                const amount = portfolio[crypto]?.amount || 0.00;
-                const portfolioItem = document.createElement('div');
-                portfolioItem.className = 'portfolio-item';
-                portfolioItem.innerHTML = `
-                    <div class="portfolio-cell">${amount.toFixed(2)}</div>
-                    <div class="portfolio-cell">
-                        <div class="coin-info">
-                            <img src="https://cryptoicons.org/api/icon/${crypto.toLowerCase()}/32" alt="${cryptoNames[crypto]}" class="coin-icon">
-                            <span>${cryptoNames[crypto]}</span>
-                        </div>
-                    </div>
-                    <div class="portfolio-cell">
-                        <span class="status-badge high">High</span>
-                    </div>
-                `;
-                portfolioBody.appendChild(portfolioItem);
-            });
-        }
-
-        function initializeRealTimeData() {
-            // Subscribe to real-time crypto data
-            window.cryptoService.subscribeToCryptoData((cryptoList) => {
-                updateCryptoDataUI(cryptoList);
-            });
-            
-            // Start price updates
-            window.cryptoService.startPriceUpdates();
-        }
-
-        function updateCryptoDataUI(cryptoList) {
-            // Update trading pairs with real data
-            cryptoList.forEach(crypto => {
-                if (crypto.id === 'bitcoin') {
-                    // You can update specific UI elements with real Bitcoin data
+        
+        async function loadCryptoPortfolio() {
+            try {
+                const uid = localStorage.getItem('uid') || 'demo-user';
+                const portfolio = await window.cryptoService.getUserPortfolio(uid);
+                
+                const portfolioContainer = document.getElementById('cryptoPortfolioList');
+                if (portfolioContainer && portfolio) {
+                    portfolioContainer.innerHTML = '';
+                    
+                    Object.entries(portfolio).forEach(([cryptoId, data]) => {
+                        const portfolioItem = document.createElement('div');
+                        portfolioItem.className = 'portfolio-item';
+                        portfolioItem.innerHTML = `
+                            <div class="crypto-info">
+                                <span class="crypto-name">${data.name}</span>
+                                <span class="crypto-symbol">${cryptoId.toUpperCase()}</span>
+                            </div>
+                            <div class="crypto-amount">
+                                <span class="amount">${data.amount.toFixed(6)}</span>
+                                <span class="value">$${(data.amount * data.currentPrice).toFixed(2)}</span>
+                            </div>
+                            <div class="crypto-change ${data.change24h >= 0 ? 'positive' : 'negative'}">
+                                ${data.change24h >= 0 ? '+' : ''}${data.change24h.toFixed(2)}%
+                            </div>
+                        `;
+                        portfolioContainer.appendChild(portfolioItem);
+                    });
                 }
-            });
+            } catch (error) {
+                console.error('Error loading crypto portfolio:', error);
+            }
         }
-
-        function initializeWalletConnection() {
+        
+        function initializeConnectWallet() {
             const connectWalletBtn = document.getElementById('connectWalletBtn');
             const walletModal = document.getElementById('walletModal');
             const closeWalletModal = document.getElementById('closeWalletModal');
+            const walletOptions = document.querySelectorAll('.wallet-option');
             
-            connectWalletBtn.addEventListener('click', () => {
-                walletModal.style.display = 'block';
-            });
+            if (connectWalletBtn) {
+                connectWalletBtn.addEventListener('click', () => {
+                    walletModal.style.display = 'block';
+                });
+            }
             
-            closeWalletModal.addEventListener('click', () => {
-                walletModal.style.display = 'none';
-            });
+            if (closeWalletModal) {
+                closeWalletModal.addEventListener('click', () => {
+                    walletModal.style.display = 'none';
+                });
+            }
             
-            // Wallet option handlers
-            document.querySelectorAll('.wallet-option').forEach(option => {
+            walletOptions.forEach(option => {
                 option.addEventListener('click', async () => {
                     const walletType = option.dataset.wallet;
                     const result = await window.walletService.connectWallet(walletType);
@@ -459,7 +441,6 @@
                         connectWalletBtn.classList.add('connected');
                         walletModal.style.display = 'none';
                         
-                        // Show success message
                         alert(`Successfully connected to ${result.wallet}!`);
                     } else {
                         alert(`Failed to connect: ${result.error}`);
@@ -467,53 +448,50 @@
                 });
             });
         }
-
+        
         function initializeBuyCrypto() {
             const buyCryptoBtn = document.getElementById('buyCryptoBtn');
             const buyCryptoModal = document.getElementById('buyCryptoModal');
             const closeBuyCryptoModal = document.getElementById('closeBuyCryptoModal');
             const confirmBuyBtn = document.getElementById('confirmBuyBtn');
             
-            buyCryptoBtn.addEventListener('click', () => {
-                buyCryptoModal.style.display = 'block';
-            });
+            if (buyCryptoBtn) {
+                buyCryptoBtn.addEventListener('click', () => {
+                    buyCryptoModal.style.display = 'block';
+                });
+            }
             
-            closeBuyCryptoModal.addEventListener('click', () => {
-                buyCryptoModal.style.display = 'none';
-            });
-            
-            confirmBuyBtn.addEventListener('click', async () => {
-                const cryptoId = document.getElementById('cryptoSelect').value;
-                const usdAmount = parseFloat(document.getElementById('usdAmount').value);
-                
-                if (!usdAmount || usdAmount <= 0) {
-                    alert('Please enter a valid amount');
-                    return;
-                }
-                
-                const uid = localStorage.getItem('uid') || 'demo-user';
-                const result = await window.cryptoService.buyCrypto(uid, cryptoId, usdAmount);
-                
-                if (result.success) {
-                    alert(result.message);
+            if (closeBuyCryptoModal) {
+                closeBuyCryptoModal.addEventListener('click', () => {
                     buyCryptoModal.style.display = 'none';
+                });
+            }
+            
+            if (confirmBuyBtn) {
+                confirmBuyBtn.addEventListener('click', async () => {
+                    const cryptoId = document.getElementById('cryptoSelect').value;
+                    const usdAmount = parseFloat(document.getElementById('usdAmount').value);
                     
-                    // Refresh portfolio
-                    initializeCryptoPortfolio();
-                } else {
-                    alert(`Purchase failed: ${result.error}`);
-                }
-            });
+                    if (!usdAmount || usdAmount <= 0) {
+                        alert('Please enter a valid amount');
+                        return;
+                    }
+                    
+                    const uid = localStorage.getItem('uid') || 'demo-user';
+                    const result = await window.cryptoService.buyCrypto(uid, cryptoId, usdAmount);
+                    
+                    if (result.success) {
+                        alert(result.message);
+                        buyCryptoModal.style.display = 'none';
+                        
+                        // Refresh portfolio
+                        await loadCryptoPortfolio();
+                    } else {
+                        alert(`Purchase failed: ${result.error}`);
+                    }
+                });
+            }
         }
-
-        function logout() {
-            window.location.href = 'auth.html';
-        }
-
-        // Make services available globally
-        window.cryptoService = window.cryptoService || {};
-        window.walletService = window.walletService || {};
-        window.firebaseDB = window.firebaseDB || {};
     </script>
 </body>
 </html>
