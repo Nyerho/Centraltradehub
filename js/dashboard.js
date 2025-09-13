@@ -512,14 +512,33 @@ class DashboardManager {
     }
 
     updateMarketPrices() {
-        // Update market prices logic
-        console.log('Updating market prices...');
+        // Market price updates will be implemented here
+    }
+    
+    goToTrading() {
+        window.location.href = 'platform.html';
+    }
+
+    goToWithdrawal() {
+        window.location.href = 'funding.html#withdrawal';
+    }
+
+    goToDeposit() {
+        window.location.href = 'funding.html';
+    }
+
+    goToSupport() {
+        window.location.href = 'index.html#contact';
+    }
+
+    goToAnalytics() {
+        window.location.href = 'platform.html#analytics';
     }
 }
 
-// Keep global functions for backward compatibility
+// Global functions
 window.openTradingModal = () => {
-    window.location.href = 'platform.html';
+    document.getElementById('tradingModal').style.display = 'block';
 };
 
 window.showDeposit = () => {
@@ -555,25 +574,3 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Export for use in other modules
 export default DashboardManager;
-
-
-    // Add new methods for button actions
-    goToTrading() {
-        window.location.href = 'platform.html';
-    }
-
-    goToWithdrawal() {
-        window.location.href = 'funding.html#withdrawal';
-    }
-
-    goToDeposit() {
-        window.location.href = 'funding.html';
-    }
-
-    goToSupport() {
-        window.location.href = 'index.html#contact';
-    }
-
-    goToAnalytics() {
-        window.location.href = 'platform.html#analytics';
-    }
