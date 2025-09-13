@@ -684,3 +684,270 @@ body {
         gap: var(--spacing-md);
     }
 }
+
+/* Crypto Portfolio Section */
+.crypto-portfolio-section {
+    background: var(--trading-bg);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    color: white;
+}
+
+.portfolio-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.portfolio-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.portfolio-title h3 {
+    color: #ff6b35;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.portfolio-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.connect-wallet-btn, .buy-crypto-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 8px 16px;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.connect-wallet-btn:hover, .buy-crypto-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.connect-wallet-btn.connected {
+    background: var(--positive-green);
+    border-color: var(--positive-green);
+}
+
+.buy-crypto-btn {
+    background: var(--positive-green);
+    border-color: var(--positive-green);
+}
+
+.no-trade-available {
+    display: flex;
+    align-items: center;
+}
+
+.no-trade-text {
+    color: #ff6b6b;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.crypto-portfolio-table {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.portfolio-table-header {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.portfolio-table-body {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.portfolio-item {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    padding: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    align-items: center;
+}
+
+.portfolio-item:last-child {
+    border-bottom: none;
+}
+
+.portfolio-cell {
+    display: flex;
+    align-items: center;
+}
+
+.coin-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.coin-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+}
+
+.status-badge {
+    background: var(--positive-green);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.status-badge.high {
+    background: var(--positive-green);
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: var(--trading-bg);
+    margin: 10% auto;
+    padding: 0;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+    color: white;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.close {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.close:hover {
+    color: white;
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.wallet-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.wallet-option {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 16px;
+}
+
+.wallet-option:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.buy-crypto-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.form-group select,
+.form-group input {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: white;
+    font-size: 16px;
+}
+
+.form-group select:focus,
+.form-group input:focus {
+    outline: none;
+    border-color: var(--brand-gradient);
+}
+
+.buy-btn {
+    background: var(--positive-green);
+    border: none;
+    border-radius: 8px;
+    padding: 16px;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.buy-btn:hover {
+    background: #00b894;
+}

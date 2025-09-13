@@ -66,7 +66,7 @@
 
         <!-- Main Content Area -->
         <main class="dashboard-main">
-            <!-- Trading Interface Section - New Addition -->
+            <!-- Trading Interface Section -->
             <div class="trading-interface">
                 <div class="user-profile">
                     <div class="profile-avatar">
@@ -89,13 +89,13 @@
                 <div class="trading-pairs">
                     <div class="pair-item">
                         <span class="pair-name">US 100 Cash CFD</span>
-                        <span class="pair-price">24,095.0</span>
-                        <span class="pair-change negative">-110.5 (-0.45%)</span>
+                        <span class="pair-price" id="us100Price">24,095.0</span>
+                        <span class="pair-change negative" id="us100Change">-110.5 (-0.45%)</span>
                     </div>
                     <div class="pair-item">
                         <span class="pair-name">EUR to USD</span>
-                        <span class="pair-price">1.17331</span>
-                        <span class="pair-change negative">-0.00009 (-0.01%)</span>
+                        <span class="pair-price" id="eurUsdPrice">1.17331</span>
+                        <span class="pair-change negative" id="eurUsdChange">-0.00009 (-0.01%)</span>
                     </div>
                 </div>
                 
@@ -106,11 +106,11 @@
                 <div class="transaction-cards">
                     <div class="transaction-card received">
                         <h4>Received</h4>
-                        <div class="transaction-amount positive">0.00 USD</div>
+                        <div class="transaction-amount positive" id="receivedAmount">0.00 USD</div>
                     </div>
                     <div class="transaction-card deposit">
                         <h4>Deposit</h4>
-                        <div class="transaction-amount negative">0.00 USD</div>
+                        <div class="transaction-amount negative" id="depositAmount">0.00 USD</div>
                     </div>
                 </div>
                 
@@ -120,6 +120,40 @@
                     <button class="tab-btn">Bonds</button>
                     <button class="tab-btn">Forex</button>
                     <button class="tab-btn">Crypto</button>
+                </div>
+            </div>
+
+            <!-- Crypto Portfolio Section -->
+            <div class="crypto-portfolio-section">
+                <div class="portfolio-header">
+                    <div class="portfolio-title">
+                        <h3>Crypto Portfolio</h3>
+                        <div class="portfolio-actions">
+                            <button class="connect-wallet-btn" id="connectWalletBtn">
+                                <i class="fas fa-wallet"></i>
+                                Connect wallet
+                            </button>
+                            <button class="buy-crypto-btn" id="buyCryptoBtn">
+                                <i class="fas fa-plus"></i>
+                                Buy Crypto
+                            </button>
+                        </div>
+                    </div>
+                    <div class="no-trade-available">
+                        <span class="no-trade-text">No trade available</span>
+                    </div>
+                </div>
+                
+                <div class="crypto-portfolio-table">
+                    <div class="portfolio-table-header">
+                        <div class="header-cell">AMOUNT</div>
+                        <div class="header-cell">COIN</div>
+                        <div class="header-cell">STATUS</div>
+                    </div>
+                    
+                    <div class="portfolio-table-body" id="cryptoPortfolioBody">
+                        <!-- Crypto portfolio items will be populated here -->
+                    </div>
                 </div>
             </div>
 
@@ -235,38 +269,250 @@
         <p>&copy; Central Trade Hub 2024</p>
     </footer>
 
+    <!-- Wallet Connection Modal -->
+    <div id="walletModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Connect Wallet</h3>
+                <span class="close" id="closeWalletModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="wallet-options">
+                    <button class="wallet-option" data-wallet="metamask">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask" width="32">
+                        <span>MetaMask</span>
+                    </button>
+                    <button class="wallet-option" data-wallet="walletconnect">
+                        <img src="https://walletconnect.com/walletconnect-logo.svg" alt="WalletConnect" width="32">
+                        <span>WalletConnect</span>
+                    </button>
+                    <button class="wallet-option" data-wallet="coinbase">
+                        <img src="https://images.ctfassets.net/q5ulk4bp65r7/3TBS4oVkD1ghowTqVQJlqj/2dfd4ea3b623a7c0d8deb2ff445dee9e/Consumer_Wordmark.svg" alt="Coinbase" width="32">
+                        <span>Coinbase Wallet</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buy Crypto Modal -->
+    <div id="buyCryptoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Buy Crypto</h3>
+                <span class="close" id="closeBuyCryptoModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="buy-crypto-form">
+                    <div class="form-group">
+                        <label for="cryptoSelect">Select Cryptocurrency</label>
+                        <select id="cryptoSelect">
+                            <option value="bitcoin">Bitcoin (BTC)</option>
+                            <option value="ethereum">Ethereum (ETH)</option>
+                            <option value="tether">Tether (USDT)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="usdAmount">Amount (USD)</label>
+                        <input type="number" id="usdAmount" placeholder="Enter amount in USD" min="1">
+                    </div>
+                    <div class="crypto-preview" id="cryptoPreview">
+                        <!-- Preview will be shown here -->
+                    </div>
+                    <button class="buy-btn" id="confirmBuyBtn">Buy Crypto</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="js/firebase-config.js"></script>
+    <script src="js/firebase-database.js"></script>
+    <script src="js/crypto-service.js"></script>
+    <script src="js/wallet-service.js"></script>
     <script src="js/dashboard.js"></script>
     <script>
-        // Initialize Central Trade Hub dashboard
+        // Initialize Central Trade Hub dashboard with real data
         document.addEventListener('DOMContentLoaded', function() {
             loadUserData();
             loadAccountBalance();
-            initializeTrading();
+            initializeCryptoPortfolio();
+            initializeRealTimeData();
+            initializeWalletConnection();
+            initializeBuyCrypto();
         });
 
-        function loadUserData() {
-            // Load user email and account info
+        async function loadUserData() {
             const userEmail = localStorage.getItem('userEmail') || 'user@example.com';
             document.getElementById('userEmail').textContent = userEmail;
         }
 
-        function loadAccountBalance() {
-            // Load account balance from Central Trade Hub API
-            document.getElementById('accountBalance').textContent = '0.00';
-            document.getElementById('walletBalance').textContent = '0.00';
+        async function loadAccountBalance() {
+            try {
+                const uid = localStorage.getItem('uid') || 'demo-user';
+                const balanceResult = await window.firebaseDB.getUserBalance(uid);
+                
+                if (balanceResult.success) {
+                    document.getElementById('accountBalance').textContent = balanceResult.balance.toFixed(2);
+                    document.getElementById('walletBalance').textContent = balanceResult.balance.toFixed(2);
+                }
+            } catch (error) {
+                console.error('Error loading balance:', error);
+            }
         }
 
-        function initializeTrading() {
-            // Initialize trading functionality
-            console.log('Central Trade Hub dashboard initialized');
+        async function initializeCryptoPortfolio() {
+            try {
+                const uid = localStorage.getItem('uid') || 'demo-user';
+                
+                // Load crypto portfolio
+                const portfolioResult = await window.cryptoService.getUserCryptoPortfolio(uid);
+                if (portfolioResult.success) {
+                    updateCryptoPortfolioUI(portfolioResult.data);
+                }
+                
+                // Load crypto data
+                const cryptoDataResult = await window.cryptoService.getAllCryptoData();
+                if (cryptoDataResult.success) {
+                    updateCryptoDataUI(cryptoDataResult.data);
+                }
+            } catch (error) {
+                console.error('Error initializing crypto portfolio:', error);
+            }
+        }
+
+        function updateCryptoPortfolioUI(portfolio) {
+            const portfolioBody = document.getElementById('cryptoPortfolioBody');
+            portfolioBody.innerHTML = '';
+            
+            const cryptos = ['bitcoin', 'ethereum', 'tether'];
+            const cryptoNames = {
+                bitcoin: 'Bitcoin',
+                ethereum: 'Ethereum', 
+                tether: 'Usdt(Tether)'
+            };
+            
+            cryptos.forEach(crypto => {
+                const amount = portfolio[crypto]?.amount || 0.00;
+                const portfolioItem = document.createElement('div');
+                portfolioItem.className = 'portfolio-item';
+                portfolioItem.innerHTML = `
+                    <div class="portfolio-cell">${amount.toFixed(2)}</div>
+                    <div class="portfolio-cell">
+                        <div class="coin-info">
+                            <img src="https://cryptoicons.org/api/icon/${crypto.toLowerCase()}/32" alt="${cryptoNames[crypto]}" class="coin-icon">
+                            <span>${cryptoNames[crypto]}</span>
+                        </div>
+                    </div>
+                    <div class="portfolio-cell">
+                        <span class="status-badge high">High</span>
+                    </div>
+                `;
+                portfolioBody.appendChild(portfolioItem);
+            });
+        }
+
+        function initializeRealTimeData() {
+            // Subscribe to real-time crypto data
+            window.cryptoService.subscribeToCryptoData((cryptoList) => {
+                updateCryptoDataUI(cryptoList);
+            });
+            
+            // Start price updates
+            window.cryptoService.startPriceUpdates();
+        }
+
+        function updateCryptoDataUI(cryptoList) {
+            // Update trading pairs with real data
+            cryptoList.forEach(crypto => {
+                if (crypto.id === 'bitcoin') {
+                    // You can update specific UI elements with real Bitcoin data
+                }
+            });
+        }
+
+        function initializeWalletConnection() {
+            const connectWalletBtn = document.getElementById('connectWalletBtn');
+            const walletModal = document.getElementById('walletModal');
+            const closeWalletModal = document.getElementById('closeWalletModal');
+            
+            connectWalletBtn.addEventListener('click', () => {
+                walletModal.style.display = 'block';
+            });
+            
+            closeWalletModal.addEventListener('click', () => {
+                walletModal.style.display = 'none';
+            });
+            
+            // Wallet option handlers
+            document.querySelectorAll('.wallet-option').forEach(option => {
+                option.addEventListener('click', async () => {
+                    const walletType = option.dataset.wallet;
+                    const result = await window.walletService.connectWallet(walletType);
+                    
+                    if (result.success) {
+                        connectWalletBtn.innerHTML = `
+                            <i class="fas fa-check"></i>
+                            ${result.wallet} Connected
+                        `;
+                        connectWalletBtn.classList.add('connected');
+                        walletModal.style.display = 'none';
+                        
+                        // Show success message
+                        alert(`Successfully connected to ${result.wallet}!`);
+                    } else {
+                        alert(`Failed to connect: ${result.error}`);
+                    }
+                });
+            });
+        }
+
+        function initializeBuyCrypto() {
+            const buyCryptoBtn = document.getElementById('buyCryptoBtn');
+            const buyCryptoModal = document.getElementById('buyCryptoModal');
+            const closeBuyCryptoModal = document.getElementById('closeBuyCryptoModal');
+            const confirmBuyBtn = document.getElementById('confirmBuyBtn');
+            
+            buyCryptoBtn.addEventListener('click', () => {
+                buyCryptoModal.style.display = 'block';
+            });
+            
+            closeBuyCryptoModal.addEventListener('click', () => {
+                buyCryptoModal.style.display = 'none';
+            });
+            
+            confirmBuyBtn.addEventListener('click', async () => {
+                const cryptoId = document.getElementById('cryptoSelect').value;
+                const usdAmount = parseFloat(document.getElementById('usdAmount').value);
+                
+                if (!usdAmount || usdAmount <= 0) {
+                    alert('Please enter a valid amount');
+                    return;
+                }
+                
+                const uid = localStorage.getItem('uid') || 'demo-user';
+                const result = await window.cryptoService.buyCrypto(uid, cryptoId, usdAmount);
+                
+                if (result.success) {
+                    alert(result.message);
+                    buyCryptoModal.style.display = 'none';
+                    
+                    // Refresh portfolio
+                    initializeCryptoPortfolio();
+                } else {
+                    alert(`Purchase failed: ${result.error}`);
+                }
+            });
         }
 
         function logout() {
-            // Redirect to login page
             window.location.href = 'auth.html';
         }
+
+        // Make services available globally
+        window.cryptoService = window.cryptoService || {};
+        window.walletService = window.walletService || {};
+        window.firebaseDB = window.firebaseDB || {};
     </script>
 </body>
 </html>
