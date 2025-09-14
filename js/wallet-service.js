@@ -3,6 +3,59 @@ class WalletService {
   constructor() {
     this.connectedWallet = null;
     this.walletAddress = null;
+    this.gitIntegration = null;
+    this.loadSavedConnections();
+  }
+
+  // Load saved wallet connections
+  loadSavedConnections() {
+    const savedWallet = localStorage.getItem('currentWallet');
+    const savedGit = localStorage.getItem('gitIntegration');
+    
+    if (savedWallet) {
+      this.connectedWallet = JSON.parse(savedWallet);
+      this.walletAddress = this.connectedWallet.address;
+    }
+    
+    if (savedGit) {
+      this.gitIntegration = JSON.parse(savedGit);
+    }
+  }
+
+  // Get all saved wallet connections
+  getSavedWallets() {
+    return JSON.parse(localStorage.getItem('walletConnections') || '[]');
+  }
+
+  // Get Git integration status
+  getGitIntegration() {
+    return this.gitIntegration;
+  }
+
+  // Push trading data to Git repository
+  async pushToGit(data, commitMessage = 'Update trading data') {
+    if (!this.gitIntegration || !this.gitIntegration.hasWriteAccess) {
+      throw new Error('Git integration not configured or no write access');
+    }
+
+    try {
+      // Simulate Git push (in production, use actual Git API)
+      console.log('Pushing to Git:', {
+        repository: this.gitIntegration.repository,
+        data: data,
+        message: commitMessage
+      });
+      
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      return {
+        success: true,
+        commitHash: Math.random().toString(16).substr(2, 8),
+        message: 'Successfully pushed to repository'
+      };
+    } catch (error) {
+      throw new Error('Failed to push to Git: ' + error.message);
+    }
   }
 
   // Check if MetaMask is installed
