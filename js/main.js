@@ -506,8 +506,18 @@ window.addEventListener('unhandledrejection', function(e) {
 
 // Initialize API keys on application startup
 if (typeof API_CONFIG !== 'undefined') {
-    // Configure SendGrid API keys
-    API_CONFIG.setApiKey('SENDGRID_API_KEY', 'SK27e6e57ffe51c05179915eb842710639');
-    API_CONFIG.setApiKey('SENDGRID_SECRET_TOKEN', 'VWmQzsyFbwmZM154sPnlRWy59MgdPz3P');
-    console.log('SendGrid API keys initialized');
+    // Configure SendGrid API keys from environment
+    const sendGridKey = process.env.SENDGRID_API_KEY;
+    const sendGridSecret = process.env.SENDGRID_SECRET_TOKEN;
+    
+    if (sendGridKey && sendGridSecret) {
+        API_CONFIG.setApiKey('SENDGRID_API_KEY', sendGridKey);
+        API_CONFIG.setApiKey('SENDGRID_SECRET_TOKEN', sendGridSecret);
+        console.log('SendGrid API keys initialized');
+    } else {
+        console.warn('SendGrid API keys not found in environment variables');
+    }
 }
+API_CONFIG.setApiKey('SENDGRID_API_KEY', 'SK27e6e57ffe51c05179915eb842710639');
+API_CONFIG.setApiKey('SENDGRID_SECRET_TOKEN', 'VWmQzsyFbwmZM154sPnlRWy59MgdPz3P');
+console.log('SendGrid API keys initialized');
