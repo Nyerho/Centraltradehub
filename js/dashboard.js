@@ -68,10 +68,10 @@ class DashboardManager {
     }
 
     init() {
-        this.setupMobileMenu();
         this.initializeAuth();
+        this.setupMobileMenu();
         this.initializeTradingTabs();
-        this.loadTradingViewChart('indices', 'S&P 500');
+        this.setupAssetSelectors();
         this.startRealTimeUpdates();
         this.initializeLeaderboard();
     }
