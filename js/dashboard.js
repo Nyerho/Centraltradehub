@@ -534,9 +534,139 @@ class DashboardManager {
     goToAnalytics() {
         window.location.href = 'platform.html#analytics';
     }
+    
+    // Add KYC verification method
+    async handleKYCVerification() {
+        try {
+            // Check if user is already verified
+            const user = auth.currentUser;
+            if (!user) {
+                alert('Please log in to access KYC verification.');
+                return;
+            }
+            
+            // Get user's KYC status from Firebase
+            const userRef = doc(db, 'users', user.uid);
+            const userDoc = await getDoc(userRef);
+            
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                if (userData.kycStatus === 'verified') {
+                    alert('Your account is already KYC verified!');
+                    return;
+                } else if (userData.kycStatus === 'pending') {
+                    alert('Your KYC verification is currently under review. Please wait for approval.');
+                    return;
+                }
+            }
+            
+            // Redirect to KYC verification page or show modal
+            this.showKYCModal();
+            
+        } catch (error) {
+            console.error('Error checking KYC status:', error);
+            alert('Unable to access KYC verification. Please try again later.');
+        }
+    }
+    
+    showKYCModal() {
+        // Create KYC modal if it doesn't exist
+        let kycModal = document.getElementById('kycModal');
+        if (!kycModal) {
+            kycModal = document.createElement('div');
+            kycModal.id = 'kycModal';
+            kycModal.className = 'modal';
+            kycModal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>KYC Verification</h3>
+                        <span class="close" onclick="document.getElementById('kycModal').style.display='none'">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <p>Complete your identity verification to unlock all trading features and higher limits.</p>
+                        <div class="kyc-benefits">
+                            <h4>Benefits of KYC Verification:</h4>
+                            <ul>
+                                <li>✅ Higher deposit and withdrawal limits</li>
+                                <li>✅ Faster withdrawal processing</li>
+                                <li>✅ Access to premium trading features</li>
+                                <li>✅ Enhanced account security</li>
+                            </ul>
+                        </div>
+                        <div class="kyc-requirements">
+                            <h4>Required Documents:</h4>
+                            <ul>
+                                <li>Government-issued ID (Passport, Driver's License, or National ID)</li>
+                                <li>Proof of Address (Utility bill or Bank statement, not older than 3 months)</li>
+                                <li>Selfie with your ID document</li>
+                            </ul>
+                        </div>
+                        <div class="kyc-actions">
+                            <button class="action-btn primary" onclick="startSumsubVerification()">
+                                <i class="fas fa-shield-alt"></i>
+                                Start Verification (Free)
+                            </button>
+                            <button class="action-btn secondary" onclick="document.getElementById('kycModal').style.display='none'">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(kycModal);
+        }
+        
+        kycModal.style.display = 'block';
+    }
 }
 
-// Global functions
+// Sumsub KYC Integration
+window.startSumsubVerification = async () => {
+    try {
+        // Initialize Sumsub SDK (you'll need to add their script to your HTML)
+        const sumsub = window.snsWebSdk;
+        if (!sumsub) {
+            alert('KYC service is currently unavailable. Please try again later.');
+            return;
+        }
+        
+        const user = auth.currentUser;
+        if (!user) {
+            alert('Please log in to start verification.');
+            return;
+        }
+        
+        // Configure Sumsub
+        const config = {
+            lang: 'en',
+            email: user.email,
+            userId: user.uid,
+            // Add your Sumsub configuration here
+        };
+        
+        sumsub.init('#sumsub-websdk-container', config)
+            .then(() => {
+                document.getElementById('kycModal').style.display = 'none';
+            })
+            .catch((error) => {
+                console.error('Sumsub initialization error:', error);
+                alert('Failed to start verification. Please try again.');
+            });
+            
+    } catch (error) {
+        console.error('KYC verification error:', error);
+        alert('Verification service unavailable. Please contact support.');
+    }
+};
+
+// Global KYC function
+window.handleKYCVerification = () => {
+    if (window.dashboardManager) {
+        window.dashboardManager.handleKYCVerification();
+    } else {
+        console.error('Dashboard manager not initialized');
+    }
+};
 window.openTradingModal = () => {
     document.getElementById('tradingModal').style.display = 'block';
 };
@@ -568,8 +698,7 @@ window.logout = async () => {
 
 // Initialize dashboard when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Dashboard initializing...');
-    new DashboardManager();
+    window.dashboardManager = new DashboardManager();
 });
 
 // Export for use in other modules
