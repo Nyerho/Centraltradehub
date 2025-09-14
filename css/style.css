@@ -1461,6 +1461,68 @@ body {
     }
 }
 
+/* Mobile Full-Width Sections - Alternative Approach */
+@media (max-width: 768px) {
+    /* Create full-width wrapper for specific sections */
+    .features,
+    .tools-preview,
+    .choose-us,
+    .security,
+    .bonus,
+    .news-achievements,
+    .choose-next,
+    .providers,
+    .education-section,
+    .about-section,
+    .indices {
+        margin: 0 -1rem; /* Negative margin to counteract container padding */
+    }
+    
+    .features .container,
+    .tools-preview .container,
+    .choose-us .container,
+    .security .container,
+    .bonus .container,
+    .news-achievements .container,
+    .choose-next .container,
+    .providers .container,
+    .education-section .container,
+    .about-section .container,
+    .indices .container {
+        padding: 0 1rem; /* Restore padding inside sections */
+    }
+}
+
+@media (max-width: 480px) {
+    .features,
+    .tools-preview,
+    .choose-us,
+    .security,
+    .bonus,
+    .news-achievements,
+    .choose-next,
+    .providers,
+    .education-section,
+    .about-section,
+    .indices {
+        margin: 0 -0.75rem;
+    }
+    
+    .features .container,
+    .tools-preview .container,
+    .choose-us .container,
+    .security .container,
+    .bonus .container,
+    .news-achievements .container,
+    .choose-next .container,
+    .providers .container,
+    .education-section .container,
+    .about-section .container,
+    .indices .container {
+        padding: 0 0.75rem;
+    }
+}
+
 .footer-section ul li a {
     color: #ffffff;
     text-decoration: none;
