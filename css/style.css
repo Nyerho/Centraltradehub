@@ -1475,7 +1475,13 @@ body {
     .education-section,
     .about-section,
     .indices {
-        margin: 0 -1rem; /* Negative margin to counteract container padding */
+        margin: 0 -1rem !important; /* Negative margin to counteract container padding */
+        width: 100vw !important;
+        position: relative !important;
+        left: 50% !important;
+        right: 50% !important;
+        margin-left: -50vw !important;
+        margin-right: -50vw !important;
     }
     
     .features .container,
@@ -1489,7 +1495,9 @@ body {
     .education-section .container,
     .about-section .container,
     .indices .container {
-        padding: 0 1rem; /* Restore padding inside sections */
+        padding: 0 1rem !important; /* Restore padding inside sections */
+        max-width: none !important;
+        width: 100% !important;
     }
 }
 
@@ -1505,7 +1513,7 @@ body {
     .education-section,
     .about-section,
     .indices {
-        margin: 0 -0.75rem;
+        margin: 0 -0.75rem !important;
     }
     
     .features .container,
@@ -1519,7 +1527,7 @@ body {
     .education-section .container,
     .about-section .container,
     .indices .container {
-        padding: 0 0.75rem;
+        padding: 0 0.75rem !important;
     }
 }
 
