@@ -92,16 +92,27 @@ class AuthManager {
   async register(formData) {
     try {
       console.log('Starting registration process...');
+      console.log('Form data received:', formData);
       
-      // Register with Firebase
-      const result = await FirebaseAuthService.register({
+      // Create proper data structure for Firebase
+      const firebaseUserData = {
         email: formData.email,
         password: formData.password,
-        fullName: formData.fullName,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
         phone: formData.phone,
         country: formData.country,
-        mirrorTradeCode: formData.mirrorTradeCode
-      });
+        displayName: `${formData.firstName} ${formData.lastName}`.trim()
+      };
+      
+      console.log('Sending to Firebase:', firebaseUserData);
+      
+      // Register with Firebase
+      const result = await FirebaseAuthService.register(
+        firebaseUserData.email,
+        firebaseUserData.password,
+        firebaseUserData
+      );
       
       if (result.success) {
         console.log('Registration successful');
@@ -110,7 +121,10 @@ class AuthManager {
         // Send welcome email only if email service is available
         if (this.emailService) {
           try {
-            await this.emailService.sendWelcomeEmail(formData.email, formData.fullName);
+            await this.emailService.sendWelcomeEmail(
+              firebaseUserData.email, 
+              firebaseUserData.displayName
+            );
             console.log('Welcome email sent successfully');
           } catch (emailError) {
             console.warn('Failed to send welcome email:', emailError.message);
@@ -120,7 +134,8 @@ class AuthManager {
         
         return true;
       } else {
-        console.error('Registration error details:', result);
+        console.error('Registration failed:', result);
+        this.showMessage(result.message || 'Registration failed. Please try again.', 'error');
         return false;
       }
     } catch (error) {
@@ -142,6 +157,9 @@ class AuthManager {
             break;
           case 'auth/network-request-failed':
             errorMessage = 'Network error. Please check your internet connection.';
+            break;
+          case 'auth/operation-not-allowed':
+            errorMessage = 'Email/password accounts are not enabled. Please contact support.';
             break;
           default:
             errorMessage = `Registration failed: ${error.message}`;

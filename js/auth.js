@@ -291,6 +291,12 @@ function handleRegister(e) {
         country: formData.get('country')
     };
     
+    // Validate required fields
+    if (!userData.firstName || !userData.lastName || !userData.email || !userData.password) {
+        showNotification('Please fill in all required fields', 'error');
+        return;
+    }
+    
     console.log('User data:', userData);
     
     // Show loading state
@@ -301,9 +307,11 @@ function handleRegister(e) {
     
     console.log('Waiting for AuthManager...');
     
-    // Wait for AuthManager to be available (same logic as handleLogin)
+    const startTime = Date.now();
+    
+    // Wait for AuthManager to be available
     const waitForAuthManager = () => {
-        console.log('Checking AuthManager:', window.authManager);
+        console.log('Checking AuthManager:', !!window.authManager);
         if (window.authManager) {
             console.log('AuthManager found, attempting registration...');
             // Use Firebase authentication through AuthManager
@@ -331,7 +339,7 @@ function handleRegister(e) {
                     // Reset button on error
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
-                    showNotification('Registration failed. Please try again.', 'error');
+                    showNotification('Registration failed: ' + (error.message || 'Please try again.'), 'error');
                 });
         } else {
             console.log('AuthManager not ready, waiting...');
