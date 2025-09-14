@@ -1,19 +1,20 @@
 /* CSS Variables for Consistency */
 :root {
-    /* Brand Colors */
+    /* Brand Colors - Updated for Dark Blue Theme */
     --primary-color: #00d4ff;
     --primary-gradient: linear-gradient(135deg, #00d4ff, #0099cc);
     --secondary-color: #0099cc;
     
-    /* Background Colors */
-    --bg-primary: #0f0f23;
-    --bg-secondary: #1a1a2e;
-    --bg-tertiary: #16213e;
-    --bg-card: #2d2d44;
+    /* Background Colors - Dark Blue Theme */
+    --bg-primary: #0a1628;  /* Deep dark blue */
+    --bg-secondary: #1a2332; /* Medium dark blue */
+    --bg-tertiary: #243447;  /* Lighter dark blue */
+    --bg-card: #2d3e52;     /* Card background */
+    --bg-sidebar: #1e2a3a;  /* Sidebar background */
     
     /* Text Colors */
     --text-primary: #ffffff;
-    --text-secondary: #b8b8b8;
+    --text-secondary: #b8c5d1;
     --text-accent: var(--primary-color);
     
     /* Status Colors */

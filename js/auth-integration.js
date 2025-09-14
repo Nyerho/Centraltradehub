@@ -1,92 +1,82 @@
-// Integration with existing authentication system
 import FirebaseAuthService from './firebase-auth.js';
 import FirebaseDatabaseService from './firebase-database.js';
+import EmailService from './email-service.js';
 
-// Update existing auth.js to use Firebase
 class AuthManager {
   constructor() {
-    this.firebaseAuth = FirebaseAuthService;
-    this.databaseService = FirebaseDatabaseService; // Add missing databaseService
-    this.currentUser = null;
-    this.isLoggedIn = false;
+    this.emailService = new EmailService();
     this.initializeFirebaseAuth();
   }
 
-  // Add the missing showMessage method
   showMessage(message, type = 'info') {
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.innerHTML = `
-      <div class="notification-content">
-        <span class="notification-message">${message}</span>
-        <button class="notification-close" onclick="this.parentElement.parentElement.remove()">&times;</button>
-      </div>
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${type}`;
+    messageDiv.textContent = message;
+    messageDiv.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 20px;
+      border-radius: 5px;
+      color: white;
+      font-weight: 500;
+      z-index: 10000;
+      max-width: 300px;
+      word-wrap: break-word;
     `;
     
-    // Add to page
-    document.body.appendChild(notification);
+    if (type === 'success') {
+      messageDiv.style.backgroundColor = '#22c55e';
+    } else if (type === 'error') {
+      messageDiv.style.backgroundColor = '#ef4444';
+    } else {
+      messageDiv.style.backgroundColor = '#3b82f6';
+    }
     
-    // Auto remove after 5 seconds
+    document.body.appendChild(messageDiv);
+    
     setTimeout(() => {
-      if (notification.parentElement) {
-        notification.remove();
+      if (messageDiv.parentNode) {
+        messageDiv.parentNode.removeChild(messageDiv);
       }
     }, 5000);
   }
 
   initializeFirebaseAuth() {
-    // Listen for authentication state changes
-    FirebaseAuthService.addAuthStateListener((user) => {
-      this.isLoggedIn = !!user;
+    FirebaseAuthService.onAuthStateChanged((user) => {
       this.currentUser = user;
-      this.updateUI(); // This calls the main updateUI method
+      this.updateUI();
     });
   }
 
   async login(email, password) {
     try {
-        this.showMessage('Signing in...', 'info');
+      const result = await FirebaseAuthService.signIn(email, password);
+      
+      if (result.success) {
+        this.showMessage('Login successful! Redirecting...', 'success');
         
-        // Fix: Use the correct method name 'signIn' instead of 'signInWithEmailAndPassword'
-        const result = await this.firebaseAuth.signIn(email, password);
+        // Check if user is admin
+        const isAdmin = await this.checkAdminStatus();
         
-        // Check if login was successful
-        if (!result.success) {
-            this.showMessage(result.message || 'Login failed', 'error');
-            return;
-        }
-        
-        this.showMessage('Login successful!', 'success');
-        
-        // Close modal if it exists
-        const modal = document.getElementById('authModal');
-        if (modal) {
-            modal.style.display = 'none';
-        }
-        
-        // Update UI immediately
-        this.updateUI();
-        
-        // Check if user is admin by email address
-        const adminEmails = [
-            'admin@centraltradehub.com',
-            'owner@centraltradehub.com'
-        ];
-        
-        if (adminEmails.includes(email.toLowerCase())) {
-            // Redirect admin users to admin portal
+        setTimeout(() => {
+          if (isAdmin) {
             window.location.href = 'admin.html';
-        } else {
-            // Redirect regular users to dashboard
+          } else {
             window.location.href = 'dashboard.html';
-        }
+          }
+        }, 1500);
         
+        return true;
+      } else {
+        this.showMessage(result.message || 'Login failed. Please try again.', 'error');
+        return false;
+      }
     } catch (error) {
-        console.error('Login error:', error);
-        this.showMessage(this.getErrorMessage(error.code), 'error');
+      console.error('Login error:', error);
+      this.showMessage(this.getErrorMessage(error.code), 'error');
     }
-}
+  }
 
   async register(formData) {
     try {
@@ -120,6 +110,18 @@ class AuthManager {
       );
       
       if (result.success) {
+        // Send welcome email notification
+        try {
+          await this.emailService.sendWelcomeEmail(
+            formData.email,
+            `${formData.firstName} ${formData.lastName}`
+          );
+          console.log('Welcome email sent successfully');
+        } catch (emailError) {
+          console.error('Failed to send welcome email:', emailError);
+          // Don't fail registration if email fails
+        }
+        
         this.showMessage(result.message, 'success');
         // Fix: Use global closeModal function instead of this.closeModal
         if (typeof closeModal === 'function') {
@@ -170,25 +172,17 @@ class AuthManager {
   async logout() {
     try {
       await FirebaseAuthService.signOut();
-      this.showMessage('Logged out successfully!', 'success');
+      this.showMessage('Logged out successfully', 'success');
       
-      // Clear any cached data
-      localStorage.clear();
-      sessionStorage.clear();
-      
-      // Redirect to home page
-      window.location.href = 'index.html';
+      setTimeout(() => {
+        window.location.href = 'index.html';
+      }, 1000);
     } catch (error) {
       console.error('Logout error:', error);
-      
-      // Force logout even if Firebase fails
-      localStorage.clear();
-      sessionStorage.clear();
-      window.location.href = 'index.html';
+      this.showMessage('Error logging out', 'error');
     }
   }
 
-  // Add the missing getErrorMessage method
   getErrorMessage(errorCode) {
     const errorMessages = {
       'auth/user-not-found': 'No account found with this email address.',
@@ -196,115 +190,71 @@ class AuthManager {
       'auth/invalid-email': 'Please enter a valid email address.',
       'auth/user-disabled': 'This account has been disabled.',
       'auth/too-many-requests': 'Too many failed attempts. Please try again later.',
-      'auth/network-request-failed': 'Network error. Please check your internet connection.',
-      'auth/invalid-credential': 'Invalid email or password. Please check your credentials.',
-      'auth/email-already-in-use': 'This email is already registered.',
-      'auth/weak-password': 'Password is too weak. Please use at least 6 characters.',
-      'auth/operation-not-allowed': 'Email/password accounts are not enabled.',
-      'auth/requires-recent-login': 'Please log in again to complete this action.'
+      'auth/network-request-failed': 'Network error. Please check your connection.',
+      'auth/email-already-in-use': 'An account with this email already exists.',
+      'auth/weak-password': 'Password should be at least 6 characters long.',
+      'auth/invalid-credential': 'Invalid login credentials. Please check your email and password.'
     };
     
-    return errorMessages[errorCode] || 'An unexpected error occurred. Please try again.';
+    return errorMessages[errorCode] || 'An error occurred. Please try again.';
   }
 
-  // Add the main updateUI method to fix admin button visibility
   updateUI() {
-      const loginButtons = document.querySelectorAll('.btn-login, .btn-login-account, .login-btn, .btn-secondary[href="auth.html"], .trade-btn[href="auth.html"]');
-      const registerButtons = document.querySelectorAll('.btn-register, .btn-primary[href="auth.html#register"], .btn-start-trading, .btn-primary[href="auth.html"], .trade-btn, a[href="auth.html#register"]');
-      const adminButton = document.querySelector('.btn-admin');
-      const userMenu = document.querySelector('.user-menu');
+    // Update UI elements based on authentication state
+    const userElements = document.querySelectorAll('[data-user-only]');
+    const guestElements = document.querySelectorAll('[data-guest-only]');
+    
+    if (this.currentUser) {
+      userElements.forEach(el => el.style.display = 'block');
+      guestElements.forEach(el => el.style.display = 'none');
       
-      // Update navigation buttons on home page
-      const loginBtn = document.getElementById('loginBtn');
-      const getStartedBtn = document.getElementById('getStartedBtn');
-      const dashboardBtn = document.getElementById('dashboardBtn');
-  
-      if (this.isLoggedIn) {
-          // Hide login/register buttons
-          loginButtons.forEach(btn => {
-              if (btn && btn.id !== 'loginBtn') btn.style.display = 'none';
-          });
-          registerButtons.forEach(btn => {
-              if (btn && btn.id !== 'getStartedBtn') btn.style.display = 'none';
-          });
-          
-          // Update home page navigation
-          if (loginBtn) loginBtn.style.display = 'none';
-          if (getStartedBtn) getStartedBtn.style.display = 'none';
-          if (dashboardBtn) dashboardBtn.style.display = 'inline-block';
-  
-          // Show admin button ONLY for authorized admins
-          if (adminButton) {
-              const isAdmin = this.isAdmin();
-              adminButton.style.display = isAdmin ? 'inline-block' : 'none';
-          }
-  
-          // Show user menu if available
-          if (userMenu) {
-              userMenu.style.display = 'block';
-              const userName = userMenu.querySelector('.user-name');
-              if (userName && this.currentUser) {
-                  userName.textContent = this.currentUser.displayName || this.currentUser.email;
-              }
-          }
-  
-          // Add logout functionality
-          const logoutBtn = document.querySelector('.btn-logout');
-          if (logoutBtn) {
-              logoutBtn.onclick = () => this.logout();
-          }
-      } else {
-          // Show login/register buttons
-          loginButtons.forEach(btn => {
-              if (btn) btn.style.display = 'inline-block';
-          });
-          registerButtons.forEach(btn => {
-              if (btn) btn.style.display = 'inline-block';
-          });
-          
-          // Update home page navigation
-          if (loginBtn) loginBtn.style.display = 'inline-block';
-          if (getStartedBtn) getStartedBtn.style.display = 'inline-block';
-          if (dashboardBtn) dashboardBtn.style.display = 'none';
-  
-          // Hide admin button and user menu
-          if (adminButton) adminButton.style.display = 'none';
-          if (userMenu) userMenu.style.display = 'none';
-      }
+      // Update user info displays
+      const userNameElements = document.querySelectorAll('.user-name, #dashboard-user-name');
+      const userEmailElements = document.querySelectorAll('.user-email, #userEmail');
+      
+      userNameElements.forEach(el => {
+        el.textContent = this.currentUser.displayName || this.currentUser.email;
+      });
+      
+      userEmailElements.forEach(el => {
+        el.textContent = this.currentUser.email;
+      });
+      
+      // Update avatar initials
+      const avatarElements = document.querySelectorAll('.avatar-initial');
+      avatarElements.forEach(el => {
+        const name = this.currentUser.displayName || this.currentUser.email;
+        el.textContent = name.charAt(0).toUpperCase();
+      });
+    } else {
+      userElements.forEach(el => el.style.display = 'none');
+      guestElements.forEach(el => el.style.display = 'block');
+    }
   }
-  // Add missing getCurrentUser method
+
   getCurrentUser() {
     return this.currentUser;
   }
 
-  // Add method to check if user is admin
   isAdmin() {
-    const adminEmails = [
-      'admin@centraltradehub.com',
-      'owner@centraltradehub.com'
-    ];
-    return this.isLoggedIn && this.currentUser && adminEmails.includes(this.currentUser.email);
+    return this.currentUser && this.currentUser.email === 'admin@centraltradehub.com';
   }
 
-  // Add the missing checkAdminStatus method
   async checkAdminStatus() {
-    if (!this.isLoggedIn || !this.currentUser) {
+    if (!this.currentUser) return false;
+    
+    try {
+      const userData = await FirebaseDatabaseService.getUserData(this.currentUser.uid);
+      return userData && userData.role === 'admin';
+    } catch (error) {
+      console.error('Error checking admin status:', error);
       return false;
     }
-    
-    const adminEmails = [
-      'admin@centraltradehub.com',
-      'owner@centraltradehub.com',
-      'neroesiso@gmail.com' // Add your current email as admin for testing
-    ];
-    
-    return adminEmails.includes(this.currentUser.email);
   }
 }
 
-// Initialize AuthManager and make it globally available
+// Create and export auth manager instance
 const authManager = new AuthManager();
 window.authManager = authManager;
 
-// Export for module usage
 export default authManager;

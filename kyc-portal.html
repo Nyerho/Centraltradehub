@@ -3,111 +3,216 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KYC Verification Portal - TradePro</title>
-    <link rel="stylesheet" href="css/dashboard.css">
+    <title>KYC Verification Portal - Mirror Trade</title>
+    <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/kyc-styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="dashboard-container">
-        <!-- Header -->
-        <header class="dashboard-header">
-            <div class="header-left">
-                <button class="menu-toggle" id="menuToggle">
-                    <i class="fas fa-bars"></i>
+    <!-- Navigation Header -->
+    <header class="kyc-header">
+        <div class="container">
+            <div class="header-content">
+                <button class="back-btn" onclick="window.location.href='dashboard.html'">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back to Dashboard</span>
                 </button>
-                <div class="logo">
-                    <h2>TradePro</h2>
+                <div class="header-title">
+                    <h1>KYC Verification</h1>
+                    <p>Secure your account with identity verification</p>
                 </div>
             </div>
-            <div class="header-right">
-                <button class="btn-secondary" onclick="window.location.href='dashboard.html'">
-                    <i class="fas fa-arrow-left"></i> Back to Dashboard
-                </button>
-            </div>
-        </header>
+        </div>
+    </header>
 
-        <!-- Main Content -->
-        <main class="kyc-portal-main">
-            <div class="kyc-container">
-                <div class="kyc-header">
-                    <h1><i class="fas fa-shield-alt"></i> KYC Verification Portal</h1>
-                    <p>Complete your identity verification to unlock all trading features</p>
-                </div>
-
-                <div class="kyc-status-card" id="kycStatusCard">
-                    <div class="status-indicator" id="statusIndicator">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <span>Verification Required</span>
+    <!-- Main Content -->
+    <main class="kyc-main">
+        <div class="container">
+            <!-- KYC Status Card -->
+            <div class="kyc-status-card">
+                <div class="status-header">
+                    <div class="status-icon" id="statusIcon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="status-info">
+                        <h2 id="statusTitle">Verification Pending</h2>
+                        <p id="statusDescription">Complete your KYC verification to unlock all features</p>
+                    </div>
+                    <div class="status-badge" id="statusBadge">
+                        <span class="badge pending">Pending</span>
                     </div>
                 </div>
-
-                <div class="kyc-benefits">
-                    <h3>Benefits of KYC Verification</h3>
-                    <div class="benefits-grid">
-                        <div class="benefit-item">
-                            <i class="fas fa-unlock"></i>
-                            <h4>Higher Trading Limits</h4>
-                            <p>Access increased daily and monthly trading limits</p>
-                        </div>
-                        <div class="benefit-item">
-                            <i class="fas fa-shield-check"></i>
-                            <h4>Enhanced Security</h4>
-                            <p>Additional account protection and fraud prevention</p>
-                        </div>
-                        <div class="benefit-item">
-                            <i class="fas fa-credit-card"></i>
-                            <h4>More Payment Options</h4>
-                            <p>Access to bank transfers and additional deposit methods</p>
-                        </div>
-                        <div class="benefit-item">
-                            <i class="fas fa-headset"></i>
-                            <h4>Priority Support</h4>
-                            <p>Get faster response times from our support team</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="kyc-requirements">
-                    <h3>Required Documents</h3>
-                    <div class="requirements-list">
-                        <div class="requirement-item">
-                            <i class="fas fa-id-card"></i>
-                            <span>Government-issued ID (Passport, Driver's License, or National ID)</span>
-                        </div>
-                        <div class="requirement-item">
-                            <i class="fas fa-file-alt"></i>
-                            <span>Proof of Address (Utility bill or bank statement, less than 3 months old)</span>
-                        </div>
-                        <div class="requirement-item">
-                            <i class="fas fa-camera"></i>
-                            <span>Selfie with your ID document</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="kyc-actions">
-                    <button class="btn-primary" id="startVerificationBtn" onclick="startKYCVerification()">
-                        <i class="fas fa-play"></i> Start Verification Process
-                    </button>
-                    <button class="btn-secondary" onclick="window.location.href='dashboard.html'">
-                        <i class="fas fa-times"></i> Cancel
-                    </button>
-                </div>
-
-                <div class="kyc-progress" id="kycProgress" style="display: none;">
-                    <h3>Verification in Progress</h3>
+                
+                <!-- Progress Bar -->
+                <div class="progress-container">
                     <div class="progress-bar">
-                        <div class="progress-fill" id="progressFill"></div>
+                        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
                     </div>
-                    <p id="progressText">Initializing verification...</p>
+                    <div class="progress-steps">
+                        <div class="step" id="step1">
+                            <div class="step-circle">1</div>
+                            <span>Personal Info</span>
+                        </div>
+                        <div class="step" id="step2">
+                            <div class="step-circle">2</div>
+                            <span>Document Upload</span>
+                        </div>
+                        <div class="step" id="step3">
+                            <div class="step-circle">3</div>
+                            <span>Verification</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </main>
+
+            <!-- Benefits Section -->
+            <div class="benefits-section">
+                <h3><i class="fas fa-star"></i> Benefits of KYC Verification</h3>
+                <div class="benefits-grid">
+                    <div class="benefit-item">
+                        <div class="benefit-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="benefit-content">
+                            <h4>Enhanced Security</h4>
+                            <p>Protect your account with verified identity</p>
+                        </div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <div class="benefit-content">
+                            <h4>Higher Limits</h4>
+                            <p>Increase your trading and withdrawal limits</p>
+                        </div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <div class="benefit-content">
+                            <h4>Premium Features</h4>
+                            <p>Access advanced trading tools and features</p>
+                        </div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">
+                            <i class="fas fa-headset"></i>
+                        </div>
+                        <div class="benefit-content">
+                            <h4>Priority Support</h4>
+                            <p>Get faster customer support response</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Requirements Section -->
+            <div class="requirements-section">
+                <h3><i class="fas fa-list-check"></i> Required Documents</h3>
+                <div class="requirements-list">
+                    <div class="requirement-item">
+                        <div class="requirement-icon">
+                            <i class="fas fa-id-card"></i>
+                        </div>
+                        <div class="requirement-content">
+                            <h4>Government-issued ID</h4>
+                            <p>Passport, Driver's License, or National ID Card</p>
+                        </div>
+                        <div class="requirement-status" id="docStatus1">
+                            <i class="fas fa-clock text-warning"></i>
+                        </div>
+                    </div>
+                    <div class="requirement-item">
+                        <div class="requirement-icon">
+                            <i class="fas fa-file-invoice"></i>
+                        </div>
+                        <div class="requirement-content">
+                            <h4>Proof of Address</h4>
+                            <p>Utility bill, Bank statement (not older than 3 months)</p>
+                        </div>
+                        <div class="requirement-status" id="docStatus2">
+                            <i class="fas fa-clock text-warning"></i>
+                        </div>
+                    </div>
+                    <div class="requirement-item">
+                        <div class="requirement-icon">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                        <div class="requirement-content">
+                            <h4>Selfie Verification</h4>
+                            <p>Clear photo of yourself holding your ID document</p>
+                        </div>
+                        <div class="requirement-status" id="docStatus3">
+                            <i class="fas fa-clock text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-section">
+                <div class="action-buttons">
+                    <button class="btn btn-primary btn-large" id="startVerificationBtn" onclick="startKYCVerification()">
+                        <i class="fas fa-play"></i>
+                        <span>Start Verification</span>
+                    </button>
+                    <button class="btn btn-secondary" id="continueVerificationBtn" onclick="continueKYCVerification()" style="display: none;">
+                        <i class="fas fa-arrow-right"></i>
+                        <span>Continue Verification</span>
+                    </button>
+                    <button class="btn btn-outline" onclick="window.location.href='dashboard.html'">
+                        <i class="fas fa-home"></i>
+                        <span>Go to Dashboard</span>
+                    </button>
+                </div>
+                
+                <div class="help-section">
+                    <p><i class="fas fa-info-circle"></i> Need help? Contact our <a href="#" onclick="openSupportChat()">support team</a></p>
+                </div>
+            </div>
+
+            <!-- Verification Modal -->
+            <div class="modal" id="verificationModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>KYC Verification Process</h3>
+                        <button class="modal-close" onclick="closeVerificationModal()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="verification-steps">
+                            <div class="step-content" id="stepContent">
+                                <!-- Dynamic content will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Processing your verification...</p>
+        </div>
     </div>
 
     <!-- Scripts -->
-    <script type="module" src="js/firebase-config.js"></script>
-    <script type="module" src="js/kyc-portal.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/kyc-portal.js"></script>
+    <script>
+        // Initialize KYC Portal when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof KYCPortal !== 'undefined') {
+                window.kycPortal = new KYCPortal();
+            }
+        });
+    </script>
 </body>
 </html>

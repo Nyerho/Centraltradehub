@@ -81,6 +81,7 @@
     padding: 24px;
     margin-bottom: 24px;
     color: white;
+    grid-column: 1;
 }
 
 .user-profile {
@@ -272,8 +273,8 @@ body {
     margin: 0;
     padding: 0;
     line-height: 1.6;
-    color: var(--centraltradehub-dark);
-    background-color: var(--centraltradehub-light);
+    color: var(--text-primary);
+    background: var(--bg-primary); /* Dark blue background */
 }
 
 /* TradetrendPro Header */
@@ -336,22 +337,24 @@ body {
 
 /* Dashboard Container */
 .dashboard-container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     padding: var(--spacing-lg);
     display: grid;
     grid-template-columns: 250px 1fr;
     gap: var(--spacing-xl);
     min-height: calc(100vh - 120px);
+    background: var(--bg-primary); /* Ensure container has dark blue background */
 }
 
 /* Sidebar */
 .dashboard-sidebar {
-    background: var(--tradetrendpro-white);
+    background: var(--bg-sidebar); /* Dark blue sidebar */
     border-radius: var(--border-radius-lg);
     padding: var(--spacing-lg);
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     height: fit-content;
+    border: 1px solid var(--bg-tertiary);
 }
 
 .sidebar-nav {
@@ -367,19 +370,20 @@ body {
     padding: var(--spacing-sm) var(--spacing-md);
     border-radius: var(--border-radius-md);
     text-decoration: none;
-    color: var(--tradetrendpro-secondary);
+    color: var(--text-secondary);
     font-weight: var(--font-weight-medium);
     transition: all 0.2s ease;
 }
 
 .nav-item:hover {
-    background: var(--tradetrendpro-light);
-    color: var(--brand-primary);
+    background: var(--bg-tertiary);
+    color: var(--primary-color);
 }
 
 .nav-item.active {
-    background: var(--brand-primary);
-    color: var(--tradetrendpro-white);
+    background: var(--bg-tertiary);
+    color: var(--primary-color);
+    border-left: 3px solid var(--primary-color);
 }
 
 .nav-item i {
@@ -389,8 +393,8 @@ body {
 
 /* Main Content */
 .dashboard-main {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
     gap: var(--spacing-xl);
 }
 
@@ -713,6 +717,8 @@ body {
     padding: 24px;
     margin-bottom: 24px;
     color: white;
+    grid-column: 2;
+    grid-row: 1;
 }
 
 .portfolio-header {

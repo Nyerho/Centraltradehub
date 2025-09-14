@@ -1,11 +1,13 @@
 import { auth, db } from './firebase-config.js';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
+import EmailService from './email-service.js';
 
 class KYCPortal {
     constructor() {
         this.currentUser = null;
         this.kycStatus = 'unverified';
+        this.emailService = new EmailService();
         this.init();
     }
 
@@ -36,57 +38,72 @@ class KYCPortal {
     }
 
     updateStatusDisplay() {
-        const statusCard = document.getElementById('kycStatusCard');
-        const statusIndicator = document.getElementById('statusIndicator');
+        const statusIcon = document.getElementById('statusIcon');
+        const statusTitle = document.getElementById('statusTitle');
+        const statusDescription = document.getElementById('statusDescription');
+        const statusBadge = document.getElementById('statusBadge');
+        const progressFill = document.getElementById('progressFill');
         const startBtn = document.getElementById('startVerificationBtn');
-
-        statusCard.className = 'kyc-status-card';
+        const continueBtn = document.getElementById('continueVerificationBtn');
         
         switch (this.kycStatus) {
             case 'verified':
-                statusCard.classList.add('verified');
-                statusIndicator.innerHTML = '<i class="fas fa-check-circle"></i><span>Verification Complete</span>';
+                statusIcon.innerHTML = '<i class="fas fa-check-circle"></i>';
+                statusIcon.style.background = 'var(--kyc-success)';
+                statusTitle.textContent = 'Verification Complete';
+                statusDescription.textContent = 'Your identity has been successfully verified';
+                statusBadge.innerHTML = '<span class="badge verified">Verified</span>';
+                progressFill.style.width = '100%';
                 startBtn.style.display = 'none';
+                continueBtn.style.display = 'none';
+                this.updateProgressSteps(3);
                 break;
             case 'pending':
-                statusCard.classList.add('pending');
-                statusIndicator.innerHTML = '<i class="fas fa-clock"></i><span>Verification Under Review</span>';
-                startBtn.textContent = 'Check Status';
-                startBtn.onclick = () => this.checkVerificationStatus();
+                statusIcon.innerHTML = '<i class="fas fa-clock"></i>';
+                statusIcon.style.background = 'var(--kyc-warning)';
+                statusTitle.textContent = 'Verification Under Review';
+                statusDescription.textContent = 'Your documents are being reviewed by our team';
+                statusBadge.innerHTML = '<span class="badge pending">Pending</span>';
+                progressFill.style.width = '66%';
+                startBtn.style.display = 'none';
+                continueBtn.style.display = 'inline-flex';
+                continueBtn.textContent = 'Check Status';
+                continueBtn.onclick = () => this.checkVerificationStatus();
+                this.updateProgressSteps(2);
                 break;
             default:
-                statusCard.classList.add('unverified');
-                statusIndicator.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Verification Required</span>';
+                statusIcon.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+                statusIcon.style.background = 'var(--kyc-danger)';
+                statusTitle.textContent = 'Verification Required';
+                statusDescription.textContent = 'Complete your KYC verification to unlock all features';
+                statusBadge.innerHTML = '<span class="badge unverified">Unverified</span>';
+                progressFill.style.width = '0%';
+                startBtn.style.display = 'inline-flex';
+                continueBtn.style.display = 'none';
+                this.updateProgressSteps(0);
                 break;
         }
+    }
+
+    updateProgressSteps(currentStep) {
+        const steps = ['step1', 'step2', 'step3'];
+        steps.forEach((stepId, index) => {
+            const stepElement = document.getElementById(stepId);
+            if (stepElement) {
+                stepElement.classList.remove('active', 'completed');
+                if (index < currentStep) {
+                    stepElement.classList.add('completed');
+                } else if (index === currentStep) {
+                    stepElement.classList.add('active');
+                }
+            }
+        });
     }
 
     async startVerification() {
-        const progressDiv = document.getElementById('kycProgress');
-        const progressFill = document.getElementById('progressFill');
-        const progressText = document.getElementById('progressText');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        loadingOverlay.style.display = 'block';
         
-        progressDiv.style.display = 'block';
-        
-        // Simulate verification process
-        const steps = [
-            'Initializing verification...',
-            'Preparing document upload...',
-            'Starting Sumsub verification...',
-            'Redirecting to verification portal...'
-        ];
-        
-        for (let i = 0; i < steps.length; i++) {
-            progressText.textContent = steps[i];
-            progressFill.style.width = `${(i + 1) * 25}%`;
-            await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-        
-        // In a real implementation, integrate with Sumsub or similar KYC provider
-        this.launchSumsubVerification();
-    }
-
-    async launchSumsubVerification() {
         try {
             // Update status to pending
             await updateDoc(doc(db, 'users', this.currentUser.uid), {
@@ -94,40 +111,86 @@ class KYCPortal {
                 kycStartedAt: new Date().toISOString()
             });
             
-            // In production, integrate with actual Sumsub SDK
-            alert('KYC verification portal would launch here. For demo purposes, status set to pending.');
+            // Send KYC notification email
+            const userDoc = await getDoc(doc(db, 'users', this.currentUser.uid));
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                await this.emailService.sendKYCNotification(
+                    this.currentUser.email,
+                    userData.displayName || 'User',
+                    'pending'
+                );
+            }
             
-            // Reload status
-            this.kycStatus = 'pending';
-            this.updateStatusDisplay();
+            // Simulate verification process
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // In production, integrate with actual KYC provider (Sumsub, etc.)
+            this.launchSumsubVerification();
             
         } catch (error) {
-            console.error('Error starting KYC verification:', error);
-            alert('Unable to start verification. Please try again later.');
+            console.error('Error starting verification:', error);
+            alert('Failed to start verification. Please try again.');
+        } finally {
+            loadingOverlay.style.display = 'none';
         }
     }
 
-    async checkVerificationStatus() {
-        await this.loadKYCStatus();
+    async launchSumsubVerification() {
+        // In production, integrate with actual Sumsub SDK
+        alert('KYC verification portal would launch here. For demo purposes, status set to pending.');
         
-        if (this.kycStatus === 'verified') {
-            alert('Congratulations! Your KYC verification has been approved.');
-        } else if (this.kycStatus === 'pending') {
-            alert('Your verification is still under review. We will notify you once it is complete.');
-        } else {
-            alert('Verification status updated. Please refresh the page.');
+        // Reload status
+        this.loadKYCStatus();
+    }
+
+    async checkVerificationStatus() {
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        loadingOverlay.style.display = 'block';
+        
+        try {
+            // Simulate status check
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Reload current status
+            await this.loadKYCStatus();
+            
+            alert('Status updated. Please check your email for any updates.');
+            
+        } catch (error) {
+            console.error('Error checking status:', error);
+            alert('Failed to check status. Please try again.');
+        } finally {
+            loadingOverlay.style.display = 'none';
         }
     }
 }
 
-// Global functions
+// Global functions for HTML onclick handlers
 window.startKYCVerification = () => {
     if (window.kycPortal) {
         window.kycPortal.startVerification();
     }
 };
 
-// Initialize when DOM is loaded
+window.continueKYCVerification = () => {
+    if (window.kycPortal) {
+        window.kycPortal.checkVerificationStatus();
+    }
+};
+
+window.closeVerificationModal = () => {
+    const modal = document.getElementById('verificationModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+};
+
+window.openSupportChat = () => {
+    // Implement support chat functionality
+    alert('Support chat would open here. Please contact support@centraltradehub.com for assistance.');
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     window.kycPortal = new KYCPortal();
 });
