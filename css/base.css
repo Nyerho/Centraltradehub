@@ -195,12 +195,13 @@
 
 .greeting-section {
     text-align: center;
-    margin: 24px 0;
+    margin: 12px 0 16px 0; /* Reduced from 24px 0 */
 }
 
 .greeting-text {
     font-size: 16px;
     color: rgba(255, 255, 255, 0.8);
+    margin: 0; /* Remove default paragraph margin */
 }
 
 .transaction-cards {

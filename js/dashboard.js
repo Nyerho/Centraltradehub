@@ -174,15 +174,26 @@ class DashboardManager {
                     console.warn('userEmail element not found');
                 }
                 
-                // Update user name
+                // Update user name in header
                 const userNameElement = document.getElementById('dashboard-user-name');
+                // Update user name in trading interface
+                const tradingUserNameElement = document.querySelector('.trading-interface .user-name');
+                
+                const displayName = userData.firstName && userData.lastName 
+                    ? `${userData.firstName} ${userData.lastName}`
+                    : userData.displayName || user.displayName || 'User';
+                
                 if (userNameElement) {
-                    const displayName = userData.firstName && userData.lastName 
-                        ? `${userData.firstName} ${userData.lastName}`
-                        : userData.displayName || user.displayName || 'User';
                     userNameElement.textContent = displayName;
                 } else {
                     console.warn('dashboard-user-name element not found');
+                }
+                
+                // Fix: Update trading interface user name
+                if (tradingUserNameElement) {
+                    tradingUserNameElement.textContent = displayName;
+                } else {
+                    console.warn('trading interface user-name element not found');
                 }
                 
                 // Load KYC status
@@ -243,7 +254,8 @@ class DashboardManager {
         const accountBalanceElement = document.getElementById('accountBalance');
         
         if (balanceElement) {
-            balanceElement.textContent = `$${(this.accountData.balance || 0).toLocaleString('en-US', {
+            // Remove $ prefix since USD is already shown in HTML
+            balanceElement.textContent = `${(this.accountData.balance || 0).toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             })}`;
