@@ -133,3 +133,119 @@
         font-size: 14px;
     }
 }
+
+
+/* KYC Portal Styles */
+.kyc-portal-main {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.kyc-container {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.kyc-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.kyc-header h1 {
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.kyc-status-card {
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.kyc-status-card.verified {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+}
+
+.kyc-status-card.pending {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+}
+
+.kyc-status-card.unverified {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+}
+
+.benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.benefit-item {
+    text-align: center;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.benefit-item i {
+    font-size: 2rem;
+    color: #007bff;
+    margin-bottom: 1rem;
+}
+
+.requirements-list {
+    margin-top: 1rem;
+}
+
+.requirement-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+.requirement-item i {
+    margin-right: 1rem;
+    color: #007bff;
+    width: 20px;
+}
+
+.kyc-actions {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.kyc-actions button {
+    margin: 0 0.5rem;
+}
+
+.kyc-progress {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 1rem 0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #007bff, #0056b3);
+    width: 0%;
+    transition: width 0.3s ease;
+}

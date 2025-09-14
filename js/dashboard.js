@@ -23,20 +23,99 @@ class DashboardManager {
 
     // Initialize authentication and load user data
     initializeAuth() {
+        // Add timeout and better error handling
+        const authTimeout = setTimeout(() => {
+            console.error('Authentication timeout - no user detected');
+            this.handleAuthError();
+        }, 10000); // 10 second timeout
+
         onAuthStateChanged(auth, async (user) => {
+            clearTimeout(authTimeout);
+            
             if (user) {
-                await this.loadUserData(user);
-                await this.loadAccountData(user);
+                console.log('User authenticated:', user.email);
+                try {
+                    await this.loadUserData(user);
+                    await this.loadAccountData(user);
+                } catch (error) {
+                    console.error('Error loading user data:', error);
+                    this.handleAuthError();
+                }
             } else {
-                // Redirect to login if not authenticated
-                window.location.href = 'auth.html';
+                console.log('No user authenticated, redirecting to login');
+                // Add delay to prevent immediate redirect on page load
+                setTimeout(() => {
+                    window.location.href = 'auth.html';
+                }, 1000);
             }
+        }, (error) => {
+            console.error('Auth state change error:', error);
+            clearTimeout(authTimeout);
+            this.handleAuthError();
         });
+    }
+
+    handleAuthError() {
+        // Update UI to show error instead of loading
+        const dashboardUserName = document.getElementById('dashboard-user-name');
+        const userEmailElement = document.getElementById('userEmail');
+        
+        if (dashboardUserName) {
+            dashboardUserName.textContent = 'Authentication Error';
+            dashboardUserName.style.color = '#dc3545';
+        }
+        if (userEmailElement) {
+            userEmailElement.textContent = 'Please refresh page';
+            userEmailElement.style.color = '#dc3545';
+        }
+        
+        // Show notification to user
+        this.showNotification('Authentication failed. Please refresh the page or log in again.', 'error');
+    }
+
+    showNotification(message, type = 'info') {
+        // Create notification if it doesn't exist
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: ${type === 'error' ? '#dc3545' : '#28a745'};
+            color: white;
+            border-radius: 5px;
+            z-index: 9999;
+            max-width: 300px;
+        `;
+        notification.innerHTML = `
+            <div>${message}</div>
+            <button onclick="this.parentElement.remove()" style="
+                background: none;
+                border: none;
+                color: white;
+                float: right;
+                font-size: 18px;
+                cursor: pointer;
+                margin-left: 10px;
+            ">&times;</button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+            }
+        }, 5000);
     }
 
     async loadUserData(user) {
         try {
-            const displayName = user.displayName || user.email || 'User';
+            console.log('Loading user data for:', user.email);
+            
+            const displayName = user.displayName || user.email.split('@')[0] || 'User';
             const userEmail = user.email || 'No email';
             
             // Update user profile section
@@ -47,6 +126,8 @@ class DashboardManager {
             const dashboardUserName = document.getElementById('dashboard-user-name');
             const userEmailElement = document.getElementById('userEmail');
             
+            console.log('Updating UI elements with user data');
+            
             if (profileName) {
                 profileName.textContent = displayName;
             }
@@ -54,12 +135,19 @@ class DashboardManager {
                 avatarInitial.textContent = displayName.charAt(0).toUpperCase();
             }
             
-            // Update dashboard header elements
+            // Update dashboard header elements with better error checking
             if (dashboardUserName) {
                 dashboardUserName.textContent = displayName;
+                dashboardUserName.style.color = ''; // Reset error color
+            } else {
+                console.warn('dashboard-user-name element not found');
             }
+            
             if (userEmailElement) {
                 userEmailElement.textContent = userEmail;
+                userEmailElement.style.color = ''; // Reset error color
+            } else {
+                console.warn('userEmail element not found');
             }
             
             // Update sidebar user name as well
@@ -71,13 +159,25 @@ class DashboardManager {
             // Load KYC status
             await this.loadUserKYCStatus(user);
             
+            console.log('User data loaded successfully');
+            
         } catch (error) {
             console.error('Error loading user data:', error);
-            // Show error state instead of loading
+            
+            // Show specific error state
             const dashboardUserName = document.getElementById('dashboard-user-name');
+            const userEmailElement = document.getElementById('userEmail');
+            
             if (dashboardUserName) {
                 dashboardUserName.textContent = 'Error loading user';
+                dashboardUserName.style.color = '#dc3545';
             }
+            if (userEmailElement) {
+                userEmailElement.textContent = 'Error loading email';
+                userEmailElement.style.color = '#dc3545';
+            }
+            
+            this.showNotification('Failed to load user data: ' + error.message, 'error');
         }
     }
 
@@ -701,242 +801,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Export for use in other modules
 export default DashboardManager;
-
-class DashboardManager {
-    constructor() {
-        this.currentChart = null;
-        this.chartSymbols = {
-            indices: 'TVC:SPX',
-            futures: 'CME:ES1!',
-            bonds: 'TVC:TNX',
-            forex: 'FX:EURUSD',
-            crypto: 'BINANCE:BTCUSDT'
-        };
-        this.initializeTradingTabs();
-        this.loadTradingViewChart('indices');
-        this.initializeKYCStatus(); // Add KYC initialization
-    }
-    
-    initializeTradingTabs() {
-        const tabButtons = document.querySelectorAll('.tab-btn');
-        tabButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                // Remove active class from all buttons
-                tabButtons.forEach(btn => btn.classList.remove('active'));
-                // Add active class to clicked button
-                e.target.classList.add('active');
-                
-                // Load corresponding chart
-                const category = e.target.getAttribute('data-category');
-                this.loadTradingViewChart(category);
-            });
-        });
-    }
-    
-    loadTradingViewChart(category) {
-        const symbol = this.chartSymbols[category] || this.chartSymbols.indices;
-        const container = document.getElementById('tradingview-chart-widget');
-        
-        if (!container) return;
-        
-        // Clear existing chart
-        container.innerHTML = '<div class="tradingview-widget-container__widget"></div>';
-        
-        // Create new TradingView widget
-        const script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-        script.async = true;
-        
-        const config = {
-            autosize: true,
-            symbol: symbol,
-            interval: '15',
-            timezone: 'Etc/UTC',
-            theme: 'dark',
-            style: '1',
-            locale: 'en',
-            enable_publishing: false,
-            backgroundColor: 'rgba(15, 15, 35, 1)',
-            gridColor: 'rgba(42, 46, 57, 0.5)',
-            hide_top_toolbar: false,
-            hide_legend: false,
-            save_image: false,
-            calendar: false,
-            hide_volume: false,
-            support_host: 'https://www.tradingview.com',
-            container_id: 'tradingview-chart-widget'
-        };
-        
-        script.innerHTML = JSON.stringify(config);
-        container.appendChild(script);
-        
-        console.log(`Loading ${category} chart with symbol: ${symbol}`);
-    }
-    
-    // Initialize KYC Status Display
-    initializeKYCStatus() {
-        this.updateKYCStatus('unverified'); // Default status
-        
-        // Add click handler for KYC badge
-        const kycBadge = document.getElementById('kycBadge');
-        if (kycBadge) {
-            kycBadge.addEventListener('click', () => {
-                this.handleKYCClick();
-            });
-        }
-    }
-    
-    // Update KYC Status Display
-    updateKYCStatus(status) {
-        const kycBadge = document.getElementById('kycBadge');
-        const kycStatusText = document.getElementById('kycStatusText');
-        
-        if (!kycBadge || !kycStatusText) return;
-        
-        // Remove existing status classes
-        kycBadge.classList.remove('verified', 'pending', 'unverified');
-        
-        // Add new status class and update content
-        switch (status) {
-            case 'verified':
-                kycBadge.classList.add('verified');
-                kycBadge.innerHTML = '<i class="fas fa-check-circle"></i><span class="kyc-text">VERIFIED</span>';
-                break;
-            case 'pending':
-                kycBadge.classList.add('pending');
-                kycBadge.innerHTML = '<i class="fas fa-clock"></i><span class="kyc-text">PENDING</span>';
-                break;
-            default:
-                kycBadge.classList.add('unverified');
-                kycBadge.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span class="kyc-text">KYC</span>';
-        }
-    }
-    
-    // Handle KYC Badge Click
-    handleKYCClick() {
-        const currentStatus = this.getCurrentKYCStatus();
-        
-        if (currentStatus === 'unverified') {
-            this.showKYCModal();
-        } else if (currentStatus === 'pending') {
-            this.showKYCStatusModal('Your KYC verification is being processed. You will be notified once it\'s complete.');
-        } else {
-            this.showKYCStatusModal('Your account is fully verified!');
-        }
-    }
-    
-    // Get Current KYC Status
-    getCurrentKYCStatus() {
-        const kycBadge = document.getElementById('kycBadge');
-        if (kycBadge.classList.contains('verified')) return 'verified';
-        if (kycBadge.classList.contains('pending')) return 'pending';
-        return 'unverified';
-    }
-    
-    // Show KYC Status Modal
-    showKYCStatusModal(message) {
-        alert(message); // Simple implementation - can be enhanced with custom modal
-    }
-    
-    // Load user KYC status from Firebase
-    async loadUserKYCStatus(user) {
-        try {
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-            if (userDoc.exists()) {
-                const userData = userDoc.data();
-                const kycStatus = userData.kycStatus || 'unverified';
-                this.updateKYCStatus(kycStatus);
-            }
-        } catch (error) {
-            console.error('Error loading KYC status:', error);
-            this.updateKYCStatus('unverified');
-        }
-    }
-    
-    async handleKYCVerification() {
-        try {
-            // Check if user is already verified
-            const user = auth.currentUser;
-            if (!user) {
-                alert('Please log in to access KYC verification.');
-                return;
-            }
-            
-            // Get user's KYC status from Firebase
-            const userRef = doc(db, 'users', user.uid);
-            const userDoc = await getDoc(userRef);
-            
-            if (userDoc.exists()) {
-                const userData = userDoc.data();
-                if (userData.kycStatus === 'verified') {
-                    alert('Your account is already KYC verified!');
-                    return;
-                } else if (userData.kycStatus === 'pending') {
-                    alert('Your KYC verification is currently under review. Please wait for approval.');
-                    return;
-                }
-            }
-            
-            // Redirect to KYC verification page or show modal
-            this.showKYCModal();
-            
-        } catch (error) {
-            console.error('Error checking KYC status:', error);
-            alert('Unable to access KYC verification. Please try again later.');
-        }
-    }
-    
-    showKYCModal() {
-        // Create KYC modal if it doesn't exist
-        let kycModal = document.getElementById('kycModal');
-        if (!kycModal) {
-            kycModal = document.createElement('div');
-            kycModal.id = 'kycModal';
-            kycModal.className = 'modal';
-            kycModal.innerHTML = `
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3>KYC Verification</h3>
-                        <span class="close" onclick="document.getElementById('kycModal').style.display='none'">&times;</span>
-                    </div>
-                    <div class="modal-body">
-                        <p>Complete your identity verification to unlock all trading features and higher limits.</p>
-                        <div class="kyc-benefits">
-                            <h4>Benefits of KYC Verification:</h4>
-                            <ul>
-                                <li>✅ Higher deposit and withdrawal limits</li>
-                                <li>✅ Faster withdrawal processing</li>
-                                <li>✅ Access to premium trading features</li>
-                                <li>✅ Enhanced account security</li>
-                            </ul>
-                        </div>
-                        <div class="kyc-requirements">
-                            <h4>Required Documents:</h4>
-                            <ul>
-                                <li>Government-issued ID (Passport, Driver's License, or National ID)</li>
-                                <li>Proof of Address (Utility bill or Bank statement, not older than 3 months)</li>
-                                <li>Selfie with your ID document</li>
-                            </ul>
-                        </div>
-                        <div class="kyc-actions">
-                            <button class="action-btn primary" onclick="startSumsubVerification()">
-                                <i class="fas fa-shield-alt"></i>
-                                Start Verification (Free)
-                            </button>
-                            <button class="action-btn secondary" onclick="document.getElementById('kycModal').style.display='none'">
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(kycModal);
-        }
-        
-        kycModal.style.display = 'block';
-    }
-}
 
 // Sumsub KYC Integration
 window.startSumsubVerification = async () => {
