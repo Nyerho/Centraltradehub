@@ -212,10 +212,18 @@ function setupFormSubmissions() {
 }
 
 function handleLogin(e) {
-    e.preventDefault();
+    e.preventDefault(); // Ensure this is the first line
+    e.stopPropagation(); // Add this to prevent event bubbling
     
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
+    
+    // Validate inputs
+    if (!email || !password) {
+        showNotification('Please enter both email and password', 'error');
+        return false;
+    }
+    
     const submitBtn = e.target.querySelector('button[type="submit"]');
     const originalText = submitBtn.innerHTML;
     
@@ -242,6 +250,8 @@ function handleLogin(e) {
         submitBtn.disabled = false;
         showNotification('Login failed: ' + error.message, 'error');
     });
+    
+    return false; // Prevent form submission
 }
 
 function handleRegister(e) {

@@ -1,11 +1,21 @@
 import FirebaseAuthService from './firebase-auth.js';
 import FirebaseDatabaseService from './firebase-database.js';
-import EmailService from './email-service.js';
 
 class AuthManager {
   constructor() {
-    this.emailService = new EmailService();
+    this.initializeEmailService();
     this.initializeFirebaseAuth();
+  }
+
+  async initializeEmailService() {
+    try {
+      const { default: EmailService } = await import('./email-service.js');
+      this.emailService = new EmailService();
+      console.log('Email service initialized successfully');
+    } catch (error) {
+      console.warn('Email service failed to initialize:', error.message);
+      this.emailService = null; // Continue without email service
+    }
   }
 
   showMessage(message, type = 'info') {
@@ -140,6 +150,20 @@ class AuthManager {
         console.error('Registration error details:', result);
         return false;
       }
+    } catch (error) {
+      console.error('Registration error:', error);
+      // Send welcome email only if email service is available
+      if (this.emailService) {
+        try {
+          await this.emailService.sendWelcomeEmail(formData.email, formData.fullName);
+          console.log('Welcome email sent successfully');
+        } catch (emailError) {
+          console.warn('Failed to send welcome email:', emailError.message);
+          // Don't fail registration if email fails
+        }
+      }
+      
+      return true;
     } catch (error) {
       console.error('Registration error:', error);
       // Show more specific error message

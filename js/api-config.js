@@ -158,9 +158,17 @@ class APIConfig {
     }
 }
 
-// Export for use in other modules
+// Create instance and export it
+const API_CONFIG = new APIConfig();
+
+// Export for ES6 modules
+export { API_CONFIG };
+export default API_CONFIG;
+
+// Export for CommonJS (if needed)
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = APIConfig;
+    module.exports = { APIConfig, API_CONFIG };
 } else {
     window.APIConfig = APIConfig;
+    window.API_CONFIG = API_CONFIG;
 }
