@@ -90,82 +90,41 @@ class AuthManager {
 
   async register(formData) {
     try {
-      // Validate required fields
-      if (!formData.email || !formData.password) {
-        this.showMessage('Email and password are required.', 'error');
-        return false;
-      }
-
-      if (!formData.firstName || !formData.lastName) {
-        this.showMessage('First name and last name are required.', 'error');
-        return false;
-      }
-
-      // Check password strength
-      if (formData.password.length < 6) {
-        this.showMessage('Password must be at least 6 characters long.', 'error');
-        return false;
-      }
-
-      const result = await FirebaseAuthService.register(
-        formData.email,
-        formData.password,
-        {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          phone: formData.phone || '',
-          country: formData.country || 'Not specified',
-          displayName: `${formData.firstName} ${formData.lastName}`
-        }
-      );
+      console.log('Starting registration process...');
+      
+      // Register with Firebase
+      const result = await FirebaseAuthService.register({
+        email: formData.email,
+        password: formData.password,
+        fullName: formData.fullName,
+        phone: formData.phone,
+        country: formData.country,
+        mirrorTradeCode: formData.mirrorTradeCode
+      });
       
       if (result.success) {
-        // Send welcome email notification
-        try {
-          await this.emailService.sendWelcomeEmail(
-            formData.email,
-            `${formData.firstName} ${formData.lastName}`
-          );
-          console.log('Welcome email sent successfully');
-        } catch (emailError) {
-          console.error('Failed to send welcome email:', emailError);
-          // Don't fail registration if email fails
-        }
+        console.log('Registration successful');
+        this.showMessage('Registration successful! Please check your email for verification.', 'success');
         
-        this.showMessage(result.message, 'success');
-        // Fix: Use global closeModal function instead of this.closeModal
-        if (typeof closeModal === 'function') {
-          closeModal('registerModal');
+        // Send welcome email only if email service is available
+        if (this.emailService) {
+          try {
+            await this.emailService.sendWelcomeEmail(formData.email, formData.fullName);
+            console.log('Welcome email sent successfully');
+          } catch (emailError) {
+            console.warn('Failed to send welcome email:', emailError.message);
+            // Don't fail registration if email fails
+          }
         }
-        
-        // Add redirect to dashboard after successful registration
-        setTimeout(() => {
-          window.location.href = 'dashboard.html';
-        }, 1500); // Small delay to show success message
         
         return true;
       } else {
-        // Show specific error message from Firebase
-        this.showMessage(result.message || 'Registration failed. Please try again.', 'error');
         console.error('Registration error details:', result);
         return false;
       }
     } catch (error) {
       console.error('Registration error:', error);
-      // Send welcome email only if email service is available
-      if (this.emailService) {
-        try {
-          await this.emailService.sendWelcomeEmail(formData.email, formData.fullName);
-          console.log('Welcome email sent successfully');
-        } catch (emailError) {
-          console.warn('Failed to send welcome email:', emailError.message);
-          // Don't fail registration if email fails
-        }
-      }
       
-      return true;
-    } catch (error) {
-      console.error('Registration error:', error);
       // Show more specific error message
       let errorMessage = 'Registration failed. Please try again.';
       
