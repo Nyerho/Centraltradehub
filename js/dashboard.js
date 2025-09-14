@@ -381,20 +381,26 @@ class DashboardManager {
             "symbol": symbol,
             "interval": "D",
             "timezone": "Etc/UTC",
-            "theme": "light",
+            "theme": "dark",
             "style": "1",
             "locale": "en",
-            "toolbar_bg": "#f1f3f6",
+            "toolbar_bg": "#1a1a2e",
             "enable_publishing": false,
             "allow_symbol_change": true,
             "container_id": "tradingview-chart-widget",
+            "hide_top_toolbar": false,
+            "hide_legend": false,
+            "hide_side_toolbar": false,
             "studies": [
                 "Volume@tv-basicstudies",
                 "MACD@tv-basicstudies"
             ],
-            "show_popup_button": true,
+            "show_popup_button": false,
             "popup_width": "1000",
-            "popup_height": "650"
+            "popup_height": "650",
+            "withdateranges": true,
+            "hide_volume": false,
+            "support_host": "https://www.tradingview.com"
         };
         
         script.innerHTML = JSON.stringify(config);
