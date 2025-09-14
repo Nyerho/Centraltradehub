@@ -1,4 +1,6 @@
 // Auth Page JavaScript
+import authManager from './auth-integration.js';
+
 document.addEventListener('DOMContentLoaded', function() {
     initializeAuthPage();
 });
@@ -210,69 +212,36 @@ function setupFormSubmissions() {
 }
 
 function handleLogin(e) {
-    console.log('Login form submitted!');
     e.preventDefault();
     
-    const form = e.target;
-    const formData = new FormData(form);
-    const email = formData.get('email');
-    const password = formData.get('password');
-    
-    console.log('Email:', email, 'Password length:', password?.length);
-    
-    // Validate form
-    const emailField = form.querySelector('[name="email"]');
-    const passwordField = form.querySelector('[name="password"]');
-    
-    const emailValid = validateField(emailField);
-    const passwordValid = validateField(passwordField);
-    
-    console.log('Validation - Email:', emailValid, 'Password:', passwordValid);
-    
-    if (!emailValid || !passwordValid) {
-        console.log('Validation failed');
-        return;
-    }
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
     
     // Show loading state
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
     submitBtn.disabled = true;
     
-    console.log('Waiting for AuthManager...');
+    console.log('Attempting login with AuthManager...');
     
-    // Wait for AuthManager to be available
-    const waitForAuthManager = () => {
-        console.log('Checking AuthManager:', window.authManager);
-        if (window.authManager) {
-            console.log('AuthManager found, attempting login...');
-            // Use Firebase authentication through AuthManager
-            window.authManager.login(email, password).then(success => {
-                console.log('Login result:', success);
-                // Reset button
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-                
-                if (success) {
-                    // Login successful - AuthManager will handle UI updates
-                    console.log('Login successful');
-                }
-            }).catch(error => {
-                console.error('Login error:', error);
-                // Reset button on error
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-                showNotification('Login failed: ' + error.message, 'error');
-            });
-        } else {
-            console.log('AuthManager not ready, waiting...');
-            // Wait a bit more for AuthManager to load
-            setTimeout(waitForAuthManager, 100);
+    // Use the imported authManager directly
+    authManager.login(email, password).then(success => {
+        console.log('Login result:', success);
+        // Reset button
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+        
+        if (success) {
+            console.log('Login successful');
         }
-    };
-    
-    waitForAuthManager();
+    }).catch(error => {
+        console.error('Login error:', error);
+        // Reset button on error
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+        showNotification('Login failed: ' + error.message, 'error');
+    });
 }
 
 function handleRegister(e) {
