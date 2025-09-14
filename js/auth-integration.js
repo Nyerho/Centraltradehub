@@ -227,13 +227,13 @@ class AuthManager {
   async checkAdminStatus() {
     if (!this.currentUser) return false;
     
-    try {
-      const userData = await FirebaseDatabaseService.getUserData(this.currentUser.uid);
-      return userData && userData.role === 'admin';
-    } catch (error) {
-      console.error('Error checking admin status:', error);
-      return false;
-    }
+    // Use email-based admin validation (consistent with main.js)
+    const adminEmails = [
+      'admin@centraltradehub.com',
+      'owner@centraltradehub.com'
+    ];
+    
+    return adminEmails.includes(this.currentUser.email);
   }
 }
 
