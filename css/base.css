@@ -1182,6 +1182,98 @@ body {
     margin: 0 auto;
 }
 
+/* Leaderboard Section */
+.leaderboard-section {
+    margin: 16px 0;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.leaderboard-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    margin: 0 0 12px 0;
+    text-align: center;
+}
+
+.leaderboard-container {
+    height: 120px;
+    overflow: hidden;
+    position: relative;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+.leaderboard-scroll {
+    display: flex;
+    flex-direction: column;
+    animation: scrollUp 20s linear infinite;
+}
+
+@keyframes scrollUp {
+    0% {
+        transform: translateY(100%);
+    }
+    100% {
+        transform: translateY(-100%);
+    }
+}
+
+.transaction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    min-height: 40px;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.transaction-item:nth-child(even) {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.transaction-user {
+    font-size: 13px;
+    font-weight: 500;
+    color: #8b9dc3;
+    flex: 1;
+}
+
+.transaction-type {
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    margin: 0 8px;
+}
+
+.transaction-type.deposit {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.transaction-type.withdrawal {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.transaction-type.swap {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+}
+
+.transaction-amount {
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    text-align: right;
+}
+
 .contact-form h3 {
     color: var(--text-primary);
     margin-bottom: 1.5rem;
