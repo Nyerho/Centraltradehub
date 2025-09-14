@@ -3,8 +3,15 @@ import { API_CONFIG } from './api-config.js';
 
 class EmailService {
     constructor() {
-        this.sendGridApiKey = API_CONFIG.apiKeys.SENDGRID_API_KEY;
-        this.baseUrl = API_CONFIG.sendgrid.baseUrl;
+        // Get the API key using the proper method
+        this.sendGridApiKey = API_CONFIG.getApiKey('SENDGRID_API_KEY');
+        
+        if (!this.sendGridApiKey) {
+            throw new Error('SendGrid API key not configured. Please set SENDGRID_API_KEY.');
+        }
+        
+        this.baseUrl = 'https://api.sendgrid.com/v3';
+        console.log('Email service initialized with SendGrid API key');
     }
 
     async sendWelcomeEmail(userEmail, userName) {

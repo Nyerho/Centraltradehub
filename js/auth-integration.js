@@ -53,7 +53,8 @@ class AuthManager {
   }
 
   initializeFirebaseAuth() {
-    FirebaseAuthService.onAuthStateChanged((user) => {
+    // Fix: Use addAuthStateListener instead of onAuthStateChanged
+    FirebaseAuthService.addAuthStateListener((user) => {
       this.currentUser = user;
       this.updateUI();
     });

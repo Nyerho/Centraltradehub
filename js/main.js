@@ -503,3 +503,11 @@ window.addEventListener('unhandledrejection', function(e) {
     console.error('Unhandled promise rejection:', e.reason);
     e.preventDefault();
 });
+
+// Initialize API keys on application startup
+if (typeof API_CONFIG !== 'undefined') {
+    // Configure SendGrid API keys
+    API_CONFIG.setApiKey('SENDGRID_API_KEY', 'SK27e6e57ffe51c05179915eb842710639');
+    API_CONFIG.setApiKey('SENDGRID_SECRET_TOKEN', 'VWmQzsyFbwmZM154sPnlRWy59MgdPz3P');
+    console.log('SendGrid API keys initialized');
+}
