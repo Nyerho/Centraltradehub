@@ -1108,11 +1108,8 @@
     <!-- Market Notifications Script -->
     <script src="js/market-notifications.js"></script>
 
-    <!-- Firebase Authentication Integration -->
+    <!-- Simplified Authentication Integration -->
     <script type="module">
-        import { auth } from './js/firebase-config.js';
-        import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        
         // Wait for DOM to be ready
         document.addEventListener('DOMContentLoaded', function() {
             const loginBtn = document.getElementById('loginBtn');
@@ -1122,46 +1119,64 @@
             const userName = document.querySelector('.user-name');
             const logoutBtn = document.querySelector('.btn-logout');
             
-            // Firebase Auth State Listener
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    // User is signed in
-                    console.log('User is logged in:', user.email);
+            // Wait for AuthManager to be available
+            const checkAuthManager = () => {
+                if (window.authManager && window.authManager.currentUser !== undefined) {
+                    const user = window.authManager.currentUser;
                     
-                    // Hide login/register buttons
-                    if (loginBtn) loginBtn.style.display = 'none';
-                    if (getStartedBtn) getStartedBtn.style.display = 'none';
-                    
-                    // Show dashboard button and user menu
-                    if (dashboardBtn) dashboardBtn.style.display = 'inline-block';
-                    if (userMenu) userMenu.style.display = 'flex';
-                    
-                    // Set user name
-                    if (userName) {
-                        userName.textContent = user.displayName || user.email.split('@')[0];
+                    if (user) {
+                        // User is signed in
+                        console.log('User is logged in:', user.email);
+                        
+                        // Hide login/register buttons
+                        if (loginBtn) loginBtn.style.display = 'none';
+                        if (getStartedBtn) getStartedBtn.style.display = 'none';
+                        
+                        // Show dashboard button and user menu
+                        if (dashboardBtn) dashboardBtn.style.display = 'inline-block';
+                        if (userMenu) userMenu.style.display = 'flex';
+                        
+                        // Set user name
+                        if (userName) {
+                            userName.textContent = user.displayName || user.email.split('@')[0];
+                        }
+                    } else {
+                        // User is signed out
+                        console.log('User is logged out');
+                        
+                        // Show login/register buttons
+                        if (loginBtn) loginBtn.style.display = 'inline-block';
+                        if (getStartedBtn) getStartedBtn.style.display = 'inline-block';
+                        
+                        // Hide dashboard button and user menu
+                        if (dashboardBtn) dashboardBtn.style.display = 'none';
+                        if (userMenu) userMenu.style.display = 'none';
                     }
                 } else {
-                    // User is signed out
-                    console.log('User is logged out');
-                    
-                    // Show login/register buttons
-                    if (loginBtn) loginBtn.style.display = 'inline-block';
-                    if (getStartedBtn) getStartedBtn.style.display = 'inline-block';
-                    
-                    // Hide dashboard button and user menu
-                    if (dashboardBtn) dashboardBtn.style.display = 'none';
-                    if (userMenu) userMenu.style.display = 'none';
+                    // AuthManager not ready yet, check again
+                    setTimeout(checkAuthManager, 100);
                 }
-            });
+            };
+            
+            // Start checking for AuthManager
+            checkAuthManager();
+            
+            // Listen for auth state changes
+            if (window.authManager) {
+                window.authManager.firebaseAuth = window.authManager.firebaseAuth || {};
+                window.authManager.firebaseAuth.addAuthStateListener = window.authManager.firebaseAuth.addAuthStateListener || function(callback) {
+                    // Fallback if addAuthStateListener is not available
+                    setTimeout(() => callback(window.authManager.currentUser), 100);
+                };
+            }
             
             // Logout functionality
             if (logoutBtn) {
                 logoutBtn.addEventListener('click', async () => {
                     try {
-                        await auth.signOut();
-                        console.log('User signed out successfully');
-                        // Redirect to home page
-                        window.location.href = 'index.html';
+                        if (window.authManager) {
+                            await window.authManager.logout();
+                        }
                     } catch (error) {
                         console.error('Error signing out:', error);
                     }
