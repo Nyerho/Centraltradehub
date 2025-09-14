@@ -1108,10 +1108,10 @@
     <!-- Market Notifications Script -->
     <script src="js/market-notifications.js"></script>
 
-    <!-- Simplified Authentication Integration -->
+    <!-- Proper AuthManager Integration -->
     <script type="module">
-        // Wait for DOM to be ready
-        document.addEventListener('DOMContentLoaded', function() {
+        // Wait for DOM and AuthManager to be ready
+        document.addEventListener('DOMContentLoaded', async function() {
             const loginBtn = document.getElementById('loginBtn');
             const getStartedBtn = document.getElementById('getStartedBtn');
             const dashboardBtn = document.getElementById('dashboardBtn');
@@ -1120,63 +1120,58 @@
             const logoutBtn = document.querySelector('.btn-logout');
             
             // Wait for AuthManager to be available
-            const checkAuthManager = () => {
-                if (window.authManager && window.authManager.currentUser !== undefined) {
-                    const user = window.authManager.currentUser;
+            while (!window.authManager) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            // Initialize AuthManager for index page
+            await window.authManager.initialize();
+            
+            // Update UI based on auth state
+            const updateUIForUser = (user) => {
+                if (user) {
+                    // User is signed in
+                    console.log('User is logged in:', user.email);
                     
-                    if (user) {
-                        // User is signed in
-                        console.log('User is logged in:', user.email);
-                        
-                        // Hide login/register buttons
-                        if (loginBtn) loginBtn.style.display = 'none';
-                        if (getStartedBtn) getStartedBtn.style.display = 'none';
-                        
-                        // Show dashboard button and user menu
-                        if (dashboardBtn) dashboardBtn.style.display = 'inline-block';
-                        if (userMenu) userMenu.style.display = 'flex';
-                        
-                        // Set user name
-                        if (userName) {
-                            userName.textContent = user.displayName || user.email.split('@')[0];
-                        }
-                    } else {
-                        // User is signed out
-                        console.log('User is logged out');
-                        
-                        // Show login/register buttons
-                        if (loginBtn) loginBtn.style.display = 'inline-block';
-                        if (getStartedBtn) getStartedBtn.style.display = 'inline-block';
-                        
-                        // Hide dashboard button and user menu
-                        if (dashboardBtn) dashboardBtn.style.display = 'none';
-                        if (userMenu) userMenu.style.display = 'none';
+                    // Hide login/register buttons
+                    if (loginBtn) loginBtn.style.display = 'none';
+                    if (getStartedBtn) getStartedBtn.style.display = 'none';
+                    
+                    // Show dashboard button and user menu
+                    if (dashboardBtn) dashboardBtn.style.display = 'inline-block';
+                    if (userMenu) userMenu.style.display = 'flex';
+                    
+                    // Set user name
+                    if (userName) {
+                        userName.textContent = user.displayName || user.email.split('@')[0];
                     }
                 } else {
-                    // AuthManager not ready yet, check again
-                    setTimeout(checkAuthManager, 100);
+                    // User is signed out
+                    console.log('User is logged out');
+                    
+                    // Show login/register buttons
+                    if (loginBtn) loginBtn.style.display = 'inline-block';
+                    if (getStartedBtn) getStartedBtn.style.display = 'inline-block';
+                    
+                    // Hide dashboard button and user menu
+                    if (dashboardBtn) dashboardBtn.style.display = 'none';
+                    if (userMenu) userMenu.style.display = 'none';
                 }
             };
             
-            // Start checking for AuthManager
-            checkAuthManager();
+            // Initial UI update
+            updateUIForUser(window.authManager.currentUser);
             
             // Listen for auth state changes
-            if (window.authManager) {
-                window.authManager.firebaseAuth = window.authManager.firebaseAuth || {};
-                window.authManager.firebaseAuth.addAuthStateListener = window.authManager.firebaseAuth.addAuthStateListener || function(callback) {
-                    // Fallback if addAuthStateListener is not available
-                    setTimeout(() => callback(window.authManager.currentUser), 100);
-                };
-            }
+            window.authManager.onAuthStateChanged(updateUIForUser);
             
-            // Logout functionality
+            // Set up logout functionality
             if (logoutBtn) {
                 logoutBtn.addEventListener('click', async () => {
                     try {
-                        if (window.authManager) {
-                            await window.authManager.logout();
-                        }
+                        await window.authManager.logout();
+                        // Stay on index page after logout
+                        window.location.reload();
                     } catch (error) {
                         console.error('Error signing out:', error);
                     }
@@ -1212,7 +1207,7 @@
             
             // Live market data simulation
             function updateMarketData() {
-                const tickers = document.querySelectorAll('.ticker-item');
+                const tickers = document.querySelectorAll('.ticker-item, .ticker-item-compact');
                 tickers.forEach(ticker => {
                     const priceElement = ticker.querySelector('.price');
                     const changeElement = ticker.querySelector('.change');
@@ -1225,8 +1220,20 @@
                         const changePercent = (change * 100).toFixed(2);
                         
                         priceElement.textContent = newPrice.toFixed(4);
-                        changeElement.textContent = `${change >= 0 ? '+' : ''}${changePercent}%`;
-                        changeElement.className = `change ${change >= 0 ? 'positive' : 'negative'}`;
+                        changeElement.textContent = `${change >= 0 ? '+' : ''}${(change * currentPrice).toFixed(4)} (${change >= 0 ? '+' : ''}${changePercent}%)`;
+                        
+                        // Update color class
+                        if (change >= 0) {
+                            priceElement.classList.remove('red');
+                            priceElement.classList.add('green');
+                            changeElement.classList.remove('negative');
+                            changeElement.classList.add('positive');
+                        } else {
+                            priceElement.classList.remove('green');
+                            priceElement.classList.add('red');
+                            changeElement.classList.remove('positive');
+                            changeElement.classList.add('negative');
+                        }
                     }
                 });
             }
