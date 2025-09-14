@@ -180,7 +180,7 @@ class DashboardManager {
                 // Update user name in header
                 const userNameElement = document.getElementById('dashboard-user-name');
                 // Update user name in trading interface
-                const tradingUserNameElement = document.querySelector('.trading-interface .user-name');
+                const tradingUserNameElement = document.getElementById('trading-user-name');
                 
                 const displayName = userData.firstName && userData.lastName 
                     ? `${userData.firstName} ${userData.lastName}`
@@ -493,6 +493,114 @@ class DashboardManager {
     goToAnalytics() {
         window.location.href = 'platform.html#analytics';
     }
+
+    // Move leaderboard methods inside the class
+    initializeLeaderboard() {
+        this.generateInitialTransactions();
+        this.startLeaderboardUpdates();
+    }
+
+    generateInitialTransactions() {
+        const usernames = [
+            'TradeMaster', 'CryptoKing', 'ForexPro', 'BullRunner', 'MarketWolf',
+            'TradingAce', 'PipHunter', 'ChartWiz', 'GoldTrader', 'SwingKing',
+            'DayTrader99', 'FXExpert', 'CoinFlip', 'TrendFollower', 'ScalpMaster',
+            'OptionsPro', 'FuturesKing', 'RiskTaker', 'ProfitSeeker', 'MarketMover'
+        ];
+
+        const transactionTypes = ['deposit', 'withdrawal', 'swap'];
+        this.leaderboardTransactions = [];
+
+        for (let i = 0; i < 20; i++) {
+            this.leaderboardTransactions.push(this.generateRandomTransaction(usernames, transactionTypes));
+        }
+
+        this.updateLeaderboardDisplay();
+    }
+
+    generateRandomTransaction(usernames, transactionTypes) {
+        const username = usernames[Math.floor(Math.random() * usernames.length)];
+        const type = transactionTypes[Math.floor(Math.random() * transactionTypes.length)];
+        const amount = this.generateRandomAmount(type);
+
+        return {
+            username,
+            type,
+            amount,
+            timestamp: Date.now()
+        };
+    }
+
+    generateRandomAmount(type) {
+        let min, max;
+
+        switch (type) {
+            case 'deposit':
+                min = 100;
+                max = 10000;
+                break;
+            case 'withdrawal':
+                min = 50;
+                max = 5000;
+                break;
+            case 'swap':
+                min = 25;
+                max = 2500;
+                break;
+            default:
+                min = 10;
+                max = 1000;
+        }
+
+        return (Math.random() * (max - min) + min).toFixed(2);
+    }
+
+    updateLeaderboardDisplay() {
+        const container = document.getElementById('leaderboardScroll');
+        if (!container) return;
+
+        const transactionElements = this.leaderboardTransactions.map(transaction => {
+            const typeClass = transaction.type === 'deposit' ? 'positive' : 
+                            transaction.type === 'withdrawal' ? 'negative' : 'neutral';
+            
+            return `
+                <div class="transaction-item ${typeClass}">
+                    <span class="username">${transaction.username}</span>
+                    <span class="transaction-type">${transaction.type}</span>
+                    <span class="amount">$${transaction.amount}</span>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = transactionElements;
+    }
+
+    startLeaderboardUpdates() {
+        if (this.leaderboardInterval) {
+            clearInterval(this.leaderboardInterval);
+        }
+
+        this.leaderboardInterval = setInterval(() => {
+            // Add new transaction
+            const usernames = [
+                'TradeMaster', 'CryptoKing', 'ForexPro', 'BullRunner', 'MarketWolf',
+                'TradingAce', 'PipHunter', 'ChartWiz', 'GoldTrader', 'SwingKing',
+                'DayTrader99', 'FXExpert', 'CoinFlip', 'TrendFollower', 'ScalpMaster',
+                'OptionsPro', 'FuturesKing', 'RiskTaker', 'ProfitSeeker', 'MarketMover'
+            ];
+            const transactionTypes = ['deposit', 'withdrawal', 'swap'];
+            
+            const newTransaction = this.generateRandomTransaction(usernames, transactionTypes);
+            this.leaderboardTransactions.unshift(newTransaction);
+            
+            // Keep only the latest 20 transactions
+            if (this.leaderboardTransactions.length > 20) {
+                this.leaderboardTransactions = this.leaderboardTransactions.slice(0, 20);
+            }
+            
+            this.updateLeaderboardDisplay();
+        }, Math.random() * 2000 + 3000); // Random interval between 3-5 seconds
+    }
 }
 
 // Global functions
@@ -537,107 +645,3 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Export for use in other modules
 export default DashboardManager;
-
-
-initializeLeaderboard() {
-        this.generateInitialTransactions();
-        this.startLeaderboardUpdates();
-    }
-
-    generateInitialTransactions() {
-        const usernames = [
-            'TradeMaster', 'CryptoKing', 'ForexPro', 'BullRunner', 'MarketWolf',
-            'TradingAce', 'PipHunter', 'ChartWiz', 'GoldTrader', 'SwingKing',
-            'DayTrader99', 'FXExpert', 'CoinFlip', 'TrendFollower', 'ScalpMaster',
-            'OptionsPro', 'FuturesKing', 'RiskTaker', 'ProfitSeeker', 'MarketMover'
-        ];
-        
-        const transactionTypes = ['deposit', 'withdrawal', 'swap'];
-        
-        // Generate initial 20 transactions
-        for (let i = 0; i < 20; i++) {
-            this.leaderboardTransactions.push(this.generateRandomTransaction(usernames, transactionTypes));
-        }
-        
-        this.updateLeaderboardDisplay();
-    }
-
-    generateRandomTransaction(usernames, transactionTypes) {
-        const username = usernames[Math.floor(Math.random() * usernames.length)];
-        const type = transactionTypes[Math.floor(Math.random() * transactionTypes.length)];
-        const amount = this.generateRandomAmount(type);
-        
-        return {
-            username,
-            type,
-            amount,
-            timestamp: Date.now()
-        };
-    }
-
-    generateRandomAmount(type) {
-        let min, max;
-        
-        switch (type) {
-            case 'deposit':
-                min = 100;
-                max = 50000;
-                break;
-            case 'withdrawal':
-                min = 50;
-                max = 25000;
-                break;
-            case 'swap':
-                min = 200;
-                max = 100000;
-                break;
-            default:
-                min = 100;
-                max = 10000;
-        }
-        
-        return (Math.random() * (max - min) + min).toFixed(2);
-    }
-
-    updateLeaderboardDisplay() {
-        const container = document.getElementById('leaderboardScroll');
-        if (!container) return;
-        
-        container.innerHTML = this.leaderboardTransactions.map(transaction => `
-            <div class="transaction-item">
-                <span class="transaction-user">${transaction.username}</span>
-                <span class="transaction-type ${transaction.type}">${transaction.type}</span>
-                <span class="transaction-amount">$${parseFloat(transaction.amount).toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                })}</span>
-            </div>
-        `).join('');
-    }
-
-    startLeaderboardUpdates() {
-        // Add new transaction every 3-5 seconds
-        this.leaderboardInterval = setInterval(() => {
-            const usernames = [
-                'TradeMaster', 'CryptoKing', 'ForexPro', 'BullRunner', 'MarketWolf',
-                'TradingAce', 'PipHunter', 'ChartWiz', 'GoldTrader', 'SwingKing',
-                'DayTrader99', 'FXExpert', 'CoinFlip', 'TrendFollower', 'ScalpMaster',
-                'OptionsPro', 'FuturesKing', 'RiskTaker', 'ProfitSeeker', 'MarketMover'
-            ];
-            
-            const transactionTypes = ['deposit', 'withdrawal', 'swap'];
-            
-            // Add new transaction at the beginning
-            this.leaderboardTransactions.unshift(
-                this.generateRandomTransaction(usernames, transactionTypes)
-            );
-            
-            // Keep only last 20 transactions
-            if (this.leaderboardTransactions.length > 20) {
-                this.leaderboardTransactions = this.leaderboardTransactions.slice(0, 20);
-            }
-            
-            this.updateLeaderboardDisplay();
-        }, Math.random() * 2000 + 3000); // Random interval between 3-5 seconds
-    }
-}
