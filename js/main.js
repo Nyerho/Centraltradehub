@@ -468,17 +468,20 @@ function updateNavigationForAuthState() {
     const loginBtn = document.getElementById('loginBtn');
     const getStartedBtn = document.getElementById('getStartedBtn');
     const dashboardBtn = document.getElementById('dashboardBtn');
+    const userMenu = document.querySelector('.user-menu');
     
     if (window.authManager && window.authManager.isLoggedIn) {
-        // User is logged in - show dashboard button, hide login buttons
+        // User is logged in - show dashboard button and user menu, hide login buttons
         if (loginBtn) loginBtn.style.display = 'none';
         if (getStartedBtn) getStartedBtn.style.display = 'none';
         if (dashboardBtn) dashboardBtn.style.display = 'inline-block';
+        if (userMenu) userMenu.style.display = 'flex';
     } else {
-        // User is not logged in - show login buttons, hide dashboard button
+        // User is not logged in - show login buttons, hide dashboard button and user menu
         if (loginBtn) loginBtn.style.display = 'inline-block';
         if (getStartedBtn) getStartedBtn.style.display = 'inline-block';
         if (dashboardBtn) dashboardBtn.style.display = 'none';
+        if (userMenu) userMenu.style.display = 'none';
     }
 }
 
