@@ -496,7 +496,16 @@ class DashboardManager {
 
     // Move leaderboard methods inside the class
     initializeLeaderboard() {
+        const container = document.getElementById('leaderboardScroll');
+        if (!container) {
+            console.error('Leaderboard container not found');
+            return;
+        }
+        
+        // Generate initial transactions
         this.generateInitialTransactions();
+        
+        // Start live updates
         this.startLeaderboardUpdates();
     }
 
