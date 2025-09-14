@@ -445,7 +445,7 @@ window.addEventListener('error', (event) => {
     }
 });
 
-// Force UI update after auth manager is ready
+// ENHANCED: Centralized authentication UI management
 window.addEventListener('load', async () => {
     // Wait for auth manager
     let attempts = 0;
@@ -455,42 +455,56 @@ window.addEventListener('load', async () => {
     }
     
     if (window.authManager) {
-        // Wait a bit more for Firebase auth state
-        setTimeout(() => {
-            window.authManager.updateUI();
-            updateNavigationForAuthState();
-        }, 500);
+        // Initialize AuthManager
+        await window.authManager.initialize();
+        
+        // Set up auth state listener for UI updates
+        window.authManager.onAuthStateChanged((user) => {
+            updateNavigationForAuthState(user);
+        });
+        
+        // Initial UI update
+        updateNavigationForAuthState(window.authManager.currentUser);
+        
+        // Set up logout functionality
+        const logoutBtn = document.querySelector('.btn-logout');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', async () => {
+                try {
+                    await window.authManager.logout();
+                    // AuthManager will handle redirect
+                } catch (error) {
+                    console.error('Error signing out:', error);
+                }
+            });
+        }
     }
 });
 
-// Function to update navigation based on authentication state
-function updateNavigationForAuthState() {
+// FIXED: Simplified navigation update function
+function updateNavigationForAuthState(user) {
     const loginBtn = document.getElementById('loginBtn');
     const getStartedBtn = document.getElementById('getStartedBtn');
     const dashboardBtn = document.getElementById('dashboardBtn');
     const userMenu = document.querySelector('.user-menu');
+    const userName = document.querySelector('.user-name');
     
-    if (window.authManager && window.authManager.isLoggedIn) {
-        // User is logged in - show dashboard button and user menu, hide login buttons
+    if (user) {
+        // User is logged in
         if (loginBtn) loginBtn.style.display = 'none';
         if (getStartedBtn) getStartedBtn.style.display = 'none';
         if (dashboardBtn) dashboardBtn.style.display = 'inline-block';
         if (userMenu) userMenu.style.display = 'flex';
+        if (userName) {
+            userName.textContent = user.displayName || user.email.split('@')[0];
+        }
     } else {
-        // User is not logged in - show login buttons, hide dashboard button and user menu
+        // User is not logged in
         if (loginBtn) loginBtn.style.display = 'inline-block';
         if (getStartedBtn) getStartedBtn.style.display = 'inline-block';
         if (dashboardBtn) dashboardBtn.style.display = 'none';
         if (userMenu) userMenu.style.display = 'none';
     }
-}
-
-// Listen for authentication state changes
-if (window.authManager) {
-    // Add listener for auth state changes
-    window.authManager.firebaseAuth.addAuthStateListener((user) => {
-        updateNavigationForAuthState();
-    });
 }
 
 // Handle unhandled promise rejections

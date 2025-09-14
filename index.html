@@ -1105,80 +1105,23 @@
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/main.js"></script>
     <script src="js/performance-optimizer.js"></script>
-    <!-- Market Notifications Script -->
     <script src="js/market-notifications.js"></script>
 
-    <!-- Proper AuthManager Integration -->
-    <script type="module">
-        // Wait for DOM and AuthManager to be ready
-        document.addEventListener('DOMContentLoaded', async function() {
-            const loginBtn = document.getElementById('loginBtn');
-            const getStartedBtn = document.getElementById('getStartedBtn');
-            const dashboardBtn = document.getElementById('dashboardBtn');
-            const userMenu = document.querySelector('.user-menu');
-            const userName = document.querySelector('.user-name');
-            const logoutBtn = document.querySelector('.btn-logout');
+    <!-- SIMPLIFIED: Let main.js handle all auth UI updates -->
+    <script>
+        // Handle Platform navigation click
+        function handlePlatformClick(event) {
+            event.preventDefault();
             
-            // Wait for AuthManager to be available
-            while (!window.authManager) {
-                await new Promise(resolve => setTimeout(resolve, 100));
+            if (window.authManager && window.authManager.isLoggedIn) {
+                window.location.href = 'platform.html';
+            } else {
+                window.location.href = 'auth.html';
             }
-            
-            // Initialize AuthManager for index page
-            await window.authManager.initialize();
-            
-            // Update UI based on auth state
-            const updateUIForUser = (user) => {
-                if (user) {
-                    // User is signed in
-                    console.log('User is logged in:', user.email);
-                    
-                    // Hide login/register buttons
-                    if (loginBtn) loginBtn.style.display = 'none';
-                    if (getStartedBtn) getStartedBtn.style.display = 'none';
-                    
-                    // Show dashboard button and user menu
-                    if (dashboardBtn) dashboardBtn.style.display = 'inline-block';
-                    if (userMenu) userMenu.style.display = 'flex';
-                    
-                    // Set user name
-                    if (userName) {
-                        userName.textContent = user.displayName || user.email.split('@')[0];
-                    }
-                } else {
-                    // User is signed out
-                    console.log('User is logged out');
-                    
-                    // Show login/register buttons
-                    if (loginBtn) loginBtn.style.display = 'inline-block';
-                    if (getStartedBtn) getStartedBtn.style.display = 'inline-block';
-                    
-                    // Hide dashboard button and user menu
-                    if (dashboardBtn) dashboardBtn.style.display = 'none';
-                    if (userMenu) userMenu.style.display = 'none';
-                }
-            };
-            
-            // Initial UI update
-            updateUIForUser(window.authManager.currentUser);
-            
-            // Listen for auth state changes
-            window.authManager.onAuthStateChanged(updateUIForUser);
-            
-            // Set up logout functionality
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', async () => {
-                    try {
-                        await window.authManager.logout();
-                        // Stay on index page after logout
-                        window.location.reload();
-                    } catch (error) {
-                        console.error('Error signing out:', error);
-                    }
-                });
-            }
-            
-            // Enhanced mobile navigation
+        }
+        
+        // Enhanced mobile navigation
+        document.addEventListener('DOMContentLoaded', function() {
             const hamburger = document.querySelector('.hamburger');
             const navMenu = document.querySelector('.nav-menu');
             const navButtons = document.querySelector('.nav-buttons');
@@ -1207,38 +1150,24 @@
             
             // Live market data simulation
             function updateMarketData() {
-                const tickers = document.querySelectorAll('.ticker-item, .ticker-item-compact');
+                const tickers = document.querySelectorAll('.ticker-item');
                 tickers.forEach(ticker => {
                     const priceElement = ticker.querySelector('.price');
                     const changeElement = ticker.querySelector('.change');
                     
                     if (priceElement && changeElement) {
-                        // Simulate price changes
                         const currentPrice = parseFloat(priceElement.textContent.replace(/[^0-9.-]/g, ''));
-                        const change = (Math.random() - 0.5) * 0.02; // ±1% change
+                        const change = (Math.random() - 0.5) * 0.02;
                         const newPrice = currentPrice * (1 + change);
                         const changePercent = (change * 100).toFixed(2);
                         
                         priceElement.textContent = newPrice.toFixed(4);
-                        changeElement.textContent = `${change >= 0 ? '+' : ''}${(change * currentPrice).toFixed(4)} (${change >= 0 ? '+' : ''}${changePercent}%)`;
-                        
-                        // Update color class
-                        if (change >= 0) {
-                            priceElement.classList.remove('red');
-                            priceElement.classList.add('green');
-                            changeElement.classList.remove('negative');
-                            changeElement.classList.add('positive');
-                        } else {
-                            priceElement.classList.remove('green');
-                            priceElement.classList.add('red');
-                            changeElement.classList.remove('positive');
-                            changeElement.classList.add('negative');
-                        }
+                        changeElement.textContent = `${change >= 0 ? '+' : ''}${changePercent}%`;
+                        changeElement.className = `change ${change >= 0 ? 'positive' : 'negative'}`;
                     }
                 });
             }
             
-            // Update market data every 3 seconds
             setInterval(updateMarketData, 3000);
         });
     </script>

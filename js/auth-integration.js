@@ -174,8 +174,10 @@ class AuthManager {
   async logout() {
     try {
       await FirebaseAuthService.signOut();
+      this.currentUser = null;
       this.showMessage('Logged out successfully', 'success');
       
+      // Always redirect to index.html instead of auth.html to prevent loops
       setTimeout(() => {
         window.location.href = 'index.html';
       }, 1000);

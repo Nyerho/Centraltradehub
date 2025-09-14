@@ -76,27 +76,32 @@ class DashboardManager {
         this.initializeLeaderboard();
     }
 
-    // Initialize authentication and load user data
-    initializeAuth() {
-        const authTimeout = setTimeout(() => {
-            console.warn('Authentication timeout - redirecting to login');
-            this.handleAuthError();
-        }, 10000);
-
-        onAuthStateChanged(auth, async (user) => {
-            clearTimeout(authTimeout);
+    // FIXED: Use AuthManager instead of direct Firebase listener
+    async initializeAuth() {
+        // Wait for AuthManager to be available
+        while (!window.authManager) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        // Use AuthManager's unified auth system
+        const user = window.authManager.currentUser;
+        if (user) {
+            console.log('User authenticated via AuthManager:', user.email);
+            await this.loadUserData(user);
+            await this.loadAccountData(user);
+        } else {
+            console.log('No user authenticated - redirecting to login');
+            window.location.href = 'auth.html';
+        }
+        
+        // Listen for auth state changes through AuthManager
+        window.authManager.onAuthStateChanged(async (user) => {
             if (user) {
-                console.log('User authenticated:', user.email);
                 await this.loadUserData(user);
                 await this.loadAccountData(user);
             } else {
-                console.log('No user authenticated - redirecting to login');
                 window.location.href = 'auth.html';
             }
-        }, (error) => {
-            clearTimeout(authTimeout);
-            console.error('Auth state change error:', error);
-            this.handleAuthError();
         });
     }
 
@@ -644,10 +649,16 @@ window.closePosition = (symbol) => {
     console.log(`Closing position for ${symbol}`);
 };
 
+// FIXED: Use AuthManager for logout
 window.logout = async () => {
     try {
-        await auth.signOut();
-        window.location.href = 'auth.html';
+        if (window.authManager) {
+            await window.authManager.logout();
+            // Let AuthManager handle the redirect
+        } else {
+            await auth.signOut();
+            window.location.href = 'auth.html';
+        }
     } catch (error) {
         console.error('Error logging out:', error);
     }
