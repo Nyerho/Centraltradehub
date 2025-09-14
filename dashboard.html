@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/main-content.css">
     <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/kyc-styles.css">
     
     <!-- External Dependencies -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -26,6 +27,13 @@
                 <p class="brand-tagline">Trade bigger and get paid faster.</p>
             </div>
             <div class="user-info">
+                <!-- KYC Status Indicator -->
+                <div class="kyc-status-indicator" id="kycStatusIndicator">
+                    <div class="kyc-badge" id="kycBadge">
+                        <i class="fas fa-user-check"></i>
+                        <span class="kyc-text" id="kycStatusText">KYC</span>
+                    </div>
+                </div>
                 <span class="user-email" id="userEmail">Loading...</span>
                 <span class="user-name" id="dashboard-user-name">Loading...</span>
                 <button class="logout-btn" onclick="logout()">Logout</button>
@@ -120,11 +128,20 @@
                 </div>
                 
                 <div class="trading-tabs">
-                    <button class="tab-btn active">Indices</button>
-                    <button class="tab-btn">Futures</button>
-                    <button class="tab-btn">Bonds</button>
-                    <button class="tab-btn">Forex</button>
-                    <button class="tab-btn">Crypto</button>
+                    <button class="tab-btn active" data-category="indices">Indices</button>
+                    <button class="tab-btn" data-category="futures">Futures</button>
+                    <button class="tab-btn" data-category="bonds">Bonds</button>
+                    <button class="tab-btn" data-category="forex">Forex</button>
+                    <button class="tab-btn" data-category="crypto">Crypto</button>
+                </div>
+                
+                <!-- Market Overview Chart Section -->
+                <div class="market-overview-section">
+                    <div class="chart-container">
+                        <div id="tradingview-chart-widget" class="tradingview-widget-container">
+                            <div class="tradingview-widget-container__widget"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
