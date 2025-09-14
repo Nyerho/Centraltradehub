@@ -285,10 +285,12 @@ function handleRegister(e) {
     const userData = {
         firstName: formData.get('firstName'),
         lastName: formData.get('lastName'),
+        fullName: `${formData.get('firstName')} ${formData.get('lastName')}`,
         email: formData.get('email'),
         password: formData.get('password'),
         phone: formData.get('phone'),
-        country: formData.get('country')
+        country: formData.get('country'),
+        mirrorTradeCode: formData.get('mirrorTradeCode') || ''
     };
     
     // Validate required fields
@@ -356,7 +358,6 @@ function handleRegister(e) {
         }
     };
     
-    const startTime = Date.now();
     waitForAuthManager();
 }
 
