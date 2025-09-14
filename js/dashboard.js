@@ -385,7 +385,7 @@ class DashboardManager {
         // Clear existing chart
         container.innerHTML = '';
         
-        // Create new TradingView widget
+        // Create new TradingView widget with proper configuration
         const script = document.createElement('script');
         script.type = 'text/javascript';
         script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
