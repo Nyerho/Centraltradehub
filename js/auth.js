@@ -215,8 +215,9 @@ function handleLogin(e) {
     e.preventDefault(); // Ensure this is the first line
     e.stopPropagation(); // Add this to prevent event bubbling
     
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+    // Use the correct field IDs from the HTML
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
     
     // Validate inputs
     if (!email || !password) {
@@ -231,7 +232,7 @@ function handleLogin(e) {
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
     submitBtn.disabled = true;
     
-    console.log('Attempting login with AuthManager...');
+    console.log('Attempting login with AuthManager...', { email });
     
     // Use the imported authManager directly
     authManager.login(email, password).then(success => {
@@ -242,6 +243,8 @@ function handleLogin(e) {
         
         if (success) {
             console.log('Login successful');
+            // Redirect to dashboard or handle success
+            window.location.href = 'dashboard.html';
         }
     }).catch(error => {
         console.error('Login error:', error);
