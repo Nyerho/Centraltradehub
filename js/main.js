@@ -506,16 +506,29 @@ window.addEventListener('unhandledrejection', function(e) {
 
 // Initialize API keys on application startup
 if (typeof API_CONFIG !== 'undefined') {
-    // Configure SendGrid API keys from environment
-    const sendGridKey = process.env.SENDGRID_API_KEY;
-    const sendGridSecret = process.env.SENDGRID_SECRET_TOKEN;
+    // Try to get keys from localStorage first
+    let sendGridKey = localStorage.getItem('sendgrid_api_key');
+    let sendGridSecret = localStorage.getItem('sendgrid_secret_token');
+    
+    // If not in localStorage, prompt user (only in development)
+    if (!sendGridKey || !sendGridSecret) {
+        if (confirm('SendGrid API keys not configured. Would you like to set them now?')) {
+            sendGridKey = prompt('Enter SendGrid API Key:');
+            sendGridSecret = prompt('Enter SendGrid Secret Token:');
+            
+            if (sendGridKey && sendGridSecret) {
+                localStorage.setItem('sendgrid_api_key', sendGridKey);
+                localStorage.setItem('sendgrid_secret_token', sendGridSecret);
+            }
+        }
+    }
     
     if (sendGridKey && sendGridSecret) {
         API_CONFIG.setApiKey('SENDGRID_API_KEY', sendGridKey);
         API_CONFIG.setApiKey('SENDGRID_SECRET_TOKEN', sendGridSecret);
-        console.log('SendGrid API keys initialized');
+        console.log('SendGrid API keys initialized from secure storage');
     } else {
-        console.warn('SendGrid API keys not found in environment variables');
+        console.warn('SendGrid API keys not configured. Email functionality will be disabled.');
     }
 }
 API_CONFIG.setApiKey('SENDGRID_API_KEY', 'SK27e6e57ffe51c05179915eb842710639');
