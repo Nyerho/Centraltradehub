@@ -557,7 +557,10 @@ class DashboardManager {
 
     updateLeaderboardDisplay() {
         const container = document.getElementById('leaderboardScroll');
-        if (!container) return;
+        if (!container) {
+            console.warn('Leaderboard container not found');
+            return;
+        }
 
         const transactionElements = this.leaderboardTransactions.map(transaction => {
             const typeClass = transaction.type === 'deposit' ? 'positive' : 
@@ -573,6 +576,9 @@ class DashboardManager {
         }).join('');
 
         container.innerHTML = transactionElements;
+        
+        // Duplicate content for seamless scrolling
+        container.innerHTML += transactionElements;
     }
 
     startLeaderboardUpdates() {

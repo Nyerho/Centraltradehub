@@ -33,16 +33,17 @@
 
 .asset-selector {
     padding: 5px 10px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--bg-card);
     border-radius: 4px;
-    background: white;
+    background: var(--bg-tertiary); /* Changed from white */
+    color: var(--text-primary);
     font-size: 12px;
     margin-left: 10px;
 }
 
 .asset-selector:focus {
     outline: none;
-    border-color: #007bff;
+    border-color: var(--primary-color);
 }
 
 .trading-tabs {
