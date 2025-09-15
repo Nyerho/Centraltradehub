@@ -204,32 +204,34 @@ class AuthManager {
   }
 
   updateUI() {
-    // Update UI elements based on authentication state
-    const userElements = document.querySelectorAll('[data-user-only]');
-    const guestElements = document.querySelectorAll('[data-guest-only]');
+    const userElements = document.querySelectorAll('.user-element');
+    const guestElements = document.querySelectorAll('.guest-element');
     
     if (this.currentUser) {
       userElements.forEach(el => el.style.display = 'block');
       guestElements.forEach(el => el.style.display = 'none');
       
-      // Update user info displays
-      const userNameElements = document.querySelectorAll('.user-name, #dashboard-user-name');
-      const userEmailElements = document.querySelectorAll('.user-email, #userEmail');
-      
-      userNameElements.forEach(el => {
-        el.textContent = this.currentUser.displayName || this.currentUser.email;
-      });
-      
-      userEmailElements.forEach(el => {
-        el.textContent = this.currentUser.email;
-      });
-      
-      // Update avatar initials
-      const avatarElements = document.querySelectorAll('.avatar-initial');
-      avatarElements.forEach(el => {
-        const name = this.currentUser.displayName || this.currentUser.email;
-        el.textContent = name.charAt(0).toUpperCase();
-      });
+      // Only update user info on non-dashboard pages
+      if (!window.location.pathname.includes('dashboard.html')) {
+        // Update user info displays
+        const userNameElements = document.querySelectorAll('.user-name, #dashboard-user-name');
+        const userEmailElements = document.querySelectorAll('.user-email, #userEmail');
+        
+        userNameElements.forEach(el => {
+          el.textContent = this.currentUser.displayName || this.currentUser.email;
+        });
+        
+        userEmailElements.forEach(el => {
+          el.textContent = this.currentUser.email;
+        });
+        
+        // Update avatar initials
+        const avatarElements = document.querySelectorAll('.avatar-initial');
+        avatarElements.forEach(el => {
+          const name = this.currentUser.displayName || this.currentUser.email;
+          el.textContent = name.charAt(0).toUpperCase();
+        });
+      }
     } else {
       userElements.forEach(el => el.style.display = 'none');
       guestElements.forEach(el => el.style.display = 'block');
