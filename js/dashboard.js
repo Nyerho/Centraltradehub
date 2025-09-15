@@ -79,11 +79,15 @@ class DashboardManager {
         setTimeout(() => {
             this.initializeTradingTabs();
             this.setupAssetSelectors();
-            this.initializeLightweightChart();
             this.setupChartControls();
             this.initializeLeaderboard();
             this.startRealTimeUpdates();
-        }, 100);
+            
+            // Initialize chart last with additional delay
+            setTimeout(() => {
+                this.initializeLightweightChart();
+            }, 300);
+        }, 200);
     }
 
     async initializeAuth() {
@@ -390,6 +394,13 @@ class DashboardManager {
     }
 
     initializeLightweightChart() {
+        // Check if LightweightCharts is available
+        if (typeof LightweightCharts === 'undefined') {
+            console.error('LightweightCharts library not loaded');
+            setTimeout(() => this.initializeLightweightChart(), 1000);
+            return;
+        }
+    
         const container = document.getElementById('lightweight-chart-container');
         if (!container) {
             console.error('Lightweight chart container not found');
@@ -398,106 +409,123 @@ class DashboardManager {
             return;
         }
     
-        // Ensure container has dimensions
+        // Ensure container has dimensions and is visible
         if (container.clientWidth === 0 || container.clientHeight === 0) {
+            console.log('Container dimensions not ready, retrying...');
             setTimeout(() => this.initializeLightweightChart(), 200);
             return;
         }
     
-        // Create chart with minimal dark theme configuration
-        this.lightweightChart = LightweightCharts.createChart(container, {
-            width: container.clientWidth,
-            height: 400,
-            layout: {
-                background: {
-                    type: 'solid',
-                    color: '#0f172a'
+        // Clear any existing chart
+        if (this.lightweightChart) {
+            this.lightweightChart.remove();
+            this.lightweightChart = null;
+            this.chartSeries = null;
+        }
+    
+        try {
+            // Create chart with minimal dark theme configuration
+            this.lightweightChart = LightweightCharts.createChart(container, {
+                width: container.clientWidth,
+                height: 400,
+                layout: {
+                    background: {
+                        type: 'solid',
+                        color: '#0f172a'
+                    },
+                    textColor: '#ffffff',
+                    fontSize: 12,
+                    fontFamily: 'Inter, sans-serif'
                 },
-                textColor: '#ffffff',
-                fontSize: 12,
-                fontFamily: 'Inter, sans-serif'
-            },
-            grid: {
-                vertLines: {
-                    color: 'rgba(42, 46, 57, 0.3)',
-                    style: 1,
-                    visible: true
+                grid: {
+                    vertLines: {
+                        color: 'rgba(42, 46, 57, 0.3)',
+                        style: 1,
+                        visible: true
+                    },
+                    horzLines: {
+                        color: 'rgba(42, 46, 57, 0.3)',
+                        style: 1,
+                        visible: true
+                    }
                 },
-                horzLines: {
-                    color: 'rgba(42, 46, 57, 0.3)',
-                    style: 1,
-                    visible: true
+                crosshair: {
+                    mode: LightweightCharts.CrosshairMode.Normal,
+                    vertLine: {
+                        color: '#3b82f6',
+                        width: 1,
+                        style: 0
+                    },
+                    horzLine: {
+                        color: '#3b82f6',
+                        width: 1,
+                        style: 0
+                    }
+                },
+                rightPriceScale: {
+                    borderColor: 'rgba(42, 46, 57, 0.5)',
+                    textColor: '#ffffff',
+                    entireTextOnly: false
+                },
+                timeScale: {
+                    borderColor: 'rgba(42, 46, 57, 0.5)',
+                    textColor: '#ffffff',
+                    timeVisible: true,
+                    secondsVisible: false
+                },
+                handleScroll: {
+                    mouseWheel: true,
+                    pressedMouseMove: true,
+                    horzTouchDrag: true,
+                    vertTouchDrag: true
+                },
+                handleScale: {
+                    axisPressedMouseMove: true,
+                    mouseWheel: true,
+                    pinch: true
                 }
-            },
-            crosshair: {
-                mode: LightweightCharts.CrosshairMode.Normal,
-                vertLine: {
-                    color: '#3b82f6',
-                    width: 1,
-                    style: 0
-                },
-                horzLine: {
-                    color: '#3b82f6',
-                    width: 1,
-                    style: 0
+            });
+    
+            // Create line series for minimal price line display
+            this.chartSeries = this.lightweightChart.addLineSeries({
+                color: '#3b82f6',
+                lineWidth: 2,
+                lineType: LightweightCharts.LineType.Simple,
+                crosshairMarkerVisible: true,
+                crosshairMarkerRadius: 4,
+                crosshairMarkerBorderColor: '#3b82f6',
+                crosshairMarkerBackgroundColor: '#3b82f6',
+                lastValueVisible: true,
+                priceLineVisible: true,
+                priceLineColor: '#3b82f6',
+                priceLineWidth: 1,
+                priceLineStyle: LightweightCharts.LineStyle.Dashed
+            });
+    
+            console.log('Chart initialized successfully');
+    
+            // Load initial data
+            this.loadChartData(this.chartSymbols.indices['S&P 500'], this.currentTimeframe);
+    
+            // Auto-export screenshot after chart loads
+            setTimeout(() => {
+                this.exportChartScreenshot();
+            }, 2000);
+    
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                if (this.lightweightChart && container) {
+                    this.lightweightChart.applyOptions({
+                        width: container.clientWidth
+                    });
                 }
-            },
-            rightPriceScale: {
-                borderColor: 'rgba(42, 46, 57, 0.5)',
-                textColor: '#ffffff',
-                entireTextOnly: false
-            },
-            timeScale: {
-                borderColor: 'rgba(42, 46, 57, 0.5)',
-                textColor: '#ffffff',
-                timeVisible: true,
-                secondsVisible: false
-            },
-            handleScroll: {
-                mouseWheel: true,
-                pressedMouseMove: true,
-                horzTouchDrag: true,
-                vertTouchDrag: true
-            },
-            handleScale: {
-                axisPressedMouseMove: true,
-                mouseWheel: true,
-                pinch: true
-            }
-        });
+            });
     
-        // Create line series for minimal price line display
-        this.chartSeries = this.lightweightChart.addLineSeries({
-            color: '#3b82f6',
-            lineWidth: 2,
-            lineType: LightweightCharts.LineType.Simple,
-            crosshairMarkerVisible: true,
-            crosshairMarkerRadius: 4,
-            crosshairMarkerBorderColor: '#3b82f6',
-            crosshairMarkerBackgroundColor: '#3b82f6',
-            lastValueVisible: true,
-            priceLineVisible: true,
-            priceLineColor: '#3b82f6',
-            priceLineWidth: 1,
-            priceLineStyle: LightweightCharts.LineStyle.Dashed
-        });
-    
-        // Load initial data
-        this.loadChartData(this.chartSymbols.indices['S&P 500'], this.currentTimeframe);
-    
-        // Auto-export screenshot after chart loads
-        setTimeout(() => {
-            this.exportChartScreenshot();
-        }, 2000);
-    
-        // Handle window resize
-        window.addEventListener('resize', () => {
-            if (this.lightweightChart && container) {
-                this.lightweightChart.applyOptions({
-                    width: container.clientWidth
-                });
-            }
-        });
+        } catch (error) {
+            console.error('Error creating chart:', error);
+            // Retry initialization after delay
+            setTimeout(() => this.initializeLightweightChart(), 1000);
+        }
     }
 
     setupChartControls() {
@@ -872,11 +900,12 @@ window.logout = async () => {
 
 // Initialize dashboard when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Add a small delay to ensure all CSS is loaded
+    // Add a longer delay to ensure all CSS and external scripts are loaded
     setTimeout(() => {
+        console.log('Initializing Dashboard Manager...');
         window.dashboardManager = new DashboardManager();
         console.log('Dashboard Manager initialized');
-    }, 100);
+    }, 500);
 });
 
 // Export for use in other modules
