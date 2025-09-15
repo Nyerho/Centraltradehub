@@ -278,10 +278,28 @@ class AuthManager {
   }
 
   isAdmin() {
-    return this.currentUser && this.currentUser.email === 'admin@centraltradehub.com';
+    if (!this.currentUser) return false;
+    
+    const adminEmails = [
+      'admin@centraltradehub.com',
+      'owner@centraltradehub.com'
+    ];
+    
+    return adminEmails.includes(this.currentUser.email);
   }
 
   async checkAdminStatus() {
+    if (!this.currentUser) {
+      // Wait for auth state to be ready
+      await new Promise(resolve => {
+        const unsubscribe = FirebaseAuthService.onAuthStateChanged((user) => {
+          this.currentUser = user;
+          unsubscribe();
+          resolve();
+        });
+      });
+    }
+    
     if (!this.currentUser) return false;
     
     // Use email-based admin validation (consistent with main.js)

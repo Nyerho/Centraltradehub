@@ -243,8 +243,22 @@ function handleLogin(e) {
         
         if (success) {
             console.log('Login successful');
-            // Redirect to dashboard or handle success
-            window.location.href = 'dashboard.html';
+            // Check admin status before redirecting
+            const user = authManager.getCurrentUser();
+            if (user) {
+                const adminEmails = [
+                    'admin@centraltradehub.com',
+                    'owner@centraltradehub.com'
+                ];
+                
+                if (adminEmails.includes(user.email)) {
+                    window.location.href = 'admin.html';
+                } else {
+                    window.location.href = 'dashboard.html';
+                }
+            } else {
+                window.location.href = 'dashboard.html';
+            }
         }
     }).catch(error => {
         console.error('Login error:', error);
