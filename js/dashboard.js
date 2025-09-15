@@ -404,12 +404,23 @@ class DashboardManager {
         const container = document.getElementById('lightweight-chart-container');
         if (!container) {
             console.error('Lightweight chart container not found');
-            // Retry after a short delay
             setTimeout(() => this.initializeLightweightChart(), 500);
             return;
         }
     
-        // Ensure container has dimensions and is visible
+        // Check if container and parent elements are visible
+        const chartSection = container.closest('.market-overview-section');
+        if (chartSection && chartSection.style.display === 'none') {
+            console.log('Chart section is hidden, making visible...');
+            chartSection.style.display = 'block';
+        }
+    
+        // Force container to be visible and have dimensions
+        container.style.display = 'block';
+        container.style.width = '100%';
+        container.style.height = '400px';
+    
+        // Wait for container to have proper dimensions
         if (container.clientWidth === 0 || container.clientHeight === 0) {
             console.log('Container dimensions not ready, retrying...');
             setTimeout(() => this.initializeLightweightChart(), 200);
@@ -424,7 +435,9 @@ class DashboardManager {
         }
     
         try {
-            // Create chart with minimal dark theme configuration
+            console.log('Creating chart with container dimensions:', container.clientWidth, 'x', container.clientHeight);
+            
+            // Create chart with explicit dimensions
             this.lightweightChart = LightweightCharts.createChart(container, {
                 width: container.clientWidth,
                 height: 400,
@@ -486,7 +499,7 @@ class DashboardManager {
                 }
             });
     
-            // Create line series for minimal price line display
+            // Create line series
             this.chartSeries = this.lightweightChart.addLineSeries({
                 color: '#3b82f6',
                 lineWidth: 2,
@@ -504,26 +517,27 @@ class DashboardManager {
     
             console.log('Chart initialized successfully');
     
-            // Load initial data
+            // Load initial data immediately
             this.loadChartData(this.chartSymbols.indices['S&P 500'], this.currentTimeframe);
     
-            // Auto-export screenshot after chart loads
-            setTimeout(() => {
-                this.exportChartScreenshot();
-            }, 2000);
-    
             // Handle window resize
-            window.addEventListener('resize', () => {
+            const resizeHandler = () => {
                 if (this.lightweightChart && container) {
                     this.lightweightChart.applyOptions({
                         width: container.clientWidth
                     });
                 }
-            });
+            };
+            
+            window.addEventListener('resize', resizeHandler);
+    
+            // Auto-export screenshot after chart loads and data is set
+            setTimeout(() => {
+                this.exportChartScreenshot();
+            }, 2000);
     
         } catch (error) {
             console.error('Error creating chart:', error);
-            // Retry initialization after delay
             setTimeout(() => this.initializeLightweightChart(), 1000);
         }
     }
