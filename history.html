@@ -88,40 +88,173 @@
                         <th>Status</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="historyTableBody">
                     <tr>
-                        <td>2024-01-15</td>
-                        <td>EUR/USD</td>
-                        <td>Buy</td>
-                        <td>$1,000</td>
-                        <td>1.0850</td>
-                        <td>1.0920</td>
-                        <td class="status-profit">+$64.50</td>
-                        <td><span class="status-profit">Closed</span></td>
-                    </tr>
-                    <tr>
-                        <td>2024-01-14</td>
-                        <td>GBP/USD</td>
-                        <td>Sell</td>
-                        <td>$500</td>
-                        <td>1.2650</td>
-                        <td>1.2580</td>
-                        <td class="status-profit">+$27.75</td>
-                        <td><span class="status-profit">Closed</span></td>
-                    </tr>
-                    <tr>
-                        <td>2024-01-13</td>
-                        <td>USD/JPY</td>
-                        <td>Buy</td>
-                        <td>$750</td>
-                        <td>148.50</td>
-                        <td>147.80</td>
-                        <td class="status-loss">-$35.40</td>
-                        <td><span class="status-loss">Closed</span></td>
+                        <td colspan="8" class="loading-row">
+                            <i class="fas fa-spinner fa-spin"></i> Loading your trading history...
+                        </td>
                     </tr>
                 </tbody>
             </table>
         </div>
+        
+        <div id="noDataMessage" class="no-data" style="display: none;">
+            <i class="fas fa-chart-line"></i>
+            <h3>No Trading History</h3>
+            <p>You haven't made any trades yet. Start trading to see your history here.</p>
+            <a href="dashboard.html" class="btn-primary">Start Trading</a>
+        </div>
     </div>
+
+    <!-- Firebase and Trading History Scripts -->
+    <script type="module">
+        import { auth, db } from './js/firebase-config.js';
+        import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { collection, query, where, orderBy, getDocs, limit } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        class TradingHistoryManager {
+            constructor() {
+                this.currentUser = null;
+                this.init();
+            }
+
+            init() {
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        this.currentUser = user;
+                        this.loadTradingHistory();
+                    } else {
+                        window.location.href = 'auth.html';
+                    }
+                });
+            }
+
+            async loadTradingHistory() {
+                const tableBody = document.getElementById('historyTableBody');
+                const noDataMessage = document.getElementById('noDataMessage');
+                
+                try {
+                    // Query user's trading history from Firebase
+                    const tradesRef = collection(db, 'trades');
+                    const q = query(
+                        tradesRef,
+                        where('uid', '==', this.currentUser.uid),
+                        orderBy('createdAt', 'desc'),
+                        limit(50)
+                    );
+                    
+                    const querySnapshot = await getDocs(q);
+                    const trades = [];
+                    
+                    querySnapshot.forEach((doc) => {
+                        trades.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+                    
+                    if (trades.length === 0) {
+                        tableBody.style.display = 'none';
+                        noDataMessage.style.display = 'block';
+                        return;
+                    }
+                    
+                    // Display real trading data
+                    this.displayTrades(trades);
+                    
+                } catch (error) {
+                    console.error('Error loading trading history:', error);
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="8" class="error-row">
+                                <i class="fas fa-exclamation-triangle"></i> 
+                                Error loading trading history. Please try again.
+                            </td>
+                        </tr>
+                    `;
+                }
+            }
+
+            displayTrades(trades) {
+                const tableBody = document.getElementById('historyTableBody');
+                
+                const tradesHTML = trades.map(trade => {
+                    const date = trade.createdAt ? new Date(trade.createdAt.toDate()).toLocaleDateString() : 'N/A';
+                    const pnl = trade.pnl || 0;
+                    const pnlClass = pnl >= 0 ? 'status-profit' : 'status-loss';
+                    const pnlSign = pnl >= 0 ? '+' : '';
+                    const statusClass = trade.status === 'closed' ? (pnl >= 0 ? 'status-profit' : 'status-loss') : 'status-pending';
+                    
+                    return `
+                        <tr>
+                            <td>${date}</td>
+                            <td>${trade.symbol || trade.asset || 'N/A'}</td>
+                            <td>${(trade.type || 'N/A').charAt(0).toUpperCase() + (trade.type || 'N/A').slice(1)}</td>
+                            <td>$${(trade.amount || 0).toLocaleString()}</td>
+                            <td>${trade.entryPrice || 'N/A'}</td>
+                            <td>${trade.exitPrice || (trade.status === 'open' ? 'Open' : 'N/A')}</td>
+                            <td class="${pnlClass}">${pnlSign}$${Math.abs(pnl).toFixed(2)}</td>
+                            <td><span class="${statusClass}">${(trade.status || 'pending').charAt(0).toUpperCase() + (trade.status || 'pending').slice(1)}</span></td>
+                        </tr>
+                    `;
+                }).join('');
+                
+                tableBody.innerHTML = tradesHTML;
+            }
+        }
+
+        // Initialize the trading history manager
+        new TradingHistoryManager();
+    </script>
+    
+    <style>
+        .loading-row, .error-row {
+            text-align: center;
+            padding: 2rem;
+            color: #888;
+        }
+        
+        .error-row {
+            color: #ff6b6b;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 3rem;
+            color: #888;
+        }
+        
+        .no-data i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #00d4ff;
+        }
+        
+        .no-data h3 {
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+        
+        .btn-primary {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: #00d4ff;
+            color: #0f0f23;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: #00b8e6;
+            transform: translateY(-2px);
+        }
+        
+        .status-pending {
+            color: #ffa500;
+        }
+    </style>
 </body>
 </html>
