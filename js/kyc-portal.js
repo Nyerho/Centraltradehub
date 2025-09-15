@@ -439,4 +439,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.kycPortal = new KYCPortal();
 });
 
+// Remove the duplicate global functions and DOMContentLoaded listener at the end
+// Keep only the class definition and export
+
 export default KYCPortal;

@@ -204,14 +204,59 @@
     </div>
 
     <!-- Scripts -->
-    <script src="js/firebase-config.js"></script>
-    <script src="js/kyc-portal.js"></script>
-    <script>
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/kyc-portal.js"></script>
+    <script type="module">
         // Initialize KYC Portal when page loads
+        import KYCPortal from './js/kyc-portal.js';
+        
         document.addEventListener('DOMContentLoaded', function() {
-            if (typeof KYCPortal !== 'undefined') {
-                window.kycPortal = new KYCPortal();
-            }
+            window.kycPortal = new KYCPortal();
+            
+            // Make global functions available
+            window.startKYCVerification = () => {
+                if (window.kycPortal) {
+                    window.kycPortal.startVerification();
+                }
+            };
+            
+            window.continueKYCVerification = () => {
+                if (window.kycPortal) {
+                    window.kycPortal.checkVerificationStatus();
+                }
+            };
+            
+            window.closeVerificationModal = () => {
+                const modal = document.getElementById('verificationModal');
+                if (modal) {
+                    modal.style.display = 'none';
+                }
+            };
+            
+            window.openSupportChat = () => {
+                alert('Support chat would open here. Please contact support@centraltradehub.com for assistance.');
+            };
+            
+            window.removeFile = (inputId, previewId, areaId) => {
+                const input = document.getElementById(inputId);
+                const preview = document.getElementById(previewId);
+                const area = document.getElementById(areaId);
+                const placeholder = area.querySelector('.upload-placeholder');
+                
+                if (input) input.value = '';
+                if (preview) preview.style.display = 'none';
+                if (placeholder) placeholder.style.display = 'block';
+                
+                if (window.kycPortal) {
+                    window.kycPortal.checkSubmitButton();
+                }
+            };
+            
+            window.submitVerification = () => {
+                if (window.kycPortal) {
+                    window.kycPortal.submitVerification();
+                }
+            };
         });
     </script>
 </body>

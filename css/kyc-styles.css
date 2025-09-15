@@ -652,6 +652,80 @@
     background: rgba(59, 130, 246, 0.1);
 }
 
+/* Modal Actions */
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.modal-actions .btn {
+    min-width: 120px;
+}
+
+.btn-ready {
+    background: var(--success-color) !important;
+    border-color: var(--success-color) !important;
+}
+
+/* File Preview Styles */
+.file-preview {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.file-preview img {
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.pdf-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 60px;
+    background: rgba(220, 53, 69, 0.1);
+    border-radius: 8px;
+}
+
+.file-info {
+    flex: 1;
+}
+
+.file-info p {
+    margin: 0 0 5px 0;
+    color: var(--text-primary);
+}
+
+.file-info small {
+    color: var(--text-secondary);
+}
+
+.btn-remove {
+    background: var(--error-color);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+}
+
+.btn-remove:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+}
+
 .upload-placeholder {
     padding: 40px 20px;
     text-align: center;
@@ -660,25 +734,24 @@
 }
 
 .upload-placeholder:hover {
-    background: var(--bg-hover);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .upload-placeholder i {
-    font-size: 2.5rem;
-    color: var(--text-secondary);
-    margin-bottom: 12px;
+    font-size: 2rem;
+    color: var(--primary-color);
+    margin-bottom: 10px;
     display: block;
 }
 
 .upload-placeholder p {
-    margin: 0 0 8px 0;
+    margin: 10px 0 5px 0;
     color: var(--text-primary);
     font-weight: 500;
 }
 
 .upload-placeholder small {
     color: var(--text-secondary);
-    font-size: 0.8rem;
 }
 
 .upload-preview {
@@ -732,23 +805,4 @@
     height: 60px;
     background: rgba(220, 53, 69, 0.1);
     border-radius: 8px;
-}
-
-.modal-actions {
-    display: flex;
-    gap: 12px;
-    justify-content: flex-end;
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid var(--border-color);
-}
-
-.btn-ready {
-    background: var(--success-color) !important;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-
-.btn-ready:hover {
-    background: #059669 !important;
-    transform: translateY(-2px);
 }
