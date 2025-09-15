@@ -57,15 +57,9 @@
                     </a>
                 </div>
                 <div class="market-status">
-                    <span class="status-indicator"></span>
-                    <span>Markets Open</span>
+                    <span class="status-indicator active"></span>
+                    <span class="status-text">Markets Open</span>
                 </div>
-            </div>
-            <div class="nav-logo">
-                <a href="index.html">
-                    <img src="assets/images/logo.png" alt="CentralTradeHub">
-                    <span class="logo-text">CentralTradeHub</span>
-                </a>
             </div>
             
             <ul class="nav-menu">
@@ -75,20 +69,12 @@
                 <li><a href="funding.html" class="nav-link">About</a></li>
                 <li><a href="index.html#contact" class="nav-link">Support</a></li>
             </ul>
-            
-            <!-- Market Status -->
-            <div class="market-status">
-                <span class="status-indicator active"></span>
-                <span class="status-text">Markets Open</span>
-            </div>
 
             <!-- Navigation Buttons -->
             <div class="nav-buttons">
                 <a href="dashboard.html" class="btn-dashboard">
                     <i class="fas fa-tachometer-alt"></i> Go to Dashboard
                 </a>
-            </div>
-            <!-- Remove standalone funding button -->
             </div>
 
             <!-- Enhanced User Menu with Comprehensive Dropdown -->
@@ -172,11 +158,7 @@
                         <a href="#" class="dropdown-item" onclick="downloadReports()">
                             <i class="fas fa-download"></i> Download Reports
                         </a>
-                        <a href="#" class="dropdown-item" onclick="logout()">
-                            <i class="fas fa-sign-out-alt"></i> Logout
-                        </a>
                     </div>
-                </div>
                     
                     <!-- Support Section -->
                     <div class="dropdown-section">
@@ -400,15 +382,15 @@
             <!-- Order Panel -->
             <div class="order-panel">
                 <div class="order-tabs">
-                    <button class="order-tab active" data-type="market">Market</button>
-                    <button class="order-tab" data-type="limit">Limit</button>
-                    <button class="order-tab" data-type="stop">Stop</button>
+                    <button class="order-tab active" data-type="market" id="market-tab">Market</button>
+                    <button class="order-tab" data-type="limit" id="limit-tab">Limit</button>
+                    <button class="order-tab" data-type="stop" id="stop-tab">Stop</button>
                 </div>
                 
                 <div class="order-form">
                     <div class="order-type-buttons">
-                        <button class="order-type-btn buy-btn active" data-type="buy">BUY</button>
-                        <button class="order-type-btn sell-btn" data-type="sell">SELL</button>
+                        <button class="order-type-btn buy-btn active" data-type="buy" id="buy-btn">BUY</button>
+                        <button class="order-type-btn sell-btn" data-type="sell" id="sell-btn">SELL</button>
                     </div>
                     
                     <div class="form-group">
@@ -416,7 +398,7 @@
                         <input type="number" id="volume-input" value="0.01" min="0.01" step="0.01">
                     </div>
                     
-                    <div class="form-group limit-order" style="display: none;">
+                    <div class="form-group limit-order" id="price-group" style="display: none;">
                         <label>Price</label>
                         <input type="number" id="price-input" step="0.00001">
                     </div>
@@ -472,6 +454,7 @@
     <script src="js/platform.js"></script>
     <script src="js/main.js"></script>
     <script src="js/market-data.js"></script>
+    <script src="js/market-notifications.js"></script>
 
     <script type="module">
         import { auth } from './js/firebase-config.js';
@@ -527,7 +510,7 @@
                 console.log('User authenticated:', user.email);
                 
                 // Update user name in navigation
-                const userNameElement = document.getElementById('user-name');
+                const userNameElement = document.getElementById('current-user-name');
                 if (userNameElement) {
                     userNameElement.textContent = user.email.split('@')[0];
                 }
@@ -608,7 +591,133 @@
             });
         }
     });
+
+    // Fixed Trading Button Functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        // Order tab functionality
+        const orderTabs = document.querySelectorAll('.order-tab');
+        const priceGroup = document.getElementById('price-group');
+        
+        orderTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Remove active class from all tabs
+                orderTabs.forEach(t => t.classList.remove('active'));
+                // Add active class to clicked tab
+                this.classList.add('active');
+                
+                // Show/hide price input based on order type
+                const orderType = this.getAttribute('data-type');
+                if (orderType === 'market') {
+                    priceGroup.style.display = 'none';
+                } else {
+                    priceGroup.style.display = 'block';
+                }
+            });
+        });
+        
+        // Buy/Sell button functionality
+        const orderTypeButtons = document.querySelectorAll('.order-type-btn');
+        orderTypeButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remove active class from all buttons
+                orderTypeButtons.forEach(b => b.classList.remove('active'));
+                // Add active class to clicked button
+                this.classList.add('active');
+                
+                // Update place order button text
+                const placeOrderBtn = document.getElementById('place-order-btn');
+                const orderType = this.getAttribute('data-type').toUpperCase();
+                placeOrderBtn.innerHTML = `<i class="fas fa-plus"></i> Place ${orderType} Order`;
+            });
+        });
+        
+        // Place order button functionality
+        const placeOrderBtn = document.getElementById('place-order-btn');
+        placeOrderBtn.addEventListener('click', function() {
+            const volume = document.getElementById('volume-input').value;
+            const price = document.getElementById('price-input').value;
+            const stopLoss = document.getElementById('sl-input').value;
+            const takeProfit = document.getElementById('tp-input').value;
+            
+            const activeOrderType = document.querySelector('.order-type-btn.active').getAttribute('data-type');
+            const activeOrderTab = document.querySelector('.order-tab.active').getAttribute('data-type');
+            
+            // Basic validation
+            if (!volume || volume <= 0) {
+                alert('Please enter a valid volume');
+                return;
+            }
+            
+            if (activeOrderTab !== 'market' && (!price || price <= 0)) {
+                alert('Please enter a valid price for limit/stop orders');
+                return;
+            }
+            
+            // Create order object
+            const order = {
+                type: activeOrderType,
+                orderType: activeOrderTab,
+                volume: parseFloat(volume),
+                price: activeOrderTab === 'market' ? null : parseFloat(price),
+                stopLoss: stopLoss ? parseFloat(stopLoss) : null,
+                takeProfit: takeProfit ? parseFloat(takeProfit) : null,
+                symbol: document.getElementById('symbol-select').value,
+                timestamp: new Date().toISOString()
+            };
+            
+            console.log('Placing order:', order);
+            
+            // Show success message
+            alert(`${activeOrderType.toUpperCase()} ${activeOrderTab} order placed successfully!`);
+            
+            // Reset form
+            document.getElementById('volume-input').value = '0.01';
+            document.getElementById('price-input').value = '';
+            document.getElementById('sl-input').value = '';
+            document.getElementById('tp-input').value = '';
+        });
+    });
     </script>
+
+    <style>
+        .btn-dashboard {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-dashboard:hover {
+            background: linear-gradient(135deg, #0099cc 0%, #007399 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn-dashboard i {
+            font-size: 16px;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .btn-dashboard {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+            
+            .btn-dashboard span {
+                display: none;
+            }
+        }
+    </style>
 </body>
 </html>
 
