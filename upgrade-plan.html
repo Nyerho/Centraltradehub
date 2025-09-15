@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upgrade Plan - Central Trade Hub</title>
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/utilities.css">
+    <link rel="stylesheet" href="css/navigation.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        .upgrade-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .upgrade-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+        }
+        
+        .upgrade-header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        .upgrade-header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .plan-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2.5rem;
+            text-align: center;
+            position: relative;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .plan-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+        }
+        
+        .plan-card.featured {
+            border: 3px solid #FFD700;
+            transform: scale(1.05);
+        }
+        
+        .plan-card.featured::before {
+            content: 'MOST POPULAR';
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            color: #333;
+            padding: 0.5rem 1.5rem;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+        
+        .plan-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .plan-name {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .plan-price {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 0.25rem;
+        }
+        
+        .plan-period {
+            color: #666;
+            margin-bottom: 2rem;
+        }
+        
+        .plan-features {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 2rem;
+        }
+        
+        .plan-features li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+        
+        .plan-features li:last-child {
+            border-bottom: none;
+        }
+        
+        .plan-features i {
+            color: #4CAF50;
+            margin-right: 0.75rem;
+            width: 20px;
+        }
+        
+        .plan-button {
+            width: 100%;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .plan-button.primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .plan-button.secondary {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .plan-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .back-button {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .features-comparison {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .comparison-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        @media (max-width: 768px) {
+            .upgrade-container {
+                padding: 1rem;
+            }
+            
+            .upgrade-header h1 {
+                font-size: 2rem;
+            }
+            
+            .plans-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .plan-card.featured {
+                transform: none;
+            }
+            
+            .back-button {
+                position: static;
+                display: block;
+                width: fit-content;
+                margin-bottom: 2rem;
+            }
+            
+            .comparison-table {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="upgrade-container">
+        <a href="dashboard.html" class="back-button">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+        
+        <div class="upgrade-header">
+            <h1><i class="fas fa-crown"></i> Upgrade Your Plan</h1>
+            <p>Choose the perfect plan to maximize your trading potential</p>
+        </div>
+        
+        <div class="plans-grid">
+            <div class="plan-card">
+                <div class="plan-icon" style="color: #28a745;">
+                    <i class="fas fa-seedling"></i>
+                </div>
+                <div class="plan-name">Basic</div>
+                <div class="plan-price">$0</div>
+                <div class="plan-period">Forever Free</div>
+                <ul class="plan-features">
+                    <li><i class="fas fa-check"></i> 3 Trading Signals/Day</li>
+                    <li><i class="fas fa-check"></i> Basic Market Analysis</li>
+                    <li><i class="fas fa-check"></i> Email Support</li>
+                    <li><i class="fas fa-check"></i> Mobile App Access</li>
+                    <li><i class="fas fa-times" style="color: #dc3545;"></i> Advanced Indicators</li>
+                </ul>
+                <button class="plan-button secondary">Current Plan</button>
+            </div>
+            
+            <div class="plan-card featured">
+                <div class="plan-icon" style="color: #ffc107;">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="plan-name">Pro</div>
+                <div class="plan-price">$29</div>
+                <div class="plan-period">per month</div>
+                <ul class="plan-features">
+                    <li><i class="fas fa-check"></i> 15 Trading Signals/Day</li>
+                    <li><i class="fas fa-check"></i> Advanced Market Analysis</li>
+                    <li><i class="fas fa-check"></i> Priority Support</li>
+                    <li><i class="fas fa-check"></i> Advanced Indicators</li>
+                    <li><i class="fas fa-check"></i> Risk Management Tools</li>
+                </ul>
+                <button class="plan-button primary" onclick="selectPlan('pro')">Upgrade to Pro</button>
+            </div>
+            
+            <div class="plan-card">
+                <div class="plan-icon" style="color: #6f42c1;">
+                    <i class="fas fa-crown"></i>
+                </div>
+                <div class="plan-name">Premium</div>
+                <div class="plan-price">$99</div>
+                <div class="plan-period">per month</div>
+                <ul class="plan-features">
+                    <li><i class="fas fa-check"></i> Unlimited Trading Signals</li>
+                    <li><i class="fas fa-check"></i> AI-Powered Analysis</li>
+                    <li><i class="fas fa-check"></i> 24/7 Phone Support</li>
+                    <li><i class="fas fa-check"></i> Custom Indicators</li>
+                    <li><i class="fas fa-check"></i> Personal Trading Coach</li>
+                </ul>
+                <button class="plan-button primary" onclick="selectPlan('premium')">Upgrade to Premium</button>
+            </div>
+        </div>
+        
+        <div class="features-comparison">
+            <h2 style="text-align: center; margin-bottom: 2rem;">Feature Comparison</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Basic</th>
+                        <th>Pro</th>
+                        <th>Premium</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Daily Signals</td>
+                        <td>3</td>
+                        <td>15</td>
+                        <td>Unlimited</td>
+                    </tr>
+                    <tr>
+                        <td>Market Analysis</td>
+                        <td>Basic</td>
+                        <td>Advanced</td>
+                        <td>AI-Powered</td>
+                    </tr>
+                    <tr>
+                        <td>Support</td>
+                        <td>Email</td>
+                        <td>Priority</td>
+                        <td>24/7 Phone</td>
+                    </tr>
+                    <tr>
+                        <td>Risk Management</td>
+                        <td>❌</td>
+                        <td>✅</td>
+                        <td>✅</td>
+                    </tr>
+                    <tr>
+                        <td>Personal Coach</td>
+                        <td>❌</td>
+                        <td>❌</td>
+                        <td>✅</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        function selectPlan(planType) {
+            // Show confirmation modal
+            const planNames = {
+                'pro': 'Pro ($29/month)',
+                'premium': 'Premium ($99/month)'
+            };
+            
+            if (confirm(`Are you sure you want to upgrade to ${planNames[planType]}?`)) {
+                // Simulate payment processing
+                alert('Redirecting to payment gateway...');
+                // In a real application, this would redirect to a payment processor
+                // window.location.href = `payment.html?plan=${planType}`;
+            }
+        }
+        
+        // Add some interactive animations
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.plan-card');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.1}s`;
+                card.style.animation = 'fadeInUp 0.6s ease forwards';
+            });
+        });
+        
+        // Add CSS animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
