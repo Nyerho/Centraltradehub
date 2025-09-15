@@ -74,12 +74,16 @@ class DashboardManager {
     init() {
         this.initializeAuth();
         this.setupMobileMenu();
-        this.initializeTradingTabs();
-        this.setupAssetSelectors();
-        this.initializeLightweightChart();
-        this.setupChartControls();
-        this.initializeLeaderboard();
-        this.startRealTimeUpdates();
+        
+        // Ensure DOM is fully loaded before initializing chart components
+        setTimeout(() => {
+            this.initializeTradingTabs();
+            this.setupAssetSelectors();
+            this.initializeLightweightChart();
+            this.setupChartControls();
+            this.initializeLeaderboard();
+            this.startRealTimeUpdates();
+        }, 100);
     }
 
     async initializeAuth() {
@@ -389,9 +393,17 @@ class DashboardManager {
         const container = document.getElementById('lightweight-chart-container');
         if (!container) {
             console.error('Lightweight chart container not found');
+            // Retry after a short delay
+            setTimeout(() => this.initializeLightweightChart(), 500);
             return;
         }
-
+    
+        // Ensure container has dimensions
+        if (container.clientWidth === 0 || container.clientHeight === 0) {
+            setTimeout(() => this.initializeLightweightChart(), 200);
+            return;
+        }
+    
         // Create chart with minimal dark theme configuration
         this.lightweightChart = LightweightCharts.createChart(container, {
             width: container.clientWidth,
@@ -453,7 +465,7 @@ class DashboardManager {
                 pinch: true
             }
         });
-
+    
         // Create line series for minimal price line display
         this.chartSeries = this.lightweightChart.addLineSeries({
             color: '#3b82f6',
@@ -469,15 +481,15 @@ class DashboardManager {
             priceLineWidth: 1,
             priceLineStyle: LightweightCharts.LineStyle.Dashed
         });
-
+    
         // Load initial data
         this.loadChartData(this.chartSymbols.indices['S&P 500'], this.currentTimeframe);
-
+    
         // Auto-export screenshot after chart loads
         setTimeout(() => {
             this.exportChartScreenshot();
         }, 2000);
-
+    
         // Handle window resize
         window.addEventListener('resize', () => {
             if (this.lightweightChart && container) {
@@ -692,6 +704,8 @@ class DashboardManager {
         const container = document.getElementById('leaderboardScroll');
         if (!container) {
             console.error('Leaderboard container not found');
+            // Retry after a short delay
+            setTimeout(() => this.initializeLeaderboard(), 500);
             return;
         }
         
@@ -700,6 +714,8 @@ class DashboardManager {
         
         // Start live updates
         this.startLeaderboardUpdates();
+        
+        console.log('Leaderboard initialized successfully');
     }
 
     generateInitialTransactions() {
@@ -781,6 +797,8 @@ class DashboardManager {
         
         // Duplicate content for seamless scrolling
         container.innerHTML += transactionElements;
+        
+        console.log('Leaderboard display updated');
     }
 
     startLeaderboardUpdates() {
@@ -854,7 +872,11 @@ window.logout = async () => {
 
 // Initialize dashboard when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    window.dashboardManager = new DashboardManager();
+    // Add a small delay to ensure all CSS is loaded
+    setTimeout(() => {
+        window.dashboardManager = new DashboardManager();
+        console.log('Dashboard Manager initialized');
+    }, 100);
 });
 
 // Export for use in other modules
