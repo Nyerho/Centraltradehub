@@ -38,10 +38,19 @@ class APIConfig {
             },
             sendgrid: {
                 baseUrl: 'https://api.sendgrid.com/v3',
-                apiKey: 'LBQUTKLA22UZF4LUBU3491RD', // Added SendGrid API key
+                apiKey: 'LBQUTKLA22UZF4LUBU3491RD',
                 endpoints: {
                     send: '/mail/send',
                     templates: '/templates'
+                }
+            },
+            newsapi: {
+                baseUrl: 'https://newsapi.org/v2',
+                apiKey: 'b1700deb123347349a86405378f23490',
+                rateLimit: 1000,
+                endpoints: {
+                    topHeadlines: '/top-headlines',
+                    everything: '/everything'
                 }
             },
             metaApi: {

@@ -138,9 +138,12 @@ class MarketNewsService {
 
     async fetchFromAlternativeSource(topic, limit) {
         try {
-            // Use NewsAPI as alternative (requires API key)
-            const newsApiKey = 'YOUR_NEWS_API_KEY'; // Replace with actual key
-            if (newsApiKey === 'YOUR_NEWS_API_KEY') {
+            // Import API config
+            const { default: APIConfig } = await import('./api-config.js');
+            const apiConfig = new APIConfig();
+            const newsApiKey = apiConfig.getApiKey('newsapi');
+            
+            if (!newsApiKey || newsApiKey === 'YOUR_NEWS_API_KEY') {
                 throw new Error('No alternative API key configured');
             }
             
