@@ -88,6 +88,13 @@ class DashboardManager {
                 this.initializeLightweightChart();
             }, 300);
         }, 200);
+
+        // Handle window resize for Chart.js
+        window.addEventListener('resize', () => {
+            if (this.marketChart) {
+                this.marketChart.resize();
+            }
+        });
     }
 
     async initializeAuth() {
@@ -394,147 +401,125 @@ class DashboardManager {
     }
 
     initializeLightweightChart() {
-        // Check if LightweightCharts is available
-        if (typeof LightweightCharts === 'undefined') {
-            console.error('LightweightCharts library not loaded');
+        // Check if Chart.js is available
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js library not loaded');
             setTimeout(() => this.initializeLightweightChart(), 1000);
             return;
         }
     
         const container = document.getElementById('lightweight-chart-container');
         if (!container) {
-            console.error('Lightweight chart container not found');
+            console.error('Chart container not found');
             setTimeout(() => this.initializeLightweightChart(), 500);
             return;
         }
     
-        // Check if container and parent elements are visible
-        const chartSection = container.closest('.market-overview-section');
-        if (chartSection && chartSection.style.display === 'none') {
-            console.log('Chart section is hidden, making visible...');
-            chartSection.style.display = 'block';
-        }
+        // Clear existing content and create canvas
+        container.innerHTML = '';
+        const canvas = document.createElement('canvas');
+        canvas.id = 'market-chart';
+        canvas.style.width = '100%';
+        canvas.style.height = '400px';
+        container.appendChild(canvas);
     
-        // Force container to be visible and have dimensions
-        container.style.display = 'block';
-        container.style.width = '100%';
-        container.style.height = '400px';
-    
-        // Wait for container to have proper dimensions
-        if (container.clientWidth === 0 || container.clientHeight === 0) {
-            console.log('Container dimensions not ready, retrying...');
-            setTimeout(() => this.initializeLightweightChart(), 200);
-            return;
-        }
-    
-        // Clear any existing chart
-        if (this.lightweightChart) {
-            this.lightweightChart.remove();
-            this.lightweightChart = null;
-            this.chartSeries = null;
+        // Destroy existing chart if it exists
+        if (this.marketChart) {
+            this.marketChart.destroy();
         }
     
         try {
-            console.log('Creating chart with container dimensions:', container.clientWidth, 'x', container.clientHeight);
+            const ctx = canvas.getContext('2d');
             
-            // Create chart with explicit dimensions
-            this.lightweightChart = LightweightCharts.createChart(container, {
-                width: container.clientWidth,
-                height: 400,
-                layout: {
-                    background: {
-                        type: 'solid',
-                        color: '#0f172a'
-                    },
-                    textColor: '#ffffff',
-                    fontSize: 12,
-                    fontFamily: 'Inter, sans-serif'
+            // Generate initial sample data
+            const sampleData = this.generateSampleData(this.currentTimeframe);
+            const labels = sampleData.map(item => {
+                const date = new Date(item.time * 1000);
+                return date.toLocaleDateString();
+            });
+            const prices = sampleData.map(item => item.value);
+    
+            this.marketChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Price',
+                        data: prices,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.1,
+                        pointBackgroundColor: '#3b82f6',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    }]
                 },
-                grid: {
-                    vertLines: {
-                        color: 'rgba(42, 46, 57, 0.3)',
-                        style: 1,
-                        visible: true
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            borderColor: '#3b82f6',
+                            borderWidth: 1
+                        }
                     },
-                    horzLines: {
-                        color: 'rgba(42, 46, 57, 0.3)',
-                        style: 1,
-                        visible: true
+                    scales: {
+                        x: {
+                            display: true,
+                            grid: {
+                                color: 'rgba(42, 46, 57, 0.3)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#ffffff',
+                                maxTicksLimit: 8
+                            }
+                        },
+                        y: {
+                            display: true,
+                            grid: {
+                                color: 'rgba(42, 46, 57, 0.3)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#ffffff',
+                                callback: function(value) {
+                                    return '$' + value.toFixed(2);
+                                }
+                            }
+                        }
                     }
                 },
-                crosshair: {
-                    mode: LightweightCharts.CrosshairMode.Normal,
-                    vertLine: {
-                        color: '#3b82f6',
-                        width: 1,
-                        style: 0
-                    },
-                    horzLine: {
-                        color: '#3b82f6',
-                        width: 1,
-                        style: 0
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                },
+                elements: {
+                    point: {
+                        hoverRadius: 8
                     }
-                },
-                rightPriceScale: {
-                    borderColor: 'rgba(42, 46, 57, 0.5)',
-                    textColor: '#ffffff',
-                    entireTextOnly: false
-                },
-                timeScale: {
-                    borderColor: 'rgba(42, 46, 57, 0.5)',
-                    textColor: '#ffffff',
-                    timeVisible: true,
-                    secondsVisible: false
-                },
-                handleScroll: {
-                    mouseWheel: true,
-                    pressedMouseMove: true,
-                    horzTouchDrag: true,
-                    vertTouchDrag: true
-                },
-                handleScale: {
-                    axisPressedMouseMove: true,
-                    mouseWheel: true,
-                    pinch: true
                 }
             });
     
-            // Create line series
-            this.chartSeries = this.lightweightChart.addLineSeries({
-                color: '#3b82f6',
-                lineWidth: 2,
-                lineType: LightweightCharts.LineType.Simple,
-                crosshairMarkerVisible: true,
-                crosshairMarkerRadius: 4,
-                crosshairMarkerBorderColor: '#3b82f6',
-                crosshairMarkerBackgroundColor: '#3b82f6',
-                lastValueVisible: true,
-                priceLineVisible: true,
-                priceLineColor: '#3b82f6',
-                priceLineWidth: 1,
-                priceLineStyle: LightweightCharts.LineStyle.Dashed
-            });
+            console.log('Chart initialized successfully with Chart.js');
     
-            console.log('Chart initialized successfully');
-    
-            // Load initial data immediately
-            this.loadChartData(this.chartSymbols.indices['S&P 500'], this.currentTimeframe);
-    
-            // Handle window resize
-            const resizeHandler = () => {
-                if (this.lightweightChart && container) {
-                    this.lightweightChart.applyOptions({
-                        width: container.clientWidth
-                    });
-                }
-            };
-            
-            window.addEventListener('resize', resizeHandler);
-    
-            // Auto-export screenshot after chart loads and data is set
+            // Auto-export screenshot after chart loads
             setTimeout(() => {
                 this.exportChartScreenshot();
-            }, 2000);
+            }, 1000);
     
         } catch (error) {
             console.error('Error creating chart:', error);
@@ -569,9 +554,19 @@ class DashboardManager {
             // Generate sample data for demonstration
             const sampleData = this.generateSampleData(timeframe);
             
-            if (this.chartSeries) {
-                this.chartSeries.setData(sampleData);
-                this.lightweightChart.timeScale().fitContent();
+            if (this.marketChart) {
+                const labels = sampleData.map(item => {
+                    const date = new Date(item.time * 1000);
+                    return date.toLocaleDateString();
+                });
+                const prices = sampleData.map(item => item.value);
+                
+                this.marketChart.data.labels = labels;
+                this.marketChart.data.datasets[0].data = prices;
+                this.marketChart.data.datasets[0].label = symbol;
+                this.marketChart.update('active');
+                
+                console.log('Chart data updated for:', symbol, timeframe);
             }
         } catch (error) {
             console.error('Error loading chart data:', error);
@@ -608,57 +603,29 @@ class DashboardManager {
     }
 
     exportChartScreenshot() {
-        if (!this.lightweightChart) {
+        if (!this.marketChart) {
             console.error('Chart not initialized');
             return;
         }
-
+    
         try {
-            // Create a canvas element
-            const canvas = document.createElement('canvas');
-            const container = document.getElementById('lightweight-chart-container');
+            // Get chart canvas and convert to image
+            const canvas = this.marketChart.canvas;
+            const url = canvas.toDataURL('image/png');
             
-            if (!container) {
-                console.error('Chart container not found');
-                return;
-            }
-
-            // Set canvas dimensions
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
-            const ctx = canvas.getContext('2d');
-
-            // Fill background
-            ctx.fillStyle = '#0f172a';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Add chart title
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '16px Inter, sans-serif';
-            ctx.fillText(`${this.currentAsset} - Central Trade Hub`, 20, 30);
-
-            // Add timestamp
-            ctx.font = '12px Inter, sans-serif';
-            ctx.fillStyle = '#94a3b8';
-            const timestamp = new Date().toLocaleString();
-            ctx.fillText(`Exported: ${timestamp}`, 20, canvas.height - 20);
-
-            // Convert to blob and download
-            canvas.toBlob((blob) => {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${this.currentAsset.replace(/[^a-z0-9]/gi, '_').toLowerCase()}-chart-${Date.now()}.png`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                
-                console.log('Chart screenshot exported successfully');
-            }, 'image/png');
-
+            // Create download link
+            const link = document.createElement('a');
+            link.download = `market-chart-${new Date().toISOString().split('T')[0]}.png`;
+            link.href = url;
+            
+            // Trigger download
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            console.log('Chart exported successfully');
         } catch (error) {
-            console.error('Error exporting chart screenshot:', error);
+            console.error('Error exporting chart:', error);
         }
     }
 
