@@ -101,38 +101,261 @@ class KYCPortal {
     }
 
     async startVerification() {
+        // Show the verification modal instead of just loading
+        this.showVerificationModal();
+    }
+
+    showVerificationModal() {
+        const modal = document.getElementById('verificationModal');
+        const stepContent = document.getElementById('stepContent');
+        
+        // Create the file upload interface
+        stepContent.innerHTML = `
+            <div class="verification-form">
+                <h4>Upload Required Documents</h4>
+                <p class="form-description">Please upload clear, high-quality images of your documents</p>
+                
+                <!-- ID Document Upload -->
+                <div class="upload-section">
+                    <div class="upload-header">
+                        <i class="fas fa-id-card"></i>
+                        <h5>Government-issued ID</h5>
+                        <span class="required">*Required</span>
+                    </div>
+                    <div class="upload-area" id="idUploadArea">
+                        <input type="file" id="idFileInput" accept="image/*,.pdf" style="display: none;">
+                        <div class="upload-placeholder" onclick="document.getElementById('idFileInput').click()">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Click to upload or drag and drop</p>
+                            <small>Supported: JPG, PNG, PDF (Max 5MB)</small>
+                        </div>
+                        <div class="upload-preview" id="idPreview" style="display: none;"></div>
+                    </div>
+                </div>
+
+                <!-- Utility Bill Upload -->
+                <div class="upload-section">
+                    <div class="upload-header">
+                        <i class="fas fa-file-invoice"></i>
+                        <h5>Proof of Address</h5>
+                        <span class="required">*Required</span>
+                    </div>
+                    <div class="upload-area" id="billUploadArea">
+                        <input type="file" id="billFileInput" accept="image/*,.pdf" style="display: none;">
+                        <div class="upload-placeholder" onclick="document.getElementById('billFileInput').click()">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Click to upload or drag and drop</p>
+                            <small>Utility bill, bank statement (Max 5MB)</small>
+                        </div>
+                        <div class="upload-preview" id="billPreview" style="display: none;"></div>
+                    </div>
+                </div>
+
+                <!-- Selfie Upload -->
+                <div class="upload-section">
+                    <div class="upload-header">
+                        <i class="fas fa-camera"></i>
+                        <h5>Selfie with ID</h5>
+                        <span class="required">*Required</span>
+                    </div>
+                    <div class="upload-area" id="selfieUploadArea">
+                        <input type="file" id="selfieFileInput" accept="image/*" style="display: none;">
+                        <div class="upload-placeholder" onclick="document.getElementById('selfieFileInput').click()">
+                            <i class="fas fa-camera"></i>
+                            <p>Take a selfie or upload photo</p>
+                            <small>Hold your ID next to your face (Max 5MB)</small>
+                        </div>
+                        <div class="upload-preview" id="selfiePreview" style="display: none;"></div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="closeVerificationModal()">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button class="btn btn-primary" id="submitVerificationBtn" onclick="submitVerification()" disabled>
+                        <i class="fas fa-check"></i> Submit for Review
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        modal.style.display = 'block';
+        
+        // Initialize file upload handlers
+        this.initializeFileUploads();
+    }
+
+    initializeFileUploads() {
+        const fileInputs = ['idFileInput', 'billFileInput', 'selfieFileInput'];
+        const previews = ['idPreview', 'billPreview', 'selfiePreview'];
+        const areas = ['idUploadArea', 'billUploadArea', 'selfieUploadArea'];
+        
+        fileInputs.forEach((inputId, index) => {
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previews[index]);
+            const area = document.getElementById(areas[index]);
+            
+            if (input && preview && area) {
+                input.addEventListener('change', (e) => {
+                    this.handleFileUpload(e, preview, area);
+                });
+                
+                // Add drag and drop functionality
+                area.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    area.classList.add('drag-over');
+                });
+                
+                area.addEventListener('dragleave', () => {
+                    area.classList.remove('drag-over');
+                });
+                
+                area.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    area.classList.remove('drag-over');
+                    
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        input.files = files;
+                        this.handleFileUpload({ target: input }, preview, area);
+                    }
+                });
+            }
+        });
+    }
+
+    handleFileUpload(event, preview, area) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        // Validate file size (5MB limit)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File size must be less than 5MB');
+            return;
+        }
+        
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Please upload a valid image (JPG, PNG) or PDF file');
+            return;
+        }
+        
+        // Show preview
+        const placeholder = area.querySelector('.upload-placeholder');
+        placeholder.style.display = 'none';
+        preview.style.display = 'block';
+        
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.innerHTML = `
+                    <div class="file-preview">
+                        <img src="${e.target.result}" alt="Preview" style="max-width: 200px; max-height: 150px; border-radius: 8px;">
+                        <div class="file-info">
+                            <p><strong>${file.name}</strong></p>
+                            <p>${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                            <button class="btn-remove" onclick="removeFile('${event.target.id}', '${preview.id}', '${area.id}')">
+                                <i class="fas fa-trash"></i> Remove
+                            </button>
+                        </div>
+                    </div>
+                `;
+            };
+            reader.readAsDataURL(file);
+        } else {
+            preview.innerHTML = `
+                <div class="file-preview">
+                    <div class="pdf-icon">
+                        <i class="fas fa-file-pdf" style="font-size: 3rem; color: #dc3545;"></i>
+                    </div>
+                    <div class="file-info">
+                        <p><strong>${file.name}</strong></p>
+                        <p>${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                        <button class="btn-remove" onclick="removeFile('${event.target.id}', '${preview.id}', '${area.id}')">
+                            <i class="fas fa-trash"></i> Remove
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Check if all files are uploaded
+        this.checkSubmitButton();
+    }
+
+    checkSubmitButton() {
+        const idFile = document.getElementById('idFileInput').files[0];
+        const billFile = document.getElementById('billFileInput').files[0];
+        const selfieFile = document.getElementById('selfieFileInput').files[0];
+        const submitBtn = document.getElementById('submitVerificationBtn');
+        
+        if (idFile && billFile && selfieFile && submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.classList.add('btn-ready');
+        } else if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.classList.remove('btn-ready');
+        }
+    }
+
+    async submitVerification() {
         const loadingOverlay = document.getElementById('loadingOverlay');
         loadingOverlay.style.display = 'block';
         
         try {
-            // Update status to pending
+            // Get uploaded files
+            const idFile = document.getElementById('idFileInput').files[0];
+            const billFile = document.getElementById('billFileInput').files[0];
+            const selfieFile = document.getElementById('selfieFileInput').files[0];
+            
+            // In production, upload files to Firebase Storage or your preferred storage
+            // For now, we'll simulate the upload process
+            
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Update user status to pending
             await updateDoc(doc(db, 'users', this.currentUser.uid), {
                 kycStatus: 'pending',
-                kycStartedAt: new Date().toISOString()
+                kycSubmittedAt: new Date().toISOString(),
+                documentsUploaded: {
+                    id: idFile.name,
+                    proofOfAddress: billFile.name,
+                    selfie: selfieFile.name
+                }
             });
             
-            // Send KYC notification email
+            // Send notification email
             const userDoc = await getDoc(doc(db, 'users', this.currentUser.uid));
             if (userDoc.exists()) {
                 const userData = userDoc.data();
                 await this.emailService.sendKYCNotification(
                     this.currentUser.email,
                     userData.displayName || 'User',
-                    'pending'
+                    'submitted'
                 );
             }
             
-            // Simulate verification process
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // Close modal and update status
+            this.closeVerificationModal();
+            this.loadKYCStatus();
             
-            // In production, integrate with actual KYC provider (Sumsub, etc.)
-            this.launchSumsubVerification();
+            alert('Documents submitted successfully! We will review your verification within 24-48 hours.');
             
         } catch (error) {
-            console.error('Error starting verification:', error);
-            alert('Failed to start verification. Please try again.');
+            console.error('Error submitting verification:', error);
+            alert('Failed to submit documents. Please try again.');
         } finally {
             loadingOverlay.style.display = 'none';
+        }
+    }
+
+    closeVerificationModal() {
+        const modal = document.getElementById('verificationModal');
+        if (modal) {
+            modal.style.display = 'none';
         }
     }
 
@@ -189,6 +412,27 @@ window.closeVerificationModal = () => {
 window.openSupportChat = () => {
     // Implement support chat functionality
     alert('Support chat would open here. Please contact support@centraltradehub.com for assistance.');
+};
+
+window.removeFile = (inputId, previewId, areaId) => {
+    const input = document.getElementById(inputId);
+    const preview = document.getElementById(previewId);
+    const area = document.getElementById(areaId);
+    const placeholder = area.querySelector('.upload-placeholder');
+    
+    if (input) input.value = '';
+    if (preview) preview.style.display = 'none';
+    if (placeholder) placeholder.style.display = 'block';
+    
+    if (window.kycPortal) {
+        window.kycPortal.checkSubmitButton();
+    }
+};
+
+window.submitVerification = () => {
+    if (window.kycPortal) {
+        window.kycPortal.submitVerification();
+    }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
