@@ -647,11 +647,6 @@
     position: relative;
 }
 
-.upload-area.drag-over {
-    border-color: var(--primary-color);
-    background: rgba(59, 130, 246, 0.1);
-}
-
 /* Modal Actions */
 .modal-actions {
     display: flex;
@@ -752,6 +747,11 @@
 
 .upload-placeholder small {
     color: var(--text-secondary);
+}
+
+.upload-area.drag-over {
+    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .upload-preview {
