@@ -1218,6 +1218,11 @@ body {
 
 /* Responsive Design for News Section */
 @media (max-width: 768px) {
+    .market-news-section {
+        padding: 16px;
+        margin-top: 16px;
+    }
+    
     .news-header {
         flex-direction: column;
         align-items: stretch;
@@ -1225,6 +1230,10 @@ body {
     
     .news-controls {
         justify-content: space-between;
+    }
+    
+    .news-item {
+        padding: 12px;
     }
     
     .news-item-header {
@@ -1240,6 +1249,14 @@ body {
         flex-direction: column;
         align-items: flex-start;
         gap: 4px;
+    }
+    
+    .news-title {
+        font-size: 0.9rem;
+    }
+    
+    .news-summary {
+        font-size: 0.8rem;
     }
 }
 
