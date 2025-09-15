@@ -3,18 +3,14 @@ class MarketDataService {
     constructor() {
         this.config = new APIConfig();
         this.cache = new Map();
-        this.cacheTimeout = 30000; // 30 seconds cache for Alpha Vantage
+        this.cacheTimeout = 30000;
         this.subscribers = new Map();
         this.updateInterval = null;
         this.errorHandler = new ErrorHandler();
         
-        // WebSocket connections
-        this.websockets = {
-            finnhub: null,
-            reconnectAttempts: 0,
-            maxReconnectAttempts: 5,
-            reconnectDelay: 1000
-        };
+        // Replace old WebSocket implementation with enhanced manager
+        this.websocketManager = new WebSocketManager();
+        this.isWebSocketConnected = false;
         
         this.subscribedSymbols = new Set();
         
@@ -41,123 +37,107 @@ class MarketDataService {
         };
     }
 
-    // Initialize the service
+    // Initialize the service with enhanced WebSocket manager
     async init() {
-        console.log('Initializing Market Data Service with real-time WebSocket connections...');
+        console.log('Initializing Market Data Service with Enhanced WebSocket Manager...');
         try {
             // Test API connection
             await this.testConnection();
             console.log('✅ Alpha Vantage API connection successful');
             
-            // Initialize WebSocket connections
-            await this.initWebSocketConnections();
+            // Initialize enhanced WebSocket manager
+            const wsInitialized = await this.websocketManager.init();
+            if (wsInitialized) {
+                this.isWebSocketConnected = true;
+                this.setupWebSocketListeners();
+                console.log('✅ Enhanced WebSocket Manager initialized');
+            }
             
-            // Start periodic updates for non-WebSocket data
+            // Start periodic updates for fallback data
             this.startPeriodicUpdates();
+            
         } catch (error) {
             console.error('❌ Failed to initialize market data service:', error);
         }
     }
 
-    // Initialize WebSocket connections
-    async initWebSocketConnections() {
-        try {
-            await this.connectFinnhubWebSocket();
-            console.log('✅ Finnhub WebSocket connection established');
-        } catch (error) {
-            console.error('❌ Failed to establish WebSocket connections:', error);
-        }
-    }
-
-    // Connect to Finnhub WebSocket
-    async connectFinnhubWebSocket() {
-        const config = this.config.getApiConfig('finnhub');
-        if (!config || !config.apiKey) {
-            throw new Error('Finnhub API key not configured');
-        }
-
-        const wsUrl = `${config.wsUrl}?token=${config.apiKey}`;
-        
-        return new Promise((resolve, reject) => {
-            try {
-                this.websockets.finnhub = new WebSocket(wsUrl);
-                
-                this.websockets.finnhub.onopen = () => {
-                    console.log('🔗 Finnhub WebSocket connected');
-                    this.websockets.reconnectAttempts = 0;
-                    
-                    // Subscribe to default symbols
-                    this.subscribeToDefaultSymbols();
-                    resolve();
-                };
-                
-                this.websockets.finnhub.onmessage = (event) => {
-                    this.handleFinnhubMessage(event.data);
-                };
-                
-                this.websockets.finnhub.onclose = (event) => {
-                    console.log('🔌 Finnhub WebSocket disconnected:', event.code, event.reason);
-                    this.handleWebSocketReconnect();
-                };
-                
-                this.websockets.finnhub.onerror = (error) => {
-                    console.error('❌ Finnhub WebSocket error:', error);
-                    reject(error);
-                };
-                
-                // Timeout for connection
-                setTimeout(() => {
-                    if (this.websockets.finnhub.readyState !== WebSocket.OPEN) {
-                        reject(new Error('WebSocket connection timeout'));
-                    }
-                }, 10000);
-                
-            } catch (error) {
-                reject(error);
+    // Setup WebSocket event listeners
+    setupWebSocketListeners() {
+        // Listen for connection status changes
+        this.websocketManager.onStatusChange((status, data) => {
+            console.log(`📡 WebSocket status: ${status}`, data);
+            
+            switch (status) {
+                case 'connected':
+                    this.isWebSocketConnected = true;
+                    this.notifySubscribers('connection', { status: 'connected', provider: data });
+                    break;
+                case 'disconnected':
+                    this.notifySubscribers('connection', { status: 'disconnected', provider: data });
+                    break;
+                case 'error':
+                    this.notifySubscribers('connection', { status: 'error', message: data });
+                    break;
+                case 'failed':
+                    this.isWebSocketConnected = false;
+                    this.notifySubscribers('connection', { status: 'failed', provider: data });
+                    break;
             }
         });
     }
 
-    // Handle Finnhub WebSocket messages
-    handleFinnhubMessage(data) {
-        try {
-            const message = JSON.parse(data);
+    // Enhanced symbol subscription with WebSocket manager
+    subscribeToSymbol(symbol, callback) {
+        if (!this.subscribers.has(symbol)) {
+            this.subscribers.set(symbol, new Set());
+        }
+        
+        this.subscribers.get(symbol).add(callback);
+        
+        // Subscribe via WebSocket manager for real-time data
+        if (this.isWebSocketConnected) {
+            this.websocketManager.subscribe(symbol, (data) => {
+                // Update cache with real-time data
+                this.updateCache(symbol, data);
+                
+                // Notify all subscribers
+                this.notifySubscribers(symbol, data);
+            });
+        }
+        
+        console.log(`📡 Subscribed to ${symbol} via enhanced WebSocket manager`);
+    }
+
+    // Enhanced symbol unsubscription
+    unsubscribeFromSymbol(symbol, callback) {
+        if (this.subscribers.has(symbol)) {
+            this.subscribers.get(symbol).delete(callback);
             
-            if (message.type === 'trade') {
-                // Handle real-time trade data
-                message.data.forEach(trade => {
-                    const symbol = this.mapFinnhubSymbolToLocal(trade.s);
-                    if (symbol) {
-                        const quote = {
-                            symbol: symbol,
-                            price: trade.p,
-                            change: null, // Will be calculated
-                            changePercent: null,
-                            volume: trade.v,
-                            timestamp: new Date(trade.t),
-                            source: 'finnhub_ws'
-                        };
-                        
-                        // Update cache and notify subscribers
-                        this.updateCache(symbol, quote);
-                        this.notifySubscribers(symbol, quote);
-                    }
-                });
+            if (this.subscribers.get(symbol).size === 0) {
+                this.subscribers.delete(symbol);
+                
+                // Unsubscribe from WebSocket manager
+                if (this.isWebSocketConnected) {
+                    this.websocketManager.unsubscribe(symbol, () => {});
+                }
             }
-        } catch (error) {
-            console.error('Error parsing Finnhub message:', error);
         }
     }
 
-    // Map Finnhub symbol back to local symbol
-    mapFinnhubSymbolToLocal(finnhubSymbol) {
-        for (const [localSymbol, mappedSymbol] of Object.entries(this.finnhubSymbolMapping)) {
-            if (mappedSymbol === finnhubSymbol) {
-                return localSymbol;
-            }
+    // Get connection status from WebSocket manager
+    getConnectionStatus() {
+        if (this.websocketManager) {
+            return this.websocketManager.getConnectionStatus();
         }
-        // For stocks, return as-is
-        return finnhubSymbol;
+        return { status: 'not_initialized' };
+    }
+
+    // Get subscribed symbols from WebSocket manager
+    getSubscribedSymbols() {
+        if (this.websocketManager) {
+            return this.websocketManager.getSubscribedSymbols();
+        }
+        return [];
     }
 
     // Subscribe to default symbols on WebSocket

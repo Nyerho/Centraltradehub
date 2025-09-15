@@ -891,3 +891,37 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Export for use in other modules
 export default DashboardManager;
+
+// Initialize enhanced market data service
+const marketDataService = new MarketDataService();
+const connectionStatus = new ConnectionStatus();
+
+// Initialize services
+marketDataService.init().then(() => {
+    connectionStatus.setMarketDataService(marketDataService);
+    
+    // Subscribe to real-time data for dashboard symbols
+    const dashboardSymbols = ['EUR/USD', 'GBP/USD', 'BTC/USD', 'AAPL', 'GOOGL'];
+    
+    dashboardSymbols.forEach(symbol => {
+        marketDataService.subscribeToSymbol(symbol, (data) => {
+            updateDashboardPrice(symbol, data);
+        });
+    });
+});
+
+function updateDashboardPrice(symbol, data) {
+    const priceElement = document.querySelector(`[data-symbol="${symbol}"] .price`);
+    const changeElement = document.querySelector(`[data-symbol="${symbol}"] .change`);
+    
+    if (priceElement) {
+        priceElement.textContent = formatPrice(data.price, symbol);
+        priceElement.classList.add('price-update');
+        setTimeout(() => priceElement.classList.remove('price-update'), 500);
+    }
+    
+    if (changeElement && data.change) {
+        changeElement.textContent = formatChange(data.change);
+        changeElement.className = `change ${data.change >= 0 ? 'positive' : 'negative'}`;
+    }
+}
