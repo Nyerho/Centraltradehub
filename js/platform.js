@@ -232,11 +232,42 @@ class TradingPlatform {
             });
         });
 
+        // Enhanced BUY/SELL button handling
+        document.querySelectorAll('.order-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const orderType = e.target.textContent.trim();
+                const activeTab = document.querySelector('.tab-btn.active')?.textContent || 'market';
+                
+                // Get form data
+                const volume = document.getElementById('volume')?.value || '0.01';
+                const symbol = this.currentSymbol || 'EUR/USD';
+                
+                // Create order object
+                const order = {
+                    id: Date.now(),
+                    symbol: symbol,
+                    type: orderType.toLowerCase(),
+                    orderMode: activeTab.toLowerCase(),
+                    volume: parseFloat(volume),
+                    price: this.getCurrentPrice(symbol),
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Execute the order
+                this.executeOrder(order);
+                this.showNotification(`${orderType} order executed for ${volume} ${symbol}`, 'success');
+            });
+        });
+
         // Order tabs (Buy/Sell)
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
+                
+                const orderType = e.target.textContent.toLowerCase();
+                this.updateOrderFormFields(orderType);
                 this.updateOrderButton();
             });
         });
@@ -1178,6 +1209,19 @@ class TradingPlatform {
         }, 3000);
     }
     
+    // Add method to update form fields based on order type
+    updateOrderFormFields(orderType) {
+        const priceField = document.getElementById('price');
+        const priceContainer = priceField?.parentElement;
+        
+        if (orderType === 'market') {
+            if (priceContainer) priceContainer.style.display = 'none';
+        } else {
+            if (priceContainer) priceContainer.style.display = 'block';
+            if (priceField) priceField.placeholder = orderType === 'limit' ? 'Limit Price' : 'Stop Price';
+        }
+    }
+    
     // New method for user profile integration
     async initializeUserProfile() {
         // Wait for user to be loaded
@@ -1214,11 +1258,42 @@ class TradingPlatform {
             });
         });
 
+        // Enhanced BUY/SELL button handling
+        document.querySelectorAll('.order-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const orderType = e.target.textContent.trim();
+                const activeTab = document.querySelector('.tab-btn.active')?.textContent || 'market';
+                
+                // Get form data
+                const volume = document.getElementById('volume')?.value || '0.01';
+                const symbol = this.currentSymbol || 'EUR/USD';
+                
+                // Create order object
+                const order = {
+                    id: Date.now(),
+                    symbol: symbol,
+                    type: orderType.toLowerCase(),
+                    orderMode: activeTab.toLowerCase(),
+                    volume: parseFloat(volume),
+                    price: this.getCurrentPrice(symbol),
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Execute the order
+                this.executeOrder(order);
+                this.showNotification(`${orderType} order executed for ${volume} ${symbol}`, 'success');
+            });
+        });
+
         // Order tabs (Buy/Sell)
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
+                
+                const orderType = e.target.textContent.toLowerCase();
+                this.updateOrderFormFields(orderType);
                 this.updateOrderButton();
             });
         });

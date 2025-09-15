@@ -15,6 +15,7 @@
     gap: 1rem;
     padding: 1rem;
     margin-top: 0; /* Remove margin-top since we added padding to body */
+    overflow: hidden; /* Prevent content overflow */
 }
 
 /* Sidebar Styles */
@@ -29,11 +30,15 @@
 .left-sidebar {
     width: 300px;
     min-width: 280px;
+    max-width: 320px; /* Prevent excessive expansion */
+    flex-shrink: 0;
 }
 
 .right-sidebar {
     width: 320px;
     min-width: 300px;
+    max-width: 350px; /* Prevent excessive expansion */
+    flex-shrink: 0;
 }
 
 .main-content {
@@ -46,6 +51,7 @@
     border: 1px solid #2d2d44;
     /* Ensure no overflow issues */
     overflow: hidden;
+    min-width: 0; /* Allow flex shrinking */
 }
 
 .platform-nav {
@@ -140,6 +146,8 @@
     top: 70px;
     right: 20px;
     width: 320px;
+    max-height: calc(100vh - 100px); /* Prevent overflow */
+    overflow-y: auto;
     background: #1a1a2e;
     border: 1px solid #2d2d44;
     border-radius: 12px;
@@ -368,18 +376,25 @@
 }
 
 .tab-btn {
-    flex: 1;
-    padding: 0.75rem;
-    border: none;
-    background: #2d2d44;
+    padding: 0.5rem 1rem;
+    border: 1px solid #2d2d44;
+    background: transparent;
     color: #ffffff;
+    border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: all 0.3s ease;
+    margin-right: 0.5rem;
 }
 
 .tab-btn.active {
     background: #00d4ff;
     color: #000000;
+    border-color: #00d4ff;
+}
+
+.tab-btn:hover:not(.active) {
+    background: rgba(0, 212, 255, 0.1);
+    border-color: rgba(0, 212, 255, 0.3);
 }
 
 .tab-btn:first-child {
@@ -418,33 +433,41 @@
     border-color: #00d4ff;
 }
 
+.order-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
 .order-btn {
-    width: 100%;
-    padding: 1rem;
+    flex: 1;
+    padding: 0.75rem;
     border: none;
-    border-radius: 5px;
+    border-radius: 6px;
     font-weight: 600;
-    font-size: 1rem;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
 }
 
-.buy-btn {
+.order-btn.buy {
     background: #28a745;
-    color: #ffffff;
+    color: white;
 }
 
-.buy-btn:hover {
+.order-btn.buy:hover {
     background: #218838;
+    transform: translateY(-1px);
 }
 
-.sell-btn {
+.order-btn.sell {
     background: #dc3545;
-    color: #ffffff;
+    color: white;
 }
 
-.sell-btn:hover {
+.order-btn.sell:hover {
     background: #c82333;
+    transform: translateY(-1px);
 }
 
 .trading-main {
@@ -604,7 +627,17 @@
 }
 
 /* Responsive Design for Platform */
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
+    .left-sidebar {
+        width: 250px;
+        min-width: 220px;
+    }
+    
+    .right-sidebar {
+        width: 280px;
+        min-width: 250px;
+    }
+    
     .trading-sidebar {
         width: 250px;
     }
@@ -616,6 +649,26 @@
 }
 
 @media (max-width: 768px) {
+    .trading-container {
+        flex-direction: column;
+        height: auto;
+        gap: 0.5rem;
+        padding: 0.5rem;
+    }
+    
+    .left-sidebar,
+    .right-sidebar {
+        width: 100%;
+        min-width: auto;
+        max-width: none;
+    }
+    
+    .comprehensive-dropdown {
+        right: 10px;
+        width: calc(100vw - 20px);
+        max-width: 320px;
+    }
+    
     .trading-interface {
         flex-direction: column;
     }
