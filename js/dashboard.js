@@ -216,6 +216,13 @@ class DashboardManager {
                     console.warn('trading interface user-name element not found');
                 }
                 
+                // Fix: Update avatar initial based on user's name
+                const avatarInitialElement = document.querySelector('.avatar-initial');
+                if (avatarInitialElement) {
+                    const nameForInitial = displayName || user.email || 'User';
+                    avatarInitialElement.textContent = nameForInitial.charAt(0).toUpperCase();
+                }
+                
                 // Load KYC status
                 await this.loadUserKYCStatus(user);
                 
@@ -237,6 +244,13 @@ class DashboardManager {
                 
                 if (userEmailElement) userEmailElement.textContent = user.email;
                 if (userNameElement) userNameElement.textContent = defaultUserData.displayName;
+                
+                // Fix: Update avatar initial for new users
+                const avatarInitialElement = document.querySelector('.avatar-initial');
+                if (avatarInitialElement) {
+                    const nameForInitial = defaultUserData.displayName || user.email || 'User';
+                    avatarInitialElement.textContent = nameForInitial.charAt(0).toUpperCase();
+                }
             }
         } catch (error) {
             console.error('Error loading user data:', error);
