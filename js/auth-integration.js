@@ -3,8 +3,34 @@ import FirebaseDatabaseService from './firebase-database.js';
 
 class AuthManager {
   constructor() {
+    this.currentUser = null;
+    this.isLoggedIn = false;
     this.initializeEmailService();
     this.initializeFirebaseAuth();
+  }
+
+  // Add the missing initialize method
+  async initialize() {
+    try {
+      // Wait for Firebase auth to be ready
+      return new Promise((resolve) => {
+        const unsubscribe = FirebaseAuthService.addAuthStateListener((user) => {
+          this.currentUser = user;
+          this.isLoggedIn = !!user;
+          this.updateUI();
+          unsubscribe(); // Remove listener after first call
+          resolve(user);
+        });
+      });
+    } catch (error) {
+      console.error('Error initializing AuthManager:', error);
+      return null;
+    }
+  }
+
+  // Add onAuthStateChanged method that main.js expects
+  onAuthStateChanged(callback) {
+    FirebaseAuthService.addAuthStateListener(callback);
   }
 
   async initializeEmailService() {
@@ -175,12 +201,19 @@ class AuthManager {
     try {
       await FirebaseAuthService.signOut();
       this.currentUser = null;
+      this.isLoggedIn = false;
       this.showMessage('Logged out successfully', 'success');
       
-      // Always redirect to index.html instead of auth.html to prevent loops
-      setTimeout(() => {
-        window.location.href = 'index.html';
-      }, 1000);
+      // Only redirect if not already on index.html to prevent loops
+      if (!window.location.pathname.includes('index.html') && 
+          !window.location.pathname.endsWith('/')) {
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 1000);
+      } else {
+        // Just update UI if already on index page
+        this.updateUI();
+      }
     } catch (error) {
       console.error('Logout error:', error);
       this.showMessage('Error logging out', 'error');
@@ -211,11 +244,11 @@ class AuthManager {
       userElements.forEach(el => el.style.display = 'block');
       guestElements.forEach(el => el.style.display = 'none');
       
-      // Only update user info on non-dashboard pages
+      // Only update user info on non-dashboard pages to prevent conflicts
       if (!window.location.pathname.includes('dashboard.html')) {
         // Update user info displays
-        const userNameElements = document.querySelectorAll('.user-name, #dashboard-user-name');
-        const userEmailElements = document.querySelectorAll('.user-email, #userEmail');
+        const userNameElements = document.querySelectorAll('.user-name:not(#dashboard-user-name):not(#trading-user-name)');
+        const userEmailElements = document.querySelectorAll('.user-email:not(#userEmail)');
         
         userNameElements.forEach(el => {
           el.textContent = this.currentUser.displayName || this.currentUser.email;

@@ -455,28 +455,31 @@ window.addEventListener('load', async () => {
     }
     
     if (window.authManager) {
-        // Initialize AuthManager
-        await window.authManager.initialize();
-        
-        // Set up auth state listener for UI updates
-        window.authManager.onAuthStateChanged((user) => {
-            updateNavigationForAuthState(user);
-        });
-        
-        // Initial UI update
-        updateNavigationForAuthState(window.authManager.currentUser);
-        
-        // Set up logout functionality
-        const logoutBtn = document.querySelector('.btn-logout');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', async () => {
-                try {
-                    await window.authManager.logout();
-                    // AuthManager will handle redirect
-                } catch (error) {
-                    console.error('Error signing out:', error);
-                }
+        try {
+            // Initialize AuthManager and wait for auth state
+            const user = await window.authManager.initialize();
+            
+            // Set up auth state listener for UI updates
+            window.authManager.onAuthStateChanged((user) => {
+                updateNavigationForAuthState(user);
             });
+            
+            // Initial UI update
+            updateNavigationForAuthState(user);
+            
+            // Set up logout functionality
+            const logoutBtn = document.querySelector('.btn-logout');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async () => {
+                    try {
+                        await window.authManager.logout();
+                    } catch (error) {
+                        console.error('Error signing out:', error);
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error initializing auth:', error);
         }
     }
 });
