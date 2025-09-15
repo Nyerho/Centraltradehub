@@ -259,12 +259,26 @@ class ContentManager {
         }
     }
     
-    submitContactForm(formData) {
-        // Simulate form submission
-        showNotification('Thank you for your message! We will get back to you within 24 hours.', 'success');
-        
-        // In a real application, you would send this to your backend
-        console.log('Contact form submitted:', Object.fromEntries(formData));
+    import { db } from './firebase-config.js';
+    import { collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    
+    async submitContactForm(formData) {
+        try {
+            // Store message in Firebase
+            await addDoc(collection(db, 'contact_messages'), {
+                name: formData.get('name'),
+                email: formData.get('email'),
+                subject: formData.get('subject'),
+                message: formData.get('message'),
+                timestamp: serverTimestamp(),
+                status: 'unread'
+            });
+            
+            showNotification('Thank you for your message! We will get back to you within 24 hours.', 'success');
+        } catch (error) {
+            console.error('Error submitting contact form:', error);
+            showNotification('Failed to send message. Please try again.', 'error');
+        }
     }
     
     subscribeNewsletter(email) {
