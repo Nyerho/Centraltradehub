@@ -18,7 +18,9 @@ class AuthManager {
           this.currentUser = user;
           this.isLoggedIn = !!user;
           this.updateUI();
-          unsubscribe(); // Remove listener after first call
+          if (typeof unsubscribe === 'function') {
+            unsubscribe(); // Remove listener after first call
+          }
           resolve(user);
         });
       });

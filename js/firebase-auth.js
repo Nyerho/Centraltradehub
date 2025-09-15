@@ -216,6 +216,10 @@ class FirebaseAuthService {
   // Add authentication state listener
   addAuthStateListener(callback) {
     this.authStateListeners.push(callback);
+    // Return unsubscribe function
+    return () => {
+      this.removeAuthStateListener(callback);
+    };
   }
 
   // Remove authentication state listener
