@@ -396,33 +396,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Admin access control function
 function checkAdminAccess() {
-    // Import Firebase auth to check current user
     import('./firebase-config.js').then(({ auth }) => {
-        import('./firebase-auth.js').then(({ default: FirebaseAuthService }) => {
-            FirebaseAuthService.getCurrentUser().then(user => {
-                if (!user) {
-                    showNotification('Please log in to access admin panel', 'error');
-                    return;
-                }
-                
-                // Define admin emails
-                const adminEmails = [
-                    'admin@centraltradehub.com',
-                    'owner@centraltradehub.com'
-                ];
-                
-                if (adminEmails.includes(user.email)) {
-                    // User is authorized
-                    window.location.href = 'admin.html';
-                } else {
-                    // User is not authorized
-                    showNotification('Access denied. Admin privileges required.', 'error');
-                }
-            }).catch(error => {
-                console.error('Error checking admin access:', error);
-                showNotification('Error checking admin access', 'error');
-            });
-        });
+        const user = auth.currentUser;
+        
+        if (!user) {
+            showNotification('Please log in to access admin panel', 'error');
+            return;
+        }
+        
+        // Define admin emails
+        const adminEmails = [
+            'admin@centraltradehub.com',
+            'owner@centraltradehub.com'
+        ];
+        
+        if (adminEmails.includes(user.email)) {
+            // User is authorized
+            window.location.href = 'admin.html';
+        } else {
+            // User is not authorized
+            showNotification('Access denied. Admin privileges required.', 'error');
+        }
+    }).catch(error => {
+        console.error('Error checking admin access:', error);
+        showNotification('Error checking admin access', 'error');
     });
 }
 
