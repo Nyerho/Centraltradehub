@@ -26,11 +26,83 @@
     width: 100%;
 }
 
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.chart-header h3 {
+    color: #ffffff;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.export-btn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.export-btn:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+}
+
 .chart-container {
-    height: 500px;
+    height: 400px;
     width: 100%;
     border-radius: 8px;
     overflow: hidden;
+    margin-bottom: 15px;
+}
+
+.lightweight-chart-wrapper {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.timeframe-selector {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.timeframe-btn {
+    background: rgba(42, 46, 57, 0.5);
+    color: #94a3b8;
+    border: 1px solid rgba(42, 46, 57, 0.8);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 50px;
+}
+
+.timeframe-btn:hover {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: #3b82f6;
+    color: #ffffff;
+}
+
+.timeframe-btn.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
 }
 
 /* Market News Section */
@@ -1218,6 +1290,26 @@ body {
 
 /* Responsive Design for News Section */
 @media (max-width: 768px) {
+    .chart-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+    
+    .timeframe-selector {
+        gap: 6px;
+    }
+    
+    .timeframe-btn {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        min-width: 40px;
+    }
+    
+    .chart-container {
+        height: 300px;
+    }
+    
     .market-news-section {
         padding: 16px;
         margin-top: 16px;

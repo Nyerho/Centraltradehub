@@ -9,7 +9,9 @@ class DashboardManager {
         this.portfolioChart = null;
         this.userProfileService = null;
         this.accountData = {};
-        this.currentChart = null;
+        this.lightweightChart = null;
+        this.chartSeries = null;
+        this.currentTimeframe = '1D';
         this.leaderboardTransactions = [];
         this.leaderboardInterval = null;
         this.chartSymbols = {
@@ -72,8 +74,10 @@ class DashboardManager {
         this.setupMobileMenu();
         this.initializeTradingTabs();
         this.setupAssetSelectors();
-        this.startRealTimeUpdates();
+        this.initializeLightweightChart();
+        this.setupChartControls();
         this.initializeLeaderboard();
+        this.startRealTimeUpdates();
     }
 
     async initializeAuth() {
@@ -662,3 +666,240 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Export for use in other modules
 export default DashboardManager;
+
+    initializeLightweightChart() {
+        const container = document.getElementById('lightweight-chart-container');
+        if (!container) {
+            console.error('Lightweight chart container not found');
+            return;
+        }
+
+        // Create chart with minimal dark theme configuration
+        this.lightweightChart = LightweightCharts.createChart(container, {
+            width: container.clientWidth,
+            height: 400,
+            layout: {
+                background: {
+                    type: 'solid',
+                    color: '#0f172a'
+                },
+                textColor: '#ffffff',
+                fontSize: 12,
+                fontFamily: 'Inter, sans-serif'
+            },
+            grid: {
+                vertLines: {
+                    color: 'rgba(42, 46, 57, 0.3)',
+                    style: 1,
+                    visible: true
+                },
+                horzLines: {
+                    color: 'rgba(42, 46, 57, 0.3)',
+                    style: 1,
+                    visible: true
+                }
+            },
+            crosshair: {
+                mode: LightweightCharts.CrosshairMode.Normal,
+                vertLine: {
+                    color: '#3b82f6',
+                    width: 1,
+                    style: 0
+                },
+                horzLine: {
+                    color: '#3b82f6',
+                    width: 1,
+                    style: 0
+                }
+            },
+            rightPriceScale: {
+                borderColor: 'rgba(42, 46, 57, 0.5)',
+                textColor: '#ffffff',
+                entireTextOnly: false
+            },
+            timeScale: {
+                borderColor: 'rgba(42, 46, 57, 0.5)',
+                textColor: '#ffffff',
+                timeVisible: true,
+                secondsVisible: false
+            },
+            handleScroll: {
+                mouseWheel: true,
+                pressedMouseMove: true,
+                horzTouchDrag: true,
+                vertTouchDrag: true
+            },
+            handleScale: {
+                axisPressedMouseMove: true,
+                mouseWheel: true,
+                pinch: true
+            }
+        });
+
+        // Create line series for minimal price line display
+        this.chartSeries = this.lightweightChart.addLineSeries({
+            color: '#3b82f6',
+            lineWidth: 2,
+            lineType: LightweightCharts.LineType.Simple,
+            crosshairMarkerVisible: true,
+            crosshairMarkerRadius: 4,
+            crosshairMarkerBorderColor: '#3b82f6',
+            crosshairMarkerBackgroundColor: '#3b82f6',
+            lastValueVisible: true,
+            priceLineVisible: true,
+            priceLineColor: '#3b82f6',
+            priceLineWidth: 1,
+            priceLineStyle: LightweightCharts.LineStyle.Dashed
+        });
+
+        // Load initial data
+        this.loadChartData('TVC:SPX', this.currentTimeframe);
+
+        // Auto-export screenshot after chart loads
+        setTimeout(() => {
+            this.exportChartScreenshot();
+        }, 2000);
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (this.lightweightChart && container) {
+                this.lightweightChart.applyOptions({
+                    width: container.clientWidth
+                });
+            }
+        });
+    }
+
+    setupChartControls() {
+        // Timeframe selector
+        const timeframeBtns = document.querySelectorAll('.timeframe-btn');
+        timeframeBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                timeframeBtns.forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                this.currentTimeframe = e.target.dataset.timeframe;
+                this.loadChartData(this.getCurrentSymbol(), this.currentTimeframe);
+            });
+        });
+
+        // Export button
+        const exportBtn = document.getElementById('exportChartBtn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                this.exportChartScreenshot();
+            });
+        }
+    }
+
+    getCurrentSymbol() {
+        const activeTab = document.querySelector('.tab-btn.active');
+        const category = activeTab ? activeTab.dataset.category : 'indices';
+        const firstSymbol = Object.keys(this.chartSymbols[category])[0];
+        return this.chartSymbols[category][firstSymbol] || 'TVC:SPX';
+    }
+
+    async loadChartData(symbol, timeframe) {
+        try {
+            // Generate sample data for demonstration
+            // In production, you would fetch real data from TradingView or another API
+            const sampleData = this.generateSampleData(timeframe);
+            
+            if (this.chartSeries) {
+                this.chartSeries.setData(sampleData);
+                this.lightweightChart.timeScale().fitContent();
+            }
+        } catch (error) {
+            console.error('Error loading chart data:', error);
+        }
+    }
+
+    generateSampleData(timeframe) {
+        const data = [];
+        const now = new Date();
+        let days = 30;
+        
+        switch (timeframe) {
+            case '1D': days = 1; break;
+            case '1W': days = 7; break;
+            case '1M': days = 30; break;
+            case '3M': days = 90; break;
+            case '1Y': days = 365; break;
+        }
+
+        let basePrice = 4500;
+        for (let i = days; i >= 0; i--) {
+            const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+            const time = Math.floor(date.getTime() / 1000);
+            const change = (Math.random() - 0.5) * 100;
+            basePrice += change;
+            
+            data.push({
+                time: time,
+                value: Math.max(basePrice, 1000)
+            });
+        }
+        
+        return data;
+    }
+
+    exportChartScreenshot() {
+        if (!this.lightweightChart) {
+            console.error('Chart not initialized');
+            return;
+        }
+
+        try {
+            // Create a canvas element
+            const canvas = document.createElement('canvas');
+            const container = document.getElementById('lightweight-chart-container');
+            
+            if (!container) {
+                console.error('Chart container not found');
+                return;
+            }
+
+            // Set canvas dimensions
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            const ctx = canvas.getContext('2d');
+
+            // Fill background
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Add chart title
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '16px Inter, sans-serif';
+            ctx.fillText('Market Overview - Central Trade Hub', 20, 30);
+
+            // Add timestamp
+            ctx.font = '12px Inter, sans-serif';
+            ctx.fillStyle = '#94a3b8';
+            const timestamp = new Date().toLocaleString();
+            ctx.fillText(`Exported: ${timestamp}`, 20, canvas.height - 20);
+
+            // Convert to blob and download
+            canvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `market-chart-${Date.now()}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                console.log('Chart screenshot exported successfully');
+            }, 'image/png');
+
+        } catch (error) {
+            console.error('Error exporting chart screenshot:', error);
+        }
+    }
+
+    loadTradingViewChart(category, assetName) {
+        // Update to use lightweight chart instead
+        const symbol = this.chartSymbols[category]?.[assetName] || this.chartSymbols.indices['S&P 500'];
+        this.loadChartData(symbol, this.currentTimeframe);
+        console.log(`Loading chart for ${assetName} (${symbol})`);
+    }
