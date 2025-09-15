@@ -516,10 +516,10 @@ class DashboardManager {
     
             console.log('Chart initialized successfully with Chart.js');
     
-            // Auto-export screenshot after chart loads
-            setTimeout(() => {
-                this.exportChartScreenshot();
-            }, 1000);
+            // Remove automatic chart export - user can manually export if needed
+            // setTimeout(() => {
+            //     this.exportChartScreenshot();
+            // }, 1000);
     
         } catch (error) {
             console.error('Error creating chart:', error);
