@@ -382,40 +382,15 @@
         let selectedCurrency = 'USD';
         
         window.addEventListener('load', async () => {
-            // Wait for auth manager to load
+            // Simplified auth check
             let attempts = 0;
-            while (!window.authManager && attempts < 50) {
+            while (!window.authManager && attempts < 30) {
                 await new Promise(resolve => setTimeout(resolve, 100));
                 attempts++;
             }
             
-            // Wait for Firebase auth state to be properly synchronized
-            attempts = 0;
-            while (attempts < 100) { // Increased timeout for auth state
-                // Check if Firebase auth has a current user
-                const firebaseUser = window.authManager?.firebaseAuth?.getCurrentUser();
-                if (firebaseUser || window.authManager?.isLoggedIn) {
-                    break; // User is authenticated
-                }
-                
-                // If we've waited long enough and still no auth, check one more time
-                if (attempts > 50) {
-                    // Final check - if Firebase thinks user is logged in but authManager doesn't
-                    if (firebaseUser && !window.authManager.isLoggedIn) {
-                        // Force update the auth manager state
-                        window.authManager.isLoggedIn = true;
-                        window.authManager.currentUser = firebaseUser;
-                        break;
-                    }
-                }
-                
-                await new Promise(resolve => setTimeout(resolve, 100));
-                attempts++;
-            }
-            
-            // Final authentication check
-            const firebaseUser = window.authManager?.firebaseAuth?.getCurrentUser();
-            if (!window.authManager?.isLoggedIn && !firebaseUser) {
+            // Simple authentication verification
+            if (!window.authManager?.isLoggedIn) {
                 alert('Please log in to access funding.');
                 window.location.href = 'auth.html';
                 return;
@@ -423,7 +398,7 @@
             
             // Wait for funding manager
             attempts = 0;
-            while (!window.fundingManager && attempts < 50) {
+            while (!window.fundingManager && attempts < 30) {
                 await new Promise(resolve => setTimeout(resolve, 100));
                 attempts++;
             }
@@ -587,68 +562,79 @@
         }
     </script>
     <script>
-    // Add this missing function before the closing script tag
-    async function processWithdrawal() {
-        try {
-            const amount = parseFloat(document.getElementById('withdrawal-amount').value);
-            const selectedMethodCard = document.querySelector('.method-card.selected');
-            
-            if (!selectedMethodCard) {
-                alert('Please select a withdrawal method (Bank Transfer or Cryptocurrency)');
-                return;
-            }
-            
-            if (!amount || amount < 50) {
-                alert('Minimum withdrawal amount is $50');
-                return;
-            }
-            
-            const method = selectedMethodCard.dataset.method;
-            
-            // Show loading state
-            const submitBtn = event.target;
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Processing...';
-            submitBtn.disabled = true;
-            
-            // Create withdrawal request
-            const withdrawalRequest = {
-                id: 'WD-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
-                method: method,
-                amount: amount,
-                currency: 'USD',
-                status: 'pending',
-                timestamp: new Date().toISOString(),
-                user: window.authManager?.getCurrentUser()?.email
-            };
-            
-            // Add to transaction history
-            if (window.fundingManager) {
-                window.fundingManager.transactions.push(withdrawalRequest);
-            }
-            
-            // Show success message
-            showSuccessMessage(`Withdrawal request of $${amount} submitted successfully! Processing time: ${method === 'bank' ? '1-3 business days' : '30 minutes'}`);
-            
-            // Reset form
-            document.getElementById('withdrawal-amount').value = '';
-            document.querySelectorAll('.method-card').forEach(card => card.classList.remove('selected'));
-            
-            // Update transaction history
-            loadTransactionHistory();
-            
-        } catch (error) {
-            console.error('Withdrawal processing error:', error);
-            alert('Error processing withdrawal: ' + error.message);
-        } finally {
-            // Reset button state
-            const submitBtn = event.target;
-            if (submitBtn) {
-                submitBtn.textContent = 'Request Withdrawal';
-                submitBtn.disabled = false;
+        async function processWithdrawal() {
+            try {
+                const amount = parseFloat(document.getElementById('withdrawal-amount').value);
+                const selectedMethodCard = document.querySelector('.method-card.selected');
+                
+                if (!selectedMethodCard) {
+                    alert('Please select a withdrawal method (Bank Transfer or Cryptocurrency)');
+                    return;
+                }
+                
+                if (!amount || amount < 50) {
+                    alert('Minimum withdrawal amount is $50');
+                    return;
+                }
+                
+                // Check authentication before processing
+                if (!window.authManager?.isLoggedIn) {
+                    alert('Please refresh the page and try again.');
+                    return;
+                }
+                
+                const method = selectedMethodCard.dataset.method;
+                
+                // Show loading state
+                const submitBtn = event.target;
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = 'Processing...';
+                submitBtn.disabled = true;
+                
+                // Create withdrawal request
+                const withdrawalRequest = {
+                    id: 'WD-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+                    method: method,
+                    amount: amount,
+                    currency: 'USD',
+                    status: 'pending',
+                    timestamp: new Date().toISOString(),
+                    user: window.authManager?.getCurrentUser()?.email
+                };
+                
+                // Add to transaction history
+                if (window.fundingManager) {
+                    window.fundingManager.transactions.push(withdrawalRequest);
+                }
+                
+                // Show success message
+                showSuccessMessage(`Withdrawal request of $${amount} submitted successfully! Processing time: ${method === 'bank' ? '1-3 business days' : '30 minutes'}`);
+                
+                // Reset form
+                document.getElementById('withdrawal-amount').value = '';
+                document.querySelectorAll('.method-card').forEach(card => card.classList.remove('selected'));
+                
+                // Update transaction history
+                loadTransactionHistory();
+                
+            } catch (error) {
+                console.error('Withdrawal processing error:', error);
+                
+                // Handle authentication errors specifically
+                if (error.message.includes('auth') || error.status === 401) {
+                    alert('Authentication issue. Please refresh the page and try again.');
+                } else {
+                    alert('Error processing withdrawal: ' + error.message);
+                }
+            } finally {
+                // Reset button state
+                const submitBtn = event.target;
+                if (submitBtn) {
+                    submitBtn.textContent = 'Request Withdrawal';
+                    submitBtn.disabled = false;
+                }
             }
         }
-    }
     </script>
 </body>
 </html>

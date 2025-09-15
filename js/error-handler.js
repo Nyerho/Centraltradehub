@@ -643,11 +643,23 @@ class ErrorHandler {
     }
 
     handleAuthError(error, context) {
+        // Check if we're on the funding page
+        const isFundingPage = window.location.pathname.includes('funding.html');
+        
+        if (isFundingPage) {
+            // Don't redirect during funding operations
+            this.showUserNotification(
+                'Authentication issue detected. Please try again.',
+                'warning'
+            );
+            return { retry: true };
+        }
+        
+        // Original behavior for other pages
         this.showUserNotification(
             'Authentication failed. Please log in again.',
             'error'
         );
-        // Redirect to login or refresh token
         setTimeout(() => {
             window.location.href = '/login';
         }, 2000);
