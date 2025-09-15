@@ -982,6 +982,33 @@ body {
     }
 }
 
+/* Responsive Design for News Section */
+@media (max-width: 768px) {
+    .news-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .news-controls {
+        justify-content: space-between;
+    }
+    
+    .news-item-header {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .news-source {
+        align-self: flex-start;
+    }
+    
+    .news-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+}
+
 /* Improved Mobile Navigation */
 @media (max-width: 768px) {
     .nav-right {

@@ -329,6 +329,40 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Market News Section -->
+            <div class="market-news-section">
+                <div class="news-header">
+                    <h3>Market News</h3>
+                    <div class="news-controls">
+                        <button class="refresh-news-btn" id="refreshNewsBtn">
+                            <i class="fas fa-sync-alt"></i>
+                            Refresh
+                        </button>
+                        <div class="news-filter">
+                            <select id="newsTopicFilter">
+                                <option value="general">General</option>
+                                <option value="forex">Forex</option>
+                                <option value="crypto">Crypto</option>
+                                <option value="earnings">Earnings</option>
+                                <option value="ipo">IPO</option>
+                                <option value="mergers_and_acquisitions">M&A</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="news-loading" id="newsLoading" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <span>Loading latest market news...</span>
+                </div>
+                <div class="news-list" id="marketNewsList">
+                    <!-- Market news items will be populated here -->
+                </div>
+                <div class="news-error" id="newsError" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Unable to load market news. Please try again later.</span>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -398,6 +432,7 @@
     <script type="module" src="js/firebase-database.js"></script>
     <script type="module" src="js/crypto-service.js"></script>
     <script type="module" src="js/wallet-service.js"></script>
+    <script type="module" src="js/market-news.js"></script>
     <script type="module" src="js/dashboard.js"></script>
     
     <!-- Inline Scripts -->
