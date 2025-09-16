@@ -564,8 +564,98 @@ class AdminDashboard {
         }
     }
 
-    initializeCharts() {
-        // Trading Activity Chart
+    async initializeCharts() {
+        try {
+            // Get real trading data from Firebase
+            const tradesSnapshot = await getDocs(collection(this.db, 'trades'));
+            const monthlyData = this.processTradesForChart(tradesSnapshot);
+            
+            // Trading Activity Chart
+            const tradingCtx = document.getElementById('tradingChart');
+            if (tradingCtx) {
+                this.charts.trading = new Chart(tradingCtx, {
+                    type: 'line',
+                    data: {
+                        labels: monthlyData.labels,
+                        datasets: [{
+                            label: 'Trading Volume ($)',
+                            data: monthlyData.values,
+                            borderColor: '#00d4ff',
+                            backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#ffffff'
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    color: '#ffffff'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            },
+                            y: {
+                                ticks: {
+                                    color: '#ffffff'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Analytics Mini Charts
+            await this.createMiniCharts();
+        } catch (error) {
+            console.error('Error initializing charts:', error);
+            // Fallback to empty charts if Firebase data fails
+            this.initializeEmptyCharts();
+        }
+    }
+
+    processTradesForChart(tradesSnapshot) {
+        const monthlyTotals = {};
+        const currentDate = new Date();
+        
+        // Initialize last 6 months
+        for (let i = 5; i >= 0; i--) {
+            const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+            const monthKey = date.toLocaleDateString('en-US', { month: 'short' });
+            monthlyTotals[monthKey] = 0;
+        }
+        
+        // Process trades data
+        tradesSnapshot.forEach(doc => {
+            const trade = doc.data();
+            if (trade.timestamp && trade.amount) {
+                const tradeDate = trade.timestamp.toDate();
+                const monthKey = tradeDate.toLocaleDateString('en-US', { month: 'short' });
+                if (monthlyTotals.hasOwnProperty(monthKey)) {
+                    monthlyTotals[monthKey] += parseFloat(trade.amount) || 0;
+                }
+            }
+        });
+        
+        return {
+            labels: Object.keys(monthlyTotals),
+            values: Object.values(monthlyTotals)
+        };
+    }
+
+    initializeEmptyCharts() {
         const tradingCtx = document.getElementById('tradingChart');
         if (tradingCtx) {
             this.charts.trading = new Chart(tradingCtx, {
@@ -573,8 +663,8 @@ class AdminDashboard {
                 data: {
                     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
                     datasets: [{
-                        label: 'Trading Volume ($M)',
-                        data: [1.2, 1.9, 2.3, 2.1, 2.8, 2.4],
+                        label: 'Trading Volume ($)',
+                        data: [0, 0, 0, 0, 0, 0],
                         borderColor: '#00d4ff',
                         backgroundColor: 'rgba(0, 212, 255, 0.1)',
                         tension: 0.4,
@@ -611,12 +701,93 @@ class AdminDashboard {
                 }
             });
         }
-
-        // Analytics Mini Charts
         this.createMiniCharts();
     }
 
-    createMiniCharts() {
+    async createMiniCharts() {
+        try {
+            const miniCharts = document.querySelectorAll('.chart-mini');
+            const analyticsData = await this.getAnalyticsData();
+            
+            miniCharts.forEach((chart, index) => {
+                const canvas = document.createElement('canvas');
+                canvas.width = 100;
+                canvas.height = 50;
+                chart.appendChild(canvas);
+
+                const ctx = canvas.getContext('2d');
+                const data = analyticsData[index] || [0, 0, 0, 0, 0, 0];
+                
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['', '', '', '', '', ''],
+                        datasets: [{
+                            data: data,
+                            borderColor: ['#00d4ff', '#00ff88', '#ff6b6b'][index] || '#00d4ff',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            x: { display: false },
+                            y: { display: false }
+                        }
+                    }
+                });
+            });
+        } catch (error) {
+            console.error('Error creating mini charts:', error);
+            // Fallback to empty mini charts
+            this.createEmptyMiniCharts();
+        }
+    }
+
+    async getAnalyticsData() {
+        try {
+            const usersSnapshot = await getDocs(collection(this.db, 'users'));
+            const tradesSnapshot = await getDocs(collection(this.db, 'trades'));
+            const activitiesSnapshot = await getDocs(collection(this.db, 'activities'));
+            
+            // Process data for last 6 periods
+            const userData = this.processTimeSeriesData(usersSnapshot, 'createdAt');
+            const tradeData = this.processTimeSeriesData(tradesSnapshot, 'timestamp');
+            const activityData = this.processTimeSeriesData(activitiesSnapshot, 'timestamp');
+            
+            return [userData, tradeData, activityData];
+        } catch (error) {
+            console.error('Error getting analytics data:', error);
+            return [[0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]];
+        }
+    }
+
+    processTimeSeriesData(snapshot, timestampField) {
+        const data = [0, 0, 0, 0, 0, 0];
+        const now = new Date();
+        
+        snapshot.forEach(doc => {
+            const item = doc.data();
+            if (item[timestampField]) {
+                const itemDate = item[timestampField].toDate();
+                const daysDiff = Math.floor((now - itemDate) / (1000 * 60 * 60 * 24));
+                const index = Math.floor(daysDiff / 30); // Group by months
+                if (index >= 0 && index < 6) {
+                    data[5 - index]++; // Reverse order for chronological display
+                }
+            }
+        });
+        
+        return data;
+    }
+
+    createEmptyMiniCharts() {
         const miniCharts = document.querySelectorAll('.chart-mini');
         miniCharts.forEach((chart, index) => {
             const canvas = document.createElement('canvas');
@@ -625,14 +796,13 @@ class AdminDashboard {
             chart.appendChild(canvas);
 
             const ctx = canvas.getContext('2d');
-            const data = this.generateMiniChartData();
             
             new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: ['', '', '', '', '', ''],
                     datasets: [{
-                        data: data,
+                        data: [0, 0, 0, 0, 0, 0],
                         borderColor: ['#00d4ff', '#00ff88', '#ff6b6b'][index] || '#00d4ff',
                         backgroundColor: 'transparent',
                         borderWidth: 2,
@@ -652,10 +822,6 @@ class AdminDashboard {
                 }
             });
         });
-    }
-
-    generateMiniChartData() {
-        return Array.from({ length: 6 }, () => Math.floor(Math.random() * 100) + 20);
     }
 
     setupRealTimeUpdates() {
@@ -763,194 +929,3 @@ if (document.readyState === 'loading') {
 }
 
 export default AdminDashboard;
-
-
-initializeChatSystem() {
-    // Listen to all conversations
-    this.conversationListener = this.chatService.listenToConversations((conversations) => {
-        this.updateConversationsList(conversations);
-    });
-    
-    // Bind chat events
-    document.getElementById('sendAdminMessage').addEventListener('click', () => {
-        this.sendAdminMessage();
-    });
-    
-    document.getElementById('adminMessageInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            this.sendAdminMessage();
-        }
-    });
-    
-    document.getElementById('markResolvedBtn').addEventListener('click', () => {
-        this.markConversationResolved();
-    });
-}
-
-updateConversationsList(conversations) {
-    const conversationsList = document.getElementById('conversationsList');
-    const totalConversations = document.getElementById('totalConversations');
-    const unreadConversations = document.getElementById('unreadConversations');
-    
-    conversationsList.innerHTML = '';
-    
-    let unreadCount = 0;
-    
-    conversations.forEach(conversation => {
-        if (conversation.unreadByAdmin > 0) {
-            unreadCount++;
-        }
-        const element = this.createConversationElement(conversation);
-        conversationsList.appendChild(element);
-    });
-    
-    totalConversations.textContent = conversations.length;
-    unreadConversations.textContent = unreadCount;
-}
-
-createConversationElement(conversation) {
-    const element = document.createElement('div');
-    element.className = `conversation-item ${conversation.unreadByAdmin > 0 ? 'unread' : ''}`;
-    element.dataset.conversationId = conversation.id;
-    
-    const lastMessageTime = conversation.lastMessageTime ? 
-        conversation.lastMessageTime.toDate().toLocaleString() : 'No messages';
-    
-    element.innerHTML = `
-        <div class="conversation-avatar">
-            <i class="fas fa-user"></i>
-        </div>
-        <div class="conversation-info">
-            <div class="conversation-header">
-                <span class="user-email">${conversation.userEmail}</span>
-                ${conversation.unreadByAdmin > 0 ? '<span class="unread-badge"></span>' : ''}
-            </div>
-            <div class="last-message">${conversation.lastMessage || 'No messages yet'}</div>
-            <div class="conversation-time">${lastMessageTime}</div>
-        </div>
-    `;
-    
-    element.addEventListener('click', () => {
-        this.selectConversation(conversation);
-    });
-    
-    return element;
-}
-
-async selectConversation(conversation) {
-    // Update UI
-    document.querySelectorAll('.conversation-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    
-    const selectedElement = document.querySelector(`[data-conversation-id="${conversation.id}"]`);
-    if (selectedElement) {
-        selectedElement.classList.add('active');
-    }
-    
-    // Update chat header
-    const chatHeader = document.getElementById('chatHeader');
-    chatHeader.innerHTML = `
-        <div class="user-info">
-            <i class="fas fa-user"></i>
-            <span>${conversation.userEmail}</span>
-        </div>
-        <div class="chat-actions">
-            <button class="btn-icon" id="markResolvedBtn" title="Mark as Resolved">
-                <i class="fas fa-check"></i>
-            </button>
-        </div>
-    `;
-    
-    // Show chat input
-    document.getElementById('adminChatInput').style.display = 'block';
-    
-    // Stop previous message listener
-    if (this.messageListener) {
-        this.messageListener();
-    }
-    
-    // Start listening to messages
-    this.currentConversation = conversation;
-    this.messageListener = this.chatService.listenToMessages(
-        conversation.id,
-        (messages) => {
-            this.displayAdminMessages(messages);
-        }
-    );
-    
-    // Mark as read
-    await this.chatService.markMessagesAsRead(conversation.id, 'admin');
-}
-
-displayAdminMessages(messages) {
-    const messagesContainer = document.getElementById('adminChatMessages');
-    messagesContainer.innerHTML = '';
-    
-    messages.forEach(message => {
-        const messageElement = this.createAdminMessageElement(message);
-        messagesContainer.appendChild(messageElement);
-    });
-    
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
-
-createAdminMessageElement(message) {
-    const element = document.createElement('div');
-    element.className = `admin-message ${message.senderType}`;
-    
-    const timestamp = message.timestamp ? 
-        message.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 
-        'Now';
-    
-    element.innerHTML = `
-        <div class="message-avatar ${message.senderType}">
-            ${message.senderType === 'user' ? '<i class="fas fa-user"></i>' : 
-              message.senderType === 'admin' ? '<i class="fas fa-user-tie"></i>' : 
-              '<i class="fas fa-robot"></i>'}
-        </div>
-        <div class="message-content">
-            ${message.senderType === 'admin' ? `<div class="sender-name">${message.senderName}</div>` : ''}
-            <div class="message-text">${message.text}</div>
-            <div class="message-time">${timestamp}</div>
-        </div>
-    `;
-    
-    return element;
-}
-
-async sendAdminMessage() {
-    const input = document.getElementById('adminMessageInput');
-    const message = input.value.trim();
-    
-    if (!message || !this.currentConversation) return;
-    
-    try {
-        const currentUser = this.auth.currentUser;
-        await this.chatService.sendMessage(
-            this.currentConversation.id,
-            message,
-            'admin',
-            currentUser.uid,
-            currentUser.displayName || 'Admin'
-        );
-        
-        input.value = '';
-    } catch (error) {
-        console.error('Error sending admin message:', error);
-        this.showNotification('Failed to send message', 'error');
-    }
-}
-
-async markConversationResolved() {
-    if (!this.currentConversation) return;
-    
-    try {
-        // You can implement conversation status updates here
-        this.showNotification('Conversation marked as resolved', 'success');
-    } catch (error) {
-        console.error('Error marking conversation as resolved:', error);
-        this.showNotification('Failed to mark conversation as resolved', 'error');
-    }
-}
