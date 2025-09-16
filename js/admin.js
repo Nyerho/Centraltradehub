@@ -804,9 +804,8 @@ updateConversationsList(conversations) {
         if (conversation.unreadByAdmin > 0) {
             unreadCount++;
         }
-        
-        const conversationElement = this.createConversationElement(conversation);
-        conversationsList.appendChild(conversationElement);
+        const element = this.createConversationElement(conversation);
+        conversationsList.appendChild(element);
     });
     
     totalConversations.textContent = conversations.length;
