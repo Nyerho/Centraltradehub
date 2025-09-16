@@ -369,9 +369,16 @@
 .form-error {
     display: block;
     color: #e74c3c;
-    font-size: 0.8rem;
+    font-size: 0.875rem;
     margin-top: 0.25rem;
-    min-height: 1rem;
+    min-height: 1.2em;
+}
+
+.form-success {
+    color: #27ae60;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: block;
 }
 
 .form-options {

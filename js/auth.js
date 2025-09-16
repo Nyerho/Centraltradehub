@@ -415,6 +415,7 @@ async function handleForgotPassword(e) {
     
     const email = document.getElementById('resetEmail').value.trim();
     const resetEmailError = document.getElementById('resetEmailError');
+    const submitBtn = e.target.querySelector('button[type="submit"]');
     
     // Clear previous errors
     resetEmailError.textContent = '';
@@ -424,37 +425,45 @@ async function handleForgotPassword(e) {
         return;
     }
     
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        resetEmailError.textContent = 'Please enter a valid email address';
+        return;
+    }
+    
+    // Show loading state
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+    
     try {
-        // Import Firebase auth functions
-        const { sendPasswordResetEmail } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
-        const { auth } = await import('./firebase-config.js');
+        // Use the FirebaseAuthService instead of direct Firebase calls
+        const { default: authService } = await import('./firebase-auth.js');
+        const result = await authService.resetPassword(email);
         
-        await sendPasswordResetEmail(auth, email, {
-            url: window.location.origin + '/auth.html',
-            handleCodeInApp: false
-        });
-        
-        alert('Password reset email sent! Check your inbox.');
-        closeForgotPassword();
+        if (result.success) {
+            // Show success message
+            resetEmailError.style.color = 'green';
+            resetEmailError.textContent = 'Password reset email sent! Check your inbox.';
+            
+            // Close modal after 2 seconds
+            setTimeout(() => {
+                closeForgotPassword();
+                resetEmailError.textContent = '';
+                resetEmailError.style.color = '';
+            }, 2000);
+        } else {
+            resetEmailError.textContent = result.message || 'Failed to send reset email. Please try again.';
+        }
         
     } catch (error) {
         console.error('Password reset error:', error);
-        
-        let errorMessage = 'An error occurred. Please try again.';
-        
-        switch (error.code) {
-            case 'auth/user-not-found':
-                errorMessage = 'No account found with this email address';
-                break;
-            case 'auth/invalid-email':
-                errorMessage = 'Invalid email address';
-                break;
-            case 'auth/too-many-requests':
-                errorMessage = 'Too many requests. Please try again later';
-                break;
-        }
-        
-        resetEmailError.textContent = errorMessage;
+        resetEmailError.textContent = 'Network error. Please check your connection and try again.';
+    } finally {
+        // Reset button state
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
     }
 }
 

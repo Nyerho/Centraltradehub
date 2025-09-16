@@ -107,12 +107,16 @@ class FirebaseAuthService {
   // Reset password
   async resetPassword(email) {
     try {
-      await sendPasswordResetEmail(auth, email);
+      await sendPasswordResetEmail(auth, email, {
+        url: window.location.origin + '/auth.html',
+        handleCodeInApp: false
+      });
       return {
         success: true,
-        message: 'Password reset email sent'
+        message: 'Password reset email sent successfully'
       };
     } catch (error) {
+      console.error('Firebase reset password error:', error);
       return {
         success: false,
         error: error.code,
@@ -245,17 +249,21 @@ class FirebaseAuthService {
   // Get error message
   getErrorMessage(errorCode) {
     const errorMessages = {
-      'auth/user-not-found': 'No user found with this email address.',
+      'auth/user-not-found': 'No account found with this email address.',
       'auth/wrong-password': 'Incorrect password.',
       'auth/email-already-in-use': 'An account with this email already exists.',
       'auth/weak-password': 'Password should be at least 6 characters.',
-      'auth/invalid-email': 'Invalid email address.',
-      'auth/too-many-requests': 'Too many failed attempts. Please try again later.',
-      'auth/network-request-failed': 'Network error. Please check your connection.',
-      'auth/requires-recent-login': 'Please sign in again to complete this action.'
+      'auth/invalid-email': 'Please enter a valid email address.',
+      'auth/too-many-requests': 'Too many requests. Please wait a few minutes before trying again.',
+      'auth/network-request-failed': 'Network error. Please check your internet connection.',
+      'auth/requires-recent-login': 'Please sign in again to complete this action.',
+      'auth/invalid-action-code': 'The reset link is invalid or has expired.',
+      'auth/expired-action-code': 'The reset link has expired. Please request a new one.',
+      'auth/missing-email': 'Please enter your email address.',
+      'auth/operation-not-allowed': 'Password reset is not enabled. Please contact support.'
     };
 
-    return errorMessages[errorCode] || 'An unexpected error occurred.';
+    return errorMessages[errorCode] || 'An unexpected error occurred. Please try again later.';
   }
 }
 

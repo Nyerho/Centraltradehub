@@ -1,16 +1,70 @@
 // AI Support Chat System
+import ChatService from './chat-service.js';
+import { auth } from './firebase-config.js';
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
 class AISupportChat {
     constructor() {
         this.isOpen = false;
         this.messages = [];
         this.isTyping = false;
+        this.chatService = new ChatService();
+        this.currentUser = null;
+        this.conversationId = null;
+        this.messageListener = null;
         this.init();
     }
 
     init() {
         this.createChatElements();
         this.bindEvents();
+        this.setupAuthListener();
         this.addWelcomeMessage();
+    }
+
+    setupAuthListener() {
+        onAuthStateChanged(auth, (user) => {
+            this.currentUser = user;
+            if (user && this.conversationId) {
+                this.setupMessageListener();
+            }
+        });
+    }
+
+    async setupMessageListener() {
+        if (!this.currentUser || !this.conversationId) return;
+        
+        // Stop existing listener
+        if (this.messageListener) {
+            this.messageListener();
+        }
+        
+        // Start new listener
+        this.messageListener = this.chatService.listenToMessages(
+            this.conversationId,
+            (messages) => {
+                this.displayMessages(messages);
+            }
+        );
+    }
+
+    displayMessages(messages) {
+        const messagesContainer = document.getElementById('chatMessages');
+        // Clear existing messages except welcome message
+        const welcomeMsg = messagesContainer.querySelector('.welcome-message');
+        messagesContainer.innerHTML = '';
+        if (welcomeMsg) {
+            messagesContainer.appendChild(welcomeMsg);
+        }
+        
+        messages.forEach(message => {
+            this.addMessageToUI(message.text, message.senderType, message.senderName, message.timestamp);
+        });
+        
+        // Mark messages as read
+        if (this.conversationId) {
+            this.chatService.markMessagesAsRead(this.conversationId, 'user');
+        }
     }
 
     createChatElements() {
@@ -172,38 +226,87 @@ class AISupportChat {
         
         if (!messageText) return;
         
-        // Add user message
-        this.addMessage(messageText, 'user');
-        
         // Clear input
         if (!message) {
             chatInput.value = '';
             this.autoResize(chatInput);
         }
         
-        // Show typing indicator and generate AI response
-        this.showTypingIndicator();
-        setTimeout(() => {
-            this.generateAIResponse(messageText);
-        }, 1000 + Math.random() * 2000); // Random delay for realism
+        try {
+            if (!this.currentUser) {
+                // If user not logged in, show AI response
+                this.addMessageToUI(messageText, 'user');
+                this.showTypingIndicator();
+                setTimeout(() => {
+                    this.hideTypingIndicator();
+                    const aiResponse = this.chatService.getAIResponse(messageText);
+                    this.addMessageToUI(aiResponse, 'ai');
+                }, 1500);
+                return;
+            }
+            
+            // Get or create conversation
+            if (!this.conversationId) {
+                const conversation = await this.chatService.getOrCreateConversation(
+                    this.currentUser.uid,
+                    this.currentUser.email
+                );
+                this.conversationId = conversation.id;
+                this.setupMessageListener();
+            }
+            
+            // Send message through chat service
+            await this.chatService.sendMessage(
+                this.conversationId,
+                messageText,
+                'user',
+                this.currentUser.uid,
+                this.currentUser.displayName || this.currentUser.email
+            );
+            
+        } catch (error) {
+            console.error('Error sending message:', error);
+            this.addMessageToUI('Sorry, there was an error sending your message. Please try again.', 'ai');
+        }
     }
 
-    addMessage(text, sender) {
+    addMessageToUI(text, senderType, senderName = null, timestamp = null) {
         const messagesContainer = document.getElementById('chatMessages');
         const messageElement = document.createElement('div');
-        messageElement.className = `chat-message ${sender}`;
+        messageElement.className = `chat-message ${senderType}`;
         
         const avatar = document.createElement('div');
-        avatar.className = `message-avatar ${sender}`;
-        avatar.innerHTML = sender === 'ai' ? '<i class="fas fa-robot"></i>' : '<i class="fas fa-user"></i>';
+        avatar.className = `message-avatar ${senderType}`;
+        
+        if (senderType === 'ai') {
+            avatar.innerHTML = '<i class="fas fa-robot"></i>';
+        } else if (senderType === 'admin') {
+            avatar.innerHTML = '<i class="fas fa-user-tie"></i>';
+        } else {
+            avatar.innerHTML = '<i class="fas fa-user"></i>';
+        }
         
         const content = document.createElement('div');
-        content.className = `message-content ${sender}`;
-        content.innerHTML = text;
+        content.className = `message-content ${senderType}`;
+        
+        if (senderType === 'admin' && senderName) {
+            const adminLabel = document.createElement('div');
+            adminLabel.className = 'admin-label';
+            adminLabel.textContent = `${senderName} (Support)`;
+            content.appendChild(adminLabel);
+        }
+        
+        const messageText = document.createElement('div');
+        messageText.innerHTML = text;
+        content.appendChild(messageText);
         
         const time = document.createElement('div');
         time.className = 'message-time';
-        time.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        if (timestamp && timestamp.toDate) {
+            time.textContent = timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        } else {
+            time.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
         content.appendChild(time);
         
         messageElement.appendChild(avatar);
@@ -212,7 +315,11 @@ class AISupportChat {
         
         // Scroll to bottom
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        
+    }
+
+    // Update the existing addMessage method to use addMessageToUI
+    addMessage(text, sender) {
+        this.addMessageToUI(text, sender);
         this.messages.push({ text, sender, timestamp: new Date() });
     }
 

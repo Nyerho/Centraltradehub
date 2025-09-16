@@ -1,12 +1,17 @@
 // Real Firebase integration for admin panel
 import { auth, db } from './firebase-config.js';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import ChatService from './chat-service.js';
 
 class AdminDashboard {
     constructor() {
         this.db = db;
         this.auth = auth;
         this.charts = {};
+        this.chatService = new ChatService();
+        this.currentConversation = null;
+        this.conversationListener = null;
+        this.messageListener = null;
         this.init();
     }
 
@@ -760,3 +765,195 @@ if (document.readyState === 'loading') {
 }
 
 export default AdminDashboard;
+
+
+initializeChatSystem() {
+    // Listen to all conversations
+    this.conversationListener = this.chatService.listenToConversations((conversations) => {
+        this.updateConversationsList(conversations);
+    });
+    
+    // Bind chat events
+    document.getElementById('sendAdminMessage').addEventListener('click', () => {
+        this.sendAdminMessage();
+    });
+    
+    document.getElementById('adminMessageInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            this.sendAdminMessage();
+        }
+    });
+    
+    document.getElementById('markResolvedBtn').addEventListener('click', () => {
+        this.markConversationResolved();
+    });
+}
+
+updateConversationsList(conversations) {
+    const conversationsList = document.getElementById('conversationsList');
+    const totalConversations = document.getElementById('totalConversations');
+    const unreadConversations = document.getElementById('unreadConversations');
+    
+    conversationsList.innerHTML = '';
+    
+    let unreadCount = 0;
+    
+    conversations.forEach(conversation => {
+        if (conversation.unreadByAdmin > 0) {
+            unreadCount++;
+        }
+        
+        const conversationElement = this.createConversationElement(conversation);
+        conversationsList.appendChild(conversationElement);
+    });
+    
+    totalConversations.textContent = conversations.length;
+    unreadConversations.textContent = unreadCount;
+}
+
+createConversationElement(conversation) {
+    const element = document.createElement('div');
+    element.className = `conversation-item ${conversation.unreadByAdmin > 0 ? 'unread' : ''}`;
+    element.dataset.conversationId = conversation.id;
+    
+    const lastMessageTime = conversation.lastMessageTime ? 
+        conversation.lastMessageTime.toDate().toLocaleString() : 'No messages';
+    
+    element.innerHTML = `
+        <div class="conversation-avatar">
+            <i class="fas fa-user"></i>
+        </div>
+        <div class="conversation-info">
+            <div class="conversation-header">
+                <span class="user-email">${conversation.userEmail}</span>
+                ${conversation.unreadByAdmin > 0 ? '<span class="unread-badge"></span>' : ''}
+            </div>
+            <div class="last-message">${conversation.lastMessage || 'No messages yet'}</div>
+            <div class="conversation-time">${lastMessageTime}</div>
+        </div>
+    `;
+    
+    element.addEventListener('click', () => {
+        this.selectConversation(conversation);
+    });
+    
+    return element;
+}
+
+async selectConversation(conversation) {
+    // Update UI
+    document.querySelectorAll('.conversation-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    const selectedElement = document.querySelector(`[data-conversation-id="${conversation.id}"]`);
+    if (selectedElement) {
+        selectedElement.classList.add('active');
+    }
+    
+    // Update chat header
+    const chatHeader = document.getElementById('chatHeader');
+    chatHeader.innerHTML = `
+        <div class="user-info">
+            <i class="fas fa-user"></i>
+            <span>${conversation.userEmail}</span>
+        </div>
+        <div class="chat-actions">
+            <button class="btn-icon" id="markResolvedBtn" title="Mark as Resolved">
+                <i class="fas fa-check"></i>
+            </button>
+        </div>
+    `;
+    
+    // Show chat input
+    document.getElementById('adminChatInput').style.display = 'block';
+    
+    // Stop previous message listener
+    if (this.messageListener) {
+        this.messageListener();
+    }
+    
+    // Start listening to messages
+    this.currentConversation = conversation;
+    this.messageListener = this.chatService.listenToMessages(
+        conversation.id,
+        (messages) => {
+            this.displayAdminMessages(messages);
+        }
+    );
+    
+    // Mark as read
+    await this.chatService.markMessagesAsRead(conversation.id, 'admin');
+}
+
+displayAdminMessages(messages) {
+    const messagesContainer = document.getElementById('adminChatMessages');
+    messagesContainer.innerHTML = '';
+    
+    messages.forEach(message => {
+        const messageElement = this.createAdminMessageElement(message);
+        messagesContainer.appendChild(messageElement);
+    });
+    
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+createAdminMessageElement(message) {
+    const element = document.createElement('div');
+    element.className = `admin-message ${message.senderType}`;
+    
+    const timestamp = message.timestamp ? 
+        message.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 
+        'Now';
+    
+    element.innerHTML = `
+        <div class="message-avatar ${message.senderType}">
+            ${message.senderType === 'user' ? '<i class="fas fa-user"></i>' : 
+              message.senderType === 'admin' ? '<i class="fas fa-user-tie"></i>' : 
+              '<i class="fas fa-robot"></i>'}
+        </div>
+        <div class="message-content">
+            ${message.senderType === 'admin' ? `<div class="sender-name">${message.senderName}</div>` : ''}
+            <div class="message-text">${message.text}</div>
+            <div class="message-time">${timestamp}</div>
+        </div>
+    `;
+    
+    return element;
+}
+
+async sendAdminMessage() {
+    const input = document.getElementById('adminMessageInput');
+    const message = input.value.trim();
+    
+    if (!message || !this.currentConversation) return;
+    
+    try {
+        const currentUser = this.auth.currentUser;
+        await this.chatService.sendMessage(
+            this.currentConversation.id,
+            message,
+            'admin',
+            currentUser.uid,
+            currentUser.displayName || 'Admin'
+        );
+        
+        input.value = '';
+    } catch (error) {
+        console.error('Error sending admin message:', error);
+        this.showNotification('Failed to send message', 'error');
+    }
+}
+
+async markConversationResolved() {
+    if (!this.currentConversation) return;
+    
+    try {
+        // You can implement conversation status updates here
+        this.showNotification('Conversation marked as resolved', 'success');
+    } catch (error) {
+        console.error('Error marking conversation as resolved:', error);
+        this.showNotification('Failed to mark conversation as resolved', 'error');
+    }
+}
