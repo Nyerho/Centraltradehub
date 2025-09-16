@@ -109,19 +109,29 @@ class AISupportChat {
         const chatContainer = document.getElementById('aiChatContainer');
         const chatButton = document.getElementById('aiChatButton');
         
-        // Mobile-specific fixes
+        // Enhanced mobile-specific fixes
         if (window.innerWidth <= 768) {
             // Prevent body scroll when chat is open
             document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.width = '100%';
             
-            // Force visibility
+            // Force visibility and positioning
             chatContainer.style.display = 'flex';
             chatContainer.style.visibility = 'visible';
             chatContainer.style.opacity = '1';
             chatContainer.style.pointerEvents = 'auto';
+            chatContainer.style.position = 'fixed';
+            chatContainer.style.top = '0';
+            chatContainer.style.left = '0';
+            chatContainer.style.right = '0';
+            chatContainer.style.bottom = '0';
+            chatContainer.style.width = '100vw';
+            chatContainer.style.height = '100vh';
             
-            // Ensure proper z-index
-            chatContainer.style.zIndex = '1002';
+            // Ensure highest z-index
+            chatContainer.style.zIndex = '1020';
+            chatButton.style.zIndex = '1021';
         }
         
         chatContainer.classList.add('open');
@@ -142,10 +152,12 @@ class AISupportChat {
         const chatContainer = document.getElementById('aiChatContainer');
         const chatButton = document.getElementById('aiChatButton');
         
-        // Mobile-specific fixes
+        // Enhanced mobile-specific fixes
         if (window.innerWidth <= 768) {
-            // Restore body scroll
+            // Restore body scroll and positioning
             document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.width = '';
         }
         
         chatContainer.classList.remove('open');
