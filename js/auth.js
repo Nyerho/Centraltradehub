@@ -212,12 +212,14 @@ function setupFormSubmissions() {
 }
 
 function handleLogin(e) {
-    e.preventDefault(); // Ensure this is the first line
-    e.stopPropagation(); // Add this to prevent event bubbling
+    e.preventDefault(); // Prevent default form submission
+    e.stopPropagation(); // Stop event bubbling
     
-    // Use the correct field IDs from the HTML
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
+    console.log('Login form submitted'); // Debug log
+    
+    // Get form elements
+    const email = document.getElementById('loginEmail')?.value?.trim();
+    const password = document.getElementById('loginPassword')?.value;
     
     // Validate inputs
     if (!email || !password) {
@@ -225,50 +227,53 @@ function handleLogin(e) {
         return false;
     }
     
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        showNotification('Please enter a valid email address', 'error');
+        return false;
+    }
+    
+    const submitBtn = e.target.querySelector('button[type="submit"]') || e.target.querySelector('.auth-btn');
+    const originalText = submitBtn ? submitBtn.innerHTML : '';
     
     // Show loading state
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
-    submitBtn.disabled = true;
+    if (submitBtn) {
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
+        submitBtn.disabled = true;
+    }
     
-    console.log('Attempting login with AuthManager...', { email });
+    console.log('Attempting login with:', { email }); // Debug log
     
     // Use the imported authManager directly
-    authManager.login(email, password).then(success => {
-        console.log('Login result:', success);
-        // Reset button
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-        
-        if (success) {
-            console.log('Login successful');
-            // Check admin status before redirecting
-            const user = authManager.getCurrentUser();
-            if (user) {
-                const adminEmails = [
-                    'admin@centraltradehub.com',
-                    'owner@centraltradehub.com'
-                ];
-                
-                if (adminEmails.includes(user.email)) {
-                    window.location.href = 'admin.html';
-                } else {
-                    window.location.href = 'dashboard.html';
-                }
-            } else {
-                window.location.href = 'dashboard.html';
+    authManager.login(email, password)
+        .then(success => {
+            console.log('Login result:', success);
+            
+            // Reset button state
+            if (submitBtn) {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
             }
-        }
-    }).catch(error => {
-        console.error('Login error:', error);
-        // Reset button on error
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-        showNotification('Login failed: ' + error.message, 'error');
-    });
+            
+            if (success) {
+                console.log('Login successful, redirecting...');
+                // Don't redirect here - let authManager handle it
+            }
+        })
+        .catch(error => {
+            console.error('Login error:', error);
+            
+            // Reset button state
+            if (submitBtn) {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+            
+            showNotification('Login failed: ' + (error.message || 'Please try again'), 'error');
+        });
     
-    return false; // Prevent form submission
+    return false; // Prevent any form submission
 }
 
 function handleRegister(e) {

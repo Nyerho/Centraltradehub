@@ -91,32 +91,45 @@ class AuthManager {
 
   async login(email, password) {
     try {
-      const result = await FirebaseAuthService.signIn(email, password);
-      
-      if (result.success) {
-        this.showMessage('Login successful! Redirecting...', 'success');
+        console.log('AuthManager: Starting login process for:', email);
         
-        // Check if user is admin
-        const isAdmin = await this.checkAdminStatus();
+        const result = await FirebaseAuthService.signIn(email, password);
+        console.log('AuthManager: Firebase result:', result);
         
-        setTimeout(() => {
-          if (isAdmin) {
-            window.location.href = 'admin.html';
-          } else {
-            window.location.href = 'dashboard.html';
-          }
-        }, 1500);
-        
-        return true;
-      } else {
-        this.showMessage(result.message || 'Login failed. Please try again.', 'error');
-        return false;
-      }
+        if (result.success) {
+            this.showMessage('Login successful! Redirecting...', 'success');
+            
+            // Update internal state
+            this.currentUser = result.user;
+            this.isLoggedIn = true;
+            
+            // Check if user is admin
+            const isAdmin = await this.checkAdminStatus();
+            console.log('AuthManager: Admin status:', isAdmin);
+            
+            // Redirect after a short delay
+            setTimeout(() => {
+                if (isAdmin) {
+                    console.log('Redirecting to admin panel');
+                    window.location.href = 'admin.html';
+                } else {
+                    console.log('Redirecting to dashboard');
+                    window.location.href = 'dashboard.html';
+                }
+            }, 1000); // Reduced delay
+            
+            return true;
+        } else {
+            console.error('AuthManager: Login failed:', result.message);
+            this.showMessage(result.message || 'Login failed. Please check your credentials.', 'error');
+            return false;
+        }
     } catch (error) {
-      console.error('Login error:', error);
-      this.showMessage(this.getErrorMessage(error.code), 'error');
+        console.error('AuthManager: Login error:', error);
+        this.showMessage(this.getErrorMessage(error.code) || 'Login failed. Please try again.', 'error');
+        return false;
     }
-  }
+}
 
   async register(formData) {
     try {

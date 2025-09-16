@@ -1,4 +1,4 @@
-// Firebase Configuration - Optimized
+// Firebase Configuration - Fixed
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -6,12 +6,12 @@ import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-s
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-    apiKey: process.env.FIREBASE_API_KEY || "AIzaSyBvOkBwNQI0GBYuFII-HrEh-rjMO-CW4oo",
+    apiKey: "AIzaSyBvOkBwNQI0GBYuFII-HrEh-rjMO-CW4oo",
     authDomain: "centraltradehub-30f00.firebaseapp.com",
     projectId: "centraltradehub-30f00",
     storageBucket: "centraltradehub-30f00.firebasestorage.app",
-    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "522674886045",
-    appId: process.env.FIREBASE_APP_ID || "1:522674886045:web:4f8f5e9c8e9c8e9c8e9c8e"
+    messagingSenderId: "522674886045",
+    appId: "1:522674886045:web:4f8f5e9c8e9c8e9c8e9c8e"
 };
 
 // Initialize Firebase
@@ -23,6 +23,15 @@ const storage = getStorage(app);
 // Set authentication persistence to LOCAL (survives browser restarts)
 setPersistence(auth, browserLocalPersistence).catch((error) => {
     console.error('Error setting auth persistence:', error);
+});
+
+// Add error handling for auth state changes
+auth.onAuthStateChanged((user) => {
+    if (user) {
+        console.log('User is signed in:', user.email);
+    } else {
+        console.log('User is signed out');
+    }
 });
 
 export { app, auth, db, storage };

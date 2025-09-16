@@ -27,9 +27,10 @@ class ForgotPasswordManager {
     async handleForgotPassword(e) {
         e.preventDefault();
         
-        const email = document.getElementById('email').value.trim();
-        const emailError = document.getElementById('emailError');
-        const resetBtn = document.getElementById('resetPasswordBtn');
+        // FIXED: Use correct element IDs
+        const email = document.getElementById('resetEmail').value.trim();
+        const emailError = document.getElementById('resetEmailError');
+        const resetBtn = document.getElementById('resetBtn');
         
         // Clear previous errors
         emailError.textContent = '';
@@ -107,7 +108,7 @@ class ForgotPasswordManager {
         
         try {
             await sendPasswordResetEmail(auth, email, {
-                url: window.location.origin + '/auth.html',
+                url: window.location.origin + '/reset-password.html',
                 handleCodeInApp: false
             });
             
@@ -129,8 +130,8 @@ class ForgotPasswordManager {
         const resetForm = document.getElementById('reset-form');
         const successMessage = document.getElementById('success-message');
         
-        resetForm.style.display = 'none';
-        successMessage.style.display = 'block';
+        if (resetForm) resetForm.style.display = 'none';
+        if (successMessage) successMessage.style.display = 'block';
     }
 
     isValidEmail(email) {
