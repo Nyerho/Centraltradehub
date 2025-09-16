@@ -393,6 +393,26 @@
                 attempts++;
             }
             
+            // Wait for funding manager to be available
+            let attempts = 0;
+            const maxAttempts = 50; // Wait up to 5 seconds (50 * 100ms)
+            const checkFundingManager = () => {
+                if (window.fundingManager && typeof window.fundingManager.processCryptoPayment === 'function') {
+                    console.log('Funding manager is ready');
+                    // Your existing crypto payment logic here
+                } else {
+                    attempts++;
+                    if (attempts < maxAttempts) {
+                        setTimeout(checkFundingManager, 100);
+                    } else {
+                        console.error('Funding manager failed to load after 5 seconds');
+                        // Show user-friendly error message
+                        alert('Payment system is still loading. Please try again in a moment.');
+                    }
+                }
+            };
+            checkFundingManager();
+            
             // Check actual Firebase authentication state
             const currentUser = window.authManager?.getCurrentUser();
             if (!currentUser) {
@@ -413,13 +433,6 @@
             } else {
                 // User is already authenticated
                 initializeFundingInterface();
-            }
-            
-            // Wait for funding manager
-            attempts = 0;
-            while (!window.fundingManager && attempts < 30) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                attempts++;
             }
         });
         
