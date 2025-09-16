@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fund Your Account - Central Trade Hub</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/ai-support-chat.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .funding-container {
@@ -841,6 +842,68 @@
         }
     </script>
     <script>
+        // Add the missing copyToClipboard function
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            if (!element) {
+                console.error('Element not found:', elementId);
+                return;
+            }
+            
+            const textToCopy = element.textContent || element.innerText;
+            
+            // Modern clipboard API
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    showCopySuccess();
+                }).catch(err => {
+                    console.error('Failed to copy text: ', err);
+                    fallbackCopyTextToClipboard(textToCopy);
+                });
+            } else {
+                // Fallback for older browsers
+                fallbackCopyTextToClipboard(textToCopy);
+            }
+        }
+        
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showCopySuccess();
+                } else {
+                    console.error('Fallback: Copying text command was unsuccessful');
+                }
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+            }
+            
+            document.body.removeChild(textArea);
+        }
+        
+        function showCopySuccess() {
+            const copyBtn = document.getElementById('copy-address-btn');
+            if (copyBtn) {
+                const originalText = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+                copyBtn.classList.add('success');
+                
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalText;
+                    copyBtn.classList.remove('success');
+                }, 2000);
+            }
+        }
+        
         async function processWithdrawal() {
             try {
                 const amount = parseFloat(document.getElementById('withdrawal-amount').value);
@@ -915,5 +978,6 @@
             }
         }
     </script>
+    <script src="js/ai-support-chat.js"></script>
 </body>
 </html>

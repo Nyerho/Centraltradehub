@@ -37,6 +37,7 @@
     <link rel="stylesheet" href="css/mobile-performance.css">
     <!-- Market Notifications CSS -->
     <link rel="stylesheet" href="css/market-notifications.css">
+    <link rel="stylesheet" href="css/ai-support-chat.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -1106,7 +1107,6 @@
     <script type="module" src="js/main.js"></script>
     <script src="js/performance-optimizer.js"></script>
     <script src="js/market-notifications.js"></script>
-    <script src="js/ai-support-chat.js"></script>
 
     <!-- SIMPLIFIED: Let main.js handle all auth UI updates -->
     <script>
@@ -1306,8 +1306,33 @@
     </div>
 </div>
 
+<!-- Forgot Password Modal -->
+<div id="forgotPasswordModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-key"></i> Reset Password</h2>
+            <span class="close" onclick="closeModal('forgotPasswordModal')">&times;</span>
+        </div>
+        <form id="forgotPasswordForm" class="auth-form">
+            <div class="form-group">
+                <label for="resetEmail">
+                    <i class="fas fa-envelope"></i>
+                    Email Address
+                </label>
+                <input type="email" id="resetEmail" name="email" required placeholder="Enter your email address">
+                <span class="form-error" id="resetEmailError"></span>
+            </div>
+            <button type="submit" class="btn-primary btn-full">
+                <i class="fas fa-paper-plane"></i>
+                Send Reset Link
+            </button>
+        </form>
+        <div class="modal-footer">
+            <p>Remember your password? <a href="#" onclick="closeModal('forgotPasswordModal'); openModal('loginModal');">Back to Login</a></p>
         </div>
     </div>
 </div>
+
+<script src="js/ai-support-chat.js"></script>
 </body>
 </html>
