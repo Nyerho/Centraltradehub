@@ -34,7 +34,7 @@ class FundingManager {
                 processingTime: '10-60 minutes',
                 minAmount: 25,
                 maxAmount: 100000,
-                currencies: ['BTC', 'ETH', 'LTC', 'USDC', 'USDT']
+                currencies: ['BTC', 'ETH', 'LTC', 'XRP', 'SOL', 'USDC', 'USDC-SOL', 'USDT']
             },
             wire: {
                 name: 'Bank Wire Transfer',
@@ -243,15 +243,27 @@ class FundingManager {
     async processCryptoPayment(transaction) {
         const { amount, currency } = transaction;
         
-        // Generate crypto wallet address for payment
         const walletAddress = await this.generateCryptoAddress(currency);
         
-        // Show payment instructions
+        // Use specific QR code images for each cryptocurrency
+        const qrCodeImages = {
+            'BTC': 'assets/images/btc.jpg',
+            'ETH': 'assets/images/eth.jpg',
+            'LTC': 'assets/images/ltc.jpg',
+            'XRP': 'assets/images/XRP.jpg',
+            'SOL': 'assets/images/sol.jpg',
+            'USDC': 'assets/images/usdceth.jpg', // ETH Network
+            'USDC-SOL': 'assets/images/usdcsol.jpg', // SOL Network
+            'USDT': 'assets/images/usdt.jpg'
+        };
+        
+        const qrCodeUrl = qrCodeImages[currency] || qrCodeImages['BTC'];
+        
         const instructions = {
             address: walletAddress,
             amount: amount,
             currency: currency,
-            qr_code: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${walletAddress}`,
+            qr_code: qrCodeUrl,
             network_fee: await this.estimateNetworkFee(currency),
             confirmation_time: '10-60 minutes'
         };
@@ -280,13 +292,16 @@ class FundingManager {
     }
 
     async generateCryptoAddress(currency) {
-        // In production, integrate with a crypto payment processor
+        // Generate or retrieve wallet address for the specified currency
         const addresses = {
-            'BTC': '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
-            'ETH': '0x742d35Cc6634C0532925a3b8D4C9db96590c6C87',
-            'LTC': 'LTC1qw508d6qejxtdg4y5r3zarvary0c5xw7k3w508d6qejxtdg4y5r3zarvary0c5xw7k',
-            'USDC': '0x742d35Cc6634C0532925a3b8D4C9db96590c6C87',
-            'USDT': '0x742d35Cc6634C0532925a3b8D4C9db96590c6C87'
+            'BTC': 'bc1qvke2527gzazwpgfaxu0lnq8c2mx98jfgwqdn8x',
+            'ETH': '0x0248172c922BEdAb4EE8DD01523Ef072615b06De',
+            'LTC': 'LgQsH8WPTRZCZNYi2nrFPafx8xDhYDoWhR',
+            'XRP': 'rJs4fv6FDxukHYMWpnBFvNKsAtwGUaSiCo',
+            'SOL': 'EU4Xrb7fLsqmxoWZhuXFLGMrq3Q1ivZcuJe8yoAivf17',
+            'USDC': '0x0248172c922BEdAb4EE8DD01523Ef072615b06De', // ETH Network
+            'USDC-SOL': 'EU4Xrb7fLsqmxoWZhuXFLGMrq3Q1ivZcuJe8yoAivf17', // SOL Network
+            'USDT': '0x0248172c922BEdAb4EE8DD01523Ef072615b06De'  // ETH Network
         };
         return addresses[currency] || addresses['BTC'];
     }
@@ -296,7 +311,10 @@ class FundingManager {
             'BTC': '$2-15',
             'ETH': '$5-25',
             'LTC': '$0.05-0.50',
+            'XRP': '$0.01-0.10',
+            'SOL': '$0.01-0.05',
             'USDC': '$5-25',
+            'USDC-SOL': '$0.01-0.05',
             'USDT': '$5-25'
         };
         return fees[currency] || '$5-25';
