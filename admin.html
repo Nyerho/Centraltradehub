@@ -298,12 +298,68 @@
                     <button class="btn-primary">Save Settings</button>
                 </div>
             </section>
+            
+            <!-- Support Chat Section -->
+            <section id="support-chat" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h2><i class="fas fa-comments"></i> Support Chat Management</h2>
+                    <p>Manage user conversations and provide real-time support</p>
+                </div>
+                
+                <div class="chat-management-container">
+                    <div class="conversations-panel">
+                        <div class="panel-header">
+                            <h3>Active Conversations</h3>
+                            <div class="conversation-stats">
+                                <span class="stat-item">
+                                    <i class="fas fa-comments"></i>
+                                    <span id="totalConversations">0</span> Total
+                                </span>
+                                <span class="stat-item">
+                                    <i class="fas fa-bell"></i>
+                                    <span id="unreadConversations">0</span> Unread
+                                </span>
+                            </div>
+                        </div>
+                        <div class="conversations-list" id="conversationsList">
+                            <!-- Conversations will be loaded here -->
+                        </div>
+                    </div>
+                    
+                    <div class="chat-panel">
+                        <div class="chat-header" id="chatHeader">
+                            <div class="user-info">
+                                <i class="fas fa-user"></i>
+                                <span>Select a conversation</span>
+                            </div>
+                            <div class="chat-actions">
+                                <button class="btn-icon" id="markResolvedBtn" title="Mark as Resolved">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="chat-messages" id="adminChatMessages">
+                            <div class="no-conversation">
+                                <i class="fas fa-comments"></i>
+                                <p>Select a conversation to start chatting</p>
+                            </div>
+                        </div>
+                        
+                        <div class="chat-input-container" id="adminChatInput" style="display: none;">
+                            <div class="input-wrapper">
+                                <textarea id="adminMessageInput" placeholder="Type your message..." rows="1"></textarea>
+                                <button id="sendAdminMessage" class="btn-send">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
-    <!-- Remove duplicate admin.js loading -->
-    <!-- <script src="js/admin.js"></script> -->
-    
     <!-- Firebase Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -312,7 +368,6 @@
     <script type="module" src="js/firebase-auth.js"></script>
     <script type="module" src="js/firebase-database.js"></script>
     <script type="module" src="js/auth-integration.js"></script>
-    <!-- Keep only module version -->
     <script type="module" src="js/admin.js"></script>
     <script>
         // Proper logout function that uses Firebase auth
@@ -385,66 +440,5 @@
             }
         });
     </script>
-</body>
-</html>
-
-<!-- Support Chat Section -->
-<section id="support-chat" class="admin-section" style="display: none;">
-    <div class="section-header">
-        <h2><i class="fas fa-comments"></i> Support Chat Management</h2>
-        <p>Manage user conversations and provide real-time support</p>
-    </div>
-    
-    <div class="chat-management-container">
-        <div class="conversations-panel">
-            <div class="panel-header">
-                <h3>Active Conversations</h3>
-                <div class="conversation-stats">
-                    <span class="stat-item">
-                        <i class="fas fa-comments"></i>
-                        <span id="totalConversations">0</span> Total
-                    </span>
-                    <span class="stat-item">
-                        <i class="fas fa-bell"></i>
-                        <span id="unreadConversations">0</span> Unread
-                    </span>
-                </div>
-            </div>
-            <div class="conversations-list" id="conversationsList">
-                <!-- Conversations will be loaded here -->
-            </div>
-        </div>
-        
-        <div class="chat-panel">
-            <div class="chat-header" id="chatHeader">
-                <div class="user-info">
-                    <i class="fas fa-user"></i>
-                    <span>Select a conversation</span>
-                </div>
-                <div class="chat-actions">
-                    <button class="btn-icon" id="markResolvedBtn" title="Mark as Resolved">
-                        <i class="fas fa-check"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <div class="chat-messages" id="adminChatMessages">
-                <div class="no-conversation">
-                    <i class="fas fa-comments"></i>
-                    <p>Select a conversation to start chatting</p>
-                </div>
-            </div>
-            
-            <div class="chat-input-container" id="adminChatInput" style="display: none;">
-                <div class="input-wrapper">
-                    <textarea id="adminMessageInput" placeholder="Type your message..." rows="1"></textarea>
-                    <button id="sendAdminMessage" class="btn-send">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
 </body>
 </html>

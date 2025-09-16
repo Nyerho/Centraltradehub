@@ -25,6 +25,7 @@ class AdminDashboard {
             await this.loadInitialData();
             this.initializeCharts();
             this.setupRealTimeUpdates();
+            this.initializeChatSystem(); // Add this line
             
             console.log('Admin dashboard initialized successfully');
         } catch (error) {
