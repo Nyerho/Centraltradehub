@@ -1,7 +1,7 @@
 // Dashboard functionality with real user data
 import { auth, db } from './firebase-config.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { doc, getDoc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { doc, getDoc, setDoc, onSnapshot, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 class DashboardManager {
     constructor() {
@@ -261,11 +261,29 @@ class DashboardManager {
         
         // Setup user data listener
         const userRef = doc(db, 'users', user.uid);
-        this.userDataListener = onSnapshot(userRef, (doc) => {
+        this.userDataListener = onSnapshot(userRef, async (doc) => {
             if (doc.exists()) {
                 const userData = doc.data();
                 console.log('Real-time user data update:', userData);
                 this.updateUserInterface(userData, user);
+                
+                // Sync admin balance changes to accounts collection
+                if (userData.accountBalance !== undefined && userData.balanceUpdatedAt) {
+                    const accountRef = doc(db, 'accounts', user.uid);
+                    const accountDoc = await getDoc(accountRef);
+                    
+                    if (accountDoc.exists()) {
+                        const currentAccountData = accountDoc.data();
+                        // Only update if admin balance is different
+                        if (currentAccountData.balance !== userData.accountBalance) {
+                            await updateDoc(accountRef, {
+                                balance: userData.accountBalance,
+                                lastSyncedAt: new Date().toISOString()
+                            });
+                            console.log('Synced admin balance to accounts collection');
+                        }
+                    }
+                }
                 
                 // Show notification for admin changes (optional)
                 if (userData.balanceUpdatedAt) {
@@ -303,9 +321,14 @@ class DashboardManager {
             if (accountDoc.exists()) {
                 this.accountData = accountDoc.data();
             } else {
-                // Create default account
+                // Check if user has balance from admin updates first
+                const userRef = doc(db, 'users', user.uid);
+                const userDoc = await getDoc(userRef);
+                const adminBalance = userDoc.exists() ? (userDoc.data().accountBalance || 0) : 0;
+                
+                // Create account with admin balance if available, otherwise default to 0
                 this.accountData = {
-                    balance: 0,
+                    balance: adminBalance,
                     currency: 'USD',
                     createdAt: new Date().toISOString()
                 };
