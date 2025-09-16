@@ -118,39 +118,32 @@ class AdminDashboard {
             // Get real data from Firebase
             const usersSnapshot = await getDocs(collection(this.db, 'users'));
             const tradesSnapshot = await getDocs(collection(this.db, 'trades'));
-            const settingsSnapshot = await getDocs(collection(this.db, 'settings'));
             
-            const totalUsers = usersSnapshot.size;
+            // Update stat cards with real data
+            const statCards = document.querySelectorAll('.stat-card h3');
+            if (statCards.length >= 4) {
+                statCards[0].textContent = usersSnapshot.size || '0'; // Total Users
+                statCards[1].textContent = tradesSnapshot.size || '0'; // Total Trades
+                statCards[2].textContent = '$0'; // Total Volume (calculate from trades)
+                statCards[3].textContent = '0%'; // Growth Rate
+            }
             
-            // Calculate trading volume
-            let tradingVolume = 0;
-            let activeTrades = 0;
+            // Calculate total volume from trades
+            let totalVolume = 0;
             tradesSnapshot.forEach(doc => {
                 const trade = doc.data();
                 if (trade.amount) {
-                    tradingVolume += parseFloat(trade.amount) || 0;
-                }
-                if (trade.status === 'active' || trade.status === 'pending') {
-                    activeTrades++;
+                    totalVolume += parseFloat(trade.amount) || 0;
                 }
             });
             
-            // Calculate revenue (example: 2% of trading volume)
-            const revenue = tradingVolume * 0.02;
-            
-            // Update stat cards with real data
-            this.updateStatCard(0, totalUsers.toLocaleString(), 'Total Users');
-            this.updateStatCard(1, '$' + tradingVolume.toLocaleString(), 'Trading Volume');
-            this.updateStatCard(2, activeTrades.toLocaleString(), 'Active Trades');
-            this.updateStatCard(3, '$' + revenue.toLocaleString(), 'Revenue');
+            if (statCards.length >= 3) {
+                statCards[2].textContent = `$${totalVolume.toLocaleString()}`;
+            }
             
         } catch (error) {
             console.error('Error updating dashboard stats:', error);
-            // Fallback to sample data if Firebase fails
-            this.updateStatCard(0, '1,234', 'Total Users');
-            this.updateStatCard(1, '$2,456,789', 'Trading Volume');
-            this.updateStatCard(2, '89', 'Active Trades');
-            this.updateStatCard(3, '$49,136', 'Revenue');
+            this.showNotification('Failed to load dashboard statistics', 'warning');
         }
     }
 
@@ -181,19 +174,21 @@ class AdminDashboard {
             tbody.innerHTML = '';
         
             if (usersSnapshot.empty) {
-                // Show sample data if no users exist
-                const sampleUsers = [
-                    { id: 'sample1', email: 'john.doe@example.com', displayName: 'John Doe', status: 'active', balance: 5000 },
-                    { id: 'sample2', email: 'jane.smith@example.com', displayName: 'Jane Smith', status: 'active', balance: 7500 },
-                    { id: 'sample3', email: 'mike.wilson@example.com', displayName: 'Mike Wilson', status: 'inactive', balance: 2300 }
-                ];
+                // Show empty state instead of fake data
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <div class="empty-message">
+                                <i class="fas fa-users fa-3x"></i>
+                                <h3>No Users Found</h3>
+                                <p>Your database is empty. Real users will appear here when they register.</p>
+                                <button class="btn btn-primary" onclick="window.adminDashboard.showAddUserModal()">Add Test User</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
                 
-                sampleUsers.forEach((user, index) => {
-                    const row = this.createUserRow(user.id, user, index + 1);
-                    tbody.appendChild(row);
-                });
-                
-                this.showNotification('No users found in database. Showing sample data.', 'warning');
+                this.showNotification('Database is empty. Add some users to see real data.', 'info');
             } else {
                 usersSnapshot.forEach((doc, index) => {
                     const user = doc.data();
@@ -206,24 +201,23 @@ class AdminDashboard {
         } catch (error) {
             console.error('Error loading users:', error);
             
-            // Show detailed error message
-            this.showNotification(`Failed to load users: ${error.message}. Showing sample data.`, 'error');
-            
-            // Show sample data as fallback
             const tbody = document.querySelector('#users tbody');
             if (tbody) {
-                tbody.innerHTML = '';
-                
-                const sampleUsers = [
-                    { id: 'fallback1', email: 'demo.user@example.com', displayName: 'Demo User', status: 'active', balance: 10000 },
-                    { id: 'fallback2', email: 'test.trader@example.com', displayName: 'Test Trader', status: 'active', balance: 15000 }
-                ];
-                
-                sampleUsers.forEach((user, index) => {
-                    const row = this.createUserRow(user.id, user, index + 1);
-                    tbody.appendChild(row);
-                });
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="error-state">
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-triangle fa-3x"></i>
+                                <h3>Database Connection Error</h3>
+                                <p>Error: ${error.message}</p>
+                                <button class="btn btn-secondary" onclick="window.adminDashboard.loadUsers()">Retry</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
             }
+            
+            this.showNotification(`Database error: ${error.message}`, 'error');
         }
     }
 

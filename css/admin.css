@@ -842,3 +842,37 @@ body {
     background: #ccc;
     cursor: not-allowed;
 }
+
+.empty-state, .error-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #666;
+}
+
+.empty-message, .error-message {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.empty-message i, .error-message i {
+    color: #ddd;
+    margin-bottom: 1rem;
+}
+
+.empty-message h3, .error-message h3 {
+    margin: 1rem 0 0.5rem 0;
+    color: #333;
+}
+
+.empty-message p, .error-message p {
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.error-message {
+    color: #d32f2f;
+}
+
+.error-message i {
+    color: #f44336;
+}
