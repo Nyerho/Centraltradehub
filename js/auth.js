@@ -396,64 +396,66 @@ function handleRegister(e) {
     waitForAuthManager();
 }
 
-function handleForgotPassword(e) {
-    e.preventDefault();
-    
-    const form = e.target;
-    const emailField = form.querySelector('[name="email"]');
-    
-    if (!validateField(emailField)) {
-        return;
-    }
-    
-    // Show loading state
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-    submitBtn.disabled = true;
-    
-    // Simulate API call
-    setTimeout(() => {
-        // Reset button
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-        
-        // Show success message
-        showNotification('Password reset link sent to your email!', 'success');
-        
-        // Close modal
-        closeForgotPassword();
-    }, 2000);
-}
-
-// Utility functions
-// Password visibility toggle function
-function togglePassword(inputId) {
-    const passwordInput = document.getElementById(inputId);
-    const toggleButton = passwordInput.nextElementSibling;
-    const icon = toggleButton.querySelector('i');
-    
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        icon.classList.remove('fa-eye');
-        icon.classList.add('fa-eye-slash');
-    } else {
-        passwordInput.type = 'password';
-        icon.classList.remove('fa-eye-slash');
-        icon.classList.add('fa-eye');
-    }
-}
-
-// Make togglePassword globally available
-window.togglePassword = togglePassword;
+// Update the forgot password functions
 function showForgotPassword() {
-    const modal = document.getElementById('forgotPasswordModal');
-    modal.classList.add('show');
+    // Redirect to dedicated forgot password page
+    window.location.href = 'forgot-password.html';
 }
 
 function closeForgotPassword() {
     const modal = document.getElementById('forgotPasswordModal');
-    modal.classList.remove('show');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Update the handleForgotPassword function
+async function handleForgotPassword(e) {
+    e.preventDefault();
+    
+    const email = document.getElementById('resetEmail').value.trim();
+    const resetEmailError = document.getElementById('resetEmailError');
+    
+    // Clear previous errors
+    resetEmailError.textContent = '';
+    
+    if (!email) {
+        resetEmailError.textContent = 'Please enter your email address';
+        return;
+    }
+    
+    try {
+        // Import Firebase auth functions
+        const { sendPasswordResetEmail } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+        const { auth } = await import('./firebase-config.js');
+        
+        await sendPasswordResetEmail(auth, email, {
+            url: window.location.origin + '/auth.html',
+            handleCodeInApp: false
+        });
+        
+        alert('Password reset email sent! Check your inbox.');
+        closeForgotPassword();
+        
+    } catch (error) {
+        console.error('Password reset error:', error);
+        
+        let errorMessage = 'An error occurred. Please try again.';
+        
+        switch (error.code) {
+            case 'auth/user-not-found':
+                errorMessage = 'No account found with this email address';
+                break;
+            case 'auth/invalid-email':
+                errorMessage = 'Invalid email address';
+                break;
+            case 'auth/too-many-requests':
+                errorMessage = 'Too many requests. Please try again later';
+                break;
+        }
+        
+        resetEmailError.textContent = errorMessage;
+    }
 }
 
 function showNotification(message, type = 'info') {
