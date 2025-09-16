@@ -51,7 +51,7 @@ class ForgotPasswordManager {
         
         try {
             await sendPasswordResetEmail(auth, email, {
-                url: window.location.origin + '/auth.html',
+                url: window.location.origin + '/reset-password.html',
                 handleCodeInApp: false
             });
             

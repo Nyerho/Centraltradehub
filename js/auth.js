@@ -732,3 +732,4 @@ function updateCountryCode() {
 window.showForgotPassword = showForgotPassword;
 window.closeForgotPassword = closeForgotPassword;
 window.updateCountryCode = updateCountryCode;
+window.handleForgotPassword = handleForgotPassword;
