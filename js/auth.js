@@ -728,5 +728,7 @@ function updateCountryCode() {
     }
 }
 
-// Make function globally available
+// Make functions globally accessible
+window.showForgotPassword = showForgotPassword;
+window.closeForgotPassword = closeForgotPassword;
 window.updateCountryCode = updateCountryCode;
