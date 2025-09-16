@@ -642,28 +642,20 @@ class ErrorHandler {
         }
     }
 
-    handleAuthError(error, context) {
-        // Check if we're on the funding page
-        const isFundingPage = window.location.pathname.includes('funding.html');
+    handleAuthError(error, context = '') {
+        console.error('Authentication error:', error);
         
-        if (isFundingPage) {
-            // Don't redirect during funding operations
-            this.showUserNotification(
-                'Authentication issue detected. Please try again.',
-                'warning'
-            );
-            return { retry: true };
+        // Special handling for funding page - don't redirect, just show warning
+        if (window.location.pathname.includes('funding.html')) {
+            this.showNotification('Please ensure you are logged in to access funding features', 'warning');
+            return;
         }
         
-        // Original behavior for other pages
-        this.showUserNotification(
-            'Authentication failed. Please log in again.',
-            'error'
-        );
+        // For other pages, redirect to login after showing error
+        this.showNotification('Session expired. Redirecting to login...', 'error');
         setTimeout(() => {
-            window.location.href = '/login';
+            window.location.href = 'login';
         }, 2000);
-        return { retry: false };
     }
 
     handleApiResponseError(error, context) {
