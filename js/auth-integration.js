@@ -83,10 +83,11 @@ class AuthManager {
   initializeFirebaseAuth() {
     // Fix: Use addAuthStateListener instead of onAuthStateChanged
     FirebaseAuthService.addAuthStateListener((user) => {
-      this.currentUser = user;
-      this.updateUI();
+        this.currentUser = user;
+        this.isLoggedIn = !!user; // Properly sync isLoggedIn with auth state
+        this.updateUI();
     });
-  }
+}
 
   async login(email, password) {
     try {
