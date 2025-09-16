@@ -19,15 +19,6 @@
     justify-content: center;
 }
 
-.ai-chat-button:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 25px rgba(79, 70, 229, 0.6);
-}
-
-.ai-chat-button.active {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-}
-
 /* Chat Container */
 .ai-chat-container {
     position: fixed;
@@ -312,26 +303,90 @@
     border-color: #4f46e5;
 }
 
-/* Mobile Responsive */
+/* Enhanced Mobile Responsive Solution */
 @media (max-width: 768px) {
-    .ai-chat-container {
-        width: 100vw;
-        right: -100vw;
-        top: 70px; /* Position below dashboard header */
-        height: calc(100vh - 70px); /* Adjust height to account for header */
+    /* Root CSS variables for different page header heights */
+    :root {
+        --header-height: 70px; /* Default for dashboard, platform, admin */
+        --mobile-header-height: 60px; /* Smaller mobile headers */
     }
     
+    /* Main pages with 70px headers (dashboard, platform, admin) */
+    body:not(.landing-page) .ai-chat-container {
+        width: 100vw;
+        right: -100vw;
+        top: var(--header-height);
+        height: calc(100vh - var(--header-height));
+    }
+    
+    /* Landing page and auth pages with different header heights */
+    .landing-page .ai-chat-container,
+    body[class*="auth"] .ai-chat-container {
+        top: var(--mobile-header-height);
+        height: calc(100vh - var(--mobile-header-height));
+    }
+    
+    /* Enhanced button positioning */
     .ai-chat-button {
         bottom: 15px;
         right: 15px;
         width: 50px;
         height: 50px;
         font-size: 20px;
-        z-index: 1001; /* Ensure button stays above navbar */
+        z-index: 1001; /* Above all headers */
     }
     
+    /* Optimized message content for mobile */
     .message-content {
         max-width: 240px;
+    }
+    
+    /* Improved mobile chat header */
+    .ai-chat-header {
+        padding: 15px;
+        min-height: 60px;
+    }
+    
+    /* Better mobile input area */
+    .ai-chat-input {
+        padding: 15px;
+    }
+    
+    .chat-input {
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+}
+
+/* Specific page adjustments */
+@media (max-width: 768px) {
+    /* Dashboard page - 70px header */
+    .dashboard-page .ai-chat-container {
+        top: 70px;
+        height: calc(100vh - 70px);
+    }
+    
+    /* Platform page - 70px header */
+    .platform-page .ai-chat-container {
+        top: 70px;
+        height: calc(100vh - 70px);
+    }
+    
+    /* Admin page - standard header */
+    .admin-page .ai-chat-container {
+        top: 70px;
+        height: calc(100vh - 70px);
+    }
+    
+    /* Landing page - smaller header */
+    .landing-page .ai-chat-container {
+        top: 60px;
+        height: calc(100vh - 60px);
+    }
+    
+    /* Auth pages - minimal header */
+    .auth-page .ai-chat-container {
+        top: 50px;
+        height: calc(100vh - 50px);
     }
 }
 
