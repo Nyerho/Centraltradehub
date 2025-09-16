@@ -289,10 +289,14 @@
                     <span>Network Fee:</span>
                     <span id="crypto-fee"></span>
                 </div>
-                <div class="qr-code">
-                    <img id="crypto-qr" src="" alt="QR Code" style="max-width: 200px;">
+                <div class="instruction-row">
+                    <span>QR Code:</span>
+                    <img id="crypto-qr" src="" alt="Payment QR Code" style="max-width: 200px; height: auto; border: 1px solid #ddd; border-radius: 8px;">
                 </div>
-                <p><strong>Important:</strong> Send the exact amount to the address above. Funds will be credited after network confirmations.</p>
+                <div class="instruction-note">
+                    <p><strong>Important:</strong> Send the exact amount to the address above. Include network fees in your transaction.</p>
+                    <p>Funds will be credited after network confirmations (typically 10-60 minutes).</p>
+                </div>
             </div>
             <button id="crypto-generate" class="btn-fund">Generate Payment Address</button>
         </div>
@@ -386,7 +390,6 @@
         let selectedCurrency = 'USD';
         
         window.addEventListener('load', async () => {
-            // Wait for auth manager
             let attempts = 0;
             while (!window.authManager && attempts < 30) {
                 await new Promise(resolve => setTimeout(resolve, 100));
@@ -394,19 +397,19 @@
             }
             
             // Wait for funding manager to be available
-            let attempts = 0;
+            let fundingAttempts = 0; // Changed variable name to avoid conflict
             const maxAttempts = 50; // Wait up to 5 seconds (50 * 100ms)
             const checkFundingManager = () => {
                 if (window.fundingManager && typeof window.fundingManager.processCryptoPayment === 'function') {
                     console.log('Funding manager is ready');
-                    // Your existing crypto payment logic here
+                    // Initialize funding interface once manager is ready
+                    initializeFundingInterface();
                 } else {
-                    attempts++;
-                    if (attempts < maxAttempts) {
+                    fundingAttempts++; // Use the renamed variable
+                    if (fundingAttempts < maxAttempts) {
                         setTimeout(checkFundingManager, 100);
                     } else {
                         console.error('Funding manager failed to load after 5 seconds');
-                        // Show user-friendly error message
                         alert('Payment system is still loading. Please try again in a moment.');
                     }
                 }
@@ -436,7 +439,13 @@
             }
         });
         
+        let selectedMethod = null;
+        let selectedAmount = 0;
+        let selectedCurrency = 'USD';
+        
         function initializeFundingInterface() {
+            console.log('Initializing funding interface...');
+            
             // Method selection
             document.querySelectorAll('.method-card').forEach(card => {
                 card.addEventListener('click', () => {
@@ -519,19 +528,31 @@
                 
                 try {
                     const cryptoCurrency = document.getElementById('crypto-currency').value;
-                    const instructions = await window.fundingManager.processCryptoPayment({
+                    
+                    // Validate the currency is supported
+                    if (!window.fundingManager.supportedMethods.crypto.currencies.includes(cryptoCurrency)) {
+                        alert(`${cryptoCurrency} is not supported`);
+                        return;
+                    }
+                    
+                    // Create transaction object
+                    const transaction = {
                         amount: selectedAmount,
-                        currency: cryptoCurrency
-                    });
+                        currency: cryptoCurrency,
+                        method: 'crypto'
+                    };
+                    
+                    const instructions = await window.fundingManager.processCryptoPayment(transaction);
                     
                     // Show instructions
-                    document.getElementById('crypto-amount').textContent = `${selectedAmount} ${cryptoCurrency}`;
+                    document.getElementById('crypto-amount').textContent = `${selectedAmount} USD = ${instructions.amount} ${cryptoCurrency}`;
                     document.getElementById('crypto-address').textContent = instructions.address;
                     document.getElementById('crypto-fee').textContent = instructions.network_fee;
                     document.getElementById('crypto-qr').src = instructions.qr_code;
                     document.getElementById('crypto-instructions').style.display = 'block';
                     
                 } catch (error) {
+                    console.error('Crypto payment error:', error);
                     alert('Error generating crypto payment: ' + error.message);
                 }
             });
