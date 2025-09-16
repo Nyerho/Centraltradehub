@@ -27,9 +27,9 @@ class ForgotPasswordManager {
     async handleForgotPassword(e) {
         e.preventDefault();
         
-        const email = document.getElementById('resetEmail').value.trim();
-        const resetBtn = document.getElementById('resetBtn');
-        const emailError = document.getElementById('resetEmailError');
+        const email = document.getElementById('email').value.trim();
+        const emailError = document.getElementById('emailError');
+        const resetBtn = document.getElementById('resetPasswordBtn');
         
         // Clear previous errors
         emailError.textContent = '';
@@ -51,7 +51,7 @@ class ForgotPasswordManager {
         
         try {
             await sendPasswordResetEmail(auth, email, {
-                url: window.location.origin + '/reset-password.html',
+                url: `${window.location.origin}/reset-password.html`,
                 handleCodeInApp: false
             });
             
@@ -78,6 +78,9 @@ class ForgotPasswordManager {
                     break;
                 case 'auth/network-request-failed':
                     errorMessage = 'Network error. Please check your connection';
+                    break;
+                case 'auth/unauthorized-continue-uri':
+                    errorMessage = 'Password reset temporarily unavailable. Please contact support.';
                     break;
             }
             

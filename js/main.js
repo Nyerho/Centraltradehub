@@ -505,22 +505,25 @@ function updateNavigationForAuthState(user) {
     const dashboardBtn = document.getElementById('dashboardBtn');
     const userMenu = document.querySelector('.user-menu');
     const userName = document.querySelector('.user-name');
+    const logoutBtn = document.querySelector('.btn-logout');
     
     if (user) {
-        // User is logged in
+        // User is logged in - show authenticated UI
         if (loginBtn) loginBtn.style.display = 'none';
         if (getStartedBtn) getStartedBtn.style.display = 'none';
         if (dashboardBtn) dashboardBtn.style.display = 'inline-block';
         if (userMenu) userMenu.style.display = 'flex';
+        if (logoutBtn) logoutBtn.style.display = 'inline-block';
         if (userName) {
             userName.textContent = user.displayName || user.email.split('@')[0];
         }
     } else {
-        // User is not logged in
+        // User is not logged in - show guest UI
         if (loginBtn) loginBtn.style.display = 'inline-block';
         if (getStartedBtn) getStartedBtn.style.display = 'inline-block';
         if (dashboardBtn) dashboardBtn.style.display = 'none';
         if (userMenu) userMenu.style.display = 'none';
+        if (logoutBtn) logoutBtn.style.display = 'none';
     }
 }
 
