@@ -1,3 +1,6 @@
+/* Import AI Support Chat Styles */
+@import url('ai-support-chat.css');
+
 /* Authentic TradetrendPro Base Styles */
 :root {
     --tradetrendpro-primary: #007bff;

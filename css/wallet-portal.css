@@ -145,9 +145,29 @@
 
 .wallet-info p {
     color: #8b9dc3;
-    font-size: 0.9rem;
+    font-size: 0.875rem;
+    margin: 0;
 }
 
+.download-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: #4f46e5;
+    text-decoration: none;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    transition: color 0.2s ease;
+}
+
+.download-link:hover {
+    color: #6366f1;
+    text-decoration: underline;
+}
+
+.download-link i {
+    font-size: 0.7rem;
+}
 /* Forms */
 .wallet-form,
 .git-form {

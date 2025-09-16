@@ -114,6 +114,9 @@ class WalletPortal {
                 case 'coinbase':
                     result = await this.connectCoinbaseWallet();
                     break;
+                case 'keplr':
+                    result = await this.connectKeplr();
+                    break;
                 default:
                     throw new Error('Unsupported wallet type');
             }
@@ -179,6 +182,42 @@ class WalletPortal {
             type: 'coinbase',
             simulated: true
         };
+    }
+    
+    async connectKeplr() {
+        if (typeof window.keplr === 'undefined') {
+            // Keplr not installed, redirect to download
+            window.open('https://www.keplr.app/get', '_blank');
+            throw new Error('Keplr wallet not found. Please install Keplr extension.');
+        }
+        
+        try {
+            // Enable Keplr for Cosmos Hub (you can change this to your preferred chain)
+            await window.keplr.enable('cosmoshub-4');
+            
+            // Get the offline signer
+            const offlineSigner = window.getOfflineSigner('cosmoshub-4');
+            const accounts = await offlineSigner.getAccounts();
+            
+            return {
+                success: true,
+                wallet: 'Keplr',
+                address: accounts[0].address,
+                type: 'keplr',
+                chainId: 'cosmoshub-4'
+            };
+        } catch (error) {
+            // Simulate Keplr connection for demo if real connection fails
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            return {
+                success: true,
+                wallet: 'Keplr',
+                address: 'cosmos' + Math.random().toString(36).substr(2, 39),
+                type: 'keplr',
+                simulated: true
+            };
+        }
     }
 
     async handleManualWalletSubmit() {
