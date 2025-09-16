@@ -388,8 +388,11 @@
         let selectedMethod = null;
         let selectedAmount = 0;
         let selectedCurrency = 'USD';
+        let interfaceInitialized = false; // Prevent multiple initializations
         
         window.addEventListener('load', async () => {
+            console.log('Page loaded, starting initialization...');
+            
             let attempts = 0;
             while (!window.authManager && attempts < 30) {
                 await new Promise(resolve => setTimeout(resolve, 100));
@@ -397,15 +400,15 @@
             }
             
             // Wait for funding manager to be available
-            let fundingAttempts = 0; // Changed variable name to avoid conflict
+            let fundingAttempts = 0;
             const maxAttempts = 50; // Wait up to 5 seconds (50 * 100ms)
             const checkFundingManager = () => {
                 if (window.fundingManager && typeof window.fundingManager.processCryptoPayment === 'function') {
                     console.log('Funding manager is ready');
-                    // Initialize funding interface once manager is ready
-                    initializeFundingInterface();
+                    // Check authentication and initialize once
+                    checkAuthAndInitialize();
                 } else {
-                    fundingAttempts++; // Use the renamed variable
+                    fundingAttempts++;
                     if (fundingAttempts < maxAttempts) {
                         setTimeout(checkFundingManager, 100);
                     } else {
@@ -415,10 +418,18 @@
                 }
             };
             checkFundingManager();
+        });
+        
+        async function checkAuthAndInitialize() {
+            if (interfaceInitialized) {
+                console.log('Interface already initialized, skipping...');
+                return;
+            }
             
             // Check actual Firebase authentication state
             const currentUser = window.authManager?.getCurrentUser();
             if (!currentUser) {
+                console.log('No current user, waiting for auth state...');
                 // Wait for Firebase auth state to be restored
                 const { auth } = await import('./js/firebase-config.js');
                 const { onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
@@ -430,28 +441,45 @@
                         return;
                     } else {
                         // User is authenticated, initialize funding interface
-                        initializeFundingInterface();
+                        if (!interfaceInitialized) {
+                            initializeFundingInterface();
+                        }
                     }
                 });
             } else {
                 // User is already authenticated
+                console.log('User already authenticated, initializing interface...');
                 initializeFundingInterface();
             }
-        });
-        
-        let selectedMethod = null;
-        let selectedAmount = 0;
-        let selectedCurrency = 'USD';
+        }
         
         function initializeFundingInterface() {
+            if (interfaceInitialized) {
+                console.log('Interface already initialized');
+                return;
+            }
+            
             console.log('Initializing funding interface...');
+            interfaceInitialized = true;
             
             // Method selection
-            document.querySelectorAll('.method-card').forEach(card => {
-                card.addEventListener('click', () => {
+            const methodCards = document.querySelectorAll('.method-card');
+            console.log('Found method cards:', methodCards.length);
+            
+            methodCards.forEach((card, index) => {
+                console.log(`Setting up card ${index}:`, card.dataset.method);
+                card.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    console.log('Method card clicked:', card.dataset.method);
+                    
+                    // Remove selected class from all cards
                     document.querySelectorAll('.method-card').forEach(c => c.classList.remove('selected'));
+                    
+                    // Add selected class to clicked card
                     card.classList.add('selected');
                     selectedMethod = card.dataset.method;
+                    
+                    console.log('Selected method:', selectedMethod);
                     
                     // Also handle withdrawal method selection
                     const withdrawalSection = card.closest('.withdrawal-section');
@@ -466,29 +494,60 @@
             });
             
             // Quick amount selection
-            document.querySelectorAll('.quick-amount').forEach(btn => {
-                btn.addEventListener('click', () => {
+            const quickAmountBtns = document.querySelectorAll('.quick-amount');
+            console.log('Found quick amount buttons:', quickAmountBtns.length);
+            
+            quickAmountBtns.forEach((btn, index) => {
+                console.log(`Setting up amount button ${index}:`, btn.dataset.amount);
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
                     const amount = btn.dataset.amount;
-                    document.getElementById('funding-amount').value = amount;
-                    selectedAmount = parseFloat(amount);
+                    console.log('Quick amount clicked:', amount);
+                    
+                    // Remove selected class from all amount buttons
+                    document.querySelectorAll('.quick-amount').forEach(b => b.classList.remove('selected'));
+                    
+                    // Add selected class to clicked button
+                    btn.classList.add('selected');
+                    
+                    // Update amount input and variable
+                    const amountInput = document.getElementById('funding-amount');
+                    if (amountInput) {
+                        amountInput.value = amount;
+                        selectedAmount = parseFloat(amount);
+                        console.log('Selected amount:', selectedAmount);
+                    }
                 });
             });
             
             // Amount input
-            document.getElementById('funding-amount').addEventListener('input', (e) => {
-                selectedAmount = parseFloat(e.target.value) || 0;
-            });
+            const amountInput = document.getElementById('funding-amount');
+            if (amountInput) {
+                amountInput.addEventListener('input', (e) => {
+                    selectedAmount = parseFloat(e.target.value) || 0;
+                    console.log('Amount input changed:', selectedAmount);
+                    
+                    // Remove selected class from quick amount buttons when typing
+                    document.querySelectorAll('.quick-amount').forEach(b => b.classList.remove('selected'));
+                });
+            }
             
             // Currency selection
-            document.getElementById('currency').addEventListener('change', (e) => {
-                selectedCurrency = e.target.value;
-            });
+            const currencySelect = document.getElementById('currency');
+            if (currencySelect) {
+                currencySelect.addEventListener('change', (e) => {
+                    selectedCurrency = e.target.value;
+                    console.log('Currency changed:', selectedCurrency);
+                });
+            }
             
             // Payment form handlers
             setupPaymentHandlers();
             
             // Load transaction history
             loadTransactionHistory();
+            
+            console.log('Funding interface initialization complete');
         }
         
         function showPaymentForm(method) {

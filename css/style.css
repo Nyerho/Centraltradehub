@@ -1,5 +1,38 @@
 @import url('connection-status.css');
 
+/* Method Cards and Amount Buttons */
+.method-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    user-select: none;
+}
+
+.method-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.method-card.selected {
+    border-color: #00d4ff;
+    background-color: rgba(0, 212, 255, 0.1);
+}
+
+.quick-amount {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    user-select: none;
+}
+
+.quick-amount:hover {
+    background-color: #00d4ff;
+    color: white;
+}
+
+.quick-amount.selected {
+    background-color: #00d4ff;
+    color: white;
+}
+
 /* Reset and Base Styles */
 * {
     margin: 0;
