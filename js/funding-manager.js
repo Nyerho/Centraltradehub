@@ -214,31 +214,33 @@ class FundingManager {
         }
     }
 
-    return new Promise((resolve, reject) => {
-        paypal.Buttons({
-            createOrder: (data, actions) => {
-                return actions.order.create({
-                    purchase_units: [{
-                        amount: {
-                            value: amount.toString(),
-                            currency_code: currency
-                        }
-                    }]
-                });
-            },
-            onApprove: async (data, actions) => {
-                const order = await actions.order.capture();
-                resolve({
-                    order_id: order.id,
-                    status: order.status,
-                    payer: order.payer
-                });
-            },
-            onError: (err) => {
-                reject(new Error('PayPal payment failed: ' + err));
-            }
-        }).render('#paypal-button-container');
-    });
+    async createPayPalButtons(amount, currency) {
+        return new Promise((resolve, reject) => {
+            paypal.Buttons({
+                createOrder: (data, actions) => {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: {
+                                value: amount.toString(),
+                                currency_code: currency
+                            }
+                        }]
+                    });
+                },
+                onApprove: async (data, actions) => {
+                    const order = await actions.order.capture();
+                    resolve({
+                        order_id: order.id,
+                        status: order.status,
+                        payer: order.payer
+                    });
+                },
+                onError: (err) => {
+                    reject(new Error('PayPal payment failed: ' + err));
+                }
+            }).render('#paypal-button-container');
+        });
+    }
 
     async processCryptoPayment(transaction) {
         const { amount, currency } = transaction;
