@@ -5,7 +5,7 @@ import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
 
-// Your web app's Firebase configuration - Updated with correct values
+// Your web app's Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyAwnWoLfrEc1EtXWCD0by5L0VtCmYf8Unw",
     authDomain: "centraltradehub-30f00.firebaseapp.com",
@@ -32,7 +32,6 @@ setPersistence(auth, browserLocalPersistence).catch((error) => {
 console.log('Firebase initialized successfully');
 console.log('Auth domain:', firebaseConfig.authDomain);
 console.log('Project ID:', firebaseConfig.projectId);
-console.log('API Key (first 10 chars):', firebaseConfig.apiKey.substring(0, 10) + '...');
 
 // Add error handling for auth state changes
 auth.onAuthStateChanged((user) => {
@@ -41,6 +40,8 @@ auth.onAuthStateChanged((user) => {
     } else {
         console.log('User is signed out');
     }
+}, (error) => {
+    console.error('Auth state change error:', error);
 });
 
 export { app, auth, db, storage, analytics };

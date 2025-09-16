@@ -787,3 +787,25 @@ async function handleEmailVerification() {
 
 // Call on page load
 document.addEventListener('DOMContentLoaded', handleEmailVerification);
+
+// Password visibility toggle function
+function togglePassword(inputId) {
+    const passwordInput = document.getElementById(inputId);
+    const toggleButton = passwordInput.parentElement.querySelector('.password-toggle');
+    const toggleIcon = toggleButton.querySelector('i');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.classList.remove('fa-eye');
+        toggleIcon.classList.add('fa-eye-slash');
+        toggleButton.setAttribute('aria-label', 'Hide password');
+    } else {
+        passwordInput.type = 'password';
+        toggleIcon.classList.remove('fa-eye-slash');
+        toggleIcon.classList.add('fa-eye');
+        toggleButton.setAttribute('aria-label', 'Show password');
+    }
+}
+
+// Make function globally accessible
+window.togglePassword = togglePassword;
