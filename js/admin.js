@@ -1,14 +1,16 @@
 // Real Firebase integration for admin panel
 import { auth, db } from './firebase-config.js';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import ChatService from './chat-service.js';
+// Remove ChatService import
+// import ChatService from './chat-service.js';
 
 class AdminDashboard {
     constructor() {
         this.db = db;
         this.auth = auth;
         this.charts = {};
-        this.chatService = new ChatService();
+        // Remove chat service
+        // this.chatService = new ChatService();
         this.currentConversation = null;
         this.conversationListener = null;
         this.messageListener = null;
@@ -25,7 +27,8 @@ class AdminDashboard {
             await this.loadInitialData();
             this.initializeCharts();
             this.setupRealTimeUpdates();
-            this.initializeChatSystem(); // Add this line
+            // Remove chat initialization
+            // this.initializeChatSystem();
             
             console.log('Admin dashboard initialized successfully');
         } catch (error) {
