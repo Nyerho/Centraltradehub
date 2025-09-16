@@ -109,6 +109,21 @@ class AISupportChat {
         const chatContainer = document.getElementById('aiChatContainer');
         const chatButton = document.getElementById('aiChatButton');
         
+        // Mobile-specific fixes
+        if (window.innerWidth <= 768) {
+            // Prevent body scroll when chat is open
+            document.body.style.overflow = 'hidden';
+            
+            // Force visibility
+            chatContainer.style.display = 'flex';
+            chatContainer.style.visibility = 'visible';
+            chatContainer.style.opacity = '1';
+            chatContainer.style.pointerEvents = 'auto';
+            
+            // Ensure proper z-index
+            chatContainer.style.zIndex = '1002';
+        }
+        
         chatContainer.classList.add('open');
         chatButton.classList.add('active');
         chatButton.innerHTML = '<i class="fas fa-times"></i>';
@@ -116,13 +131,22 @@ class AISupportChat {
         
         // Focus on input
         setTimeout(() => {
-            document.getElementById('chatInput').focus();
+            const chatInput = document.getElementById('chatInput');
+            if (chatInput) {
+                chatInput.focus();
+            }
         }, 300);
     }
 
     closeChat() {
         const chatContainer = document.getElementById('aiChatContainer');
         const chatButton = document.getElementById('aiChatButton');
+        
+        // Mobile-specific fixes
+        if (window.innerWidth <= 768) {
+            // Restore body scroll
+            document.body.style.overflow = '';
+        }
         
         chatContainer.classList.remove('open');
         chatButton.classList.remove('active');

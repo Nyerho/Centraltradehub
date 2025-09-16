@@ -303,57 +303,91 @@
     border-color: #4f46e5;
 }
 
-/* Enhanced Mobile Responsive Solution */
+/* Mobile Responsive */
 @media (max-width: 768px) {
-    /* Root CSS variables for different page header heights */
-    :root {
-        --header-height: 70px; /* Default for dashboard, platform, admin */
-        --mobile-header-height: 60px; /* Smaller mobile headers */
-    }
-    
-    /* Main pages with 70px headers (dashboard, platform, admin) */
-    body:not(.landing-page) .ai-chat-container {
+    .ai-chat-container {
         width: 100vw;
         right: -100vw;
-        top: var(--header-height);
-        height: calc(100vh - var(--header-height));
+        top: 0; /* Changed from 70px to 0 */
+        height: 100vh; /* Full height instead of calc */
+        z-index: 1002; /* Higher than sidebar z-index */
+        background: rgba(26, 26, 46, 0.98);
+        backdrop-filter: blur(10px);
     }
     
-    /* Landing page and auth pages with different header heights */
-    .landing-page .ai-chat-container,
-    body[class*="auth"] .ai-chat-container {
-        top: var(--mobile-header-height);
-        height: calc(100vh - var(--mobile-header-height));
+    .ai-chat-container.open {
+        right: 0;
+        transform: translateX(0); /* Ensure proper positioning */
     }
     
-    /* Enhanced button positioning */
     .ai-chat-button {
         bottom: 15px;
         right: 15px;
         width: 50px;
         height: 50px;
         font-size: 20px;
-        z-index: 1001; /* Above all headers */
+        z-index: 1003; /* Higher than container */
+        position: fixed;
+        display: flex !important; /* Force display */
+        visibility: visible !important; /* Force visibility */
     }
     
-    /* Optimized message content for mobile */
+    .ai-chat-header {
+        padding: 20px;
+        padding-top: 80px; /* Add space for mobile status bar */
+        border-bottom: 1px solid rgba(42, 46, 57, 0.5);
+        background: rgba(79, 70, 229, 0.1);
+    }
+    
     .message-content {
         max-width: 240px;
     }
     
-    /* Improved mobile chat header */
-    .ai-chat-header {
-        padding: 15px;
-        min-height: 60px;
+    /* Ensure chat is above all mobile elements */
+    .ai-chat-container {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: auto !important;
+        transform: translateX(-100%) !important;
+        transition: transform 0.3s ease !important;
     }
     
-    /* Better mobile input area */
-    .ai-chat-input {
-        padding: 15px;
+    .ai-chat-container.open {
+        transform: translateX(0) !important;
+    }
+}
+
+/* Additional mobile fixes */
+@media (max-width: 480px) {
+    .ai-chat-container {
+        z-index: 1004; /* Even higher for small screens */
     }
     
-    .chat-input {
-        font-size: 16px; /* Prevents zoom on iOS */
+    .ai-chat-button {
+        z-index: 1005;
+        bottom: 20px;
+        right: 20px;
+    }
+}
+
+/* Force visibility on touch devices */
+@media (hover: none) and (pointer: coarse) {
+    .ai-chat-button {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+    
+    .ai-chat-container {
+        display: flex !important;
+        visibility: visible !important;
+    }
+    
+    .ai-chat-container.open {
+        opacity: 1 !important;
+        pointer-events: auto !important;
     }
 }
 
@@ -387,6 +421,18 @@
     .auth-page .ai-chat-container {
         top: 50px;
         height: calc(100vh - 50px);
+    }
+    
+    /* Funding page - standard header */
+    .funding-page .ai-chat-container {
+        top: 0;
+        height: 100vh;
+    }
+    
+    .funding-page .ai-chat-button {
+        bottom: 20px;
+        right: 20px;
+        z-index: 1003;
     }
 }
 
