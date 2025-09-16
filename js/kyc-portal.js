@@ -411,7 +411,7 @@ window.closeVerificationModal = () => {
 
 window.openSupportChat = () => {
     // Implement support chat functionality
-    alert('Support chat would open here. Please contact support@centraltradehub.com for assistance.');
+    alert('Support chat would open here. Please contact support@centraltradekeplr.com for assistance.');
 };
 
 window.removeFile = (inputId, previewId, areaId) => {

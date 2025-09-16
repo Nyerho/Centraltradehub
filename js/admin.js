@@ -551,7 +551,7 @@ class AdminDashboard {
                         const inputs = form.querySelectorAll('input, textarea');
                         if (inputs[0]) inputs[0].value = settings.siteName || 'Central Trade Hub';
                         if (inputs[1]) inputs[1].value = settings.siteDescription || 'Advanced Trading Platform for Professional Traders';
-                        if (inputs[2]) inputs[2].value = settings.contactEmail || 'admin@centraltradehub.com';
+                        if (inputs[2]) inputs[2].value = settings.contactEmail || 'support@centraltradekeplr.com';
                         if (inputs[3]) inputs[3].checked = settings.maintenanceMode || false;
                     }
                 }

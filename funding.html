@@ -158,8 +158,172 @@
         .instruction-row {
             display: flex;
             justify-content: space-between;
+            align-items: flex-start;
             padding: 8px 0;
             border-bottom: 1px solid #333;
+            gap: 10px;
+        }
+        
+        .instruction-row > span:first-child {
+            flex-shrink: 0;
+            min-width: 80px;
+            font-weight: bold;
+        }
+        
+        .instruction-row > span:last-child,
+        .instruction-row > div {
+            flex: 1;
+            word-break: break-all;
+            overflow-wrap: break-word;
+        }
+        
+        #crypto-address {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            background: #333;
+            padding: 8px;
+            border-radius: 4px;
+            word-break: break-all;
+            overflow-wrap: break-word;
+            max-width: 100%;
+            display: block;
+        }
+        
+        .copy-btn {
+            background: #00d4ff;
+            color: #000;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            margin-left: 10px;
+        }
+        
+        .copy-btn:hover {
+            background: #0099cc;
+            transform: scale(1.05);
+        }
+        
+        .copy-btn.success {
+            background: #28a745;
+            color: white;
+        }
+        
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .funding-container {
+                padding: 15px;
+                margin: 0;
+                max-width: 100%;
+                width: 100%;
+            }
+            
+            .funding-methods {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .method-card {
+                padding: 20px;
+            }
+            
+            .amount-section,
+            .payment-form,
+            .transaction-history {
+                padding: 20px;
+                margin: 20px 0;
+            }
+            
+            .amount-input {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            
+            .amount-input input,
+            .amount-input select {
+                width: 100%;
+                box-sizing: border-box;
+            }
+            
+            .quick-amounts {
+                justify-content: center;
+            }
+            
+            .instruction-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 5px;
+            }
+            
+            .instruction-row > span:first-child {
+                min-width: auto;
+                margin-bottom: 5px;
+            }
+            
+            .instruction-row > div {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .instruction-row > div[style*="flex"] {
+                flex-direction: row;
+                align-items: center;
+            }
+            
+            #crypto-address {
+                font-size: 12px;
+                padding: 10px;
+                margin-right: 0;
+                width: 100%;
+                box-sizing: border-box;
+            }
+            
+            .copy-btn {
+                margin-left: 0;
+                margin-top: 10px;
+                align-self: flex-start;
+            }
+            
+            #crypto-qr {
+                max-width: 150px;
+                margin: 10px auto;
+                display: block;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .funding-container {
+                padding: 10px;
+            }
+            
+            .method-card {
+                padding: 15px;
+            }
+            
+            .amount-section,
+            .payment-form,
+            .transaction-history {
+                padding: 15px;
+            }
+            
+            .quick-amount {
+                padding: 6px 12px;
+                font-size: 14px;
+            }
+            
+            #crypto-address {
+                font-size: 11px;
+                padding: 8px;
+            }
+            
+            .copy-btn {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
         }
     </style>
 </head>

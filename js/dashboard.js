@@ -259,7 +259,16 @@ class DashboardManager {
             this.accountDataListener();
         }
         
-        // Setup user data listener
+        // Add debounce mechanism
+        let updateTimeout;
+        const debounceUpdate = () => {
+            clearTimeout(updateTimeout);
+            updateTimeout = setTimeout(() => {
+                this.updateAccountSummary();
+            }, 100); // 100ms debounce
+        };
+        
+        // Setup user data listener (primary - admin updates)
         const userRef = doc(db, 'users', user.uid);
         this.userDataListener = onSnapshot(userRef, async (doc) => {
             if (doc.exists()) {
@@ -278,9 +287,20 @@ class DashboardManager {
                         if (currentAccountData.balance !== userData.accountBalance) {
                             await updateDoc(accountRef, {
                                 balance: userData.accountBalance,
-                                lastSyncedAt: new Date().toISOString()
+                                lastSyncedAt: new Date().toISOString(),
+                                adminUpdated: true // Flag to indicate admin update
                             });
+                            
+                            // Update local data immediately to prevent twitching
+                            this.accountData = {
+                                ...this.accountData,
+                                balance: userData.accountBalance,
+                                lastSyncedAt: new Date().toISOString(),
+                                adminUpdated: true
+                            };
+                            
                             console.log('Synced admin balance to accounts collection');
+                            debounceUpdate();
                         }
                     }
                 }
@@ -299,14 +319,42 @@ class DashboardManager {
             console.error('Error in user data listener:', error);
         });
         
-        // Setup account data listener (fallback)
+        // Setup account data listener (secondary - only for non-admin updates)
         const accountRef = doc(db, 'accounts', user.uid);
-        this.accountDataListener = onSnapshot(accountRef, (doc) => {
+        this.accountDataListener = onSnapshot(accountRef, async (doc) => {
             if (doc.exists()) {
                 const accountData = doc.data();
                 console.log('Real-time account data update:', accountData);
-                this.accountData = accountData;
-                this.updateAccountSummary();
+                
+                // Check if this is an admin update by looking at timestamp
+                const userRef = doc(db, 'users', user.uid);
+                const userDoc = await getDoc(userRef);
+                
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    const adminUpdateTime = userData.balanceUpdatedAt ? new Date(userData.balanceUpdatedAt) : null;
+                    const accountUpdateTime = accountData.lastSyncedAt ? new Date(accountData.lastSyncedAt) : null;
+                    
+                    // Only update if this isn't a recent admin update
+                    const isRecentAdminUpdate = adminUpdateTime && accountUpdateTime && 
+                        Math.abs(adminUpdateTime - accountUpdateTime) < 2000; // 2 second tolerance
+                    
+                    if (!isRecentAdminUpdate && !accountData.adminUpdated) {
+                        this.accountData = accountData;
+                        debounceUpdate();
+                    } else if (accountData.adminUpdated) {
+                        // Clear the admin flag after processing
+                        await updateDoc(accountRef, {
+                            adminUpdated: false
+                        });
+                        this.accountData = accountData;
+                        debounceUpdate();
+                    }
+                } else {
+                    // No user data, safe to update
+                    this.accountData = accountData;
+                    debounceUpdate();
+                }
             }
         }, (error) => {
             console.error('Error in account data listener:', error);
