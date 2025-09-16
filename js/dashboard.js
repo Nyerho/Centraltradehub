@@ -1,7 +1,7 @@
 // Dashboard functionality with real user data
 import { auth, db } from './firebase-config.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { doc, getDoc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 class DashboardManager {
     constructor() {
@@ -16,6 +16,10 @@ class DashboardManager {
         this.currentAsset = 'S&P 500';
         this.leaderboardTransactions = [];
         this.leaderboardInterval = null;
+        // Add real-time listener references
+        this.userDataListener = null;
+        this.accountDataListener = null;
+        this.currentUser = null;
         this.chartSymbols = {
             indices: {
                 'S&P 500': 'TVC:SPX',
@@ -98,21 +102,17 @@ class DashboardManager {
     }
 
     async initializeAuth() {
-        const timeout = setTimeout(() => {
-            console.error('Authentication timeout');
-            this.handleAuthError();
-        }, 10000);
-    
         onAuthStateChanged(auth, async (user) => {
-            clearTimeout(timeout);
             if (user) {
                 console.log('User authenticated:', user.email);
-                // Load detailed user data from Firestore
+                this.currentUser = user;
                 await this.loadUserData(user);
                 await this.loadAccountData(user);
+                // Setup real-time listeners after initial load
+                this.setupRealTimeListeners(user);
             } else {
-                console.log('User not authenticated, redirecting...');
-                window.location.href = 'auth.html';
+                console.log('User not authenticated');
+                this.handleAuthError();
             }
         });
     }
@@ -185,43 +185,7 @@ class DashboardManager {
             
             if (userDoc.exists()) {
                 const userData = userDoc.data();
-                
-                // Update user email
-                const userEmailElement = document.getElementById('userEmail');
-                if (userEmailElement) {
-                    userEmailElement.textContent = user.email || 'No email';
-                } else {
-                    console.warn('userEmail element not found');
-                }
-                
-                // Update user name in header
-                const userNameElement = document.getElementById('dashboard-user-name');
-                // Update user name in trading interface
-                const tradingUserNameElement = document.getElementById('trading-user-name');
-                
-                const displayName = userData.firstName && userData.lastName 
-                    ? `${userData.firstName} ${userData.lastName}`
-                    : userData.displayName || user.displayName || 'User';
-                
-                if (userNameElement) {
-                    userNameElement.textContent = displayName;
-                } else {
-                    console.warn('dashboard-user-name element not found');
-                }
-                
-                // Fix: Update trading interface user name
-                if (tradingUserNameElement) {
-                    tradingUserNameElement.textContent = displayName;
-                } else {
-                    console.warn('trading interface user-name element not found');
-                }
-                
-                // Fix: Update avatar initial based on user's name
-                const avatarInitialElement = document.querySelector('.avatar-initial');
-                if (avatarInitialElement) {
-                    const nameForInitial = displayName || user.email || 'User';
-                    avatarInitialElement.textContent = nameForInitial.charAt(0).toUpperCase();
-                }
+                this.updateUserInterface(userData, user);
                 
                 // Load KYC status
                 await this.loadUserKYCStatus(user);
@@ -233,29 +197,102 @@ class DashboardManager {
                     email: user.email,
                     displayName: user.displayName || 'User',
                     createdAt: new Date().toISOString(),
-                    kycStatus: 'unverified'
+                    kycStatus: 'unverified',
+                    accountBalance: 0,
+                    status: 'active'
                 };
                 
                 await setDoc(userRef, defaultUserData);
-                
-                // Update UI with default data
-                const userEmailElement = document.getElementById('userEmail');
-                const userNameElement = document.getElementById('dashboard-user-name');
-                
-                if (userEmailElement) userEmailElement.textContent = user.email;
-                if (userNameElement) userNameElement.textContent = defaultUserData.displayName;
-                
-                // Fix: Update avatar initial for new users
-                const avatarInitialElement = document.querySelector('.avatar-initial');
-                if (avatarInitialElement) {
-                    const nameForInitial = defaultUserData.displayName || user.email || 'User';
-                    avatarInitialElement.textContent = nameForInitial.charAt(0).toUpperCase();
-                }
+                this.updateUserInterface(defaultUserData, user);
             }
         } catch (error) {
             console.error('Error loading user data:', error);
             this.showErrorState();
         }
+    }
+
+    // New method to update UI elements
+    updateUserInterface(userData, user) {
+        // Update user email
+        const userEmailElement = document.getElementById('userEmail');
+        if (userEmailElement) {
+            userEmailElement.textContent = user.email || 'No email';
+        }
+        
+        // Update user name in header and trading interface
+        const userNameElement = document.getElementById('dashboard-user-name');
+        const tradingUserNameElement = document.getElementById('trading-user-name');
+        
+        const displayName = userData.firstName && userData.lastName 
+            ? `${userData.firstName} ${userData.lastName}`
+            : userData.displayName || user.displayName || 'User';
+        
+        if (userNameElement) {
+            userNameElement.textContent = displayName;
+        }
+        
+        if (tradingUserNameElement) {
+            tradingUserNameElement.textContent = displayName;
+        }
+        
+        // Update avatar initial
+        const avatarInitialElement = document.querySelector('.avatar-initial');
+        if (avatarInitialElement) {
+            const nameForInitial = displayName || user.email || 'User';
+            avatarInitialElement.textContent = nameForInitial.charAt(0).toUpperCase();
+        }
+        
+        // Update account balance if present in user data
+        if (userData.accountBalance !== undefined) {
+            this.accountData.balance = userData.accountBalance;
+            this.updateAccountSummary();
+        }
+    }
+
+    // New method to setup real-time listeners
+    setupRealTimeListeners(user) {
+        // Clean up existing listeners
+        if (this.userDataListener) {
+            this.userDataListener();
+        }
+        if (this.accountDataListener) {
+            this.accountDataListener();
+        }
+        
+        // Setup user data listener
+        const userRef = doc(db, 'users', user.uid);
+        this.userDataListener = onSnapshot(userRef, (doc) => {
+            if (doc.exists()) {
+                const userData = doc.data();
+                console.log('Real-time user data update:', userData);
+                this.updateUserInterface(userData, user);
+                
+                // Show notification for admin changes (optional)
+                if (userData.balanceUpdatedAt) {
+                    const updateTime = new Date(userData.balanceUpdatedAt);
+                    const now = new Date();
+                    // If updated within last 5 seconds, show notification
+                    if (now - updateTime < 5000) {
+                        this.showNotification('Account updated by administrator', 'info');
+                    }
+                }
+            }
+        }, (error) => {
+            console.error('Error in user data listener:', error);
+        });
+        
+        // Setup account data listener (fallback)
+        const accountRef = doc(db, 'accounts', user.uid);
+        this.accountDataListener = onSnapshot(accountRef, (doc) => {
+            if (doc.exists()) {
+                const accountData = doc.data();
+                console.log('Real-time account data update:', accountData);
+                this.accountData = accountData;
+                this.updateAccountSummary();
+            }
+        }, (error) => {
+            console.error('Error in account data listener:', error);
+        });
     }
 
     async loadAccountData(user) {
@@ -878,29 +915,34 @@ window.closePosition = (symbol) => {
     console.log(`Closing position for ${symbol}`);
 };
 
-// FIXED: Use AuthManager for logout
 window.logout = async () => {
     try {
-        if (window.authManager) {
-            await window.authManager.logout();
-            // Let AuthManager handle the redirect
-        } else {
-            await auth.signOut();
-            window.location.href = 'auth.html';
+        // Clean up listeners before logout
+        if (window.dashboardManager) {
+            if (window.dashboardManager.userDataListener) {
+                window.dashboardManager.userDataListener();
+            }
+            if (window.dashboardManager.accountDataListener) {
+                window.dashboardManager.accountDataListener();
+            }
         }
+        
+        await auth.signOut();
+        window.location.href = 'auth.html';
     } catch (error) {
-        console.error('Error logging out:', error);
+        console.error('Logout error:', error);
+        alert('Error logging out. Please try again.');
     }
 };
 
 // Initialize dashboard when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Add a longer delay to ensure all CSS and external scripts are loaded
-    setTimeout(() => {
-        console.log('Initializing Dashboard Manager...');
-        window.dashboardManager = new DashboardManager();
-        console.log('Dashboard Manager initialized');
-    }, 500);
+    console.log('Dashboard DOM loaded, initializing...');
+    
+    // Create global dashboard manager instance
+    window.dashboardManager = new DashboardManager();
+    
+    console.log('Dashboard manager created');
 });
 
 // Export for use in other modules

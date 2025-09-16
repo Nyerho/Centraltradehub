@@ -283,7 +283,12 @@
                 </div>
                 <div class="instruction-row">
                     <span>To Address:</span>
-                    <span id="crypto-address"></span>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span id="crypto-address"></span>
+                        <button id="copy-address-btn" class="copy-btn" onclick="copyToClipboard('crypto-address')" title="Copy address">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="instruction-row">
                     <span>Network Fee:</span>
