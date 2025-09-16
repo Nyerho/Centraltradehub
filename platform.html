@@ -63,11 +63,11 @@
             </div>
             
             <ul class="nav-menu">
-                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="dashboard.html" class="nav-link">Home</a></li>
                 <li><a href="platform.html" class="nav-link active">Platform</a></li>
-                <li><a href="index.html#markets" class="nav-link">Markets</a></li>
+                <li><a href="#" class="nav-link" onclick="goToMarkets()">Markets</a></li>
                 <li><a href="funding.html" class="nav-link">About</a></li>
-                <li><a href="index.html#contact" class="nav-link">Support</a></li>
+                <li><a href="#" class="nav-link" onclick="goToSupport()">Support</a></li>
             </ul>
 
             <!-- Navigation Buttons -->
@@ -523,13 +523,26 @@
             }
         });
 
-        // Logout function
+        // Navigation functions that preserve authentication
+        function goToMarkets() {
+            // Open markets section in new tab to preserve current session
+            window.open('index.html#markets', '_blank');
+        }
+        
+        function goToSupport() {
+            // Open support section in new tab to preserve current session
+            window.open('index.html#contact', '_blank');
+        }
+        
+        // Enhanced logout function
         window.logout = function() {
-            auth.signOut().then(() => {
-                window.location.href = 'index.html';
-            }).catch((error) => {
-                console.error('Logout error:', error);
-            });
+            if (confirm('Are you sure you want to logout?')) {
+                auth.signOut().then(() => {
+                    window.location.href = 'index.html';
+                }).catch((error) => {
+                    console.error('Logout error:', error);
+                });
+            }
         }
     </script>
 

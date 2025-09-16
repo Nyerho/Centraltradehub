@@ -742,3 +742,43 @@ window.showForgotPassword = showForgotPassword;
 window.closeForgotPassword = closeForgotPassword;
 window.updateCountryCode = updateCountryCode;
 window.handleForgotPassword = handleForgotPassword;
+
+// Add verification handler
+async function handleEmailVerification() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('verify');
+    const email = urlParams.get('email');
+    
+    if (token && email) {
+        try {
+            // Verify token in Firestore
+            const userDoc = await db.collection('users').where('email', '==', email).where('verificationToken', '==', token).get();
+            
+            if (!userDoc.empty) {
+                const userData = userDoc.docs[0].data();
+                
+                // Check if token is still valid
+                if (userData.verificationTokenExpiry > Date.now()) {
+                    // Mark email as verified
+                    await userDoc.docs[0].ref.update({
+                        emailVerified: true,
+                        verificationToken: null,
+                        verificationTokenExpiry: null
+                    });
+                    
+                    showMessage('Email verified successfully! You can now log in.', 'success');
+                } else {
+                    showMessage('Verification link has expired. Please request a new one.', 'error');
+                }
+            } else {
+                showMessage('Invalid verification link.', 'error');
+            }
+        } catch (error) {
+            console.error('Verification error:', error);
+            showMessage('Verification failed. Please try again.', 'error');
+        }
+    }
+}
+
+// Call on page load
+document.addEventListener('DOMContentLoaded', handleEmailVerification);

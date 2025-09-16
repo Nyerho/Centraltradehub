@@ -44,16 +44,22 @@ class FirebaseAuthService {
         displayName: userData.displayName || userData.firstName + ' ' + userData.lastName
       });
 
-      // Create user document in Firestore
-      await this.createUserDocument(user, userData);
+      // Create user document in Firestore with verification token
+      const verificationToken = this.generateVerificationToken();
+      await this.createUserDocument(user, {
+        ...userData,
+        emailVerified: false,
+        verificationToken: verificationToken,
+        verificationTokenExpiry: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+      });
 
-      // Send email verification
-      await sendEmailVerification(user);
+      // Send custom verification email through your email service
+      await this.sendCustomVerificationEmail(user.email, userData.firstName || 'User', verificationToken);
 
       return {
         success: true,
         user: user,
-        message: 'Registration successful. Please verify your email.'
+        message: 'Registration successful. Please check your email for verification link.'
       };
     } catch (error) {
       return {
@@ -61,6 +67,38 @@ class FirebaseAuthService {
         error: error.code,
         message: this.getErrorMessage(error.code)
       };
+    }
+  }
+
+  // Generate secure verification token
+  generateVerificationToken() {
+    return Math.random().toString(36).substring(2, 15) + 
+           Math.random().toString(36).substring(2, 15) + 
+           Date.now().toString(36);
+  }
+
+  // Send custom verification email
+  async sendCustomVerificationEmail(email, userName, token) {
+    try {
+      const verificationUrl = `https://centraltradehub.com/auth.html?verify=${token}&email=${encodeURIComponent(email)}`;
+      
+      // Use your email service (EmailJS, SendGrid, etc.)
+      const emailData = {
+        to_email: email,
+        to_name: userName,
+        from_name: 'Central Trade Hub Support',
+        from_email: 'support@centraltradehub.com',
+        subject: 'Verify Your Central Trade Hub Account',
+        verification_url: verificationUrl,
+        user_name: userName
+      };
+
+      // Send via EmailJS or your preferred service
+      await this.sendEmail(emailData);
+      
+    } catch (error) {
+      console.error('Error sending verification email:', error);
+      throw error;
     }
   }
 
