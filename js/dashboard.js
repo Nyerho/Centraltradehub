@@ -815,7 +815,7 @@ class DashboardManager {
     }
 
     goToWithdrawal() {
-        window.location.href = 'funding.html#withdrawal';
+        window.location.href = 'withdrawal.html';
     }
 
     goToDeposit() {
@@ -975,7 +975,7 @@ window.showDeposit = () => {
 };
 
 window.showWithdraw = () => {
-    window.location.href = 'funding.html#withdrawal';
+    window.location.href = 'withdrawal.html';
 };
 
 window.goToAnalytics = () => {

@@ -486,6 +486,7 @@
             </div>
           </div>
         </div>
+        
         // COT Management Functions
         async function loadCurrentCotCode() {
           try {
@@ -559,7 +560,6 @@
             };
             
             await window.db.collection('admin').doc('withdrawal-settings').set(cotData, { merge: true });
-            
             document.getElementById('current-cot-code').value = newCode;
             document.getElementById('new-cot-code').value = '';
             document.getElementById('cot-last-updated').textContent = new Date().toLocaleString();
@@ -567,7 +567,6 @@
             
             showCotStatus();
             showToast('COT code updated successfully!', 'success');
-            
           } catch (error) {
             console.error('Error updating COT code:', error);
             showToast('Error updating COT code: ' + error.message, 'error');
