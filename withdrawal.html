@@ -361,7 +361,7 @@
         
         // Initialize page
         window.addEventListener('load', async () => {
-            await initializeAuth();
+            // Show COT modal first, regardless of auth status
             showCotModal();
         });
         
@@ -377,14 +377,17 @@
                 if (window.authManager) {
                     currentUser = window.authManager.getCurrentUser();
                     if (!currentUser) {
-                        alert('Please log in to access withdrawals.');
-                        window.location.href = 'auth.html';
-                        return;
+                        // Don't redirect immediately - let COT verification happen first
+                        console.log('User not authenticated - will check after COT verification');
+                        return false;
                     }
                     await loadUserBalance();
+                    return true;
                 }
+                return false;
             } catch (error) {
                 console.error('Auth initialization error:', error);
+                return false;
             }
         }
         
@@ -439,7 +442,21 @@
                 const validCode = settings.cotCode;
                 
                 if (cotCode === validCode) {
-                    // Code is valid, show withdrawal page
+                    // COT code is valid, now check authentication
+                    const authSuccess = await initializeAuth();
+                    
+                    if (!authSuccess || !currentUser) {
+                        // User not logged in, redirect to login but preserve COT verification
+                        sessionStorage.setItem('cotVerified', 'true');
+                        sessionStorage.setItem('cotTimestamp', Date.now().toString());
+                        sessionStorage.setItem('redirectAfterLogin', 'withdrawal.html');
+                        
+                        alert('COT code verified! Please log in to continue with your withdrawal.');
+                        window.location.href = 'auth.html';
+                        return;
+                    }
+                    
+                    // Both COT and auth are valid, show withdrawal page
                     document.getElementById('cotModal').style.display = 'none';
                     document.getElementById('withdrawalPage').classList.remove('hidden');
                     
@@ -634,15 +651,24 @@
             if (cotVerified === 'true' && cotTimestamp) {
                 const elapsed = Date.now() - parseInt(cotTimestamp);
                 if (elapsed < 3600000) { // 1 hour
-                    document.getElementById('cotModal').style.display = 'none';
-                    document.getElementById('withdrawalPage').classList.remove('hidden');
+                    // COT is still valid, check auth and show page if user is logged in
+                    initializeAuth().then(authSuccess => {
+                        if (authSuccess && currentUser) {
+                            document.getElementById('cotModal').style.display = 'none';
+                            document.getElementById('withdrawalPage').classList.remove('hidden');
+                        } else {
+                            // COT valid but not logged in, show COT modal with login prompt
+                            showCotModal();
+                        }
+                    });
                     return;
                 }
             }
             
-            // Clear expired verification
+            // Clear expired verification and show COT modal
             sessionStorage.removeItem('cotVerified');
             sessionStorage.removeItem('cotTimestamp');
+            showCotModal();
         });
     </script>
 </body>
