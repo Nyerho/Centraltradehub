@@ -331,7 +331,7 @@
                                 await window.authManager.logout();
                             } else {
                                 // Direct Firebase logout if auth manager not available
-                                const { signOut } = await import('./js/firebase-config.js');
+                                const { signOut, auth } = await import('./js/firebase-config.js');
                                 await signOut(auth);
                                 localStorage.clear();
                                 sessionStorage.clear();
@@ -358,9 +358,10 @@
                     }
                     
                     if (window.authManager) {
-                        // Wait for Firebase auth state to be restored
-                        await new Promise((resolve) => {
-                            const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
+                        // Wait for Firebase auth state to be restored using modern SDK
+                        await new Promise(async (resolve) => {
+                            const { onAuthStateChanged, auth } = await import('./js/firebase-config.js');
+                            const unsubscribe = onAuthStateChanged(auth, (user) => {
                                 unsubscribe();
                                 resolve();
                             });
