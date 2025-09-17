@@ -320,20 +320,10 @@
                 window.handleSimpleLogout = async function() {
                     if (confirm('Are you sure you want to logout?')) {
                         try {
-                            // Wait for auth manager to be available
-                            let attempts = 0;
-                            while (!window.authManager && attempts < 50) {
-                                await new Promise(resolve => setTimeout(resolve, 100));
-                                attempts++;
-                            }
-                            
                             if (window.authManager) {
                                 await window.authManager.logout();
                             } else {
-                                // Direct Firebase logout if auth manager not available
-                                const { signOut } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
-                                const { auth } = await import('./js/firebase-config.js');
-                                await signOut(auth);
+                                // Fallback logout
                                 localStorage.clear();
                                 sessionStorage.clear();
                                 window.location.href = 'index.html';
@@ -351,41 +341,71 @@
                 
                 // Wait for page load and then check authentication
                 window.addEventListener('load', async () => {
+                    console.log('Admin page loading...');
+                    
                     // Wait for auth manager to be available
                     let attempts = 0;
-                    while (!window.authManager && attempts < 50) {
+                    while (!window.authManager && attempts < 100) {
                         await new Promise(resolve => setTimeout(resolve, 100));
                         attempts++;
                     }
                     
-                    if (window.authManager) {
-                        // Wait for Firebase auth state to be restored using modern SDK
-                        await new Promise(async (resolve) => {
-                            const { onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
-                            const { auth } = await import('./js/firebase-config.js');
-                            const unsubscribe = onAuthStateChanged(auth, (user) => {
-                                unsubscribe();
-                                resolve();
-                            });
-                        });
+                    if (!window.authManager) {
+                        console.error('Auth manager not available');
+                        alert('Authentication system not available.');
+                        window.location.href = 'index.html';
+                        return;
+                    }
+                    
+                    console.log('Auth manager found, initializing...');
+                    
+                    // Initialize auth manager and wait for authentication state
+                    try {
+                        await window.authManager.initialize();
                         
-                        // Small additional delay to ensure auth manager state is updated
-                        await new Promise(resolve => setTimeout(resolve, 500));
+                        // Additional wait to ensure auth state is fully loaded
+                        await new Promise(resolve => setTimeout(resolve, 1000));
                         
                         const user = window.authManager.getCurrentUser();
-                        if (!user || !window.authManager.isAdmin()) {
-                            alert('Access denied. Admin privileges required.');
-                            window.location.href = 'index.html';
+                        console.log('Current user:', user);
+                        
+                        if (!user) {
+                            console.log('No user found, redirecting to login');
+                            alert('Please log in to access the admin panel.');
+                            window.location.href = 'auth.html';
                             return;
                         }
+                        
+                        // Check admin status
+                        const isAdmin = window.authManager.isAdmin();
+                        console.log('Is admin:', isAdmin, 'User email:', user.email);
+                        
+                        if (!isAdmin) {
+                            console.log('User is not admin:', user.email);
+                            alert(`Access denied. Admin privileges required. Current user: ${user.email}`);
+                            window.location.href = 'dashboard.html';
+                            return;
+                        }
+                        
+                        console.log('Admin access granted for:', user.email);
+                        
                         // Update welcome message with actual user email
                         const welcomeSpan = document.querySelector('.admin-user span');
                         if (welcomeSpan) {
                             welcomeSpan.textContent = `Welcome, ${user.email}`;
                         }
-                    } else {
-                        alert('Authentication system not available.');
-                        window.location.href = 'index.html';
+                        
+                        // Initialize admin dashboard if everything is OK
+                        if (window.AdminDashboard) {
+                            console.log('Initializing admin dashboard...');
+                            const adminDashboard = new window.AdminDashboard();
+                            await adminDashboard.init();
+                        }
+                        
+                    } catch (error) {
+                        console.error('Authentication error:', error);
+                        alert('Authentication error occurred. Please try logging in again.');
+                        window.location.href = 'auth.html';
                     }
                 });
             </script>
