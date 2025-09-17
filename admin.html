@@ -425,3 +425,216 @@
         </script>
         <noscript> Powered by <a href="https://www.smartsupp.com" target="_blank">Smartsupp</a></noscript>
         </html>
+
+        <!-- COT Withdrawal Management Section -->
+        <div class="cot-management-section" id="cot-management" style="display:none;background:#2d2d2d;border-radius:12px;padding:30px;margin:30px 0">
+          <h2><i class="fas fa-shield-alt"></i> Withdrawal COT Management</h2>
+          <p style="color:#888;margin-bottom:20px">Manage the Withdrawal Code (COT) required for user withdrawals</p>
+          
+          <div class="cot-form" style="max-width:600px">
+            <div class="form-group" style="margin-bottom:20px">
+              <label for="current-cot-code" style="display:block;margin-bottom:8px;font-weight:600">Current COT Code</label>
+              <div style="display:flex;gap:10px;align-items:center">
+                <input type="text" id="current-cot-code" readonly 
+                       style="flex:1;padding:12px;border:1px solid #444;border-radius:8px;background:#1a1a1a;color:#fff;font-family:monospace">
+                <button id="copy-cot-btn" onclick="copyCotCode()" class="btn-secondary" style="padding:12px;background:#6c757d;color:#fff;border:none;border-radius:8px;cursor:pointer">
+                  <i class="fas fa-copy"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="form-group" style="margin-bottom:20px">
+              <label for="new-cot-code" style="display:block;margin-bottom:8px;font-weight:600">New COT Code</label>
+              <input type="text" id="new-cot-code" placeholder="Enter new COT code" maxlength="20"
+                     style="width:100%;padding:12px;border:1px solid #444;border-radius:8px;background:#1a1a1a;color:#fff">
+              <small style="color:#888">Leave empty to generate random code</small>
+            </div>
+            
+            <div class="form-actions" style="display:flex;gap:15px;align-items:center;margin-bottom:20px">
+              <button id="update-cot-code" onclick="updateCotCode()" class="btn-primary" style="padding:12px 24px;background:#007bff;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">
+                <i class="fas fa-save"></i> Update COT Code
+              </button>
+              <button id="generate-random-cot" onclick="generateRandomCot()" class="btn-secondary" style="padding:12px 24px;background:#6c757d;color:#fff;border:none;border-radius:8px;cursor:pointer">
+                <i class="fas fa-random"></i> Generate Random
+              </button>
+              <div id="cot-status" style="color:#28a745;font-weight:600;display:none">
+                <i class="fas fa-check"></i> Updated successfully
+              </div>
+            </div>
+            
+            <div class="cot-info" style="padding:20px;border:1px solid #444;border-radius:8px;background:#1a1a1a">
+              <h4 style="margin-bottom:15px">COT Code Information</h4>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px">
+                <div>
+                  <p><strong>Last Updated:</strong></p>
+                  <span id="cot-last-updated" style="color:#888">Never</span>
+                </div>
+                <div>
+                  <p><strong>Updated By:</strong></p>
+                  <span id="cot-updated-by" style="color:#888">N/A</span>
+                </div>
+              </div>
+              <div style="margin-top:15px;padding:15px;background:#333;border-radius:8px">
+                <p style="color:#ffc107;margin-bottom:10px"><i class="fas fa-exclamation-triangle"></i> <strong>Important:</strong></p>
+                <ul style="color:#888;font-size:14px;margin:0;padding-left:20px">
+                  <li>This code is required for all user withdrawals</li>
+                  <li>Share this code only with authorized users</li>
+                  <li>Change the code regularly for security</li>
+                  <li>Users must enter this code to access the withdrawal page</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        // COT Management Functions
+        async function loadCurrentCotCode() {
+          try {
+            if (!window.db) {
+              console.error('Firestore not initialized');
+              return;
+            }
+            
+            const docRef = window.db.collection('admin').doc('withdrawal-settings');
+            const doc = await docRef.get();
+            
+            if (doc.exists) {
+              const data = doc.data();
+              document.getElementById('current-cot-code').value = data.cotCode || '';
+              document.getElementById('cot-last-updated').textContent = data.lastUpdated ? new Date(data.lastUpdated).toLocaleString() : 'Never';
+              document.getElementById('cot-updated-by').textContent = data.updatedBy || 'N/A';
+            } else {
+              // Initialize with default COT code
+              await initializeCotSettings();
+            }
+          } catch (error) {
+            console.error('Error loading COT code:', error);
+            showToast('Error loading COT settings: ' + error.message, 'error');
+          }
+        }
+        
+        async function initializeCotSettings() {
+          try {
+            const defaultCotCode = generateRandomCotCode();
+            const cotData = {
+              cotCode: defaultCotCode,
+              lastUpdated: new Date().toISOString(),
+              updatedBy: window.currentUser?.email || 'admin',
+              createdAt: new Date().toISOString()
+            };
+            
+            await window.db.collection('admin').doc('withdrawal-settings').set(cotData);
+            document.getElementById('current-cot-code').value = defaultCotCode;
+            document.getElementById('cot-last-updated').textContent = new Date().toLocaleString();
+            document.getElementById('cot-updated-by').textContent = cotData.updatedBy;
+            
+            showToast('COT settings initialized with random code', 'success');
+          } catch (error) {
+            console.error('Error initializing COT settings:', error);
+          }
+        }
+        
+        async function updateCotCode() {
+          try {
+            let newCode = document.getElementById('new-cot-code').value.trim();
+            
+            if (!newCode) {
+              newCode = generateRandomCotCode();
+            }
+            
+            if (newCode.length < 4) {
+              showToast('COT code must be at least 4 characters long', 'error');
+              return;
+            }
+            
+            if (!window.db) {
+              console.error('Firestore not initialized');
+              showToast('Database not available', 'error');
+              return;
+            }
+            
+            const cotData = {
+              cotCode: newCode,
+              lastUpdated: new Date().toISOString(),
+              updatedBy: window.currentUser?.email || 'admin'
+            };
+            
+            await window.db.collection('admin').doc('withdrawal-settings').set(cotData, { merge: true });
+            
+            document.getElementById('current-cot-code').value = newCode;
+            document.getElementById('new-cot-code').value = '';
+            document.getElementById('cot-last-updated').textContent = new Date().toLocaleString();
+            document.getElementById('cot-updated-by').textContent = cotData.updatedBy;
+            
+            showCotStatus();
+            showToast('COT code updated successfully!', 'success');
+            
+          } catch (error) {
+            console.error('Error updating COT code:', error);
+            showToast('Error updating COT code: ' + error.message, 'error');
+          }
+        }
+        
+        function generateRandomCot() {
+          const randomCode = generateRandomCotCode();
+          document.getElementById('new-cot-code').value = randomCode;
+        }
+        
+        function generateRandomCotCode() {
+          const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+          let result = '';
+          for (let i = 0; i < 8; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+          }
+          return result;
+        }
+        
+        function copyCotCode() {
+          const cotCode = document.getElementById('current-cot-code').value;
+          if (!cotCode) {
+            showToast('No COT code to copy', 'error');
+            return;
+          }
+          
+          navigator.clipboard.writeText(cotCode).then(() => {
+            const btn = document.getElementById('copy-cot-btn');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i>';
+            btn.style.background = '#28a745';
+            
+            setTimeout(() => {
+              btn.innerHTML = originalHtml;
+              btn.style.background = '#6c757d';
+            }, 2000);
+            
+            showToast('COT code copied to clipboard', 'success');
+          }).catch(() => {
+            showToast('Failed to copy COT code', 'error');
+          });
+        }
+        
+        function showCotStatus() {
+          const status = document.getElementById('cot-status');
+          status.style.display = 'block';
+          setTimeout(() => {
+            status.style.display = 'none';
+          }, 3000);
+        }
+        
+        // Add COT management to navigation
+        const cotNavItem = document.createElement('a');
+        cotNavItem.href = '#';
+        cotNavItem.className = 'nav-item';
+        cotNavItem.innerHTML = '<i class="fas fa-shield-alt"></i> COT Management';
+        cotNavItem.onclick = () => showSection('cot-management');
+        
+        // Add to sidebar (insert after crypto wallets)
+        const sidebar = document.querySelector('.sidebar');
+        const cryptoWalletsItem = sidebar.querySelector('a[onclick*="crypto-wallets"]');
+        if (cryptoWalletsItem) {
+          cryptoWalletsItem.parentNode.insertBefore(cotNavItem, cryptoWalletsItem.nextSibling);
+        }
+        
+        // Auto-load COT settings on page load
+        window.addEventListener('load', () => {
+          setTimeout(loadCurrentCotCode, 1500);
+        });
