@@ -57,3 +57,4 @@ temp/
 
 # Jupyter Notebook files (since you have some in assets)
 *.ipynb_checkpoints
+.vercel
