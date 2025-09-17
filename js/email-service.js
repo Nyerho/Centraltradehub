@@ -4,14 +4,31 @@ import { API_CONFIG } from './api-config.js';
 class EmailService {
     constructor() {
         // Initialize EmailJS or your preferred email service
-        this.emailServiceId = 'your_service_id';
-        this.templateId = 'verification_template';
-        this.publicKey = 'your_public_key';
+        this.emailServiceId = 'service_your_id'; // Replace with actual service ID
+        this.templateId = 'template_your_id';     // Replace with actual template ID
+        this.publicKey = 'your_public_key';       // Replace with actual public key
+        this.isConfigured = this.checkConfiguration();
+    }
+
+    checkConfiguration() {
+        return this.emailServiceId !== 'service_your_id' && 
+               this.templateId !== 'template_your_id' && 
+               this.publicKey !== 'your_public_key';
     }
 
     async sendVerificationEmail(emailData) {
         try {
-            // Using EmailJS as an example - replace with your preferred service
+            if (!this.isConfigured) {
+                console.warn('EmailJS not configured properly');
+                return { success: false, error: 'Email service not configured' };
+            }
+
+            // Check if EmailJS is loaded
+            if (typeof emailjs === 'undefined') {
+                console.warn('EmailJS library not loaded');
+                return { success: false, error: 'EmailJS library not available' };
+            }
+
             const response = await emailjs.send(
                 this.emailServiceId,
                 this.templateId,
@@ -21,7 +38,7 @@ class EmailService {
             return { success: true, response };
         } catch (error) {
             console.error('Email sending failed:', error);
-            return { success: false, error };
+            return { success: false, error: error.message };
         }
     }
 

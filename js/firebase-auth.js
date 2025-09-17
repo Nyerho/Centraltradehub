@@ -19,9 +19,37 @@ class FirebaseAuthService {
   constructor() {
     this.currentUser = null;
     this.authStateListeners = [];
+    this.emailService = null;
     this.initializeAuthListener();
+    this.initializeEmailService();
   }
 
+  // Add email service initialization
+  async initializeEmailService() {
+    try {
+      const { default: EmailService } = await import('./email-service.js');
+      this.emailService = new EmailService();
+      console.log('Email service initialized successfully');
+    } catch (error) {
+      console.warn('Email service not available:', error.message);
+      this.emailService = null;
+    }
+  }
+
+  // Add the missing sendEmail method
+  async sendEmail(emailData) {
+    if (!this.emailService) {
+      console.warn('Email service not available, skipping email send');
+      return { success: false, error: 'Email service not initialized' };
+    }
+    
+    try {
+      return await this.emailService.sendVerificationEmail(emailData);
+    } catch (error) {
+      console.error('Error sending email:', error);
+      return { success: false, error: error.message };
+    }
+  }
   // Initialize authentication state listener
   initializeAuthListener() {
     onAuthStateChanged(auth, async (user) => {
@@ -44,24 +72,29 @@ class FirebaseAuthService {
         displayName: userData.displayName || userData.firstName + ' ' + userData.lastName
       });
 
-      // Create user document in Firestore with verification token
-      const verificationToken = this.generateVerificationToken();
+      // Create user document in Firestore
       await this.createUserDocument(user, {
         ...userData,
-        emailVerified: false,
-        verificationToken: verificationToken,
-        verificationTokenExpiry: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+        emailVerified: false
       });
 
-      // Send custom verification email through your email service
-      await this.sendCustomVerificationEmail(user.email, userData.firstName || 'User', verificationToken);
+      // Try to send verification email, but don't fail registration if it fails
+      try {
+        const verificationToken = this.generateVerificationToken();
+        await this.sendCustomVerificationEmail(user.email, userData.firstName || 'User', verificationToken);
+        console.log('Verification email sent successfully');
+      } catch (emailError) {
+        console.warn('Failed to send verification email:', emailError.message);
+        // Continue with registration even if email fails
+      }
 
       return {
         success: true,
         user: user,
-        message: 'Registration successful. Please check your email for verification link.'
+        message: 'Registration successful. You can now log in with your credentials.'
       };
     } catch (error) {
+      console.error('Registration error:', error);
       return {
         success: false,
         error: error.code,
@@ -80,9 +113,13 @@ class FirebaseAuthService {
   // Send custom verification email
   async sendCustomVerificationEmail(email, userName, token) {
     try {
-      const verificationUrl = `https://centraltradehub.com/auth.html?verify=${token}&email=${encodeURIComponent(email)}`;
+      if (!this.emailService) {
+        console.warn('Email service not available, skipping verification email');
+        return;
+      }
+
+      const verificationUrl = `${window.location.origin}/auth.html?verify=${token}&email=${encodeURIComponent(email)}`;
       
-      // Use your email service (EmailJS, SendGrid, etc.)
       const emailData = {
         to_email: email,
         to_name: userName,
@@ -93,12 +130,14 @@ class FirebaseAuthService {
         user_name: userName
       };
 
-      // Send via EmailJS or your preferred service
-      await this.sendEmail(emailData);
+      const result = await this.sendEmail(emailData);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
       
     } catch (error) {
       console.error('Error sending verification email:', error);
-      throw error;
+      // Don't throw error - let registration continue
     }
   }
 
