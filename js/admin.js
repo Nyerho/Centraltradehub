@@ -903,22 +903,37 @@ class AdminDashboard {
     showNotification(message, type = 'info') {
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
-        notification.innerHTML = `
-            <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
-            <span>${message}</span>
-            <button onclick="this.parentElement.remove()">&times;</button>
+        notification.textContent = message;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         `;
         
+        const colors = {
+            success: '#28a745',
+            error: '#dc3545',
+            info: '#007bff',
+            warning: '#ffc107'
+        };
+        
+        notification.style.backgroundColor = colors[type] || colors.info;
         document.body.appendChild(notification);
         
+        setTimeout(() => notification.style.opacity = '1', 100);
         setTimeout(() => {
-            if (notification.parentElement) {
-                notification.remove();
-            }
-        }, 5000);
+            notification.style.opacity = '0';
+            setTimeout(() => document.body.removeChild(notification), 300);
+        }, 3000);
     }
 
-    // Add COT Management navigation item
     addCotManagementNavigation() {
         const sidebar = document.querySelector('.sidebar-nav ul');
         if (sidebar) {
@@ -938,38 +953,15 @@ class AdminDashboard {
             }
         }
     }
-
-    // Initialize method update
-    async init() {
-        try {
-            console.log('Initializing AdminDashboard...');
-            
-            // Add COT management navigation
-            this.addCotManagementNavigation();
-            
-            // Initialize navigation
-            this.initializeNavigation();
-            
-            // Load initial data
-            await this.loadDashboardData();
-            
-            // Set up real-time updates
-            this.setupRealTimeUpdates();
-            
-            console.log('AdminDashboard initialized successfully');
-        } catch (error) {
-            console.error('Error initializing AdminDashboard:', error);
-        }
-    }
 }
 
-// Initialize when DOM is ready
+// Initialize when DOM is ready - REMOVE DUPLICATE INITIALIZATION
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        window.adminDashboard = new AdminDashboard();
+        window.AdminDashboard = AdminDashboard;
     });
 } else {
-    window.adminDashboard = new AdminDashboard();
+    window.AdminDashboard = AdminDashboard;
 }
 
 export default AdminDashboard;
