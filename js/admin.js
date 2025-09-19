@@ -917,6 +917,50 @@ class AdminDashboard {
             }
         }, 5000);
     }
+
+    // Add COT Management navigation item
+    addCotManagementNavigation() {
+        const sidebar = document.querySelector('.sidebar-nav ul');
+        if (sidebar) {
+            const cotNavItem = document.createElement('li');
+            cotNavItem.innerHTML = `
+                <a href="#cot-management" class="nav-item" data-section="cot-management">
+                    <i class="fas fa-shield-alt"></i> COT Management
+                </a>
+            `;
+            
+            // Insert after settings
+            const settingsItem = sidebar.querySelector('a[data-section="settings"]');
+            if (settingsItem && settingsItem.parentNode) {
+                settingsItem.parentNode.insertAdjacentElement('afterend', cotNavItem);
+            } else {
+                sidebar.appendChild(cotNavItem);
+            }
+        }
+    }
+
+    // Initialize method update
+    async init() {
+        try {
+            console.log('Initializing AdminDashboard...');
+            
+            // Add COT management navigation
+            this.addCotManagementNavigation();
+            
+            // Initialize navigation
+            this.initializeNavigation();
+            
+            // Load initial data
+            await this.loadDashboardData();
+            
+            // Set up real-time updates
+            this.setupRealTimeUpdates();
+            
+            console.log('AdminDashboard initialized successfully');
+        } catch (error) {
+            console.error('Error initializing AdminDashboard:', error);
+        }
+    }
 }
 
 // Initialize when DOM is ready
