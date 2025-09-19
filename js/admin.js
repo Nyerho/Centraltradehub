@@ -9,8 +9,6 @@ class AdminDashboard {
         this.db = db;
         this.auth = auth;
         this.charts = {};
-        // Remove chat service
-        // this.chatService = new ChatService();
         this.currentConversation = null;
         this.conversationListener = null;
         this.messageListener = null;
@@ -22,13 +20,23 @@ class AdminDashboard {
             // Wait for auth manager to be available
             await this.waitForAuthManager();
             
+            // Make database available globally for COT management
+            window.db = this.db;
+            window.currentUser = window.authManager.getCurrentUser();
+            
             this.initializeEventListeners();
             this.initializeNavigation();
             await this.loadInitialData();
             this.initializeCharts();
             this.setupRealTimeUpdates();
-            // Remove chat initialization
-            // this.initializeChatSystem();
+            this.addCotManagementNavigation();
+            
+            // Initialize COT management after a short delay
+            setTimeout(() => {
+                if (typeof window.loadCurrentCotCode === 'function') {
+                    window.loadCurrentCotCode();
+                }
+            }, 1000);
             
             console.log('Admin dashboard initialized successfully');
         } catch (error) {
@@ -935,27 +943,23 @@ class AdminDashboard {
     }
 
     addCotManagementNavigation() {
-        const sidebar = document.querySelector('.sidebar-nav ul');
-        if (sidebar) {
-            const cotNavItem = document.createElement('li');
-            cotNavItem.innerHTML = `
-                <a href="#cot-management" class="nav-item" data-section="cot-management">
-                    <i class="fas fa-shield-alt"></i> COT Management
-                </a>
-            `;
-            
-            // Insert after settings
-            const settingsItem = sidebar.querySelector('a[data-section="settings"]');
-            if (settingsItem && settingsItem.parentNode) {
-                settingsItem.parentNode.insertAdjacentElement('afterend', cotNavItem);
-            } else {
-                sidebar.appendChild(cotNavItem);
-            }
+        // Add COT management to navigation
+        const cotNavItem = document.createElement('a');
+        cotNavItem.href = '#';
+        cotNavItem.className = 'nav-item';
+        cotNavItem.innerHTML = '<i class="fas fa-shield-alt"></i> COT Management';
+        cotNavItem.onclick = () => this.showSection('cot-management');
+        
+        // Add to sidebar (insert after crypto wallets)
+        const sidebar = document.querySelector('.sidebar');
+        const cryptoWalletsItem = sidebar.querySelector('a[onclick*="crypto-wallets"]');
+        if (cryptoWalletsItem && sidebar) {
+            cryptoWalletsItem.parentNode.insertBefore(cotNavItem, cryptoWalletsItem.nextSibling);
         }
     }
 }
 
-// Initialize when DOM is ready - REMOVE DUPLICATE INITIALIZATION
+// Ensure proper export and window assignment
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         window.AdminDashboard = AdminDashboard;

@@ -4,7 +4,7 @@ import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/f
 
 // Wait for page to load before initializing
 window.addEventListener('load', () => {
-    // Wait for auth to be ready
+    // Wait for auth and admin dashboard to be ready
     setTimeout(() => {
         if (typeof loadCurrentCotCode === 'function') {
             loadCurrentCotCode();
@@ -14,12 +14,13 @@ window.addEventListener('load', () => {
 
 async function loadCurrentCotCode() {
     try {
-        if (!db) {
+        const database = window.db || db;
+        if (!database) {
             console.error('Firestore not initialized');
             return;
         }
         
-        const docRef = doc(db, 'admin', 'withdrawal-settings');
+        const docRef = doc(database, 'admin', 'withdrawal-settings');
         const docSnap = await getDoc(docRef);
         
         if (docSnap.exists()) {
@@ -70,8 +71,7 @@ async function initializeCotSettings() {
 
 async function updateCotCode() {
     try {
-        const newCodeInput = document.getElementById('new-cot-code');
-        let newCode = newCodeInput ? newCodeInput.value.trim() : '';
+        let newCode = document.getElementById('new-cot-code').value.trim();
         
         if (!newCode) {
             newCode = generateRandomCotCode();
@@ -82,7 +82,8 @@ async function updateCotCode() {
             return;
         }
         
-        if (!db) {
+        const database = window.db || db;
+        if (!database) {
             console.error('Firestore not initialized');
             showToast('Database not available', 'error');
             return;
@@ -91,18 +92,18 @@ async function updateCotCode() {
         const cotData = {
             cotCode: newCode,
             lastUpdated: new Date().toISOString(),
-            updatedBy: window.authManager?.getCurrentUser()?.email || 'admin'
+            updatedBy: window.currentUser?.email || window.authManager?.getCurrentUser()?.email || 'admin'
         };
         
-        const docRef = doc(db, 'admin', 'withdrawal-settings');
-        await setDoc(docRef, cotData, { merge: true });
+        await setDoc(doc(database, 'admin', 'withdrawal-settings'), cotData, { merge: true });
         
         const currentCotInput = document.getElementById('current-cot-code');
+        const newCotInput = document.getElementById('new-cot-code');
         const lastUpdatedSpan = document.getElementById('cot-last-updated');
         const updatedBySpan = document.getElementById('cot-updated-by');
         
         if (currentCotInput) currentCotInput.value = newCode;
-        if (newCodeInput) newCodeInput.value = '';
+        if (newCotInput) newCotInput.value = '';
         if (lastUpdatedSpan) lastUpdatedSpan.textContent = new Date().toLocaleString();
         if (updatedBySpan) updatedBySpan.textContent = cotData.updatedBy;
         
@@ -206,7 +207,7 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
-// Export functions for global use
+// Export functions to window for global access
 window.loadCurrentCotCode = loadCurrentCotCode;
 window.updateCotCode = updateCotCode;
 window.generateRandomCot = generateRandomCot;
