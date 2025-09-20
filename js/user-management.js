@@ -780,3 +780,66 @@ function showToast(message, type = 'info') {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', initializeUserManagement);
+
+
+// With your actual Firebase project configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyC...",  // Your actual API key
+    authDomain: "centraltradekeplr.firebaseapp.com",  // Your actual domain
+    projectId: "centraltradekeplr",  // Your actual project ID
+    storageBucket: "centraltradekeplr.appspot.com",
+    messagingSenderId: "123456789",  // Your actual sender ID
+    appId: "1:123456789:web:abc123def456"
+};
+
+// Add this at the top of your file
+window.addEventListener('error', function(e) {
+    if (e.message.includes('Could not establish connection') || 
+        e.message.includes('message port closed')) {
+        console.log('Browser extension conflict detected - continuing with local functionality');
+        return true; // Prevent error from stopping execution
+    }
+});
+
+// Wrap your Firebase initialization in try-catch
+try {
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    window.db = firebase.firestore();
+    console.log('Firebase initialized successfully');
+} catch (error) {
+    console.warn('Firebase initialization failed, using sample data:', error);
+    // In your loadUsers function, make sure this fallback works
+    async function loadUsers() {
+        try {
+            if (window.db) {
+                // Try Firebase first
+                const snapshot = await window.db.collection('users').get();
+                // ... Firebase logic
+            } else {
+                throw new Error('Firebase not available');
+            }
+        } catch (error) {
+            console.warn('Using sample data due to Firebase error:', error);
+            // Use sample data
+            window.usersData = [
+                {
+                    id: 'user1',
+                    email: 'john.doe@example.com',
+                    fullName: 'John Doe',
+                    accountBalance: 5000.00,
+                    status: 'active',
+                    joinDate: '2024-01-15',
+                    lastLogin: '2024-01-20'
+                },
+                // ... more sample users
+            ];
+            displayUsers(window.usersData);
+            showToast('Using sample data - Firebase connection failed', 'warning');
+        }
+    }
+    showLoading(false);
+    
+    // Show sample data if Firebase fails
+    loadSampleData();
+}
