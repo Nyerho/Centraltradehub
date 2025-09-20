@@ -14,11 +14,19 @@ class AuthManager {
   async initialize() {
     try {
       console.log('Initializing AuthManager...');
+      
+      // If already initialized, return current user
+      if (this.isInitialized) {
+        console.log('AuthManager already initialized');
+        return this.currentUser;
+      }
+      
       // Wait for Firebase auth to be ready
       return new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {
+          console.error('Authentication initialization timeout');
           reject(new Error('Authentication initialization timeout'));
-        }, 10000); // 10 second timeout
+        }, 15000); // Increased to 15 second timeout
         
         const unsubscribe = FirebaseAuthService.addAuthStateListener((user) => {
           clearTimeout(timeout);
@@ -91,12 +99,15 @@ class AuthManager {
   }
 
   initializeFirebaseAuth() {
-    // Fix: Use addAuthStateListener instead of onAuthStateChanged
+    // Fix: Use addAuthStateListener and set isInitialized flag
     FirebaseAuthService.addAuthStateListener((user) => {
         this.currentUser = user;
         this.isLoggedIn = !!user; // Properly sync isLoggedIn with auth state
+        this.isInitialized = true; // Set initialization flag
         this.updateUI();
+        console.log('AuthManager: Firebase auth state updated, user:', user ? user.email : 'No user');
     });
+  }
 }
 
   async login(email, password) {
