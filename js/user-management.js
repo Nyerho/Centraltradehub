@@ -5,33 +5,44 @@ let allUsers = [];
 let filteredUsers = [];
 let currentUserDetails = {};
 
-// Handle browser extension conflicts
+// Error handling for browser extensions
 window.addEventListener('error', function(e) {
-    if (e.message.includes('Could not establish connection') || 
-        e.message.includes('message port closed')) {
-        console.log('Browser extension conflict detected - continuing with local functionality');
+    if (e.message && e.message.includes('Extension context invalidated')) {
+        console.warn('Browser extension conflict detected, continuing with core functionality');
         return true;
     }
 });
 
-// With your actual Firebase project configuration
-// Remove the firebaseConfig declaration entirely and use this instead:
-
-// Use Firebase services from firebase-config.js
+// Use the CORRECT Firebase configuration (from firebase-config.js)
 try {
-    // Check if Firebase is available from the global scope
-    if (typeof window.db === 'undefined' && typeof firebase !== 'undefined') {
-        // Use the configuration that's already working
-        const app = firebase.apps.find(app => app.name === '[DEFAULT]') || 
-                   firebase.initializeApp({
-                       apiKey: "AIzaSyAwnWoLfrEc1EtXWCD0by5L0VtCmYf8Unw",
-                       authDomain: "centraltradehub-30f00.firebaseapp.com",
-                       projectId: "centraltradehub-30f00",
-                       storageBucket: "centraltradehub-30f00.firebasestorage.app",
-                       messagingSenderId: "745751687877",
-                       appId: "1:745751687877:web:4576449aa2e8360931b6ac"
-                   });
+    // Check if Firebase is already initialized
+    if (typeof firebase !== 'undefined') {
+        // Use the correct configuration - NOT placeholder values
+        const correctConfig = {
+            apiKey: "AIzaSyAwnWoLfrEc1EtXWCD0by5L0VtCmYf8Unw",
+            authDomain: "centraltradehub-30f00.firebaseapp.com",
+            projectId: "centraltradehub-30f00",  // This was 'centraltradekeplr' - WRONG!
+            storageBucket: "centraltradehub-30f00.firebasestorage.app",
+            messagingSenderId: "745751687877",
+            appId: "1:745751687877:web:4576449aa2e8360931b6ac",
+            measurementId: "G-YHCS5CH450"
+        };
+        
+        // Initialize Firebase with correct config
+        let app;
+        try {
+            // Check if app already exists
+            app = firebase.app('userManagement');
+        } catch (error) {
+            // App doesn't exist, create it
+            app = firebase.initializeApp(correctConfig, 'userManagement');
+        }
+        
         window.db = firebase.firestore(app);
+        console.log('Firebase initialized successfully for user management');
+        console.log('Using project ID:', correctConfig.projectId);
+    } else {
+        throw new Error('Firebase SDK not loaded');
     }
 } catch (error) {
     console.warn('Firebase initialization failed, using sample data:', error);
