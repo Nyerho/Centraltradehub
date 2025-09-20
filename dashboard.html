@@ -258,12 +258,14 @@
             <!-- Wallet Section -->
             <div class="wallet-section">
                 <div class="wallet-header">
-                    <h3>Account Balance</h3>
+                    <h3>Financial Overview</h3>
                     <button class="refresh-btn">
                         <i class="fas fa-sync-alt"></i>
                         Refresh
                     </button>
                 </div>
+                
+                <!-- Account Balance Display -->
                 <div class="balance-display">
                     <div class="balance-amount">
                         <span class="currency">$</span>
@@ -271,7 +273,34 @@
                     </div>
                     <div class="balance-status">
                         <span class="status-indicator"></span>
-                        <span class="status-text">Account Active</span>
+                        <span class="status-text">Account Balance</span>
+                    </div>
+                </div>
+                
+                <!-- Financial Details Grid -->
+                <div class="financial-details-grid">
+                    <!-- Received Profits Display -->
+                    <div class="balance-display profits-display">
+                        <div class="balance-amount">
+                            <span class="currency">$</span>
+                            <span class="amount" id="receivedProfits">0.00</span>
+                        </div>
+                        <div class="balance-status">
+                            <span class="status-indicator profits-indicator"></span>
+                            <span class="status-text">Received (Profits)</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Total Deposits Display -->
+                    <div class="balance-display deposits-display">
+                        <div class="balance-amount">
+                            <span class="currency">$</span>
+                            <span class="amount" id="totalDeposits">0.00</span>
+                        </div>
+                        <div class="balance-status">
+                            <span class="status-indicator deposits-indicator"></span>
+                            <span class="status-text">Total Deposits</span>
+                        </div>
                     </div>
                 </div>
             </div>

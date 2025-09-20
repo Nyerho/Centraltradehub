@@ -451,20 +451,53 @@ function renderUserDetails(userData, trades, transactions, userId) {
                                 <div class="stat-label">Account Balance</div>
                             </div>
                             <div class="stat-card">
-                                <div class="stat-value">$${stats.totalDeposits.toFixed(2)}</div>
-                                <div class="stat-label">Total Deposits</div>
+                                <div class="stat-value">$${(userData.totalProfits || 0).toFixed(2)}</div>
+                                <div class="stat-label">Total Profits (Received)</div>
                             </div>
                             <div class="stat-card">
-                                <div class="stat-value">$${stats.totalWithdrawals.toFixed(2)}</div>
-                                <div class="stat-label">Total Withdrawals</div>
+                                <div class="stat-value">$${(userData.totalDeposits || 0).toFixed(2)}</div>
+                                <div class="stat-label">Total Deposits</div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-value">$${stats.tradingVolume.toFixed(2)}</div>
                                 <div class="stat-label">Trading Volume</div>
                             </div>
                         </div>
+                        
+                        <!-- Admin Edit Section for Profits and Deposits -->
+                        <div class="admin-edit-section">
+                            <h5>Edit Financial Data</h5>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Total Profits (Received):</label>
+                                    <input type="number" id="edit-profits-${userData.uid}" 
+                                           value="${userData.totalProfits || 0}" 
+                                           step="0.01" min="0" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label>Total Deposits:</label>
+                                    <input type="number" id="edit-deposits-${userData.uid}" 
+                                           value="${userData.totalDeposits || 0}" 
+                                           step="0.01" min="0" class="form-control">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <button onclick="updateUserFinancials('${userData.uid}')" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Update Financial Data
+                                </button>
+                                <button onclick="calculateBalance('${userData.uid}')" class="btn btn-info">
+                                    <i class="fas fa-calculator"></i> Auto-Calculate Balance
+                                </button>
+                            </div>
+                            <div class="balance-info">
+                                <small class="text-muted">
+                                    Account Balance = Total Deposits + Total Profits - Total Withdrawals
+                                </small>
+                            </div>
+                        </div>
+                        
                         <div class="balance-adjustment">
-                            <h5>Adjust Balance</h5>
+                            <h5>Manual Balance Adjustment</h5>
                             <div class="form-group">
                                 <label>Amount:</label>
                                 <input type="number" step="0.01" id="balanceAdjustment-${userId}" placeholder="Enter amount">
@@ -698,3 +731,101 @@ window.changePage = changePage;
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', initializeUserManagement);
+
+
+// Add these new functions for financial data management
+window.updateUserFinancials = async function(userId) {
+    try {
+        const profitsInput = document.getElementById(`edit-profits-${userId}`);
+        const depositsInput = document.getElementById(`edit-deposits-${userId}`);
+        
+        const totalProfits = parseFloat(profitsInput.value) || 0;
+        const totalDeposits = parseFloat(depositsInput.value) || 0;
+        
+        if (totalProfits < 0 || totalDeposits < 0) {
+            alert('Profits and deposits cannot be negative');
+            return;
+        }
+        
+        // Update user document with financial data
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, {
+            totalProfits: totalProfits,
+            totalDeposits: totalDeposits,
+            financialDataUpdatedAt: new Date().toISOString(),
+            financialDataUpdatedBy: window.currentUser?.email || 'Admin'
+        });
+        
+        // Also update the accounts collection for real-time sync
+        const accountRef = doc(db, 'accounts', userId);
+        const accountDoc = await getDoc(accountRef);
+        if (accountDoc.exists()) {
+            await updateDoc(accountRef, {
+                totalProfits: totalProfits,
+                totalDeposits: totalDeposits,
+                lastSyncedAt: new Date().toISOString(),
+                adminUpdated: true
+            });
+        }
+        
+        showNotification('Financial data updated successfully!', 'success');
+        
+        // Refresh the user details
+        setTimeout(() => {
+            const userRow = document.querySelector(`tr[data-user-id="${userId}"]`);
+            if (userRow) {
+                toggleUserDetails(userRow, userId);
+                setTimeout(() => toggleUserDetails(userRow, userId), 100);
+            }
+        }, 500);
+        
+    } catch (error) {
+        console.error('Error updating financial data:', error);
+        showNotification('Error updating financial data: ' + error.message, 'error');
+    }
+};
+
+window.calculateBalance = async function(userId) {
+    try {
+        const profitsInput = document.getElementById(`edit-profits-${userId}`);
+        const depositsInput = document.getElementById(`edit-deposits-${userId}`);
+        
+        const totalProfits = parseFloat(profitsInput.value) || 0;
+        const totalDeposits = parseFloat(depositsInput.value) || 0;
+        
+        // Get withdrawal data (you may need to implement this based on your withdrawal tracking)
+        const userRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userRef);
+        const userData = userDoc.data();
+        const totalWithdrawals = userData.totalWithdrawals || 0;
+        
+        // Calculate new balance
+        const newBalance = totalDeposits + totalProfits - totalWithdrawals;
+        
+        // Update both financial data and balance
+        await updateDoc(userRef, {
+            totalProfits: totalProfits,
+            totalDeposits: totalDeposits,
+            accountBalance: newBalance,
+            balanceUpdatedAt: new Date().toISOString(),
+            balanceUpdatedBy: window.currentUser?.email || 'Admin',
+            financialDataUpdatedAt: new Date().toISOString(),
+            financialDataUpdatedBy: window.currentUser?.email || 'Admin'
+        });
+        
+        showNotification(`Balance auto-calculated and updated to $${newBalance.toFixed(2)}`, 'success');
+        
+        // Refresh the user details
+        setTimeout(() => {
+            const userRow = document.querySelector(`tr[data-user-id="${userId}"]`);
+            if (userRow) {
+                toggleUserDetails(userRow, userId);
+                setTimeout(() => toggleUserDetails(userRow, userId), 100);
+            }
+        }, 500);
+        
+    } catch (error) {
+        console.error('Error calculating balance:', error);
+        showNotification('Error calculating balance: ' + error.message, 'error');
+    }
+};

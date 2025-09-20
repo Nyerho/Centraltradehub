@@ -512,6 +512,42 @@ window.saveSiteSettings = function() {
     }
 };
 
+// Add mobile menu toggle functionality
+window.toggleMobileMenu = function() {
+    const sidebar = document.getElementById('adminSidebar');
+    const toggle = document.getElementById('mobileMenuToggle');
+    
+    if (sidebar && toggle) {
+        sidebar.classList.toggle('mobile-open');
+        toggle.classList.toggle('active');
+        
+        // Toggle icon
+        const icon = toggle.querySelector('i');
+        if (icon) {
+            if (sidebar.classList.contains('mobile-open')) {
+                icon.className = 'fas fa-times';
+            } else {
+                icon.className = 'fas fa-bars';
+            }
+        }
+    }
+};
+
+// Close mobile menu when clicking outside
+document.addEventListener('click', function(event) {
+    const sidebar = document.getElementById('adminSidebar');
+    const toggle = document.getElementById('mobileMenuToggle');
+    
+    if (sidebar && toggle && sidebar.classList.contains('mobile-open')) {
+        if (!sidebar.contains(event.target) && !toggle.contains(event.target)) {
+            sidebar.classList.remove('mobile-open');
+            toggle.classList.remove('active');
+            const icon = toggle.querySelector('i');
+            if (icon) icon.className = 'fas fa-bars';
+        }
+    }
+});
+
 // Export and initialize
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {

@@ -420,18 +420,16 @@
             }
             
             try {
-                // Use Firebase v10 modular SDK to match the admin system
-                const { db } = await import('./js/firebase-config.js');
-                const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-                
-                if (!db) {
-                    throw new Error('Database not available');
+                // Use existing Firebase v8 setup instead of importing v10 modular
+                if (!window.firebase?.firestore) {
+                    throw new Error('Firebase not initialized');
                 }
                 
-                const cotDocRef = doc(db, 'admin', 'withdrawal-settings');
-                const cotDoc = await getDoc(cotDocRef);
+                const db = window.firebase.firestore();
+                const cotDocRef = db.collection('admin').doc('withdrawal-settings');
+                const cotDoc = await cotDocRef.get();
                 
-                if (!cotDoc.exists()) {
+                if (!cotDoc.exists) {
                     throw new Error('Withdrawal settings not found');
                 }
                 
@@ -439,23 +437,26 @@
                 const validCode = settings.cotCode;
                 
                 if (cotCode === validCode) {
-                    // COT code is valid, now check authentication
-                    // Check if user is already authenticated via window.authManager
-                    let authSuccess = false;
+                    // COT code is valid, check if user is already authenticated
                     let currentUser = null;
                     
                     if (window.authManager && window.authManager.getCurrentUser()) {
-                        // User is already authenticated
+                        // User is already authenticated - proceed directly
                         currentUser = window.authManager.getCurrentUser();
-                        authSuccess = true;
                         console.log('User already authenticated:', currentUser.email);
+                        
+                        // Show withdrawal page immediately
+                        document.getElementById('cotModal').style.display = 'none';
+                        document.getElementById('withdrawalPage').classList.remove('hidden');
+                        
+                        // Store verification in session
+                        sessionStorage.setItem('cotVerified', 'true');
+                        sessionStorage.setItem('cotTimestamp', Date.now().toString());
+                        
+                        // Load user balance
+                        await loadUserBalance();
+                        
                     } else {
-                        // Try to initialize auth if not already done
-                        authSuccess = await initializeAuth();
-                        currentUser = window.currentUser;
-                    }
-                    
-                    if (!authSuccess || !currentUser) {
                         // User not logged in, redirect to login but preserve COT verification
                         sessionStorage.setItem('cotVerified', 'true');
                         sessionStorage.setItem('cotTimestamp', Date.now().toString());
@@ -466,13 +467,6 @@
                         return;
                     }
                     
-                    // Both COT and auth are valid, show withdrawal page
-                    document.getElementById('cotModal').style.display = 'none';
-                    document.getElementById('withdrawalPage').classList.remove('hidden');
-                    
-                    // Store verification in session
-                    sessionStorage.setItem('cotVerified', 'true');
-                    sessionStorage.setItem('cotTimestamp', Date.now().toString());
                 } else {
                     showAlert('Invalid COT code. Please contact your account manager.', 'error');
                 }

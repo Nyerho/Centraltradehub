@@ -369,14 +369,19 @@ class DashboardManager {
             if (accountDoc.exists()) {
                 this.accountData = accountDoc.data();
             } else {
-                // Check if user has balance from admin updates first
+                // Check if user has balance, profits, and deposits from admin updates
                 const userRef = doc(db, 'users', user.uid);
                 const userDoc = await getDoc(userRef);
-                const adminBalance = userDoc.exists() ? (userDoc.data().accountBalance || 0) : 0;
+                const userData = userDoc.exists() ? userDoc.data() : {};
+                const adminBalance = userData.accountBalance || 0;
+                const totalProfits = userData.totalProfits || 0;
+                const totalDeposits = userData.totalDeposits || 0;
                 
-                // Create account with admin balance if available, otherwise default to 0
+                // Create account with admin data if available
                 this.accountData = {
                     balance: adminBalance,
+                    totalProfits: totalProfits,
+                    totalDeposits: totalDeposits,
                     currency: 'USD',
                     createdAt: new Date().toISOString()
                 };
@@ -394,6 +399,8 @@ class DashboardManager {
     updateAccountSummary() {
         const balanceElement = document.getElementById('walletBalance');
         const accountBalanceElement = document.getElementById('accountBalance');
+        const receivedProfitsElement = document.getElementById('receivedProfits');
+        const totalDepositsElement = document.getElementById('totalDeposits');
         
         if (balanceElement) {
             // Remove $ prefix since USD is already shown in HTML
@@ -404,7 +411,23 @@ class DashboardManager {
         }
         
         if (accountBalanceElement) {
-            accountBalanceElement.textContent = `$${(this.accountData.balance || 0).toLocaleString('en-US', {
+            accountBalanceElement.textContent = `${(this.accountData.balance || 0).toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            })}`;
+        }
+        
+        // Display received profits separately
+        if (receivedProfitsElement) {
+            receivedProfitsElement.textContent = `${(this.accountData.totalProfits || 0).toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            })}`;
+        }
+        
+        // Display total deposits
+        if (totalDepositsElement) {
+            totalDepositsElement.textContent = `${(this.accountData.totalDeposits || 0).toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             })}`;

@@ -1410,6 +1410,57 @@ body {
     100% { transform: rotate(360deg); }
 }
 
+/* Wallet Section Styles */
+.wallet-section {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    border: 1px solid rgba(42, 46, 57, 0.3);
+}
+
+.financial-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(42, 46, 57, 0.3);
+}
+
+.profits-display .balance-amount {
+    color: #10b981; /* Green color for profits */
+}
+
+.profits-indicator {
+    background: #10b981;
+}
+
+.profits-display .status-text {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.deposits-display .balance-amount {
+    color: #3b82f6; /* Blue color for deposits */
+}
+
+.deposits-indicator {
+    background: #3b82f6;
+}
+
+.deposits-display .status-text {
+    color: #3b82f6;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .financial-details-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+}
+
 /* Leaderboard Styles */
 .leaderboard-section {
     background: var(--bg-secondary, #1e293b);
