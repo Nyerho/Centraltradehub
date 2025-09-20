@@ -84,6 +84,20 @@ async function loadUsers() {
     try {
         showLoading(true);
         
+        // Check if user is authenticated
+        if (!firebase.auth().currentUser) {
+            throw new Error('User not authenticated. Please sign in as admin.');
+        }
+        
+        // Check if user is admin
+        const userEmail = firebase.auth().currentUser.email;
+        const isAdmin = userEmail === 'owner@centraltradehub.com' || 
+                       userEmail === 'admin@centraltradehub.com';
+        
+        if (!isAdmin) {
+            throw new Error('Access denied. Admin privileges required.');
+        }
+        
         if (window.db) {
             console.log('Loading users from Firestore...');
             const snapshot = await window.db.collection('users').get();
