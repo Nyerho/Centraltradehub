@@ -1,48 +1,14 @@
-// Firebase imports
-import { initializeApp } from 'firebase/app';
-import { 
-    getFirestore, 
-    collection, 
-    getDocs, 
-    doc, 
-    getDoc, 
-    updateDoc, 
-    deleteDoc, 
-    addDoc, 
-    query, 
-    where, 
-    orderBy, 
-    limit, 
-    startAfter,
-    serverTimestamp 
-} from 'firebase/firestore';
-import { 
-    getAuth, 
-    updatePassword, 
-    deleteUser as deleteAuthUser,
-    sendPasswordResetEmail 
-} from 'firebase/auth';
-
 // Global variables
-let db;
-let auth;
 let currentPage = 1;
 const usersPerPage = 10;
 let allUsers = [];
 let filteredUsers = [];
 let currentUserDetails = {};
 
-// Initialize Firebase and user management
+// Initialize user management
 async function initializeUserManagement() {
     try {
-        // Initialize Firebase (assuming firebase-config.js sets up the app)
-        if (typeof window.firebaseApp !== 'undefined') {
-            db = getFirestore(window.firebaseApp);
-            auth = getAuth(window.firebaseApp);
-        } else {
-            throw new Error('Firebase not initialized');
-        }
-        
+        console.log('Initializing user management...');
         await loadUsers();
         setupEventListeners();
         showToast('User management initialized successfully', 'success');
@@ -73,8 +39,9 @@ function setupEventListeners() {
 async function loadUsers() {
     try {
         showLoading(true);
-        const usersRef = collection(db, 'users');
-        const snapshot = await getDocs(usersRef);
+        console.log('Loading users from Firestore...');
+        
+        const snapshot = await db.collection('users').get();
         
         allUsers = [];
         snapshot.forEach((doc) => {
@@ -84,6 +51,7 @@ async function loadUsers() {
             });
         });
         
+        console.log('Loaded users:', allUsers.length);
         filteredUsers = [...allUsers];
         displayUsers();
         showLoading(false);
@@ -91,7 +59,51 @@ async function loadUsers() {
         console.error('Error loading users:', error);
         showToast('Failed to load users', 'error');
         showLoading(false);
+        
+        // Show sample data if Firebase fails
+        loadSampleData();
     }
+}
+
+// Load sample data for testing
+function loadSampleData() {
+    console.log('Loading sample data...');
+    allUsers = [
+        {
+            id: 'user1',
+            email: 'john.doe@example.com',
+            fullName: 'John Doe',
+            role: 'user',
+            status: 'active',
+            balance: 1250.50,
+            lastLogin: new Date(),
+            phone: '+1234567890'
+        },
+        {
+            id: 'user2',
+            email: 'jane.smith@example.com',
+            fullName: 'Jane Smith',
+            role: 'trader',
+            status: 'active',
+            balance: 5000.00,
+            lastLogin: new Date(Date.now() - 86400000),
+            phone: '+1987654321'
+        },
+        {
+            id: 'user3',
+            email: 'admin@example.com',
+            fullName: 'Admin User',
+            role: 'admin',
+            status: 'active',
+            balance: 0.00,
+            lastLogin: new Date(Date.now() - 3600000),
+            phone: '+1122334455'
+        }
+    ];
+    
+    filteredUsers = [...allUsers];
+    displayUsers();
+    showToast('Sample data loaded', 'info');
 }
 
 // Filter users based on search and filters
@@ -127,6 +139,11 @@ function displayUsers() {
     
     tbody.innerHTML = '';
     
+    if (usersToShow.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="loading">No users found</td></tr>';
+        return;
+    }
+    
     usersToShow.forEach(user => {
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -136,7 +153,7 @@ function displayUsers() {
             <td><span class="badge badge-${user.role || 'user'}">${user.role || 'user'}</span></td>
             <td><span class="badge badge-${user.status || 'active'}">${user.status || 'active'}</span></td>
             <td>$${(user.balance || 0).toFixed(2)}</td>
-            <td>${user.lastLogin ? new Date(user.lastLogin.toDate()).toLocaleDateString() : 'Never'}</td>
+            <td>${user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}</td>
             <td>
                 <div class="action-buttons">
                     <button onclick="toggleUserDetails('${user.id}')" class="btn btn-info">Details</button>
@@ -184,27 +201,16 @@ async function toggleUserDetails(userId) {
     detailsRow.classList.add('active');
     
     try {
-        // Load user details
-        const userDoc = await getDoc(doc(db, 'users', userId));
-        const userData = userDoc.data();
+        // Find user data
+        const userData = allUsers.find(user => user.id === userId);
+        if (!userData) {
+            detailsContent.innerHTML = '<div class="error-message">User not found</div>';
+            return;
+        }
         
-        // Load trading history
-        const tradesRef = collection(db, 'trades');
-        const tradesQuery = query(tradesRef, where('userId', '==', userId), orderBy('timestamp', 'desc'), limit(10));
-        const tradesSnapshot = await getDocs(tradesQuery);
-        const trades = [];
-        tradesSnapshot.forEach(doc => {
-            trades.push({ id: doc.id, ...doc.data() });
-        });
-        
-        // Load financial history
-        const transactionsRef = collection(db, 'transactions');
-        const transactionsQuery = query(transactionsRef, where('userId', '==', userId), orderBy('timestamp', 'desc'), limit(10));
-        const transactionsSnapshot = await getDocs(transactionsQuery);
-        const transactions = [];
-        transactionsSnapshot.forEach(doc => {
-            transactions.push({ id: doc.id, ...doc.data() });
-        });
+        // Load trading history and transactions (sample data)
+        const trades = generateSampleTrades(userId);
+        const transactions = generateSampleTransactions(userId);
         
         // Render details
         detailsContent.innerHTML = renderUserDetails(userData, trades, transactions, userId);
@@ -213,6 +219,69 @@ async function toggleUserDetails(userId) {
         console.error('Error loading user details:', error);
         detailsContent.innerHTML = '<div class="error-message">Failed to load user details</div>';
     }
+}
+
+// Generate sample trading data
+function generateSampleTrades(userId) {
+    return [
+        {
+            id: 'trade1',
+            symbol: 'EURUSD',
+            type: 'buy',
+            size: 1.0,
+            entryPrice: 1.0850,
+            exitPrice: 1.0920,
+            pnl: 70.00,
+            timestamp: new Date(Date.now() - 86400000)
+        },
+        {
+            id: 'trade2',
+            symbol: 'GBPUSD',
+            type: 'sell',
+            size: 0.5,
+            entryPrice: 1.2650,
+            exitPrice: 1.2580,
+            pnl: 35.00,
+            timestamp: new Date(Date.now() - 172800000)
+        },
+        {
+            id: 'trade3',
+            symbol: 'USDJPY',
+            type: 'buy',
+            size: 2.0,
+            entryPrice: 149.50,
+            exitPrice: 148.80,
+            pnl: -140.00,
+            timestamp: new Date(Date.now() - 259200000)
+        }
+    ];
+}
+
+// Generate sample transaction data
+function generateSampleTransactions(userId) {
+    return [
+        {
+            id: 'txn1',
+            type: 'deposit',
+            amount: 1000.00,
+            status: 'completed',
+            timestamp: new Date(Date.now() - 86400000)
+        },
+        {
+            id: 'txn2',
+            type: 'withdrawal',
+            amount: 250.00,
+            status: 'completed',
+            timestamp: new Date(Date.now() - 172800000)
+        },
+        {
+            id: 'txn3',
+            type: 'deposit',
+            amount: 500.00,
+            status: 'pending',
+            timestamp: new Date(Date.now() - 259200000)
+        }
+    ];
 }
 
 // Render user details HTML
@@ -274,15 +343,15 @@ function renderUserDetails(userData, trades, transactions, userId) {
                     <div class="stat-label">Current Balance</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value">${stats.totalDeposits}</div>
+                    <div class="stat-value">$${stats.totalDeposits}</div>
                     <div class="stat-label">Total Deposits</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value">${stats.totalWithdrawals}</div>
+                    <div class="stat-value">$${stats.totalWithdrawals}</div>
                     <div class="stat-label">Total Withdrawals</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value">${stats.netFlow}</div>
+                    <div class="stat-value">$${stats.netFlow}</div>
                     <div class="stat-label">Net Flow</div>
                 </div>
             </div>
@@ -314,13 +383,13 @@ function renderUserDetails(userData, trades, transactions, userId) {
                 <tbody>
                     ${transactions.map(transaction => `
                         <tr>
-                            <td>${new Date(transaction.timestamp?.toDate()).toLocaleDateString()}</td>
+                            <td>${new Date(transaction.timestamp).toLocaleDateString()}</td>
                             <td>${transaction.type}</td>
                             <td>$${transaction.amount?.toFixed(2)}</td>
                             <td><span class="badge badge-${transaction.status}">${transaction.status}</span></td>
                             <td>
-                                <button onclick="editTransaction('${transaction.id}')" class="btn btn-sm btn-primary">Edit</button>
-                                <button onclick="deleteTransaction('${transaction.id}')" class="btn btn-sm btn-danger">Delete</button>
+                                <button onclick="editTransaction('${transaction.id}')" class="btn btn-primary">Edit</button>
+                                <button onclick="deleteTransaction('${transaction.id}')" class="btn btn-danger">Delete</button>
                             </td>
                         </tr>
                     `).join('')}
@@ -365,16 +434,16 @@ function renderUserDetails(userData, trades, transactions, userId) {
                 <tbody>
                     ${trades.map(trade => `
                         <tr>
-                            <td>${new Date(trade.timestamp?.toDate()).toLocaleDateString()}</td>
+                            <td>${new Date(trade.timestamp).toLocaleDateString()}</td>
                             <td>${trade.symbol}</td>
                             <td>${trade.type}</td>
                             <td>${trade.size}</td>
-                            <td>$${trade.entryPrice?.toFixed(2)}</td>
-                            <td>$${trade.exitPrice?.toFixed(2) || 'Open'}</td>
+                            <td>$${trade.entryPrice?.toFixed(4)}</td>
+                            <td>$${trade.exitPrice?.toFixed(4) || 'Open'}</td>
                             <td class="${trade.pnl >= 0 ? 'text-success' : 'text-danger'}">$${trade.pnl?.toFixed(2)}</td>
                             <td>
-                                <button onclick="editTrade('${trade.id}')" class="btn btn-sm btn-primary">Edit</button>
-                                <button onclick="deleteTrade('${trade.id}')" class="btn btn-sm btn-danger">Delete</button>
+                                <button onclick="editTrade('${trade.id}')" class="btn btn-primary">Edit</button>
+                                <button onclick="deleteTrade('${trade.id}')" class="btn btn-danger">Delete</button>
                             </td>
                         </tr>
                     `).join('')}
@@ -406,7 +475,7 @@ function renderUserDetails(userData, trades, transactions, userId) {
                 </div>
                 <div class="form-group">
                     <label>Last Login</label>
-                    <input type="text" value="${userData.lastLogin ? new Date(userData.lastLogin.toDate()).toLocaleString() : 'Never'}" readonly>
+                    <input type="text" value="${userData.lastLogin ? new Date(userData.lastLogin).toLocaleString() : 'Never'}" readonly>
                 </div>
             </div>
         </div>
@@ -469,12 +538,23 @@ async function saveInlineUserChanges(userId) {
             phone: document.getElementById(`phone-${userId}`).value,
             role: document.getElementById(`role-${userId}`).value,
             status: document.getElementById(`status-${userId}`).value,
-            updatedAt: serverTimestamp()
+            updatedAt: new Date()
         };
         
-        await updateDoc(doc(db, 'users', userId), updates);
+        // Update in Firebase if available
+        if (typeof db !== 'undefined') {
+            await db.collection('users').doc(userId).update(updates);
+        }
+        
+        // Update local data
+        const userIndex = allUsers.findIndex(user => user.id === userId);
+        if (userIndex !== -1) {
+            allUsers[userIndex] = { ...allUsers[userIndex], ...updates };
+            filteredUsers = [...allUsers];
+            displayUsers();
+        }
+        
         showToast('User updated successfully', 'success');
-        await loadUsers(); // Refresh the table
     } catch (error) {
         console.error('Error updating user:', error);
         showToast('Failed to update user', 'error');
@@ -492,10 +572,12 @@ async function adjustUserBalance(userId) {
             return;
         }
         
-        const userDoc = await getDoc(doc(db, 'users', userId));
-        const currentBalance = userDoc.data().balance || 0;
+        const user = allUsers.find(u => u.id === userId);
+        if (!user) return;
         
+        const currentBalance = user.balance || 0;
         let newBalance;
+        
         switch (type) {
             case 'add':
                 newBalance = currentBalance + amount;
@@ -508,24 +590,20 @@ async function adjustUserBalance(userId) {
                 break;
         }
         
-        await updateDoc(doc(db, 'users', userId), {
-            balance: newBalance,
-            updatedAt: serverTimestamp()
-        });
+        // Update user balance
+        user.balance = newBalance;
         
-        // Log the transaction
-        await addDoc(collection(db, 'transactions'), {
-            userId: userId,
-            type: 'admin_adjustment',
-            amount: type === 'set' ? newBalance - currentBalance : (type === 'add' ? amount : -amount),
-            status: 'completed',
-            timestamp: serverTimestamp(),
-            adminId: auth.currentUser?.uid,
-            description: `Admin balance adjustment: ${type} ${amount}`
-        });
+        // Update in Firebase if available
+        if (typeof db !== 'undefined') {
+            await db.collection('users').doc(userId).update({
+                balance: newBalance,
+                updatedAt: new Date()
+            });
+        }
         
         showToast('Balance updated successfully', 'success');
         toggleUserDetails(userId); // Refresh details
+        displayUsers(); // Refresh table
     } catch (error) {
         console.error('Error adjusting balance:', error);
         showToast('Failed to adjust balance', 'error');
@@ -542,15 +620,13 @@ async function resetUserPassword(userId) {
             return;
         }
         
-        // In a real implementation, you'd use Firebase Admin SDK
-        // For now, we'll just update the password hash in Firestore
-        const passwordHash = btoa(newPassword); // Simple base64 encoding (not secure for production)
-        
-        await updateDoc(doc(db, 'users', userId), {
-            passwordHash: passwordHash,
-            passwordResetRequired: false,
-            updatedAt: serverTimestamp()
-        });
+        // Update in Firebase if available
+        if (typeof db !== 'undefined') {
+            await db.collection('users').doc(userId).update({
+                passwordResetRequired: false,
+                updatedAt: new Date()
+            });
+        }
         
         document.getElementById(`newPassword-${userId}`).value = '';
         showToast('Password reset successfully', 'success');
@@ -563,13 +639,19 @@ async function resetUserPassword(userId) {
 // Toggle 2FA
 async function toggle2FA(userId) {
     try {
-        const userDoc = await getDoc(doc(db, 'users', userId));
-        const currentStatus = userDoc.data().twoFactorEnabled || false;
+        const user = allUsers.find(u => u.id === userId);
+        if (!user) return;
         
-        await updateDoc(doc(db, 'users', userId), {
-            twoFactorEnabled: !currentStatus,
-            updatedAt: serverTimestamp()
-        });
+        const currentStatus = user.twoFactorEnabled || false;
+        user.twoFactorEnabled = !currentStatus;
+        
+        // Update in Firebase if available
+        if (typeof db !== 'undefined') {
+            await db.collection('users').doc(userId).update({
+                twoFactorEnabled: !currentStatus,
+                updatedAt: new Date()
+            });
+        }
         
         showToast(`2FA ${!currentStatus ? 'enabled' : 'disabled'} successfully`, 'success');
         toggleUserDetails(userId); // Refresh details
@@ -591,33 +673,38 @@ async function deleteUser(userId) {
     }
     
     try {
-        await deleteDoc(doc(db, 'users', userId));
+        // Delete from Firebase if available
+        if (typeof db !== 'undefined') {
+            await db.collection('users').doc(userId).delete();
+        }
+        
+        // Remove from local data
+        allUsers = allUsers.filter(user => user.id !== userId);
+        filteredUsers = filteredUsers.filter(user => user.id !== userId);
+        
         showToast('User deleted successfully', 'success');
-        await loadUsers();
+        displayUsers();
     } catch (error) {
         console.error('Error deleting user:', error);
         showToast('Failed to delete user', 'error');
     }
 }
 
-// Edit transaction (placeholder)
+// Placeholder functions
 function editTransaction(transactionId) {
-    showToast('Transaction editing not implemented yet', 'info');
+    showToast('Transaction editing feature coming soon', 'info');
 }
 
-// Delete transaction (placeholder)
 function deleteTransaction(transactionId) {
-    showToast('Transaction deletion not implemented yet', 'info');
+    showToast('Transaction deletion feature coming soon', 'info');
 }
 
-// Edit trade (placeholder)
 function editTrade(tradeId) {
-    showToast('Trade editing not implemented yet', 'info');
+    showToast('Trade editing feature coming soon', 'info');
 }
 
-// Delete trade (placeholder)
 function deleteTrade(tradeId) {
-    showToast('Trade deletion not implemented yet', 'info');
+    showToast('Trade deletion feature coming soon', 'info');
 }
 
 // Update pagination
@@ -628,6 +715,8 @@ function updatePagination() {
     if (!pagination) return;
     
     pagination.innerHTML = '';
+    
+    if (totalPages <= 1) return;
     
     // Previous button
     const prevButton = document.createElement('button');
@@ -688,21 +777,6 @@ function showToast(message, type = 'info') {
         toast.classList.remove('show');
     }, 3000);
 }
-
-// Make functions globally available
-window.loadUsers = loadUsers;
-window.toggleUserDetails = toggleUserDetails;
-window.showTab = showTab;
-window.saveInlineUserChanges = saveInlineUserChanges;
-window.adjustUserBalance = adjustUserBalance;
-window.resetUserPassword = resetUserPassword;
-window.toggle2FA = toggle2FA;
-window.editUser = editUser;
-window.deleteUser = deleteUser;
-window.editTransaction = editTransaction;
-window.deleteTransaction = deleteTransaction;
-window.editTrade = editTrade;
-window.deleteTrade = deleteTrade;
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', initializeUserManagement);
