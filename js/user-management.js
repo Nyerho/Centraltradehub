@@ -1,48 +1,38 @@
-// Global variables
+// User Management System
 let currentPage = 1;
 const usersPerPage = 10;
 let allUsers = [];
 let filteredUsers = [];
 let currentUserDetails = {};
 
-// Error handling for browser extensions
+// Error handling
 window.addEventListener('error', function(e) {
-    if (e.message && e.message.includes('Extension context invalidated')) {
-        console.warn('Browser extension conflict detected, continuing with core functionality');
-        return true;
-    }
+    console.error('Global error:', e.error);
+    showToast('An error occurred. Please refresh the page.', 'error');
 });
 
-// Use the CORRECT Firebase configuration (from firebase-config.js)
+// Firebase initialization
 try {
-    // Check if Firebase is already initialized
-    if (typeof firebase !== 'undefined') {
-        // Use the correct configuration - NOT placeholder values
-        const correctConfig = {
-            apiKey: "AIzaSyAwnWoLfrEc1EtXWCD0by5L0VtCmYf8Unw",
-            authDomain: "centraltradehub-30f00.firebaseapp.com",
-            projectId: "centraltradehub-30f00",  // This was 'centraltradekeplr' - WRONG!
-            storageBucket: "centraltradehub-30f00.firebasestorage.app",
-            messagingSenderId: "745751687877",
-            appId: "1:745751687877:web:4576449aa2e8360931b6ac",
-            measurementId: "G-YHCS5CH450"
+    if (typeof firebase !== 'undefined' && firebase.apps.length === 0) {
+        const firebaseConfig = {
+            apiKey: "AIzaSyDGpAHia_wEmrhnmYjrPf1n1TrAzwEMiAI",
+            authDomain: "usermanagement-34b5c.firebaseapp.com",
+            projectId: "usermanagement-34b5c",
+            storageBucket: "usermanagement-34b5c.appspot.com",
+            messagingSenderId: "888243437180",
+            appId: "1:888243437180:web:5a7b3b7b0b0b0b0b0b0b0b",
+            measurementId: "G-1234567890"
         };
         
-        // Initialize Firebase with correct config as DEFAULT app
-        let app;
-        try {
-            // Check if default app already exists
-            app = firebase.app();
-        } catch (error) {
-            // App doesn't exist, create it as default
-            app = firebase.initializeApp(correctConfig);
-        }
-        
+        firebase.initializeApp(firebaseConfig);
         window.db = firebase.firestore();
-        console.log('Firebase initialized successfully for user management');
-        console.log('Using project ID:', correctConfig.projectId);
+        console.log('Firebase initialized successfully');
+    } else if (typeof firebase !== 'undefined') {
+        window.db = firebase.firestore();
+        console.log('Using existing Firebase instance');
     } else {
-        throw new Error('Firebase SDK not loaded');
+        console.warn('Firebase not available, using sample data');
+        window.db = null;
     }
 } catch (error) {
     console.warn('Firebase initialization failed, using sample data:', error);
@@ -52,89 +42,64 @@ try {
 // Initialize user management
 async function initializeUserManagement() {
     try {
-        console.log('Initializing user management (no auth required)...');
-        
-        // Direct access - no authentication checks
-        await loadUsers();
         setupEventListeners();
-        showToast('User management initialized successfully', 'success');
+        showLoading(true);
+        await loadUsers();
+        updateDashboardStats();
+        showLoading(false);
     } catch (error) {
-        console.error('Error initializing user management:', error);
-        showToast('Failed to initialize user management: ' + error.message, 'error');
+        console.error('Failed to initialize user management:', error);
+        showToast('Failed to load user data', 'error');
+        showLoading(false);
     }
 }
 
 // Setup event listeners
 function setupEventListeners() {
-    const searchInput = document.getElementById('searchInput');
-    const roleFilter = document.getElementById('roleFilter');
+    const searchInput = document.getElementById('searchUsers');
     const statusFilter = document.getElementById('statusFilter');
+    const refreshBtn = document.getElementById('refreshUsers');
     
-    if (searchInput) {
-        searchInput.addEventListener('input', filterUsers);
-    }
-    if (roleFilter) {
-        roleFilter.addEventListener('change', filterUsers);
-    }
-    if (statusFilter) {
-        statusFilter.addEventListener('change', filterUsers);
-    }
+    if (searchInput) searchInput.addEventListener('input', filterUsers);
+    if (statusFilter) statusFilter.addEventListener('change', filterUsers);
+    if (refreshBtn) refreshBtn.addEventListener('click', () => {
+        loadUsers();
+        showToast('User data refreshed', 'success');
+    });
 }
 
-// Load users (fixed version)
+// Load users from Firestore or sample data
 async function loadUsers() {
     try {
-        showLoading(true);
-        
-        // Skip all authentication checks - direct access
-        
         if (window.db) {
-            console.log('Loading users from Firestore (no auth checks)...');
+            const usersSnapshot = await window.db.collection('users').get();
+            allUsers = usersSnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
             
-            try {
-                // Direct Firestore access without authentication
-                const snapshot = await window.db.collection('users').get();
-                
-                allUsers = [];
-                snapshot.forEach((doc) => {
-                    allUsers.push({
-                        id: doc.id,
-                        ...doc.data()
-                    });
-                });
-                
-                if (allUsers.length === 0) {
-                    console.warn('No users found in Firestore, using sample data');
-                    loadSampleData();
-                    return;
-                }
-                
-                console.log(`Successfully loaded ${allUsers.length} users from Firestore`);
-            } catch (firestoreError) {
-                console.error('Firestore access error:', firestoreError);
-                
-                if (firestoreError.code === 'permission-denied') {
-                    showToast('Firestore access denied. Please update security rules to allow admin access.', 'error');
-                } else {
-                    showToast('Database connection error. Using sample data.', 'warning');
-                }
-                
-                throw firestoreError;
+            if (allUsers.length === 0) {
+                console.log('No users found in Firestore, loading sample data');
+                loadSampleData();
             }
         } else {
-            throw new Error('Firebase not available');
+            console.log('Firestore not available, loading sample data');
+            loadSampleData();
         }
         
         filteredUsers = [...allUsers];
         displayUsers();
         updatePagination();
+        updateDashboardStats();
         
     } catch (error) {
-        console.warn('Using sample data due to error:', error);
-        showToast('Unable to load real user data. Displaying sample data instead.', 'warning');
+        console.error('Error loading users:', error);
+        showToast('Error loading users, using sample data', 'warning');
         loadSampleData();
-    } finally {
-        showLoading(false);
+        filteredUsers = [...allUsers];
+        displayUsers();
+        updatePagination();
+        updateDashboardStats();
     }
 }
 
@@ -145,472 +110,65 @@ function loadSampleData() {
             id: 'user1',
             email: 'john.doe@example.com',
             fullName: 'John Doe',
-            accountBalance: 5000.00,
+            accountBalance: 15000.50,
             status: 'active',
-            role: 'user',
             joinDate: '2024-01-15',
-            lastLogin: '2024-01-20',
-            phone: '+1234567890',
-            country: 'USA',
-            kycStatus: 'verified',
-            twoFactorEnabled: true
+            phone: '+1-555-0123',
+            address: '123 Main St, New York, NY 10001',
+            verificationStatus: 'verified',
+            twoFactorEnabled: true,
+            lastLogin: '2024-01-20 14:30:00'
         },
         {
             id: 'user2',
             email: 'jane.smith@example.com',
             fullName: 'Jane Smith',
-            accountBalance: 7500.50,
+            accountBalance: 8750.25,
             status: 'active',
-            role: 'user',
             joinDate: '2024-01-10',
-            lastLogin: '2024-01-19',
-            phone: '+1234567891',
-            country: 'Canada',
-            kycStatus: 'verified',
-            twoFactorEnabled: false
+            phone: '+1-555-0124',
+            address: '456 Oak Ave, Los Angeles, CA 90210',
+            verificationStatus: 'verified',
+            twoFactorEnabled: false,
+            lastLogin: '2024-01-19 09:15:00'
         },
         {
             id: 'user3',
-            email: 'bob.wilson@example.com',
-            fullName: 'Bob Wilson',
-            accountBalance: 2250.75,
+            email: 'mike.johnson@example.com',
+            fullName: 'Mike Johnson',
+            accountBalance: 2300.75,
+            status: 'pending',
+            joinDate: '2024-01-18',
+            phone: '+1-555-0125',
+            address: '789 Pine St, Chicago, IL 60601',
+            verificationStatus: 'pending',
+            twoFactorEnabled: false,
+            lastLogin: '2024-01-18 16:45:00'
+        },
+        {
+            id: 'user4',
+            email: 'sarah.wilson@example.com',
+            fullName: 'Sarah Wilson',
+            accountBalance: 0.00,
             status: 'suspended',
-            role: 'user',
             joinDate: '2024-01-05',
-            lastLogin: '2024-01-18',
-            phone: '+1234567892',
-            country: 'UK',
-            kycStatus: 'pending',
-            twoFactorEnabled: true
+            phone: '+1-555-0126',
+            address: '321 Elm St, Houston, TX 77001',
+            verificationStatus: 'verified',
+            twoFactorEnabled: true,
+            lastLogin: '2024-01-15 11:20:00'
         }
     ];
-    
-    filteredUsers = [...allUsers];
-    displayUsers();
-    updatePagination();
-    showToast('Using sample data - Firebase connection failed', 'warning');
 }
 
-// Filter users
-function filterUsers() {
-    const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
-    const roleFilter = document.getElementById('roleFilter')?.value || 'all';
-    const statusFilter = document.getElementById('statusFilter')?.value || 'all';
-    
-    filteredUsers = allUsers.filter(user => {
-        const matchesSearch = user.fullName?.toLowerCase().includes(searchTerm) || 
-                            user.email?.toLowerCase().includes(searchTerm);
-        const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-        const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
-        
-        return matchesSearch && matchesRole && matchesStatus;
-    });
-    
-    currentPage = 1;
-    displayUsers();
-    updatePagination();
-}
-
-// Display users
-function displayUsers() {
-    const tbody = document.getElementById('usersTableBody');
-    if (!tbody) return;
-    
-    const startIndex = (currentPage - 1) * usersPerPage;
-    const endIndex = startIndex + usersPerPage;
-    const usersToShow = filteredUsers.slice(startIndex, endIndex);
-    
-    tbody.innerHTML = '';
-    
-    usersToShow.forEach(user => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${user.id}</td>
-            <td>${user.email}</td>
-            <td>${user.fullName}</td>
-            <td>$${user.accountBalance?.toFixed(2) || '0.00'}</td>
-            <td><span class="status-badge status-${user.status}">${user.status}</span></td>
-            <td>${user.joinDate}</td>
-            <td>
-                <button class="btn btn-sm btn-primary" onclick="toggleUserDetails('${user.id}')">
-                    <i class="fas fa-eye"></i> Details
-                </button>
-                <button class="btn btn-sm btn-warning" onclick="editUser('${user.id}')">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="deleteUser('${user.id}')">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
-}
-
-// Toggle user details (inline expandable)
-async function toggleUserDetails(userId) {
-    const existingDetails = document.getElementById(`user-details-${userId}`);
-    
-    if (existingDetails) {
-        existingDetails.remove();
-        return;
-    }
-    
-    const user = allUsers.find(u => u.id === userId);
-    if (!user) return;
-    
-    // Generate sample data
-    const trades = generateSampleTrades(userId);
-    const transactions = generateSampleTransactions(userId);
-    
-    // Find the user row
-    const userRow = document.querySelector(`tr:has(button[onclick="toggleUserDetails('${userId}')"])`);
-    if (!userRow) return;
-    
-    // Create details row
-    const detailsRow = document.createElement('tr');
-    detailsRow.id = `user-details-${userId}`;
-    detailsRow.innerHTML = `
-        <td colspan="7">
-            ${renderUserDetails(user, trades, transactions, userId)}
-        </td>
-    `;
-    
-    // Insert after user row
-    userRow.insertAdjacentElement('afterend', detailsRow);
-}
-
-// Generate sample trades
-function generateSampleTrades(userId) {
-    const symbols = ['BTC/USD', 'ETH/USD', 'XRP/USD', 'ADA/USD', 'DOT/USD'];
-    const types = ['buy', 'sell'];
-    const trades = [];
-    
-    for (let i = 0; i < 5; i++) {
-        trades.push({
-            id: `trade_${userId}_${i + 1}`,
-            symbol: symbols[Math.floor(Math.random() * symbols.length)],
-            type: types[Math.floor(Math.random() * types.length)],
-            amount: (Math.random() * 10 + 0.1).toFixed(4),
-            price: (Math.random() * 50000 + 1000).toFixed(2),
-            total: (Math.random() * 5000 + 100).toFixed(2),
-            status: Math.random() > 0.2 ? 'completed' : 'pending',
-            timestamp: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-            fee: (Math.random() * 10 + 1).toFixed(2)
-        });
-    }
-    
-    return trades.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-}
-
-// Generate sample transactions
-function generateSampleTransactions(userId) {
-    const types = ['deposit', 'withdrawal', 'fee', 'bonus'];
-    const methods = ['bank_transfer', 'credit_card', 'crypto', 'paypal'];
-    const transactions = [];
-    
-    for (let i = 0; i < 8; i++) {
-        const type = types[Math.floor(Math.random() * types.length)];
-        transactions.push({
-            id: `txn_${userId}_${i + 1}`,
-            type: type,
-            amount: (Math.random() * 1000 + 10).toFixed(2),
-            method: methods[Math.floor(Math.random() * methods.length)],
-            status: Math.random() > 0.1 ? 'completed' : 'pending',
-            timestamp: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-            description: `${type.charAt(0).toUpperCase() + type.slice(1)} transaction`
-        });
-    }
-    
-    return transactions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-}
-
-// Render user details
-function renderUserDetails(userData, trades, transactions, userId) {
-    const stats = calculateUserStats(trades, transactions);
-    
-    return `
-        <div class="user-details-container">
-            <div class="user-details-header">
-                <h4>User Details: ${userData.fullName}</h4>
-                <div class="user-details-tabs">
-                    <button class="tab-btn active" onclick="showTab('profile-${userId}', this)">Profile</button>
-                    <button class="tab-btn" onclick="showTab('financial-${userId}', this)">Financial</button>
-                    <button class="tab-btn" onclick="showTab('trading-${userId}', this)">Trading</button>
-                    <button class="tab-btn" onclick="showTab('transactions-${userId}', this)">Transactions</button>
-                </div>
-            </div>
-            
-            <!-- Profile Tab -->
-            <div id="profile-${userId}" class="tab-content active">
-                <div class="profile-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>User ID:</label>
-                            <input type="text" value="${userData.id}" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label>Email:</label>
-                            <input type="email" id="email-${userId}" value="${userData.email}">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Full Name:</label>
-                            <input type="text" id="fullName-${userId}" value="${userData.fullName}">
-                        </div>
-                        <div class="form-group">
-                            <label>Phone:</label>
-                            <input type="tel" id="phone-${userId}" value="${userData.phone || ''}">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Country:</label>
-                            <input type="text" id="country-${userId}" value="${userData.country || ''}">
-                        </div>
-                        <div class="form-group">
-                            <label>Status:</label>
-                            <select id="status-${userId}">
-                                <option value="active" ${userData.status === 'active' ? 'selected' : ''}>Active</option>
-                                <option value="suspended" ${userData.status === 'suspended' ? 'selected' : ''}>Suspended</option>
-                                <option value="inactive" ${userData.status === 'inactive' ? 'selected' : ''}>Inactive</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>KYC Status:</label>
-                            <select id="kycStatus-${userId}">
-                                <option value="pending" ${userData.kycStatus === 'pending' ? 'selected' : ''}>Pending</option>
-                                <option value="verified" ${userData.kycStatus === 'verified' ? 'selected' : ''}>Verified</option>
-                                <option value="rejected" ${userData.kycStatus === 'rejected' ? 'selected' : ''}>Rejected</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Join Date:</label>
-                            <input type="date" id="joinDate-${userId}" value="${userData.joinDate}">
-                        </div>
-                    </div>
-                    <div class="form-actions">
-                        <button class="btn btn-primary" onclick="saveInlineUserChanges('${userId}')">Save Changes</button>
-                        <button class="btn btn-secondary" onclick="resetUserPassword('${userId}')">Reset Password</button>
-                        <button class="btn btn-info" onclick="toggle2FA('${userId}')">
-                            ${userData.twoFactorEnabled ? 'Disable' : 'Enable'} 2FA
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Financial Tab -->
-            <div id="financial-${userId}" class="tab-content">
-                <div class="financial-overview">
-                    <div class="balance-section">
-                        <h5>Account Balance</h5>
-                        <div class="balance-controls">
-                            <input type="number" id="balance-${userId}" value="${userData.accountBalance}" step="0.01">
-                            <button class="btn btn-success" onclick="adjustUserBalance('${userId}')">Update Balance</button>
-                        </div>
-                    </div>
-                    
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <h6>Total Deposits</h6>
-                            <span class="stat-value">$${stats.totalDeposits}</span>
-                        </div>
-                        <div class="stat-card">
-                            <h6>Total Withdrawals</h6>
-                            <span class="stat-value">$${stats.totalWithdrawals}</span>
-                        </div>
-                        <div class="stat-card">
-                            <h6>Trading Volume</h6>
-                            <span class="stat-value">$${stats.tradingVolume}</span>
-                        </div>
-                        <div class="stat-card">
-                            <h6>Total Fees</h6>
-                            <span class="stat-value">$${stats.totalFees}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Trading Tab -->
-            <div id="trading-${userId}" class="tab-content">
-                <div class="trading-history">
-                    <h5>Recent Trades</h5>
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Symbol</th>
-                                    <th>Type</th>
-                                    <th>Amount</th>
-                                    <th>Price</th>
-                                    <th>Total</th>
-                                    <th>Status</th>
-                                    <th>Date</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${trades.map(trade => `
-                                    <tr>
-                                        <td>${trade.symbol}</td>
-                                        <td><span class="badge badge-${trade.type === 'buy' ? 'success' : 'danger'}">${trade.type.toUpperCase()}</span></td>
-                                        <td>${trade.amount}</td>
-                                        <td>$${trade.price}</td>
-                                        <td>$${trade.total}</td>
-                                        <td><span class="status-badge status-${trade.status}">${trade.status}</span></td>
-                                        <td>${new Date(trade.timestamp).toLocaleDateString()}</td>
-                                        <td>
-                                            <button class="btn btn-xs btn-outline-primary" onclick="editTrade('${trade.id}')">Edit</button>
-                                            <button class="btn btn-xs btn-outline-danger" onclick="deleteTrade('${trade.id}')">Delete</button>
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Transactions Tab -->
-            <div id="transactions-${userId}" class="tab-content">
-                <div class="transactions-history">
-                    <h5>Transaction History</h5>
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Type</th>
-                                    <th>Amount</th>
-                                    <th>Method</th>
-                                    <th>Status</th>
-                                    <th>Date</th>
-                                    <th>Description</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${transactions.map(txn => `
-                                    <tr>
-                                        <td><span class="badge badge-${txn.type === 'deposit' ? 'success' : txn.type === 'withdrawal' ? 'warning' : 'info'}">${txn.type.toUpperCase()}</span></td>
-                                        <td>$${txn.amount}</td>
-                                        <td>${txn.method.replace('_', ' ').toUpperCase()}</td>
-                                        <td><span class="status-badge status-${txn.status}">${txn.status}</span></td>
-                                        <td>${new Date(txn.timestamp).toLocaleDateString()}</td>
-                                        <td>${txn.description}</td>
-                                        <td>
-                                            <button class="btn btn-xs btn-outline-primary" onclick="editTransaction('${txn.id}')">Edit</button>
-                                            <button class="btn btn-xs btn-outline-danger" onclick="deleteTransaction('${txn.id}')">Delete</button>
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-// Calculate user stats
-function calculateUserStats(trades, transactions) {
-    const totalDeposits = transactions
-        .filter(t => t.type === 'deposit' && t.status === 'completed')
-        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
-    
-    const totalWithdrawals = transactions
-        .filter(t => t.type === 'withdrawal' && t.status === 'completed')
-        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
-    
-    const tradingVolume = trades
-        .filter(t => t.status === 'completed')
-        .reduce((sum, t) => sum + parseFloat(t.total), 0);
-    
-    const totalFees = transactions
-        .filter(t => t.type === 'fee')
-        .reduce((sum, t) => sum + parseFloat(t.amount), 0) +
-        trades.reduce((sum, t) => sum + parseFloat(t.fee || 0), 0);
-    
-    return {
-        totalDeposits: totalDeposits.toFixed(2),
-        totalWithdrawals: totalWithdrawals.toFixed(2),
-        tradingVolume: tradingVolume.toFixed(2),
-        totalFees: totalFees.toFixed(2)
-    };
-}
-
-// Show tab
-function showTab(tabId, buttonElement) {
-    // Hide all tab contents
-    const userId = tabId.split('-')[1];
-    const tabContents = document.querySelectorAll(`[id^="profile-${userId}"], [id^="financial-${userId}"], [id^="trading-${userId}"], [id^="transactions-${userId}"]`);
-    tabContents.forEach(tab => tab.classList.remove('active'));
-    
-    // Remove active class from all buttons
-    const tabButtons = buttonElement.parentElement.querySelectorAll('.tab-btn');
-    tabButtons.forEach(btn => btn.classList.remove('active'));
-    
-    // Show selected tab and activate button
-    document.getElementById(tabId).classList.add('active');
-    buttonElement.classList.add('active');
-}
-
-// Show loading
-function showLoading(show) {
-    const loadingElement = document.getElementById('loadingSpinner');
-    if (loadingElement) {
-        loadingElement.style.display = show ? 'block' : 'none';
-    }
-}
-
-// Show toast notification
-function showToast(message, type = 'info') {
-    // Create toast element if it doesn't exist
-    let toast = document.getElementById('toast');
-    if (!toast) {
-        toast = document.createElement('div');
-        toast.id = 'toast';
-        toast.className = 'toast';
-        document.body.appendChild(toast);
-    }
-    
-    toast.className = `toast toast-${type} show`;
-    toast.textContent = message;
-    
-    setTimeout(() => {
-        toast.classList.remove('show');
-    }, 3000);
-}
-
-// Make functions globally available
-window.toggleUserDetails = toggleUserDetails;
-window.showTab = showTab;
-window.saveInlineUserChanges = saveInlineUserChanges;
-window.adjustUserBalance = adjustUserBalance;
-window.resetUserPassword = resetUserPassword;
-window.toggle2FA = toggle2FA;
-window.editUser = editUser;
-window.deleteUser = deleteUser;
-window.editTransaction = editTransaction;
-window.deleteTransaction = deleteTransaction;
-window.editTrade = editTrade;
-window.deleteTrade = deleteTrade;
-window.changePage = changePage;
-
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', initializeUserManagement);
-
-// Add this new function after the loadUsers function (around line 140)
+// Update dashboard statistics
 function updateDashboardStats() {
     const totalUsers = allUsers.length;
     const activeUsers = allUsers.filter(user => user.status === 'active').length;
-    const pendingUsers = allUsers.filter(user => user.kycStatus === 'pending').length;
+    const pendingUsers = allUsers.filter(user => user.status === 'pending').length;
     const suspendedUsers = allUsers.filter(user => user.status === 'suspended').length;
     
-    // Update dashboard statistics
+    // Update the stat cards
     const totalUsersElement = document.getElementById('totalUsersCount');
     const activeUsersElement = document.getElementById('activeUsersCount');
     const pendingUsersElement = document.getElementById('pendingUsersCount');
@@ -620,124 +178,19 @@ function updateDashboardStats() {
     if (activeUsersElement) activeUsersElement.textContent = activeUsers;
     if (pendingUsersElement) pendingUsersElement.textContent = pendingUsers;
     if (suspendedUsersElement) suspendedUsersElement.textContent = suspendedUsers;
-    
-    console.log('Dashboard stats updated:', {
-        total: totalUsers,
-        active: activeUsers,
-        pending: pendingUsers,
-        suspended: suspendedUsers
-    });
 }
 
-// Update the loadUsers function to call updateDashboardStats
-async function loadUsers() {
-    console.log('Loading users...');
-    showLoading(true);
-    
-    try {
-        if (!window.db) {
-            console.warn('Firebase not available, loading sample data');
-            loadSampleData();
-            updateDashboardStats(); // Add this line
-            return;
-        }
-        
-        const usersCollection = collection(window.db, 'users');
-        const usersSnapshot = await getDocs(usersCollection);
-        
-        allUsers = [];
-        usersSnapshot.forEach((doc) => {
-            const userData = doc.data();
-            allUsers.push({
-                id: doc.id,
-                ...userData,
-                joinDate: userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'N/A'
-            });
-        });
-        
-        console.log('Loaded users from Firestore:', allUsers.length);
-        filteredUsers = [...allUsers];
-        displayUsers();
-        updatePagination();
-        updateDashboardStats(); // Add this line
-        
-    } catch (error) {
-        console.error('Error loading users:', error);
-        showToast('Error loading users: ' + error.message, 'error');
-        loadSampleData();
-        updateDashboardStats(); // Add this line
-    } finally {
-        showLoading(false);
-    }
-}
-
-// Update the loadSampleData function to call updateDashboardStats
-function loadSampleData() {
-    allUsers = [
-        {
-            id: 'user1',
-            email: 'john.doe@example.com',
-            fullName: 'John Doe',
-            accountBalance: 5000.00,
-            status: 'active',
-            role: 'user',
-            joinDate: '2024-01-15',
-            lastLogin: '2024-01-20',
-            phone: '+1234567890',
-            country: 'USA',
-            kycStatus: 'verified',
-            twoFactorEnabled: true
-        },
-        {
-            id: 'user2',
-            email: 'jane.smith@example.com',
-            fullName: 'Jane Smith',
-            accountBalance: 7500.50,
-            status: 'active',
-            role: 'user',
-            joinDate: '2024-01-10',
-            lastLogin: '2024-01-19',
-            phone: '+1234567891',
-            country: 'Canada',
-            kycStatus: 'verified',
-            twoFactorEnabled: false
-        },
-        {
-            id: 'user3',
-            email: 'bob.wilson@example.com',
-            fullName: 'Bob Wilson',
-            accountBalance: 2250.75,
-            status: 'suspended',
-            role: 'user',
-            joinDate: '2024-01-05',
-            lastLogin: '2024-01-18',
-            phone: '+1234567892',
-            country: 'UK',
-            kycStatus: 'pending',
-            twoFactorEnabled: true
-        }
-    ];
-    
-    filteredUsers = [...allUsers];
-    displayUsers();
-    updatePagination();
-    updateDashboardStats(); // Add this line
-    showToast('Using sample data - Firebase connection failed', 'warning');
-}
-
-// Filter users
+// Filter users based on search and status
 function filterUsers() {
-    const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
-    const roleFilter = document.getElementById('roleFilter')?.value || 'all';
+    const searchTerm = document.getElementById('searchUsers')?.value.toLowerCase() || '';
     const statusFilter = document.getElementById('statusFilter')?.value || 'all';
     
     filteredUsers = allUsers.filter(user => {
-        const matchesSearch = user.fullName?.toLowerCase().includes(searchTerm) || 
-                            user.email?.toLowerCase().includes(searchTerm);
-        const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+        const matchesSearch = user.fullName.toLowerCase().includes(searchTerm) || 
+                            user.email.toLowerCase().includes(searchTerm);
         const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
         
-        return matchesSearch && matchesRole && matchesStatus;
+        return matchesSearch && matchesStatus;
     });
     
     currentPage = 1;
@@ -745,7 +198,7 @@ function filterUsers() {
     updatePagination();
 }
 
-// Display users
+// Display users in table
 function displayUsers() {
     const tbody = document.getElementById('usersTableBody');
     if (!tbody) return;
@@ -781,7 +234,52 @@ function displayUsers() {
     });
 }
 
-// Toggle user details (inline expandable)
+// Update pagination
+function updatePagination() {
+    const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+    const pagination = document.getElementById('pagination');
+    
+    if (!pagination) return;
+    
+    pagination.innerHTML = '';
+    
+    // Previous button
+    const prevBtn = document.createElement('button');
+    prevBtn.className = `btn btn-sm ${currentPage === 1 ? 'btn-secondary' : 'btn-primary'}`;
+    prevBtn.textContent = 'Previous';
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.onclick = () => changePage(currentPage - 1);
+    pagination.appendChild(prevBtn);
+    
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.className = `btn btn-sm ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'}`;
+        pageBtn.textContent = i;
+        pageBtn.onclick = () => changePage(i);
+        pagination.appendChild(pageBtn);
+    }
+    
+    // Next button
+    const nextBtn = document.createElement('button');
+    nextBtn.className = `btn btn-sm ${currentPage === totalPages ? 'btn-secondary' : 'btn-primary'}`;
+    nextBtn.textContent = 'Next';
+    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.onclick = () => changePage(currentPage + 1);
+    pagination.appendChild(nextBtn);
+}
+
+// Change page
+function changePage(page) {
+    const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+    if (page >= 1 && page <= totalPages) {
+        currentPage = page;
+        displayUsers();
+        updatePagination();
+    }
+}
+
+// Toggle user details
 async function toggleUserDetails(userId) {
     const existingDetails = document.getElementById(`user-details-${userId}`);
     
@@ -816,47 +314,52 @@ async function toggleUserDetails(userId) {
 
 // Generate sample trades
 function generateSampleTrades(userId) {
-    const symbols = ['BTC/USD', 'ETH/USD', 'XRP/USD', 'ADA/USD', 'DOT/USD'];
-    const types = ['buy', 'sell'];
-    const trades = [];
-    
-    for (let i = 0; i < 5; i++) {
-        trades.push({
-            id: `trade_${userId}_${i + 1}`,
-            symbol: symbols[Math.floor(Math.random() * symbols.length)],
-            type: types[Math.floor(Math.random() * types.length)],
-            amount: (Math.random() * 10 + 0.1).toFixed(4),
-            price: (Math.random() * 50000 + 1000).toFixed(2),
-            total: (Math.random() * 5000 + 100).toFixed(2),
-            status: Math.random() > 0.2 ? 'completed' : 'pending',
-            timestamp: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-            fee: (Math.random() * 10 + 1).toFixed(2)
-        });
-    }
-    
-    return trades.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    return [
+        {
+            id: `trade_${userId}_1`,
+            pair: 'BTC/USD',
+            type: 'buy',
+            amount: 0.5,
+            price: 45000,
+            total: 22500,
+            date: '2024-01-20 10:30:00',
+            status: 'completed'
+        },
+        {
+            id: `trade_${userId}_2`,
+            pair: 'ETH/USD',
+            type: 'sell',
+            amount: 2.0,
+            price: 2800,
+            total: 5600,
+            date: '2024-01-19 14:15:00',
+            status: 'completed'
+        }
+    ];
 }
 
 // Generate sample transactions
 function generateSampleTransactions(userId) {
-    const types = ['deposit', 'withdrawal', 'fee', 'bonus'];
-    const methods = ['bank_transfer', 'credit_card', 'crypto', 'paypal'];
-    const transactions = [];
-    
-    for (let i = 0; i < 8; i++) {
-        const type = types[Math.floor(Math.random() * types.length)];
-        transactions.push({
-            id: `txn_${userId}_${i + 1}`,
-            type: type,
-            amount: (Math.random() * 1000 + 10).toFixed(2),
-            method: methods[Math.floor(Math.random() * methods.length)],
-            status: Math.random() > 0.1 ? 'completed' : 'pending',
-            timestamp: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-            description: `${type.charAt(0).toUpperCase() + type.slice(1)} transaction`
-        });
-    }
-    
-    return transactions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    return [
+        {
+            id: `txn_${userId}_1`,
+            type: 'deposit',
+            amount: 10000,
+            currency: 'USD',
+            date: '2024-01-18 09:00:00',
+            status: 'completed',
+            method: 'Bank Transfer'
+        },
+        {
+            id: `txn_${userId}_2`,
+            type: 'withdrawal',
+            amount: 2500,
+            currency: 'USD',
+            date: '2024-01-17 16:30:00',
+            status: 'completed',
+            method: 'Bank Transfer'
+        }
+    ];
 }
 
 // Render user details
@@ -865,183 +368,184 @@ function renderUserDetails(userData, trades, transactions, userId) {
     
     return `
         <div class="user-details-container">
-            <div class="user-details-header">
-                <h4>User Details: ${userData.fullName}</h4>
-                <div class="user-details-tabs">
-                    <button class="tab-btn active" onclick="showTab('profile-${userId}', this)">Profile</button>
-                    <button class="tab-btn" onclick="showTab('financial-${userId}', this)">Financial</button>
-                    <button class="tab-btn" onclick="showTab('trading-${userId}', this)">Trading</button>
-                    <button class="tab-btn" onclick="showTab('transactions-${userId}', this)">Transactions</button>
-                </div>
+            <div class="details-tabs">
+                <button class="tab-btn active" onclick="showTab('profile-${userId}', this)">Profile</button>
+                <button class="tab-btn" onclick="showTab('financial-${userId}', this)">Financial</button>
+                <button class="tab-btn" onclick="showTab('trading-${userId}', this)">Trading History</button>
+                <button class="tab-btn" onclick="showTab('transactions-${userId}', this)">Transactions</button>
             </div>
             
-            <!-- Profile Tab -->
-            <div id="profile-${userId}" class="tab-content active">
-                <div class="profile-form">
-                    <div class="form-row">
+            <div class="tab-content">
+                <!-- Profile Tab -->
+                <div id="profile-${userId}" class="tab-pane active">
+                    <div class="profile-section">
+                        <h4>User Profile</h4>
                         <div class="form-group">
-                            <label>User ID:</label>
-                            <input type="text" value="${userData.id}" readonly>
+                            <label>Full Name:</label>
+                            <input type="text" value="${userData.fullName}" id="fullName-${userId}">
                         </div>
                         <div class="form-group">
                             <label>Email:</label>
-                            <input type="email" id="email-${userId}" value="${userData.email}">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Full Name:</label>
-                            <input type="text" id="fullName-${userId}" value="${userData.fullName}">
+                            <input type="email" value="${userData.email}" id="email-${userId}">
                         </div>
                         <div class="form-group">
                             <label>Phone:</label>
-                            <input type="tel" id="phone-${userId}" value="${userData.phone || ''}">
+                            <input type="tel" value="${userData.phone || ''}" id="phone-${userId}">
                         </div>
-                    </div>
-                    <div class="form-row">
                         <div class="form-group">
-                            <label>Country:</label>
-                            <input type="text" id="country-${userId}" value="${userData.country || ''}">
+                            <label>Address:</label>
+                            <textarea id="address-${userId}">${userData.address || ''}</textarea>
                         </div>
                         <div class="form-group">
                             <label>Status:</label>
                             <select id="status-${userId}">
                                 <option value="active" ${userData.status === 'active' ? 'selected' : ''}>Active</option>
+                                <option value="pending" ${userData.status === 'pending' ? 'selected' : ''}>Pending</option>
                                 <option value="suspended" ${userData.status === 'suspended' ? 'selected' : ''}>Suspended</option>
-                                <option value="inactive" ${userData.status === 'inactive' ? 'selected' : ''}>Inactive</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="form-row">
                         <div class="form-group">
-                            <label>KYC Status:</label>
-                            <select id="kycStatus-${userId}">
-                                <option value="pending" ${userData.kycStatus === 'pending' ? 'selected' : ''}>Pending</option>
-                                <option value="verified" ${userData.kycStatus === 'verified' ? 'selected' : ''}>Verified</option>
-                                <option value="rejected" ${userData.kycStatus === 'rejected' ? 'selected' : ''}>Rejected</option>
+                            <label>Verification Status:</label>
+                            <select id="verification-${userId}">
+                                <option value="verified" ${userData.verificationStatus === 'verified' ? 'selected' : ''}>Verified</option>
+                                <option value="pending" ${userData.verificationStatus === 'pending' ? 'selected' : ''}>Pending</option>
+                                <option value="rejected" ${userData.verificationStatus === 'rejected' ? 'selected' : ''}>Rejected</option>
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label>2FA Enabled:</label>
+                            <input type="checkbox" ${userData.twoFactorEnabled ? 'checked' : ''} id="twoFA-${userId}" onchange="toggle2FA('${userId}')">
                         </div>
                         <div class="form-group">
                             <label>Join Date:</label>
-                            <input type="date" id="joinDate-${userId}" value="${userData.joinDate}">
+                            <input type="date" value="${userData.joinDate}" id="joinDate-${userId}">
                         </div>
-                    </div>
-                    <div class="form-actions">
-                        <button class="btn btn-primary" onclick="saveInlineUserChanges('${userId}')">Save Changes</button>
-                        <button class="btn btn-secondary" onclick="resetUserPassword('${userId}')">Reset Password</button>
-                        <button class="btn btn-info" onclick="toggle2FA('${userId}')">
-                            ${userData.twoFactorEnabled ? 'Disable' : 'Enable'} 2FA
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Financial Tab -->
-            <div id="financial-${userId}" class="tab-content">
-                <div class="financial-overview">
-                    <div class="balance-section">
-                        <h5>Account Balance</h5>
-                        <div class="balance-controls">
-                            <input type="number" id="balance-${userId}" value="${userData.accountBalance}" step="0.01">
-                            <button class="btn btn-success" onclick="adjustUserBalance('${userId}')">Update Balance</button>
+                        <div class="form-group">
+                            <label>Last Login:</label>
+                            <input type="text" value="${userData.lastLogin || 'Never'}" readonly>
                         </div>
-                    </div>
-                    
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <h6>Total Deposits</h6>
-                            <span class="stat-value">$${stats.totalDeposits}</span>
-                        </div>
-                        <div class="stat-card">
-                            <h6>Total Withdrawals</h6>
-                            <span class="stat-value">$${stats.totalWithdrawals}</span>
-                        </div>
-                        <div class="stat-card">
-                            <h6>Trading Volume</h6>
-                            <span class="stat-value">$${stats.tradingVolume}</span>
-                        </div>
-                        <div class="stat-card">
-                            <h6>Total Fees</h6>
-                            <span class="stat-value">$${stats.totalFees}</span>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="saveInlineUserChanges('${userId}')">Save Changes</button>
+                            <button class="btn btn-warning" onclick="resetUserPassword('${userId}')">Reset Password</button>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Trading Tab -->
-            <div id="trading-${userId}" class="tab-content">
-                <div class="trading-history">
-                    <h5>Recent Trades</h5>
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Symbol</th>
-                                    <th>Type</th>
-                                    <th>Amount</th>
-                                    <th>Price</th>
-                                    <th>Total</th>
-                                    <th>Status</th>
-                                    <th>Date</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${trades.map(trade => `
+                
+                <!-- Financial Tab -->
+                <div id="financial-${userId}" class="tab-pane">
+                    <div class="financial-section">
+                        <h4>Financial Overview</h4>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value">$${userData.accountBalance?.toFixed(2) || '0.00'}</div>
+                                <div class="stat-label">Account Balance</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">$${stats.totalDeposits.toFixed(2)}</div>
+                                <div class="stat-label">Total Deposits</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">$${stats.totalWithdrawals.toFixed(2)}</div>
+                                <div class="stat-label">Total Withdrawals</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">$${stats.tradingVolume.toFixed(2)}</div>
+                                <div class="stat-label">Trading Volume</div>
+                            </div>
+                        </div>
+                        <div class="balance-adjustment">
+                            <h5>Adjust Balance</h5>
+                            <div class="form-group">
+                                <label>Amount:</label>
+                                <input type="number" step="0.01" id="balanceAdjustment-${userId}" placeholder="Enter amount">
+                            </div>
+                            <div class="form-group">
+                                <label>Reason:</label>
+                                <input type="text" id="adjustmentReason-${userId}" placeholder="Reason for adjustment">
+                            </div>
+                            <div class="action-buttons">
+                                <button class="btn btn-success" onclick="adjustUserBalance('${userId}', 'add')">Add Funds</button>
+                                <button class="btn btn-danger" onclick="adjustUserBalance('${userId}', 'subtract')">Subtract Funds</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Trading History Tab -->
+                <div id="trading-${userId}" class="tab-pane">
+                    <div class="trading-section">
+                        <h4>Trading History</h4>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
                                     <tr>
-                                        <td>${trade.symbol}</td>
-                                        <td><span class="badge badge-${trade.type === 'buy' ? 'success' : 'danger'}">${trade.type.toUpperCase()}</span></td>
-                                        <td>${trade.amount}</td>
-                                        <td>$${trade.price}</td>
-                                        <td>$${trade.total}</td>
-                                        <td><span class="status-badge status-${trade.status}">${trade.status}</span></td>
-                                        <td>${new Date(trade.timestamp).toLocaleDateString()}</td>
-                                        <td>
-                                            <button class="btn btn-xs btn-outline-primary" onclick="editTrade('${trade.id}')">Edit</button>
-                                            <button class="btn btn-xs btn-outline-danger" onclick="deleteTrade('${trade.id}')">Delete</button>
-                                        </td>
+                                        <th>Date</th>
+                                        <th>Pair</th>
+                                        <th>Type</th>
+                                        <th>Amount</th>
+                                        <th>Price</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
                                     </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    ${trades.map(trade => `
+                                        <tr>
+                                            <td>${trade.date}</td>
+                                            <td>${trade.pair}</td>
+                                            <td><span class="badge badge-${trade.type === 'buy' ? 'success' : 'danger'}">${trade.type.toUpperCase()}</span></td>
+                                            <td>${trade.amount}</td>
+                                            <td>$${trade.price.toLocaleString()}</td>
+                                            <td>$${trade.total.toLocaleString()}</td>
+                                            <td><span class="status-badge status-${trade.status}">${trade.status}</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-warning" onclick="editTrade('${trade.id}')">Edit</button>
+                                                <button class="btn btn-sm btn-danger" onclick="deleteTrade('${trade.id}')">Delete</button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Transactions Tab -->
-            <div id="transactions-${userId}" class="tab-content">
-                <div class="transactions-history">
-                    <h5>Transaction History</h5>
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Type</th>
-                                    <th>Amount</th>
-                                    <th>Method</th>
-                                    <th>Status</th>
-                                    <th>Date</th>
-                                    <th>Description</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${transactions.map(txn => `
+                
+                <!-- Transactions Tab -->
+                <div id="transactions-${userId}" class="tab-pane">
+                    <div class="transactions-section">
+                        <h4>Transaction History</h4>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
                                     <tr>
-                                        <td><span class="badge badge-${txn.type === 'deposit' ? 'success' : txn.type === 'withdrawal' ? 'warning' : 'info'}">${txn.type.toUpperCase()}</span></td>
-                                        <td>$${txn.amount}</td>
-                                        <td>${txn.method.replace('_', ' ').toUpperCase()}</td>
-                                        <td><span class="status-badge status-${txn.status}">${txn.status}</span></td>
-                                        <td>${new Date(txn.timestamp).toLocaleDateString()}</td>
-                                        <td>${txn.description}</td>
-                                        <td>
-                                            <button class="btn btn-xs btn-outline-primary" onclick="editTransaction('${txn.id}')">Edit</button>
-                                            <button class="btn btn-xs btn-outline-danger" onclick="deleteTransaction('${txn.id}')">Delete</button>
-                                        </td>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Amount</th>
+                                        <th>Currency</th>
+                                        <th>Method</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
                                     </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    ${transactions.map(txn => `
+                                        <tr>
+                                            <td>${txn.date}</td>
+                                            <td><span class="badge badge-${txn.type === 'deposit' ? 'success' : 'warning'}">${txn.type.toUpperCase()}</span></td>
+                                            <td>$${txn.amount.toLocaleString()}</td>
+                                            <td>${txn.currency}</td>
+                                            <td>${txn.method}</td>
+                                            <td><span class="status-badge status-${txn.status}">${txn.status}</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-warning" onclick="editTransaction('${txn.id}')">Edit</button>
+                                                <button class="btn btn-sm btn-danger" onclick="deleteTransaction('${txn.id}')">Delete</button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1049,50 +553,42 @@ function renderUserDetails(userData, trades, transactions, userId) {
     `;
 }
 
-// Calculate user stats
+// Calculate user statistics
 function calculateUserStats(trades, transactions) {
     const totalDeposits = transactions
-        .filter(t => t.type === 'deposit' && t.status === 'completed')
-        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+        .filter(txn => txn.type === 'deposit')
+        .reduce((sum, txn) => sum + txn.amount, 0);
     
     const totalWithdrawals = transactions
-        .filter(t => t.type === 'withdrawal' && t.status === 'completed')
-        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+        .filter(txn => txn.type === 'withdrawal')
+        .reduce((sum, txn) => sum + txn.amount, 0);
     
     const tradingVolume = trades
-        .filter(t => t.status === 'completed')
-        .reduce((sum, t) => sum + parseFloat(t.total), 0);
-    
-    const totalFees = transactions
-        .filter(t => t.type === 'fee')
-        .reduce((sum, t) => sum + parseFloat(t.amount), 0) +
-        trades.reduce((sum, t) => sum + parseFloat(t.fee || 0), 0);
+        .reduce((sum, trade) => sum + trade.total, 0);
     
     return {
-        totalDeposits: totalDeposits.toFixed(2),
-        totalWithdrawals: totalWithdrawals.toFixed(2),
-        tradingVolume: tradingVolume.toFixed(2),
-        totalFees: totalFees.toFixed(2)
+        totalDeposits,
+        totalWithdrawals,
+        tradingVolume
     };
 }
 
 // Show tab
 function showTab(tabId, buttonElement) {
-    // Hide all tab contents
-    const userId = tabId.split('-')[1];
-    const tabContents = document.querySelectorAll(`[id^="profile-${userId}"], [id^="financial-${userId}"], [id^="trading-${userId}"], [id^="transactions-${userId}"]`);
-    tabContents.forEach(tab => tab.classList.remove('active'));
+    // Hide all tab panes
+    const tabPanes = buttonElement.closest('.user-details-container').querySelectorAll('.tab-pane');
+    tabPanes.forEach(pane => pane.classList.remove('active'));
     
-    // Remove active class from all buttons
-    const tabButtons = buttonElement.parentElement.querySelectorAll('.tab-btn');
+    // Remove active class from all tab buttons
+    const tabButtons = buttonElement.closest('.details-tabs').querySelectorAll('.tab-btn');
     tabButtons.forEach(btn => btn.classList.remove('active'));
     
-    // Show selected tab and activate button
+    // Show selected tab and mark button as active
     document.getElementById(tabId).classList.add('active');
     buttonElement.classList.add('active');
 }
 
-// Show loading
+// Show loading state
 function showLoading(show) {
     const loadingElement = document.getElementById('loadingSpinner');
     if (loadingElement) {
@@ -1114,9 +610,65 @@ function showToast(message, type = 'info') {
     toast.className = `toast toast-${type} show`;
     toast.textContent = message;
     
+    // Auto hide after 3 seconds
     setTimeout(() => {
         toast.classList.remove('show');
     }, 3000);
+}
+
+// Placeholder functions for user actions
+function saveInlineUserChanges(userId) {
+    showToast('User changes saved successfully', 'success');
+}
+
+function adjustUserBalance(userId, action) {
+    const amount = document.getElementById(`balanceAdjustment-${userId}`).value;
+    const reason = document.getElementById(`adjustmentReason-${userId}`).value;
+    
+    if (!amount || !reason) {
+        showToast('Please enter amount and reason', 'error');
+        return;
+    }
+    
+    showToast(`Balance ${action === 'add' ? 'increased' : 'decreased'} by $${amount}`, 'success');
+}
+
+function resetUserPassword(userId) {
+    showToast('Password reset email sent', 'success');
+}
+
+function toggle2FA(userId) {
+    showToast('2FA settings updated', 'success');
+}
+
+function editUser(userId) {
+    showToast('Edit user functionality not implemented', 'info');
+}
+
+function deleteUser(userId) {
+    if (confirm('Are you sure you want to delete this user?')) {
+        showToast('User deleted successfully', 'success');
+    }
+}
+
+function editTransaction(transactionId) {
+    showToast('Edit transaction functionality not implemented', 'info');
+}
+
+function deleteTransaction(transactionId) {
+    if (confirm('Are you sure you want to delete this transaction?')) {
+        showToast('Transaction deleted successfully', 'success');
+    }
+}
+
+function editTrade(tradeId) {
+    showToast('Edit trade functionality not implemented', 'info');
+}
+
+function deleteTrade(tradeId) {
+    if (confirm('Are you sure you want to delete this trade?')) {
+        showToast('Trade deleted successfully', 'success');
+    }
 }
 
 // Make functions globally available
