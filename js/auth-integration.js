@@ -108,7 +108,6 @@ class AuthManager {
         console.log('AuthManager: Firebase auth state updated, user:', user ? user.email : 'No user');
     });
   }
-}
 
   async login(email, password) {
     try {
