@@ -28,17 +28,17 @@ try {
             measurementId: "G-YHCS5CH450"
         };
         
-        // Initialize Firebase with correct config
+        // Initialize Firebase with correct config as DEFAULT app
         let app;
         try {
-            // Check if app already exists
-            app = firebase.app('userManagement');
+            // Check if default app already exists
+            app = firebase.app();
         } catch (error) {
-            // App doesn't exist, create it
-            app = firebase.initializeApp(correctConfig, 'userManagement');
+            // App doesn't exist, create it as default
+            app = firebase.initializeApp(correctConfig);
         }
         
-        window.db = firebase.firestore(app);
+        window.db = firebase.firestore();
         console.log('Firebase initialized successfully for user management');
         console.log('Using project ID:', correctConfig.projectId);
     } else {
