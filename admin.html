@@ -47,29 +47,30 @@
                     <li><a href="#settings" class="nav-item" data-section="settings">
                         <i class="fas fa-cog"></i> Site Settings
                     </a></li>
-                    <!-- <li><a href="#support-chat" class="nav-item" data-section="support-chat">
-                        <i class="fas fa-comments"></i> Support Chat
-                    </a></li> -->
+                    <li><a href="cot-admin.html" class="nav-item">
+                        <i class="fas fa-shield-alt"></i> COT Management
+                    </a></li>
                 </ul>
             </nav>
         </aside>
 
-        <!-- Main Content Area -->
+        <!-- Main Content -->
         <main class="admin-main">
             <!-- Dashboard Section -->
             <section id="dashboard" class="admin-section active">
                 <div class="section-header">
-                    <h1>Dashboard Overview</h1>
-                    <p>Welcome to the Central Trade Hub administration panel</p>
+                    <h1><i class="fas fa-tachometer-alt"></i> Dashboard Overview</h1>
+                    <p>Monitor your platform's key metrics and performance</p>
                 </div>
-                
+
+                <!-- Stats Cards -->
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-icon">
                             <i class="fas fa-users"></i>
                         </div>
-                        <div class="stat-info">
-                            <h3>1,247</h3>
+                        <div class="stat-content">
+                            <h3 id="total-users">0</h3>
                             <p>Total Users</p>
                         </div>
                     </div>
@@ -77,17 +78,8 @@
                         <div class="stat-icon">
                             <i class="fas fa-chart-line"></i>
                         </div>
-                        <div class="stat-info">
-                            <h3>$2.4M</h3>
-                            <p>Trading Volume</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-exchange-alt"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3>8,432</h3>
+                        <div class="stat-content">
+                            <h3 id="active-trades">0</h3>
                             <p>Active Trades</p>
                         </div>
                     </div>
@@ -95,39 +87,39 @@
                         <div class="stat-icon">
                             <i class="fas fa-dollar-sign"></i>
                         </div>
-                        <div class="stat-info">
-                            <h3>$847K</h3>
-                            <p>Revenue</p>
+                        <div class="stat-content">
+                            <h3 id="total-volume">$0</h3>
+                            <p>Total Volume</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="success-rate">0%</h3>
+                            <p>Success Rate</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="dashboard-charts">
+                <!-- Charts Section -->
+                <div class="charts-grid">
                     <div class="chart-container">
-                        <h3>Trading Activity</h3>
-                        <div class="chart-placeholder">
-                            <canvas id="tradingChart"></canvas>
-                        </div>
+                        <h3>Trading Volume</h3>
+                        <canvas id="volumeChart"></canvas>
                     </div>
-                    <div class="recent-activity">
-                        <h3>Recent Activity</h3>
-                        <div class="activity-list">
-                            <div class="activity-item">
-                                <i class="fas fa-user-plus"></i>
-                                <span>New user registered: john.doe@email.com</span>
-                                <time>2 minutes ago</time>
-                            </div>
-                            <div class="activity-item">
-                                <i class="fas fa-exchange-alt"></i>
-                                <span>Large trade executed: $50,000 BTC/USD</span>
-                                <time>5 minutes ago</time>
-                            </div>
-                            <div class="activity-item">
-                                <i class="fas fa-cog"></i>
-                                <span>System maintenance completed</span>
-                                <time>1 hour ago</time>
-                            </div>
-                        </div>
+                    <div class="chart-container">
+                        <h3>User Growth</h3>
+                        <canvas id="userChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="activity-section">
+                    <h3>Recent Activity</h3>
+                    <div id="recent-activity" class="activity-list">
+                        <!-- Activity items will be populated here -->
                     </div>
                 </div>
             </section>
@@ -135,48 +127,23 @@
             <!-- User Management Section -->
             <section id="users" class="admin-section">
                 <div class="section-header">
-                    <h1>User Management</h1>
-                    <button class="btn-primary"><i class="fas fa-plus"></i> Add New User</button>
+                    <h1><i class="fas fa-users"></i> User Management</h1>
+                    <button class="btn-primary"><i class="fas fa-plus"></i> Add User</button>
                 </div>
-                
                 <div class="table-container">
                     <table class="admin-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <th>User ID</th>
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Status</th>
-                                <th>Balance</th>
-                                <th>Joined</th>
+                                <th>Join Date</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <td>#001</td>
-                                <td>John Doe</td>
-                                <td>john.doe@email.com</td>
-                                <td><span class="status active">Active</span></td>
-                                <td>$12,450</td>
-                                <td>2024-01-15</td>
-                                <td>
-                                    <button class="btn-edit"><i class="fas fa-edit"></i></button>
-                                    <button class="btn-delete"><i class="fas fa-trash"></i></button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>#002</td>
-                                <td>Jane Smith</td>
-                                <td>jane.smith@email.com</td>
-                                <td><span class="status suspended">Suspended</span></td>
-                                <td>$8,230</td>
-                                <td>2024-01-10</td>
-                                <td>
-                                    <button class="btn-edit"><i class="fas fa-edit"></i></button>
-                                    <button class="btn-delete"><i class="fas fa-trash"></i></button>
-                                </td>
-                            </tr>
+                        <tbody id="users-table-body">
+                            <!-- User data will be populated here -->
                         </tbody>
                     </table>
                 </div>
@@ -185,180 +152,68 @@
             <!-- Content Management Section -->
             <section id="content" class="admin-section">
                 <div class="section-header">
-                    <h1>Content Management</h1>
+                    <h1><i class="fas fa-edit"></i> Content Management</h1>
                     <button class="btn-primary"><i class="fas fa-plus"></i> Add Content</button>
                 </div>
-                
                 <div class="content-grid">
-                    <div class="content-card">
-                        <h3>Homepage Hero</h3>
-                        <p>Manage the main hero section content and call-to-action buttons</p>
-                        <button class="btn-edit">Edit Content</button>
-                    </div>
-                    <div class="content-card">
-                        <h3>Market Data</h3>
-                        <p>Update market information, trading pairs, and price feeds</p>
-                        <button class="btn-edit">Edit Content</button>
-                    </div>
-                    <div class="content-card">
-                        <h3>News & Updates</h3>
-                        <p>Manage news articles, market updates, and announcements</p>
-                        <button class="btn-edit">Edit Content</button>
-                    </div>
-                    <div class="content-card">
-                        <h3>Educational Content</h3>
-                        <p>Update trading guides, tutorials, and educational materials</p>
-                        <button class="btn-edit">Edit Content</button>
-                    </div>
+                    <!-- Content items will be populated here -->
                 </div>
             </section>
 
             <!-- Trading Settings Section -->
             <section id="trading" class="admin-section">
                 <div class="section-header">
-                    <h1>Trading Settings</h1>
+                    <h1><i class="fas fa-chart-bar"></i> Trading Settings</h1>
                 </div>
-                
                 <div class="settings-form">
                     <div class="form-group">
-                        <label>Trading Hours</label>
-                        <select>
-                            <option>24/7 Trading</option>
-                            <option>Market Hours Only</option>
-                            <option>Custom Schedule</option>
-                        </select>
+                        <label for="min-trade">Minimum Trade Amount ($)</label>
+                        <input type="number" id="min-trade" class="form-control">
                     </div>
                     <div class="form-group">
-                        <label>Minimum Trade Amount</label>
-                        <input type="number" value="10" min="1">
+                        <label for="max-trade">Maximum Trade Amount ($)</label>
+                        <input type="number" id="max-trade" class="form-control">
                     </div>
                     <div class="form-group">
-                        <label>Maximum Trade Amount</label>
-                        <input type="number" value="100000" min="1">
+                        <label for="commission">Commission Rate (%)</label>
+                        <input type="number" id="commission" class="form-control" step="0.01">
                     </div>
-                    <div class="form-group">
-                        <label>Trading Fee (%)</label>
-                        <input type="number" value="0.1" step="0.01" min="0">
-                    </div>
-                    <button class="btn-primary">Save Settings</button>
+                    <button class="btn-primary" onclick="saveTradingSettings()">Save Settings</button>
                 </div>
             </section>
 
             <!-- Analytics Section -->
             <section id="analytics" class="admin-section">
                 <div class="section-header">
-                    <h1>Analytics & Reports</h1>
+                    <h1><i class="fas fa-analytics"></i> Analytics</h1>
                 </div>
-                
                 <div class="analytics-grid">
-                    <div class="analytics-card">
-                        <h3>User Growth</h3>
-                        <div class="chart-mini"></div>
-                        <p>+15% this month</p>
-                    </div>
-                    <div class="analytics-card">
-                        <h3>Trading Volume</h3>
-                        <div class="chart-mini"></div>
-                        <p>+23% this month</p>
-                    </div>
-                    <div class="analytics-card">
-                        <h3>Revenue</h3>
-                        <div class="chart-mini"></div>
-                        <p>+18% this month</p>
-                    </div>
+                    <!-- Analytics charts will be populated here -->
                 </div>
             </section>
 
             <!-- Site Settings Section -->
             <section id="settings" class="admin-section">
                 <div class="section-header">
-                    <h1>Site Settings</h1>
+                    <h1><i class="fas fa-cog"></i> Site Settings</h1>
                 </div>
-                
                 <div class="settings-form">
                     <div class="form-group">
-                        <label>Site Name</label>
-                        <input type="text" value="Central Trade Hub">
+                        <label for="site-name">Site Name</label>
+                        <input type="text" id="site-name" class="form-control">
                     </div>
                     <div class="form-group">
-                        <label>Site Description</label>
-                        <textarea>Advanced Trading Platform for Professional Traders</textarea>
+                        <label for="site-email">Contact Email</label>
+                        <input type="email" id="site-email" class="form-control">
                     </div>
                     <div class="form-group">
-                        <label>Contact Email</label>
-                        <input type="email" value="support@centraltradekeplr.com">
+                        <label for="maintenance-mode">Maintenance Mode</label>
+                        <select id="maintenance-mode" class="form-control">
+                            <option value="false">Disabled</option>
+                            <option value="true">Enabled</option>
+                        </select>
                     </div>
-                    <div class="form-group">
-                        <label>Maintenance Mode</label>
-                        <label class="toggle">
-                            <input type="checkbox">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                    <button class="btn-primary">Save Settings</button>
-                </div>
-            </section>
-
-            <!-- COT Management Section -->
-            <section id="cot-management" class="admin-section">
-                <div class="section-header">
-                    <h1><i class="fas fa-shield-alt"></i> Withdrawal COT Management</h1>
-                    <p>Manage the Withdrawal Code (COT) required for user withdrawals</p>
-                </div>
-                
-                <div class="cot-management-content">
-                    <div class="cot-form">
-                        <div class="form-group">
-                            <label for="current-cot-code">Current COT Code</label>
-                            <div class="input-group">
-                                <input type="text" id="current-cot-code" readonly class="form-control monospace">
-                                <button id="copy-cot-btn" onclick="copyCotCode()" class="btn-secondary">
-                                    <i class="fas fa-copy"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="new-cot-code">New COT Code</label>
-                            <input type="text" id="new-cot-code" placeholder="Enter new COT code" maxlength="20" class="form-control">
-                            <small class="form-text">Leave empty to generate random code</small>
-                        </div>
-                        
-                        <div class="form-actions">
-                            <button id="update-cot-code" onclick="updateCotCode()" class="btn-primary">
-                                <i class="fas fa-save"></i> Update COT Code
-                            </button>
-                            <button id="generate-random-cot" onclick="generateRandomCot()" class="btn-secondary">
-                                <i class="fas fa-random"></i> Generate Random
-                            </button>
-                            <div id="cot-status" class="status-message">
-                                <i class="fas fa-check"></i> Updated successfully
-                            </div>
-                        </div>
-                        
-                        <div class="cot-info">
-                            <h4>COT Code Information</h4>
-                            <div class="info-grid">
-                                <div class="info-item">
-                                    <strong>Last Updated:</strong>
-                                    <span id="cot-last-updated">Never</span>
-                                </div>
-                                <div class="info-item">
-                                    <strong>Updated By:</strong>
-                                    <span id="cot-updated-by">N/A</span>
-                                </div>
-                            </div>
-                            <div class="warning-box">
-                                <p><i class="fas fa-exclamation-triangle"></i> <strong>Important:</strong></p>
-                                <ul>
-                                    <li>This code is required for all user withdrawals</li>
-                                    <li>Share this code only with authorized users</li>
-                                    <li>Change the code regularly for security</li>
-                                    <li>Users must enter this code to access the withdrawal page</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
+                    <button class="btn-primary" onclick="saveSiteSettings()">Save Settings</button>
                 </div>
             </section>
         </main>
@@ -368,8 +223,8 @@
     <script type="module" src="js/firebase-config.js"></script>
     <script type="module" src="js/firebase-auth.js"></script>
     <script type="module" src="js/firebase-database.js"></script>
+    <script type="module" src="js/auth-integration.js"></script>
     <script type="module" src="js/admin.js"></script>
-    <script type="module" src="js/cot-management.js"></script>
 
     <script type="module">
         import AdminDashboard from './js/admin.js';
@@ -380,7 +235,7 @@
                 
                 // Enhanced wait for auth manager with better error handling
                 let attempts = 0;
-                const maxAttempts = 100; // Increased from 50
+                const maxAttempts = 100;
                 
                 while (!window.authManager && attempts < maxAttempts) {
                     console.log(`Waiting for auth manager... attempt ${attempts + 1}/${maxAttempts}`);
@@ -399,7 +254,7 @@
                 await new Promise(resolve => {
                     const checkAuth = () => {
                         const user = window.authManager.getCurrentUser();
-                        if (user !== undefined) { // null or user object
+                        if (user !== undefined) {
                             resolve();
                         } else {
                             setTimeout(checkAuth, 100);
@@ -461,7 +316,6 @@
             } catch (error) {
                 console.error('Authentication error:', error);
                 
-                // More specific error handling
                 if (error.message.includes('Authentication system not available')) {
                     alert('Authentication system is not ready. Please refresh the page and try again.');
                 } else if (error.message.includes('Auth manager not available')) {
@@ -470,12 +324,24 @@
                     alert('Authentication error occurred: ' + error.message + '. Please try logging in again.');
                 }
                 
-                // Add delay before redirect to allow user to read the message
                 setTimeout(() => {
                     window.location.href = 'auth.html';
                 }, 2000);
             }
         });
+
+        // Simple logout function
+        window.handleSimpleLogout = async function() {
+            try {
+                if (window.authManager) {
+                    await window.authManager.logout();
+                }
+                window.location.href = 'auth.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+                window.location.href = 'auth.html';
+            }
+        };
     </script>
 
     <!-- Smartsupp Live Chat script -->
@@ -483,225 +349,16 @@
     var _smartsupp = _smartsupp || {};
     _smartsupp.key = '5a12e502e39d89519fbf29c7014792f8d6540920';
     window.smartsupp||(function(d) {
-      var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
-      s=d.getElementsByTagName('script')[0];c=d.createElement('script');
-      c.type='text/javascript';c.charset='utf-8';c.async=true;
-      c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
+      var s,c,o=smartsupp=function(){ o._.push(arguments)};
+      o._=[];
+      s=d.getElementsByTagName('script')[0];
+      c=d.createElement('script');
+      c.type='text/javascript';
+      c.charset='utf-8';
+      c.async=true;
+      c.src='https://www.smartsuppchat.com/loader.js?';
+      s.parentNode.insertBefore(c,s);
     })(document);
     </script>
-    <noscript> Powered by <a href="https://www.smartsupp.com" target="_blank">Smartsupp</a></noscript>
 </body>
 </html>
-
-        <!-- COT Withdrawal Management Section -->
-        <div class="cot-management-section" id="cot-management" style="display:none;background:#2d2d2d;border-radius:12px;padding:30px;margin:30px 0">
-          <h2><i class="fas fa-shield-alt"></i> Withdrawal COT Management</h2>
-          <p style="color:#888;margin-bottom:20px">Manage the Withdrawal Code (COT) required for user withdrawals</p>
-          
-          <div class="cot-form" style="max-width:600px">
-            <div class="form-group" style="margin-bottom:20px">
-              <label for="current-cot-code" style="display:block;margin-bottom:8px;font-weight:600">Current COT Code</label>
-              <div style="display:flex;gap:10px;align-items:center">
-                <input type="text" id="current-cot-code" readonly 
-                       style="flex:1;padding:12px;border:1px solid #444;border-radius:8px;background:#1a1a1a;color:#fff;font-family:monospace">
-                <button id="copy-cot-btn" onclick="copyCotCode()" class="btn-secondary" style="padding:12px;background:#6c757d;color:#fff;border:none;border-radius:8px;cursor:pointer">
-                  <i class="fas fa-copy"></i>
-                </button>
-              </div>
-            </div>
-            
-            <div class="form-group" style="margin-bottom:20px">
-              <label for="new-cot-code" style="display:block;margin-bottom:8px;font-weight:600">New COT Code</label>
-              <input type="text" id="new-cot-code" placeholder="Enter new COT code" maxlength="20"
-                     style="width:100%;padding:12px;border:1px solid #444;border-radius:8px;background:#1a1a1a;color:#fff">
-              <small style="color:#888">Leave empty to generate random code</small>
-            </div>
-            
-            <div class="form-actions" style="display:flex;gap:15px;align-items:center;margin-bottom:20px">
-              <button id="update-cot-code" onclick="updateCotCode()" class="btn-primary" style="padding:12px 24px;background:#007bff;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">
-                <i class="fas fa-save"></i> Update COT Code
-              </button>
-              <button id="generate-random-cot" onclick="generateRandomCot()" class="btn-secondary" style="padding:12px 24px;background:#6c757d;color:#fff;border:none;border-radius:8px;cursor:pointer">
-                <i class="fas fa-random"></i> Generate Random
-              </button>
-              <div id="cot-status" style="color:#28a745;font-weight:600;display:none">
-                <i class="fas fa-check"></i> Updated successfully
-              </div>
-            </div>
-            
-            <div class="cot-info" style="padding:20px;border:1px solid #444;border-radius:8px;background:#1a1a1a">
-              <h4 style="margin-bottom:15px">COT Code Information</h4>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px">
-                <div>
-                  <p><strong>Last Updated:</strong></p>
-                  <span id="cot-last-updated" style="color:#888">Never</span>
-                </div>
-                <div>
-                  <p><strong>Updated By:</strong></p>
-                  <span id="cot-updated-by" style="color:#888">N/A</span>
-                </div>
-              </div>
-              <div style="margin-top:15px;padding:15px;background:#333;border-radius:8px">
-                <p style="color:#ffc107;margin-bottom:10px"><i class="fas fa-exclamation-triangle"></i> <strong>Important:</strong></p>
-                <ul style="color:#888;font-size:14px;margin:0;padding-left:20px">
-                  <li>This code is required for all user withdrawals</li>
-                  <li>Share this code only with authorized users</li>
-                  <li>Change the code regularly for security</li>
-                  <li>Users must enter this code to access the withdrawal page</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        
-        // COT Management Functions
-        async function loadCurrentCotCode() {
-          try {
-            if (!window.db) {
-              console.error('Firestore not initialized');
-              return;
-            }
-            
-            const docRef = window.db.collection('admin').doc('withdrawal-settings');
-            const doc = await docRef.get();
-            
-            if (doc.exists) {
-              const data = doc.data();
-              document.getElementById('current-cot-code').value = data.cotCode || '';
-              document.getElementById('cot-last-updated').textContent = data.lastUpdated ? new Date(data.lastUpdated).toLocaleString() : 'Never';
-              document.getElementById('cot-updated-by').textContent = data.updatedBy || 'N/A';
-            } else {
-              // Initialize with default COT code
-              await initializeCotSettings();
-            }
-          } catch (error) {
-            console.error('Error loading COT code:', error);
-            showToast('Error loading COT settings: ' + error.message, 'error');
-          }
-        }
-        
-        async function initializeCotSettings() {
-          try {
-            const defaultCotCode = generateRandomCotCode();
-            const cotData = {
-              cotCode: defaultCotCode,
-              lastUpdated: new Date().toISOString(),
-              updatedBy: window.currentUser?.email || 'admin',
-              createdAt: new Date().toISOString()
-            };
-            
-            await window.db.collection('admin').doc('withdrawal-settings').set(cotData);
-            document.getElementById('current-cot-code').value = defaultCotCode;
-            document.getElementById('cot-last-updated').textContent = new Date().toLocaleString();
-            document.getElementById('cot-updated-by').textContent = cotData.updatedBy;
-            
-            showToast('COT settings initialized with random code', 'success');
-          } catch (error) {
-            console.error('Error initializing COT settings:', error);
-          }
-        }
-        
-        async function updateCotCode() {
-          try {
-            let newCode = document.getElementById('new-cot-code').value.trim();
-            
-            if (!newCode) {
-              newCode = generateRandomCotCode();
-            }
-            
-            if (newCode.length < 4) {
-              showToast('COT code must be at least 4 characters long', 'error');
-              return;
-            }
-            
-            if (!window.db) {
-              console.error('Firestore not initialized');
-              showToast('Database not available', 'error');
-              return;
-            }
-            
-            const cotData = {
-              cotCode: newCode,
-              lastUpdated: new Date().toISOString(),
-              updatedBy: window.currentUser?.email || 'admin'
-            };
-            
-            await window.db.collection('admin').doc('withdrawal-settings').set(cotData, { merge: true });
-            document.getElementById('current-cot-code').value = newCode;
-            document.getElementById('new-cot-code').value = '';
-            document.getElementById('cot-last-updated').textContent = new Date().toLocaleString();
-            document.getElementById('cot-updated-by').textContent = cotData.updatedBy;
-            
-            showCotStatus();
-            showToast('COT code updated successfully!', 'success');
-          } catch (error) {
-            console.error('Error updating COT code:', error);
-            showToast('Error updating COT code: ' + error.message, 'error');
-          }
-        }
-        
-        function generateRandomCot() {
-          const randomCode = generateRandomCotCode();
-          document.getElementById('new-cot-code').value = randomCode;
-        }
-        
-        function generateRandomCotCode() {
-          const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-          let result = '';
-          for (let i = 0; i < 8; i++) {
-            result += chars.charAt(Math.floor(Math.random() * chars.length));
-          }
-          return result;
-        }
-        
-        function copyCotCode() {
-          const cotCode = document.getElementById('current-cot-code').value;
-          if (!cotCode) {
-            showToast('No COT code to copy', 'error');
-            return;
-          }
-          
-          navigator.clipboard.writeText(cotCode).then(() => {
-            const btn = document.getElementById('copy-cot-btn');
-            const originalHtml = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-check"></i>';
-            btn.style.background = '#28a745';
-            
-            setTimeout(() => {
-              btn.innerHTML = originalHtml;
-              btn.style.background = '#6c757d';
-            }, 2000);
-            
-            showToast('COT code copied to clipboard', 'success');
-          }).catch(() => {
-            showToast('Failed to copy COT code', 'error');
-          });
-        }
-        
-        function showCotStatus() {
-          const status = document.getElementById('cot-status');
-          status.style.display = 'block';
-          setTimeout(() => {
-            status.style.display = 'none';
-          }, 3000);
-        }
-        
-        // Add COT management to navigation
-        const cotNavItem = document.createElement('a');
-        cotNavItem.href = '#';
-        cotNavItem.className = 'nav-item';
-        cotNavItem.innerHTML = '<i class="fas fa-shield-alt"></i> COT Management';
-        cotNavItem.onclick = () => showSection('cot-management');
-        
-        // Add to sidebar (insert after crypto wallets)
-        const sidebar = document.querySelector('.sidebar');
-        const cryptoWalletsItem = sidebar.querySelector('a[onclick*="crypto-wallets"]');
-        if (cryptoWalletsItem) {
-          cryptoWalletsItem.parentNode.insertBefore(cotNavItem, cryptoWalletsItem.nextSibling);
-        }
-        
-        // Auto-load COT settings on page load
-        window.addEventListener('load', () => {
-          setTimeout(loadCurrentCotCode, 1500);
-        });
