@@ -376,30 +376,83 @@
         
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                // Wait for auth manager to be available
+                console.log('Starting admin page initialization...');
+                
+                // Enhanced wait for auth manager with better error handling
                 let attempts = 0;
-                while (!window.authManager && attempts < 50) {
+                const maxAttempts = 100; // Increased from 50
+                
+                while (!window.authManager && attempts < maxAttempts) {
+                    console.log(`Waiting for auth manager... attempt ${attempts + 1}/${maxAttempts}`);
                     await new Promise(resolve => setTimeout(resolve, 100));
                     attempts++;
                 }
                 
                 if (!window.authManager) {
-                    throw new Error('Auth manager not available');
+                    console.error('Auth manager failed to initialize after', maxAttempts, 'attempts');
+                    throw new Error('Authentication system not available. Please refresh the page.');
                 }
                 
-                // Check if user is authenticated and is admin
+                console.log('Auth manager found, checking authentication state...');
+                
+                // Wait for authentication state to be ready
+                await new Promise(resolve => {
+                    const checkAuth = () => {
+                        const user = window.authManager.getCurrentUser();
+                        if (user !== undefined) { // null or user object
+                            resolve();
+                        } else {
+                            setTimeout(checkAuth, 100);
+                        }
+                    };
+                    checkAuth();
+                });
+                
+                // Check if user is authenticated
                 const user = window.authManager.getCurrentUser();
+                console.log('Current user:', user ? user.email : 'No user');
+                
                 if (!user) {
+                    console.log('No authenticated user found, redirecting to auth page');
+                    alert('Please log in to access the admin panel.');
                     window.location.href = 'auth.html';
                     return;
                 }
                 
-                const isAdmin = await window.authManager.checkAdminStatus();
+                console.log('Checking admin status for user:', user.email);
+                
+                // Check admin status with retry mechanism
+                let isAdmin = false;
+                let adminCheckAttempts = 0;
+                const maxAdminAttempts = 3;
+                
+                while (!isAdmin && adminCheckAttempts < maxAdminAttempts) {
+                    try {
+                        isAdmin = await window.authManager.checkAdminStatus();
+                        if (!isAdmin) {
+                            adminCheckAttempts++;
+                            if (adminCheckAttempts < maxAdminAttempts) {
+                                console.log(`Admin check failed, retrying... (${adminCheckAttempts}/${maxAdminAttempts})`);
+                                await new Promise(resolve => setTimeout(resolve, 1000));
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error checking admin status:', error);
+                        adminCheckAttempts++;
+                        if (adminCheckAttempts < maxAdminAttempts) {
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                        }
+                    }
+                }
+                
                 if (!isAdmin) {
+                    console.log('User is not an admin, redirecting to dashboard');
                     alert('Access denied. Admin privileges required.');
                     window.location.href = 'dashboard.html';
                     return;
                 }
+                
+                console.log('Admin access confirmed, initializing dashboard...');
                 
                 // Initialize admin dashboard
                 window.adminDashboard = new AdminDashboard();
@@ -407,8 +460,20 @@
                 
             } catch (error) {
                 console.error('Authentication error:', error);
-                alert('Authentication error occurred. Please try logging in again.');
-                window.location.href = 'auth.html';
+                
+                // More specific error handling
+                if (error.message.includes('Authentication system not available')) {
+                    alert('Authentication system is not ready. Please refresh the page and try again.');
+                } else if (error.message.includes('Auth manager not available')) {
+                    alert('Authentication service failed to load. Please check your internet connection and refresh.');
+                } else {
+                    alert('Authentication error occurred: ' + error.message + '. Please try logging in again.');
+                }
+                
+                // Add delay before redirect to allow user to read the message
+                setTimeout(() => {
+                    window.location.href = 'auth.html';
+                }, 2000);
             }
         });
     </script>

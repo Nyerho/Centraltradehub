@@ -5,6 +5,7 @@ class AuthManager {
   constructor() {
     this.currentUser = null;
     this.isLoggedIn = false;
+    this.isInitialized = false;
     this.initializeEmailService();
     this.initializeFirebaseAuth();
   }
@@ -12,12 +13,20 @@ class AuthManager {
   // Add the missing initialize method
   async initialize() {
     try {
+      console.log('Initializing AuthManager...');
       // Wait for Firebase auth to be ready
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Authentication initialization timeout'));
+        }, 10000); // 10 second timeout
+        
         const unsubscribe = FirebaseAuthService.addAuthStateListener((user) => {
+          clearTimeout(timeout);
           this.currentUser = user;
           this.isLoggedIn = !!user;
+          this.isInitialized = true;
           this.updateUI();
+          console.log('AuthManager initialized with user:', user ? user.email : 'No user');
           if (typeof unsubscribe === 'function') {
             unsubscribe(); // Remove listener after first call
           }
@@ -26,7 +35,8 @@ class AuthManager {
       });
     } catch (error) {
       console.error('Error initializing AuthManager:', error);
-      return null;
+      this.isInitialized = false;
+      throw error;
     }
   }
 
@@ -288,6 +298,10 @@ class AuthManager {
   }
 
   getCurrentUser() {
+    if (!this.isInitialized) {
+      console.warn('AuthManager not fully initialized yet');
+      return undefined; // Return undefined instead of null when not ready
+    }
     return this.currentUser;
   }
 
