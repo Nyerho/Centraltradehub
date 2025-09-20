@@ -107,9 +107,9 @@
             try {
                 console.log('Starting COT admin page initialization...');
                 
-                // Wait for auth manager
+                // Wait for auth manager with proper initialization check
                 let attempts = 0;
-                while (!window.authManager && attempts < 50) {
+                while ((!window.authManager || !window.authManager.isInitialized) && attempts < 100) {
                     await new Promise(resolve => setTimeout(resolve, 100));
                     attempts++;
                 }
@@ -117,6 +117,23 @@
                 if (!window.authManager) {
                     throw new Error('Authentication system not available');
                 }
+                
+                // Initialize AuthManager if not already initialized
+                if (!window.authManager.isInitialized) {
+                    await window.authManager.initialize();
+                }
+                
+                // Wait for authentication state to be determined
+                await new Promise(resolve => {
+                    const checkAuth = () => {
+                        if (window.authManager.getCurrentUser() !== undefined) {
+                            resolve();
+                        } else {
+                            setTimeout(checkAuth, 100);
+                        }
+                    };
+                    checkAuth();
+                });
                 
                 // Check authentication and admin status
                 const user = window.authManager.getCurrentUser();
