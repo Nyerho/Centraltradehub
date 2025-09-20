@@ -98,11 +98,155 @@
             padding: 20px;
             border: 1px solid #2d2d44;
             border-radius: 8px;
-            margin: 10px 0;
             background: #1a1a2e;
-            color: #e8eaed;
         }
         
+        .profile-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #16213e;
+            border-radius: 8px;
+        }
+        
+        .profile-section h3 {
+            color: #ffffff;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #e8eaed;
+            font-weight: 500;
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #2d2d44;
+            border-radius: 5px;
+            background: #1a1a2e;
+            color: #e8eaed;
+            font-size: 14px;
+        }
+        
+        .balance-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .balance-input {
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .transaction-history {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .transaction-item {
+            padding: 15px;
+            border: 1px solid #2d2d44;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            background: #1a1a2e;
+        }
+        
+        .transaction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .transaction-type {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .type-deposit { background: #28a745; color: white; }
+        .type-withdrawal { background: #dc3545; color: white; }
+        .type-profit { background: #17a2b8; color: white; }
+        .type-trade { background: #ffc107; color: #212529; }
+        
+        .trade-history {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .trade-item {
+            padding: 15px;
+            border: 1px solid #2d2d44;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            background: #1a1a2e;
+        }
+        
+        .trade-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .trade-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-active { background: #28a745; color: white; }
+        .status-closed { background: #6c757d; color: white; }
+        .status-pending { background: #ffc107; color: #212529; }
+        
+        @media (max-width: 768px) {
+            .search-controls {
+                flex-direction: column;
+            }
+            
+            .search-input, .filter-select {
+                width: 100%;
+            }
+            
+            .users-table {
+                font-size: 12px;
+            }
+            
+            .users-table th,
+            .users-table td {
+                padding: 8px 4px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+            
+            .balance-controls {
+                flex-direction: column;
+            }
+            
+            .balance-input {
+                width: 100%;
+            }
+        }
+    }
         .details-tabs {
             display: flex;
             border-bottom: 2px solid #2d2d44;

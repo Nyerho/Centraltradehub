@@ -348,71 +348,66 @@
     </div>
 
   
+    // Firebase v8 CDN Scripts - Add before closing body tag 
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    
     <script>
-        let selectedWithdrawalMethod = null;
-        let currentUser = null;
-        let userBalance = 0;
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBQf8T7_9_9_9_9_9_9_9_9_9_9_9_9_9_9",
+            authDomain: "centraltradehub-30f00.firebaseapp.com",
+            projectId: "centraltradehub-30f00",
+            storageBucket: "centraltradehub-30f00.firebasestorage.app",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef123456789"
+        };
         
-        // Initialize page
-        window.addEventListener('load', async () => {
-            // Show COT modal first, regardless of auth status
-            showCotModal();
-        });
-        
-        async function initializeAuth() {
-            try {
-                // Wait for auth manager
-                let attempts = 0;
-                while (!window.authManager && attempts < 50) {
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    attempts++;
-                }
-                
-                if (window.authManager) {
-                    currentUser = window.authManager.getCurrentUser();
-                    if (!currentUser) {
-                        // Don't redirect immediately - let COT verification happen first
-                        console.log('User not authenticated - will check after COT verification');
-                        return false;
-                    }
-                    await loadUserBalance();
-                    return true;
-                }
-                return false;
-            } catch (error) {
-                console.error('Auth initialization error:', error);
-                return false;
-            }
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
         }
         
-        async function loadUserBalance() {
+        let currentUser = null;
+        let authManager = null;
+    
+        // Initialize auth manager
+        async function initializeAuth() {
             try {
-                if (!window.firebase?.firestore || !currentUser) return;
+                // Import auth integration
+                const authModule = await import('./js/auth-integration.js');
+                authManager = authModule.default || authModule.AuthManager;
                 
-                const db = firebase.firestore();
+                if (authManager) {
+                    await authManager.initialize();
+                    currentUser = authManager.getCurrentUser();
+                    return true;
+                }
+            } catch (error) {
+                console.error('Auth initialization error:', error);
+            }
+            return false;
+        }
+    
+        async function loadUserBalance() {
+            if (!firebase?.firestore || !currentUser) return;
+            
+            const db = firebase.firestore();
+            try {
                 const userDoc = await db.collection('users').doc(currentUser.uid).get();
-                
                 if (userDoc.exists) {
                     const userData = userDoc.data();
-                    userBalance = userData.balance || 0;
-                    document.getElementById('accountBalance').textContent = `$${userBalance.toFixed(2)}`;
+                    const balance = userData.balance || 0;
+                    document.getElementById('currentBalance').textContent = `$${balance.toFixed(2)}`;
                 }
             } catch (error) {
                 console.error('Error loading balance:', error);
             }
         }
-        
-        function showCotModal() {
-            document.getElementById('cotModal').style.display = 'block';
-        }
-        
-        function closeCotModal() {
-            document.getElementById('cotModal').style.display = 'none';
-        }
-        
+    
         async function verifyCotCode() {
             const cotCode = document.getElementById('cotCode').value.trim();
-            const alertDiv = document.getElementById('cotAlert');
             
             if (!cotCode) {
                 showAlert('Please enter the COT code', 'error');
@@ -420,12 +415,12 @@
             }
             
             try {
-                // Use existing Firebase v8 setup instead of importing v10 modular
-                if (!window.firebase?.firestore) {
+                // Ensure Firebase is initialized
+                if (!firebase?.firestore) {
                     throw new Error('Firebase not initialized');
                 }
                 
-                const db = window.firebase.firestore();
+                const db = firebase.firestore();
                 const cotDocRef = db.collection('admin').doc('withdrawal-settings');
                 const cotDoc = await cotDocRef.get();
                 
@@ -440,9 +435,9 @@
                     // COT code is valid, check if user is already authenticated
                     let currentUser = null;
                     
-                    if (window.authManager && window.authManager.getCurrentUser()) {
+                    if (authManager && authManager.getCurrentUser()) {
                         // User is already authenticated - proceed directly
-                        currentUser = window.authManager.getCurrentUser();
+                        currentUser = authManager.getCurrentUser();
                         console.log('User already authenticated:', currentUser.email);
                         
                         // Show withdrawal page immediately
@@ -476,178 +471,90 @@
                 showAlert('Error verifying code. Please try again.', 'error');
             }
         }
-        
+    
         function showAlert(message, type) {
-            const alertDiv = document.getElementById('cotAlert');
+            const alertDiv = document.createElement('div');
             alertDiv.className = `alert alert-${type}`;
+            alertDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 5px;
+                color: white;
+                font-weight: 500;
+                z-index: 10000;
+                max-width: 300px;
+                ${type === 'error' ? 'background: #dc3545;' : 'background: #28a745;'}
+            `;
             alertDiv.textContent = message;
-            alertDiv.classList.remove('hidden');
+            
+            document.body.appendChild(alertDiv);
             
             setTimeout(() => {
-                alertDiv.classList.add('hidden');
+                alertDiv.remove();
             }, 5000);
         }
-        
-        function selectMethod(method) {
-            selectedWithdrawalMethod = method;
+    
+        function showCotModal() {
+            document.getElementById('cotModal').style.display = 'flex';
+            document.getElementById('withdrawalPage').classList.add('hidden');
+        }
+    
+        async function processWithdrawal() {
+            const amount = parseFloat(document.getElementById('withdrawalAmount').value);
+            const method = document.getElementById('withdrawalMethod').value;
+            const address = document.getElementById('withdrawalAddress').value;
             
-            // Update UI
-            document.querySelectorAll('.method-card').forEach(card => {
-                card.classList.remove('selected');
-            });
-            document.querySelector(`[data-method="${method}"]`).classList.add('selected');
-            
-            // Show appropriate form
-            document.getElementById('bankForm').classList.add('hidden');
-            document.getElementById('cryptoForm').classList.add('hidden');
-            
-            if (method === 'bank') {
-                document.getElementById('bankForm').classList.remove('hidden');
-            } else if (method === 'crypto') {
-                document.getElementById('cryptoForm').classList.remove('hidden');
+            if (!amount || amount <= 0) {
+                showAlert('Please enter a valid withdrawal amount', 'error');
+                return;
             }
             
-            updateWithdrawalSummary();
-        }
-        
-        function updateWithdrawalSummary() {
-            const amount = parseFloat(document.getElementById('withdrawalAmount').value) || 0;
-            
-            if (amount > 0 && selectedWithdrawalMethod) {
-                const fee = selectedWithdrawalMethod === 'bank' ? 25 : 0;
-                const netAmount = amount - fee;
-                
-                document.getElementById('summaryAmount').textContent = `$${amount.toFixed(2)}`;
-                document.getElementById('summaryFee').textContent = `$${fee.toFixed(2)}`;
-                document.getElementById('summaryNet').textContent = `$${netAmount.toFixed(2)}`;
-                
-                document.getElementById('withdrawalSummary').classList.remove('hidden');
-                document.getElementById('submitWithdrawal').disabled = false;
-            } else {
-                document.getElementById('withdrawalSummary').classList.add('hidden');
-                document.getElementById('submitWithdrawal').disabled = true;
+            if (!method) {
+                showAlert('Please select a withdrawal method', 'error');
+                return;
             }
-        }
-        
-        // Event listeners
-        document.getElementById('withdrawalAmount').addEventListener('input', updateWithdrawalSummary);
-        
-        async function submitWithdrawal() {
+            
+            if (!address) {
+                showAlert('Please enter withdrawal address/details', 'error');
+                return;
+            }
+            
             try {
-                const amount = parseFloat(document.getElementById('withdrawalAmount').value);
-                
-                if (!amount || amount < 50) {
-                    alert('Minimum withdrawal amount is $50');
-                    return;
-                }
-                
-                if (amount > userBalance) {
-                    alert('Insufficient balance');
-                    return;
-                }
-                
-                if (!selectedWithdrawalMethod) {
-                    alert('Please select a withdrawal method');
-                    return;
-                }
-                
-                // Validate form data
-                if (!validateWithdrawalForm()) {
-                    return;
-                }
-                
-                const submitBtn = document.getElementById('submitWithdrawal');
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
-                
-                // Create withdrawal request
-                const withdrawalData = {
-                    userId: currentUser.uid,
-                    userEmail: currentUser.email,
-                    amount: amount,
-                    method: selectedWithdrawalMethod,
-                    status: 'pending',
-                    timestamp: new Date().toISOString(),
-                    requestId: 'WD-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11)
-                };
-                
-                // Add method-specific data
-                if (selectedWithdrawalMethod === 'bank') {
-                    withdrawalData.bankDetails = {
-                        bankName: document.getElementById('bankName').value,
-                        accountName: document.getElementById('accountName').value,
-                        accountNumber: document.getElementById('accountNumber').value,
-                        routingNumber: document.getElementById('routingNumber').value,
-                        swiftCode: document.getElementById('swiftCode').value
-                    };
-                } else if (selectedWithdrawalMethod === 'crypto') {
-                    withdrawalData.cryptoDetails = {
-                        currency: document.getElementById('cryptoCurrency').value,
-                        network: document.getElementById('cryptoNetwork').value,
-                        address: document.getElementById('cryptoAddress').value
-                    };
-                }
-                
                 // Save to Firebase
                 const db = firebase.firestore();
-                await db.collection('withdrawals').add(withdrawalData);
+                await db.collection('withdrawals').add({
+                    userId: currentUser.uid,
+                    amount: amount,
+                    method: method,
+                    address: address,
+                    status: 'pending',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
                 
-                // Update user balance (deduct amount)
+                // Update user balance
                 await db.collection('users').doc(currentUser.uid).update({
                     balance: firebase.firestore.FieldValue.increment(-amount),
                     lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
-                // Show success message
-                alert(`Withdrawal request submitted successfully!\n\nRequest ID: ${withdrawalData.requestId}\nAmount: $${amount.toFixed(2)}\nMethod: ${selectedWithdrawalMethod.toUpperCase()}\n\nProcessing time: ${selectedWithdrawalMethod === 'bank' ? '1-3 business days' : '30-60 minutes'}`);
+                showAlert('Withdrawal request submitted successfully!', 'success');
                 
-                // Redirect to dashboard
-                window.location.href = 'dashboard.html';
+                // Reset form
+                document.getElementById('withdrawalForm').reset();
+                
+                // Reload balance
+                await loadUserBalance();
                 
             } catch (error) {
-                console.error('Withdrawal submission error:', error);
-                alert('Error submitting withdrawal request. Please try again.');
-                
-                const submitBtn = document.getElementById('submitWithdrawal');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Submit Withdrawal Request';
+                console.error('Withdrawal error:', error);
+                showAlert('Error processing withdrawal. Please try again.', 'error');
             }
         }
-        
-        function validateWithdrawalForm() {
-            if (selectedWithdrawalMethod === 'bank') {
-                const required = ['bankName', 'accountName', 'accountNumber', 'routingNumber'];
-                for (let field of required) {
-                    if (!document.getElementById(field).value.trim()) {
-                        alert(`Please fill in ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
-                        return false;
-                    }
-                }
-            } else if (selectedWithdrawalMethod === 'crypto') {
-                const currency = document.getElementById('cryptoCurrency').value;
-                const network = document.getElementById('cryptoNetwork').value;
-                const address = document.getElementById('cryptoAddress').value.trim();
-                
-                if (!currency || !network || !address) {
-                    alert('Please fill in all cryptocurrency details');
-                    return false;
-                }
-                
-                if (address.length < 10) {
-                    alert('Please enter a valid wallet address');
-                    return false;
-                }
-            }
-            
-            return true;
-        }
-        
-        function goBack() {
-            window.location.href = 'dashboard.html';
-        }
-        
-        // Check COT verification on page load
-        window.addEventListener('load', () => {
+    
+        // Initialize on page load
+        window.addEventListener('load', async () => {
             const cotVerified = sessionStorage.getItem('cotVerified');
             const cotTimestamp = sessionStorage.getItem('cotTimestamp');
             
@@ -656,15 +563,15 @@
                 const elapsed = Date.now() - parseInt(cotTimestamp);
                 if (elapsed < 3600000) { // 1 hour
                     // COT is still valid, check auth and show page if user is logged in
-                    initializeAuth().then(authSuccess => {
-                        if (authSuccess && currentUser) {
-                            document.getElementById('cotModal').style.display = 'none';
-                            document.getElementById('withdrawalPage').classList.remove('hidden');
-                        } else {
-                            // COT valid but not logged in, show COT modal with login prompt
-                            showCotModal();
-                        }
-                    });
+                    const authSuccess = await initializeAuth();
+                    if (authSuccess && currentUser) {
+                        document.getElementById('cotModal').style.display = 'none';
+                        document.getElementById('withdrawalPage').classList.remove('hidden');
+                        await loadUserBalance();
+                    } else {
+                        // COT valid but not logged in, show COT modal with login prompt
+                        showCotModal();
+                    }
                     return;
                 }
             }
@@ -675,5 +582,5 @@
             showCotModal();
         });
     </script>
-</body>
-</html>
+    </body>
+    </html>
