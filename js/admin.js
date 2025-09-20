@@ -77,10 +77,13 @@ class AdminDashboard {
         const body = document.body;
         
         if (mobileToggle && sidebar) {
-            // Create mobile overlay
-            const overlay = document.createElement('div');
-            overlay.className = 'mobile-overlay';
-            body.appendChild(overlay);
+            // Create mobile overlay if it doesn't exist
+            let overlay = document.querySelector('.mobile-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.className = 'mobile-overlay';
+                body.appendChild(overlay);
+            }
             
             // Toggle menu function
             const toggleMenu = () => {
@@ -100,28 +103,39 @@ class AdminDashboard {
             };
             
             // Event listeners
-            mobileToggle.addEventListener('click', toggleMenu);
-            overlay.addEventListener('click', toggleMenu);
+            mobileToggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleMenu();
+            });
+            
+            // Close menu when clicking overlay
+            overlay.addEventListener('click', () => {
+                if (sidebar.classList.contains('mobile-open')) {
+                    toggleMenu();
+                }
+            });
             
             // Close menu when clicking nav items on mobile
-            const navItems = sidebar.querySelectorAll('.nav-item');
-            navItems.forEach(item => {
-                item.addEventListener('click', () => {
-                    if (window.innerWidth <= 768) {
-                        toggleMenu();
-                    }
-                });
+            sidebar.addEventListener('click', (e) => {
+                if (e.target.classList.contains('nav-item') && window.innerWidth <= 768) {
+                    setTimeout(() => toggleMenu(), 300); // Small delay for smooth transition
+                }
             });
             
             // Handle window resize
             window.addEventListener('resize', () => {
-                if (window.innerWidth > 768) {
+                if (window.innerWidth > 768 && sidebar.classList.contains('mobile-open')) {
                     sidebar.classList.remove('mobile-open');
                     overlay.classList.remove('active');
                     mobileToggle.classList.remove('active');
                     body.style.overflow = '';
                 }
             });
+            
+            console.log('Mobile menu initialized successfully');
+        } else {
+            console.warn('Mobile toggle or sidebar not found');
         }
     }
 

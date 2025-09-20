@@ -25,10 +25,17 @@ async function initializeCotManagement() {
 
 async function loadCurrentCotCode() {
     try {
-        const database = window.db || db;
+        // Ensure database is available
+        let database = window.db;
         if (!database) {
-            console.error('Firestore not initialized');
-            return;
+            // Import database directly if not available globally
+            const { db } = await import('./firebase-config.js');
+            database = db;
+            window.db = db; // Set globally for future use
+        }
+        
+        if (!database) {
+            throw new Error('Firebase database not initialized');
         }
         
         const docRef = doc(database, 'admin', 'withdrawal-settings');
@@ -44,18 +51,80 @@ async function loadCurrentCotCode() {
             if (lastUpdatedSpan) lastUpdatedSpan.textContent = data.lastUpdated ? new Date(data.lastUpdated).toLocaleString() : 'Never';
             if (updatedBySpan) updatedBySpan.textContent = data.updatedBy || 'Admin Panel';
             
-            console.log('COT code loaded successfully');
+            console.log('COT code loaded successfully:', data.cotCode);
+            showToast('COT code loaded successfully', 'success');
         } else {
-            // Initialize with default COT code
+            console.log('No COT settings found, initializing...');
             await initializeCotSettings();
         }
     } catch (error) {
         console.error('Error loading COT code:', error);
         if (error.code === 'permission-denied') {
-            showToast('Access denied. Please ensure Firestore security rules allow admin access.', 'error');
+            showToast('Access denied. Please check your admin permissions.', 'error');
         } else {
-            showToast('Error loading COT settings. Please try again.', 'error');
+            showToast('Error loading COT settings: ' + error.message, 'error');
         }
+    }
+}
+
+async function updateCotCode() {
+    try {
+        let newCode = document.getElementById('new-cot-code').value.trim();
+        
+        if (!newCode) {
+            newCode = generateRandomCotCode();
+        }
+        
+        if (newCode.length < 4) {
+            showToast('COT code must be at least 4 characters long', 'error');
+            return;
+        }
+        
+        // Ensure database is available
+        let database = window.db;
+        if (!database) {
+            const { db } = await import('./firebase-config.js');
+            database = db;
+            window.db = db;
+        }
+        
+        if (!database) {
+            throw new Error('Firebase database not initialized');
+        }
+        
+        // Get current user info
+        const currentUserEmail = window.currentUser?.email || 
+                               window.authManager?.getCurrentUser()?.email || 
+                               'admin';
+        
+        const cotData = {
+            cotCode: newCode,
+            lastUpdated: new Date().toISOString(),
+            updatedBy: currentUserEmail
+        };
+        
+        console.log('Updating COT code:', cotData);
+        
+        await setDoc(doc(database, 'admin', 'withdrawal-settings'), cotData, { merge: true });
+        
+        // Update UI
+        const currentCotInput = document.getElementById('current-cot-code');
+        const newCotInput = document.getElementById('new-cot-code');
+        const lastUpdatedSpan = document.getElementById('cot-last-updated');
+        const updatedBySpan = document.getElementById('cot-updated-by');
+        
+        if (currentCotInput) currentCotInput.value = newCode;
+        if (newCotInput) newCotInput.value = '';
+        if (lastUpdatedSpan) lastUpdatedSpan.textContent = new Date().toLocaleString();
+        if (updatedBySpan) updatedBySpan.textContent = cotData.updatedBy;
+        
+        showCotStatus();
+        showToast('COT code updated successfully!', 'success');
+        
+        console.log('COT code update completed successfully');
+    } catch (error) {
+        console.error('Error updating COT code:', error);
+        showToast('Error updating COT code: ' + error.message, 'error');
     }
 }
 
@@ -83,52 +152,6 @@ async function initializeCotSettings() {
         showToast('COT settings initialized with random code', 'success');
     } catch (error) {
         console.error('Error initializing COT settings:', error);
-    }
-}
-
-async function updateCotCode() {
-    try {
-        let newCode = document.getElementById('new-cot-code').value.trim();
-        
-        if (!newCode) {
-            newCode = generateRandomCotCode();
-        }
-        
-        if (newCode.length < 4) {
-            showToast('COT code must be at least 4 characters long', 'error');
-            return;
-        }
-        
-        const database = window.db || db;
-        if (!database) {
-            console.error('Firestore not initialized');
-            showToast('Database not available', 'error');
-            return;
-        }
-        
-        const cotData = {
-            cotCode: newCode,
-            lastUpdated: new Date().toISOString(),
-            updatedBy: window.currentUser?.email || window.authManager?.getCurrentUser()?.email || 'admin'
-        };
-        
-        await setDoc(doc(database, 'admin', 'withdrawal-settings'), cotData, { merge: true });
-        
-        const currentCotInput = document.getElementById('current-cot-code');
-        const newCotInput = document.getElementById('new-cot-code');
-        const lastUpdatedSpan = document.getElementById('cot-last-updated');
-        const updatedBySpan = document.getElementById('cot-updated-by');
-        
-        if (currentCotInput) currentCotInput.value = newCode;
-        if (newCotInput) newCotInput.value = '';
-        if (lastUpdatedSpan) lastUpdatedSpan.textContent = new Date().toLocaleString();
-        if (updatedBySpan) updatedBySpan.textContent = cotData.updatedBy;
-        
-        showCotStatus();
-        showToast('COT code updated successfully!', 'success');
-    } catch (error) {
-        console.error('Error updating COT code:', error);
-        showToast('Error updating COT code: ' + error.message, 'error');
     }
 }
 
