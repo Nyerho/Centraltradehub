@@ -1,8 +1,9 @@
-// Firebase Configuration - Updated for modular SDK v10.7.1
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getAuth, setPersistence, browserLocalPersistence, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { getStorage } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+// Firebase Configuration - Compat version for non-module loading
+// Import Firebase scripts in HTML first:
+// <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+// <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+// <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+// <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -15,16 +16,16 @@ const firebaseConfig = {
     measurementId: "G-YHCS5CH450"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase (compat version)
+firebase.initializeApp(firebaseConfig);
 
 // Initialize services
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const storage = firebase.storage();
 
 // Set authentication persistence to LOCAL (survives browser restarts)
-setPersistence(auth, browserLocalPersistence).catch((error) => {
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch((error) => {
     console.error('Error setting auth persistence:', error);
 });
 
@@ -34,7 +35,7 @@ console.log('Auth domain:', firebaseConfig.authDomain);
 console.log('Project ID:', firebaseConfig.projectId);
 
 // Add error handling for auth state changes
-onAuthStateChanged(auth, (user) => {
+auth.onAuthStateChanged((user) => {
     if (user) {
         console.log('User is signed in:', user.email);
     } else {
@@ -44,11 +45,16 @@ onAuthStateChanged(auth, (user) => {
     console.error('Auth state change error:', error);
 });
 
-// Make services globally available (for backward compatibility)
+// Make services globally available
 window.firebaseAuth = auth;
 window.firebaseDb = db;
 window.firebaseStorage = storage;
 
-// Export for ES6 modules
-export { auth, db, storage };
-export default { auth, db, storage };
+// Export for ES6 modules (when loaded as module)
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { auth, db, storage };
+} else if (typeof window !== 'undefined') {
+    window.auth = auth;
+    window.db = db;
+    window.storage = storage;
+}
