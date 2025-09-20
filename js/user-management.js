@@ -130,14 +130,27 @@ function displayUsers() {
             <td>${user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}</td>
             <td>
                 <div class="action-buttons">
-                    <button onclick="viewUserDetails('${user.id}')" class="btn-primary btn-sm"><i class="fas fa-eye"></i></button>
-                    <button onclick="editUser('${user.id}')" class="btn-secondary btn-sm"><i class="fas fa-edit"></i></button>
+                    <button onclick="toggleUserDetails('${user.id}')" class="btn-primary btn-sm"><i class="fas fa-eye"></i> Details</button>
                     <button onclick="toggleUserStatus('${user.id}')" class="btn-warning btn-sm"><i class="fas fa-ban"></i></button>
                     <button onclick="confirmDeleteUser('${user.id}')" class="btn-danger btn-sm"><i class="fas fa-trash"></i></button>
                 </div>
             </td>
         `;
         tbody.appendChild(row);
+        
+        // Add details row (initially hidden)
+        const detailsRow = document.createElement('tr');
+        detailsRow.id = `details-${user.id}`;
+        detailsRow.className = 'user-details-row';
+        detailsRow.style.display = 'none';
+        detailsRow.innerHTML = `
+            <td colspan="8">
+                <div class="user-details-container" id="container-${user.id}">
+                    <div class="loading">Loading user details...</div>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(detailsRow);
     });
 }
 
@@ -165,70 +178,242 @@ function refreshUserList() {
     loadUsers();
 }
 
-// Enhanced viewUserDetails function with complete profile information
-async function viewUserDetails(userId) {
-    try {
+// Replace the viewUserDetails function with toggleUserDetails
+async function toggleUserDetails(userId) {
+    const detailsRow = document.getElementById(`details-${userId}`);
+    const container = document.getElementById(`container-${userId}`);
+    
+    if (detailsRow.style.display === 'none') {
+        // Show details
+        detailsRow.style.display = 'table-row';
         selectedUserId = userId;
-        const database = window.db || db;
-        const userRef = doc(database, 'users', userId);
-        const userDoc = await getDoc(userRef);
         
-        if (!userDoc.exists()) {
-            throw new Error('User not found');
+        try {
+            const database = window.db || db;
+            const userRef = doc(database, 'users', userId);
+            const userDoc = await getDoc(userRef);
+            
+            if (!userDoc.exists()) {
+                throw new Error('User not found');
+            }
+            
+            const userData = userDoc.data();
+            
+            // Load financial and trading data
+            const [financialData, tradingHistory] = await Promise.all([
+                loadUserFinancialDataInline(userId),
+                loadUserTradingHistoryInline(userId)
+            ]);
+            
+            // Create inline details interface
+            container.innerHTML = createUserDetailsInterface(userId, userData, financialData, tradingHistory);
+            
+            // Show profile tab by default
+            showInlineTab('profile', userId);
+            
+        } catch (error) {
+            console.error('Error loading user details:', error);
+            container.innerHTML = `<div class="error">Error loading user details: ${error.message}</div>`;
         }
-        
-        const userData = userDoc.data();
-        
-        // Populate all profile fields
-        document.getElementById('modalUserId').value = userId;
-        document.getElementById('modalUserEmail').value = userData.email || '';
-        document.getElementById('modalUserName').value = userData.fullName || userData.displayName || '';
-        document.getElementById('modalUserPhone').value = userData.phone || '';
-        document.getElementById('modalUserCountry').value = userData.country || '';
-        document.getElementById('modalRegDate').value = userData.registrationDate ? 
-            new Date(userData.registrationDate).toLocaleDateString() : 'N/A';
-        document.getElementById('modalBalance').value = userData.balance || 0;
-        document.getElementById('modalKycStatus').value = userData.kycStatus || 'pending';
-        
-        // Enhanced profile fields
-        document.getElementById('modalUserAddress').value = userData.address || '';
-        document.getElementById('modalUserCity').value = userData.city || '';
-        document.getElementById('modalUserZip').value = userData.zipCode || '';
-        document.getElementById('modalUserBirthdate').value = userData.birthdate || '';
-        document.getElementById('modalUserGender').value = userData.gender || '';
-        document.getElementById('modalUserOccupation').value = userData.occupation || '';
-        document.getElementById('modalUserIncome').value = userData.annualIncome || '';
-        document.getElementById('modalUserExperience').value = userData.tradingExperience || '';
-        document.getElementById('modalUserRiskTolerance').value = userData.riskTolerance || '';
-        document.getElementById('modalUserNotes').value = userData.adminNotes || '';
-        
-        // Security fields
-        document.getElementById('modalPasswordHash').value = userData.passwordHash || 'Not available';
-        document.getElementById('modal2FA').value = userData.twoFactorEnabled ? 'enabled' : 'disabled';
-        document.getElementById('modalLoginAttempts').value = userData.loginAttempts || 0;
-        document.getElementById('modalLastLogin').value = userData.lastLogin ? 
-            new Date(userData.lastLogin).toLocaleString() : 'Never';
-        document.getElementById('modalAccountCreated').value = userData.createdAt ? 
-            new Date(userData.createdAt).toLocaleString() : 'N/A';
-        document.getElementById('modalLastModified').value = userData.lastModified ? 
-            new Date(userData.lastModified).toLocaleString() : 'N/A';
-        document.getElementById('modalModifiedBy').value = userData.modifiedBy || 'N/A';
-        
-        // Status and role
-        document.getElementById('modalUserStatus').value = userData.status || 'active';
-        document.getElementById('modalUserRole').value = userData.role || 'user';
-        
-        // Load trading history
-        await loadUserTradingHistory(userId);
-        
-        // Show modal
-        document.getElementById('userDetailsModal').style.display = 'block';
-        showTab('profile');
-        
-    } catch (error) {
-        console.error('Error viewing user details:', error);
-        showToast('Error loading user details: ' + error.message, 'error');
+    } else {
+        // Hide details
+        detailsRow.style.display = 'none';
+        selectedUserId = null;
     }
+}
+
+// Create the user details interface
+function createUserDetailsInterface(userId, userData, financialData, tradingHistory) {
+    return `
+        <div class="details-tabs">
+            <button class="tab-button active" onclick="showInlineTab('profile', '${userId}')">Profile</button>
+            <button class="tab-button" onclick="showInlineTab('security', '${userId}')">Security</button>
+            <button class="tab-button" onclick="showInlineTab('financial', '${userId}')">Financial</button>
+            <button class="tab-button" onclick="showInlineTab('trading', '${userId}')">Trading History</button>
+        </div>
+        
+        <!-- Profile Tab -->
+        <div id="profile-${userId}" class="tab-content active">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>User ID</label>
+                    <input type="text" value="${userId}" readonly class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="email-${userId}" value="${userData.email || ''}" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="fullName-${userId}" value="${userData.fullName || userData.displayName || ''}" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="text" id="phone-${userId}" value="${userData.phone || ''}" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Country</label>
+                    <input type="text" id="country-${userId}" value="${userData.country || ''}" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <input type="text" id="address-${userId}" value="${userData.address || ''}" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>City</label>
+                    <input type="text" id="city-${userId}" value="${userData.city || ''}" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>ZIP Code</label>
+                    <input type="text" id="zipCode-${userId}" value="${userData.zipCode || ''}" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Birth Date</label>
+                    <input type="date" id="birthdate-${userId}" value="${userData.birthdate || ''}" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select id="gender-${userId}" class="form-control">
+                        <option value="">Select Gender</option>
+                        <option value="male" ${userData.gender === 'male' ? 'selected' : ''}>Male</option>
+                        <option value="female" ${userData.gender === 'female' ? 'selected' : ''}>Female</option>
+                        <option value="other" ${userData.gender === 'other' ? 'selected' : ''}>Other</option>
+                        <option value="prefer_not_to_say" ${userData.gender === 'prefer_not_to_say' ? 'selected' : ''}>Prefer not to say</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Occupation</label>
+                    <input type="text" id="occupation-${userId}" value="${userData.occupation || ''}" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>KYC Status</label>
+                    <select id="kycStatus-${userId}" class="form-control">
+                        <option value="pending" ${userData.kycStatus === 'pending' ? 'selected' : ''}>Pending</option>
+                        <option value="verified" ${userData.kycStatus === 'verified' ? 'selected' : ''}>Verified</option>
+                        <option value="rejected" ${userData.kycStatus === 'rejected' ? 'selected' : ''}>Rejected</option>
+                    </select>
+                </div>
+                <div class="form-group full-width">
+                    <label>Admin Notes</label>
+                    <textarea id="adminNotes-${userId}" class="form-control" rows="3" placeholder="Internal notes about this user...">${userData.adminNotes || ''}</textarea>
+                </div>
+            </div>
+            <div class="inline-actions">
+                <button onclick="saveInlineUserChanges('${userId}')" class="btn-primary"><i class="fas fa-save"></i> Save Changes</button>
+                <button onclick="toggleUserDetails('${userId}')" class="btn-secondary"><i class="fas fa-times"></i> Close</button>
+            </div>
+        </div>
+        
+        <!-- Security Tab -->
+        <div id="security-${userId}" class="tab-content">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Current Password Hash</label>
+                    <input type="text" value="${userData.passwordHash || 'Not available'}" readonly class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Reset Password</label>
+                    <div class="balance-input-group">
+                        <input type="password" id="newPassword-${userId}" placeholder="Enter new password" class="form-control">
+                        <button onclick="resetInlineUserPassword('${userId}')" class="btn-warning"><i class="fas fa-key"></i> Reset</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>2FA Status</label>
+                    <input type="text" value="${userData.twoFactorEnabled ? 'Enabled' : 'Disabled'}" readonly class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Login Attempts</label>
+                    <div class="balance-input-group">
+                        <input type="text" value="${userData.loginAttempts || 0}" readonly class="form-control">
+                        <button onclick="resetInlineLoginAttempts('${userId}')" class="btn-secondary"><i class="fas fa-refresh"></i> Reset</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Account Status</label>
+                    <select id="status-${userId}" class="form-control">
+                        <option value="active" ${userData.status === 'active' ? 'selected' : ''}>Active</option>
+                        <option value="suspended" ${userData.status === 'suspended' ? 'selected' : ''}>Suspended</option>
+                        <option value="pending" ${userData.status === 'pending' ? 'selected' : ''}>Pending</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>User Role</label>
+                    <select id="role-${userId}" class="form-control">
+                        <option value="user" ${userData.role === 'user' ? 'selected' : ''}>User</option>
+                        <option value="admin" ${userData.role === 'admin' ? 'selected' : ''}>Admin</option>
+                        <option value="premium" ${userData.role === 'premium' ? 'selected' : ''}>Premium</option>
+                    </select>
+                </div>
+            </div>
+            <div class="inline-actions">
+                <button onclick="saveInlineUserChanges('${userId}')" class="btn-primary"><i class="fas fa-save"></i> Save Security Settings</button>
+            </div>
+        </div>
+        
+        <!-- Financial Tab -->
+        <div id="financial-${userId}" class="tab-content">
+            <div class="balance-controls">
+                <div class="form-group">
+                    <label>Current Balance</label>
+                    <div class="balance-input-group">
+                        <input type="number" id="balance-${userId}" value="${userData.balance || 0}" class="form-control" step="0.01">
+                        <button onclick="updateInlineUserBalance('${userId}')" class="btn-primary"><i class="fas fa-save"></i> Update</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Balance Adjustment</label>
+                    <div class="balance-input-group">
+                        <input type="number" id="adjustment-${userId}" class="form-control" step="0.01" placeholder="Enter amount">
+                        <select id="adjustmentType-${userId}" class="form-control">
+                            <option value="add">Add</option>
+                            <option value="subtract">Subtract</option>
+                        </select>
+                        <button onclick="adjustInlineUserBalance('${userId}')" class="btn-warning"><i class="fas fa-calculator"></i> Adjust</button>
+                    </div>
+                </div>
+            </div>
+            
+            <h4>Deposit History</h4>
+            <div id="deposits-${userId}">${createTransactionTable(financialData.deposits, 'deposit', userId)}</div>
+            
+            <h4>Withdrawal History</h4>
+            <div id="withdrawals-${userId}">${createTransactionTable(financialData.withdrawals, 'withdrawal', userId)}</div>
+            
+            <div class="inline-actions">
+                <button onclick="addInlineTransaction('${userId}', 'deposit')" class="btn-success"><i class="fas fa-plus"></i> Add Deposit</button>
+                <button onclick="addInlineTransaction('${userId}', 'withdrawal')" class="btn-warning"><i class="fas fa-minus"></i> Add Withdrawal</button>
+            </div>
+        </div>
+        
+        <!-- Trading History Tab -->
+        <div id="trading-${userId}" class="tab-content">
+            <div class="trading-stats">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Total Trades</label>
+                        <input type="text" value="${tradingHistory.totalTrades || 0}" readonly class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Total Volume</label>
+                        <input type="text" value="$${(tradingHistory.totalVolume || 0).toFixed(2)}" readonly class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Total Profit/Loss</label>
+                        <input type="text" value="$${(tradingHistory.totalPnL || 0).toFixed(2)}" readonly class="form-control">
+                    </div>
+                </div>
+            </div>
+            
+            <h4>Recent Trades</h4>
+            <div id="trades-${userId}">${createTradingTable(tradingHistory.trades, userId)}</div>
+            
+            <div class="inline-actions">
+                <button onclick="addInlineTradeRecord('${userId}')" class="btn-success"><i class="fas fa-plus"></i> Add Trade Record</button>
+                <button onclick="exportInlineTradingHistory('${userId}')" class="btn-secondary"><i class="fas fa-download"></i> Export History</button>
+            </div>
+        </div>
+    `;
 }
 
 // Load user trading history
@@ -286,9 +471,80 @@ async function loadUserTradingHistory(userId) {
     }
 }
 
-// Edit user
-function editUser(userId) {
-    viewUserDetails(userId);
+// Helper function to create transaction table
+function createTransactionTable(transactions, type, userId) {
+    if (!transactions || transactions.length === 0) {
+        return `<p>No ${type} records found.</p>`;
+    }
+    
+    let html = `<table class="transactions-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Amount</th>
+                <th>Method</th>
+                <th>Status</th>
+                <th>Reference</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>`;
+    
+    transactions.forEach(transaction => {
+        html += `<tr>
+            <td>${new Date(transaction.date).toLocaleDateString()}</td>
+            <td>$${transaction.amount.toFixed(2)}</td>
+            <td>${transaction.method || 'N/A'}</td>
+            <td><span class="status-badge status-${transaction.status}">${transaction.status.toUpperCase()}</span></td>
+            <td>${transaction.reference || 'N/A'}</td>
+            <td>
+                <button onclick="editInlineTransaction('${transaction.id}', '${type}', '${userId}')" class="btn-sm btn-secondary"><i class="fas fa-edit"></i></button>
+                <button onclick="deleteInlineTransaction('${transaction.id}', '${type}', '${userId}')" class="btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>`;
+    });
+    
+    html += `</tbody></table>`;
+    return html;
+}
+
+// Helper function to create trading table
+function createTradingTable(trades, userId) {
+    if (!trades || trades.length === 0) {
+        return `<p>No trading records found.</p>`;
+    }
+    
+    let html = `<table class="transactions-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Symbol</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Price</th>
+                <th>P&L</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>`;
+    
+    trades.forEach(trade => {
+        html += `<tr>
+            <td>${new Date(trade.date).toLocaleDateString()}</td>
+            <td>${trade.symbol}</td>
+            <td><span class="status-badge status-${trade.type}">${trade.type.toUpperCase()}</span></td>
+            <td>${trade.amount}</td>
+            <td>$${trade.price.toFixed(2)}</td>
+            <td class="${trade.pnl >= 0 ? 'text-success' : 'text-danger'}">$${trade.pnl.toFixed(2)}</td>
+            <td>
+                <button onclick="editInlineTrade('${trade.id}', '${userId}')" class="btn-sm btn-secondary"><i class="fas fa-edit"></i></button>
+                <button onclick="deleteInlineTrade('${trade.id}', '${userId}')" class="btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>`;
+    });
+    
+    html += `</tbody></table>`;
+    return html;
 }
 
 // Save user changes
@@ -869,6 +1125,223 @@ function showToast(message, type = 'info') {
 }
 window.showToast = showToast;
 window.changePage = changePage;
+
+// Tab switching for inline details
+function showInlineTab(tabName, userId) {
+    // Hide all tabs for this user
+    const tabs = ['profile', 'security', 'financial', 'trading'];
+    tabs.forEach(tab => {
+        const tabContent = document.getElementById(`${tab}-${userId}`);
+        if (tabContent) {
+            tabContent.classList.remove('active');
+        }
+    });
+    
+    // Show selected tab
+    const selectedTab = document.getElementById(`${tabName}-${userId}`);
+    if (selectedTab) {
+        selectedTab.classList.add('active');
+    }
+    
+    // Update tab buttons
+    const container = document.getElementById(`container-${userId}`);
+    const tabButtons = container.querySelectorAll('.tab-button');
+    tabButtons.forEach(button => {
+        button.classList.remove('active');
+        if (button.textContent.toLowerCase().includes(tabName)) {
+            button.classList.add('active');
+        }
+    });
+}
+
+// Save user changes inline
+async function saveInlineUserChanges(userId) {
+    try {
+        const database = window.db || db;
+        const userRef = doc(database, 'users', userId);
+        
+        const updateData = {
+            email: document.getElementById(`email-${userId}`).value,
+            fullName: document.getElementById(`fullName-${userId}`).value,
+            phone: document.getElementById(`phone-${userId}`).value,
+            country: document.getElementById(`country-${userId}`).value,
+            address: document.getElementById(`address-${userId}`).value,
+            city: document.getElementById(`city-${userId}`).value,
+            zipCode: document.getElementById(`zipCode-${userId}`).value,
+            birthdate: document.getElementById(`birthdate-${userId}`).value,
+            gender: document.getElementById(`gender-${userId}`).value,
+            occupation: document.getElementById(`occupation-${userId}`).value,
+            kycStatus: document.getElementById(`kycStatus-${userId}`).value,
+            adminNotes: document.getElementById(`adminNotes-${userId}`).value,
+            status: document.getElementById(`status-${userId}`).value,
+            role: document.getElementById(`role-${userId}`).value,
+            lastModified: new Date().toISOString()
+        };
+        
+        await updateDoc(userRef, updateData);
+        
+        // Log admin action
+        await logAdminAction('user_updated', userId, updateData);
+        
+        showToast('User details updated successfully!', 'success');
+        
+        // Refresh the user list to show updated data
+        await loadUsers();
+        
+    } catch (error) {
+        console.error('Error saving user changes:', error);
+        showToast('Error saving user changes: ' + error.message, 'error');
+    }
+}
+
+// Load financial data for inline display
+async function loadUserFinancialDataInline(userId) {
+    try {
+        const database = window.db || db;
+        
+        // Load deposits
+        const depositsQuery = query(
+            collection(database, 'deposits'),
+            where('userId', '==', userId),
+            orderBy('date', 'desc'),
+            limit(20)
+        );
+        
+        // Load withdrawals
+        const withdrawalsQuery = query(
+            collection(database, 'withdrawals'),
+            where('userId', '==', userId),
+            orderBy('date', 'desc'),
+            limit(20)
+        );
+        
+        const [depositsSnapshot, withdrawalsSnapshot] = await Promise.all([
+            getDocs(depositsQuery),
+            getDocs(withdrawalsQuery)
+        ]);
+        
+        const deposits = [];
+        const withdrawals = [];
+        
+        depositsSnapshot.forEach(doc => {
+            deposits.push({ id: doc.id, ...doc.data() });
+        });
+        
+        withdrawalsSnapshot.forEach(doc => {
+            withdrawals.push({ id: doc.id, ...doc.data() });
+        });
+        
+        return { deposits, withdrawals };
+        
+    } catch (error) {
+        console.error('Error loading financial data:', error);
+        return { deposits: [], withdrawals: [] };
+    }
+}
+
+// Load trading history for inline display
+async function loadUserTradingHistoryInline(userId) {
+    try {
+        const database = window.db || db;
+        const tradesQuery = query(
+            collection(database, 'trades'),
+            where('userId', '==', userId),
+            orderBy('date', 'desc'),
+            limit(50)
+        );
+        
+        const querySnapshot = await getDocs(tradesQuery);
+        const trades = [];
+        let totalVolume = 0;
+        let totalPnL = 0;
+        
+        querySnapshot.forEach((doc) => {
+            const trade = { id: doc.id, ...doc.data() };
+            trades.push(trade);
+            totalVolume += trade.amount * trade.price;
+            totalPnL += trade.pnl || 0;
+        });
+        
+        return {
+            trades,
+            totalTrades: trades.length,
+            totalVolume,
+            totalPnL
+        };
+        
+    } catch (error) {
+        console.error('Error loading trading history:', error);
+        return {
+            trades: [],
+            totalTrades: 0,
+            totalVolume: 0,
+            totalPnL: 0
+        };
+    }
+}
+
+// Additional inline functions for password reset, balance updates, etc.
+async function resetInlineUserPassword(userId) {
+    const newPassword = document.getElementById(`newPassword-${userId}`).value;
+    if (!newPassword) {
+        showToast('Please enter a new password', 'error');
+        return;
+    }
+    
+    try {
+        const hashedPassword = await hashPassword(newPassword);
+        const database = window.db || db;
+        const userRef = doc(database, 'users', userId);
+        
+        await updateDoc(userRef, {
+            passwordHash: hashedPassword,
+            passwordResetRequired: false,
+            lastPasswordChange: new Date().toISOString()
+        });
+        
+        await logAdminAction('password_reset', userId, { adminReset: true });
+        
+        document.getElementById(`newPassword-${userId}`).value = '';
+        showToast('Password reset successfully!', 'success');
+        
+    } catch (error) {
+        console.error('Error resetting password:', error);
+        showToast('Error resetting password: ' + error.message, 'error');
+    }
+}
+
+async function updateInlineUserBalance(userId) {
+    const newBalance = parseFloat(document.getElementById(`balance-${userId}`).value);
+    if (isNaN(newBalance)) {
+        showToast('Please enter a valid balance amount', 'error');
+        return;
+    }
+    
+    try {
+        const database = window.db || db;
+        const userRef = doc(database, 'users', userId);
+        
+        await updateDoc(userRef, {
+            balance: newBalance,
+            lastBalanceUpdate: new Date().toISOString()
+        });
+        
+        await logAdminAction('balance_updated', userId, { newBalance });
+        
+        showToast('Balance updated successfully!', 'success');
+        
+    } catch (error) {
+        console.error('Error updating balance:', error);
+        showToast('Error updating balance: ' + error.message, 'error');
+    }
+}
+
+// Make functions globally available
+window.toggleUserDetails = toggleUserDetails;
+window.showInlineTab = showInlineTab;
+window.saveInlineUserChanges = saveInlineUserChanges;
+window.resetInlineUserPassword = resetInlineUserPassword;
+window.updateInlineUserBalance = updateInlineUserBalance;
 
 // Global variables for transaction management
 let currentEditingTransaction = null;
