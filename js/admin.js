@@ -421,16 +421,19 @@ class AdminDashboard {
 
     // Placeholder methods for user management
     showAddUserModal() {
-        alert('Add user functionality will be implemented here');
+        // Redirect to user management page instead of showing popup
+        window.location.href = 'user-management.html';
     }
 
     editUser(row) {
-        alert('Edit user functionality will be implemented here');
+        // Redirect to user management page instead of showing popup
+        window.location.href = 'user-management.html';
     }
 
     deleteUser(row) {
         if (confirm('Are you sure you want to delete this user?')) {
-            alert('Delete user functionality will be implemented here');
+            // Redirect to user management page for actual deletion functionality
+            window.location.href = 'user-management.html';
         }
     }
 

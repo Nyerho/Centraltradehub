@@ -4,12 +4,22 @@ import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/f
 
 // Wait for page to load before initializing
 window.addEventListener('load', () => {
-    // Wait for auth and admin dashboard to be ready
-    setTimeout(() => {
-        if (typeof loadCurrentCotCode === 'function') {
-            loadCurrentCotCode();
+    // Wait for auth manager to be ready (since we're coming from admin panel)
+    setTimeout(async () => {
+        // Verify we still have admin access
+        if (window.authManager && window.authManager.getCurrentUser()) {
+            const isAdmin = await window.authManager.checkAdminStatus();
+            if (isAdmin && typeof loadCurrentCotCode === 'function') {
+                await loadCurrentCotCode();
+            } else {
+                console.error('Admin access required for COT management');
+                window.location.href = 'admin.html';
+            }
+        } else {
+            console.error('Authentication required for COT management');
+            window.location.href = 'auth.html';
         }
-    }, 2000);
+    }, 1000); // Reduced timeout since auth should already be ready
 });
 
 async function loadCurrentCotCode() {
