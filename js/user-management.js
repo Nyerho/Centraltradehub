@@ -57,25 +57,36 @@ async function initializeUserManagement() {
         // Wait for authManager to be available and initialized
         let attempts = 0;
         while ((!window.authManager || !window.authManager.isInitialized) && attempts < 100) {
+            console.log(`Waiting for auth manager... attempt ${attempts + 1}/100`);
             await new Promise(resolve => setTimeout(resolve, 100));
             attempts++;
         }
         
         if (!window.authManager) {
-            throw new Error('Authentication system not available');
+            console.error('Auth manager failed to initialize after 100 attempts');
+            // Fallback: redirect to admin page if auth system not available
+            alert('Authentication system not available. Redirecting to admin panel.');
+            window.location.href = 'admin.html';
+            return;
         }
         
         // Initialize AuthManager if not already initialized
         if (!window.authManager.isInitialized) {
+            console.log('Initializing auth manager...');
             await window.authManager.initialize();
         }
         
+        console.log('Auth manager ready, loading users...');
         await loadUsers();
         setupEventListeners();
         showToast('User management initialized successfully', 'success');
     } catch (error) {
         console.error('Error initializing user management:', error);
-        showToast('Failed to initialize user management', 'error');
+        showToast('Failed to initialize user management: ' + error.message, 'error');
+        // Redirect back to admin panel on error
+        setTimeout(() => {
+            window.location.href = 'admin.html';
+        }, 3000);
     }
 }
 
