@@ -126,6 +126,11 @@ class PasswordManager {
         const endIndex = startIndex + this.itemsPerPage;
         const usersToShow = this.filteredUsers.slice(startIndex, endIndex);
         
+        if (usersToShow.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No users match your search criteria</td></tr>';
+            return;
+        }
+        
         tbody.innerHTML = usersToShow.map(user => `
             <tr>
                 <td>${user.id}</td>
@@ -226,36 +231,36 @@ class PasswordManager {
         const passwordInput = document.getElementById(`password-${userId}`);
         const newPassword = passwordInput.value;
         
-        if (newPassword.length < 6) {
-            this.showToast('Password must be at least 6 characters', 'error');
+        if (!newPassword || newPassword.length < 6) {
+            this.showToast('Password must be at least 6 characters long', 'error');
             return;
         }
         
         try {
-            // Update in database
-            if (this.db) {
-                await this.db.collection('users').doc(userId).update({
-                    password: newPassword,
-                    lastPasswordChange: new Date()
-                });
-            }
+            // Update password in Firestore
+            await firebase.firestore().collection('users').doc(userId).update({
+                password: newPassword,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
             
             // Update local data
-            const user = this.allUsers.find(u => u.id === userId);
-            if (user) {
-                user.password = newPassword;
+            const userIndex = this.allUsers.findIndex(user => user.id === userId);
+            if (userIndex !== -1) {
+                this.allUsers[userIndex].password = newPassword;
             }
             
-            passwordInput.readOnly = true;
-            passwordInput.style.background = '';
+            // Update filtered data
+            const filteredIndex = this.filteredUsers.findIndex(user => user.id === userId);
+            if (filteredIndex !== -1) {
+                this.filteredUsers[filteredIndex].password = newPassword;
+            }
             
-            // Remove save/cancel buttons and refresh display
-            this.displayUsers();
+            this.cancelEdit(userId);
             this.showToast('Password updated successfully', 'success');
             
         } catch (error) {
             console.error('Error updating password:', error);
-            this.showToast('Error updating password', 'error');
+            this.showToast('Failed to update password', 'error');
         }
     }
 
@@ -348,8 +353,9 @@ function refreshPasswords() {
     passwordManager.loadUsers();
 }
 
-// Initialize password manager when DOM is loaded
+// Initialize when DOM is loaded
 let passwordManager;
 document.addEventListener('DOMContentLoaded', () => {
     passwordManager = new PasswordManager();
+    passwordManager.init();
 });
