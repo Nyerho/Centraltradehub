@@ -144,16 +144,47 @@ async function loadUsers() {
 
         // Force token refresh to ensure latest permissions
         try {
-            await currentUser.getIdToken(true);
+            // Get fresh token with force refresh
+            const token = await currentUser.getIdToken(true);
             console.log('Token refreshed for admin user:', currentUser.email);
+            
+            // Get detailed token information for debugging
+            const tokenResult = await currentUser.getIdTokenResult(true);
+            console.log('Token claims:', {
+                email: tokenResult.claims.email,
+                uid: tokenResult.claims.user_id,
+                aud: tokenResult.claims.aud,
+                iss: tokenResult.claims.iss,
+                exp: new Date(tokenResult.claims.exp * 1000),
+                iat: new Date(tokenResult.claims.iat * 1000)
+            });
+            
+            // Verify token is valid and not expired
+            if (tokenResult.claims.exp * 1000 < Date.now()) {
+                throw new Error('Token expired, forcing re-authentication');
+            }
+            
         } catch (tokenError) {
-            console.warn('Token refresh failed:', tokenError);
+            console.error('Token refresh failed:', tokenError);
+            // Force sign out and redirect to auth if token issues persist
+            if (tokenError.code === 'auth/network-request-failed' || 
+                tokenError.message.includes('expired')) {
+                await window.authManager.logout();
+                window.location.href = 'auth.html';
+                return;
+            }
         }
         
         if (window.db) {
             console.log('Loading users from Firestore...');
+            console.log('Current user email:', currentUser.email);
+            console.log('Expected admin email: owner@centraltradehub.com');
             
             try {
+                // Add a small delay to ensure token propagation
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Try to access Firestore with detailed error logging
                 const snapshot = await window.db.collection('users').get();
                 
                 allUsers = [];
