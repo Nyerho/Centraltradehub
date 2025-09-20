@@ -443,7 +443,20 @@
                 
                 if (cotCode === validCode) {
                     // COT code is valid, now check authentication
-                    const authSuccess = await initializeAuth();
+                    // Check if user is already authenticated via window.authManager
+                    let authSuccess = false;
+                    let currentUser = null;
+                    
+                    if (window.authManager && window.authManager.getCurrentUser()) {
+                        // User is already authenticated
+                        currentUser = window.authManager.getCurrentUser();
+                        authSuccess = true;
+                        console.log('User already authenticated:', currentUser.email);
+                    } else {
+                        // Try to initialize auth if not already done
+                        authSuccess = await initializeAuth();
+                        currentUser = window.currentUser;
+                    }
                     
                     if (!authSuccess || !currentUser) {
                         // User not logged in, redirect to login but preserve COT verification
