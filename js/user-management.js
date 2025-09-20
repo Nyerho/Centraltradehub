@@ -15,20 +15,24 @@ window.addEventListener('error', function(e) {
 });
 
 // With your actual Firebase project configuration
-const firebaseConfig = {
-    apiKey: "AIzaSyC...",  // Your actual API key
-    authDomain: "centraltradekeplr.firebaseapp.com",  // Your actual domain
-    projectId: "centraltradekeplr",  // Your actual project ID
-    storageBucket: "centraltradekeplr.appspot.com",
-    messagingSenderId: "123456789",  // Your actual sender ID
-    appId: "1:123456789:web:abc123def456"
-};
+// Remove the firebaseConfig declaration entirely and use this instead:
 
-// Initialize Firebase
+// Use Firebase services from firebase-config.js
 try {
-    firebase.initializeApp(firebaseConfig);
-    window.db = firebase.firestore();
-    console.log('Firebase initialized successfully');
+    // Check if Firebase is available from the global scope
+    if (typeof window.db === 'undefined' && typeof firebase !== 'undefined') {
+        // Use the configuration that's already working
+        const app = firebase.apps.find(app => app.name === '[DEFAULT]') || 
+                   firebase.initializeApp({
+                       apiKey: "AIzaSyAwnWoLfrEc1EtXWCD0by5L0VtCmYf8Unw",
+                       authDomain: "centraltradehub-30f00.firebaseapp.com",
+                       projectId: "centraltradehub-30f00",
+                       storageBucket: "centraltradehub-30f00.firebasestorage.app",
+                       messagingSenderId: "745751687877",
+                       appId: "1:745751687877:web:4576449aa2e8360931b6ac"
+                   });
+        window.db = firebase.firestore(app);
+    }
 } catch (error) {
     console.warn('Firebase initialization failed, using sample data:', error);
     window.db = null;
