@@ -407,7 +407,7 @@
         }
     
         async function verifyCotCode() {
-            const cotCode = document.getElementById('cotCode').value.trim();
+            const cotCode = document.getElementById('cotCodeInput').value.trim();
             
             if (!cotCode) {
                 showAlert('Please enter the COT code', 'error');
@@ -415,8 +415,7 @@
             }
             
             try {
-                // Ensure Firebase is initialized
-                if (!firebase?.firestore) {
+                if (!window.firebase || !window.firebase.firestore) {
                     throw new Error('Firebase not initialized');
                 }
                 
@@ -432,34 +431,26 @@
                 const validCode = settings.cotCode;
                 
                 if (cotCode === validCode) {
-                    // COT code is valid, check if user is already authenticated
-                    let currentUser = null;
+                    // COT code is valid - proceed without any redirects
+                    console.log('COT code verified successfully');
                     
+                    // Hide COT modal and show withdrawal page immediately
+                    document.getElementById('cotModal').style.display = 'none';
+                    document.getElementById('withdrawalPage').classList.remove('hidden');
+                    
+                    // Store verification in session (no expiration for this session)
+                    sessionStorage.setItem('cotVerified', 'true');
+                    sessionStorage.setItem('cotTimestamp', Date.now().toString());
+                    
+                    // Load user balance if user is authenticated
                     if (authManager && authManager.getCurrentUser()) {
-                        // User is already authenticated - proceed directly
-                        currentUser = authManager.getCurrentUser();
-                        console.log('User already authenticated:', currentUser.email);
-                        
-                        // Show withdrawal page immediately
-                        document.getElementById('cotModal').style.display = 'none';
-                        document.getElementById('withdrawalPage').classList.remove('hidden');
-                        
-                        // Store verification in session
-                        sessionStorage.setItem('cotVerified', 'true');
-                        sessionStorage.setItem('cotTimestamp', Date.now().toString());
-                        
-                        // Load user balance
                         await loadUserBalance();
-                        
+                        showAlert('COT code verified! You can now proceed with your withdrawal.', 'success');
                     } else {
-                        // User not logged in, redirect to login but preserve COT verification
-                        sessionStorage.setItem('cotVerified', 'true');
-                        sessionStorage.setItem('cotTimestamp', Date.now().toString());
-                        sessionStorage.setItem('redirectAfterLogin', 'withdrawal.html');
-                        
-                        alert('COT code verified! Please log in to continue with your withdrawal.');
-                        window.location.href = 'auth.html';
-                        return;
+                        // If not authenticated, show login prompt but don't redirect
+                        showAlert('COT code verified! Please log in to continue with your withdrawal.', 'info');
+                        // Show login form inline instead of redirecting
+                        showInlineLogin();
                     }
                     
                 } else {
@@ -472,6 +463,57 @@
             }
         }
     
+        function showInlineLogin() {
+            const loginContainer = document.createElement('div');
+            loginContainer.id = 'inlineLogin';
+            loginContainer.innerHTML = `
+                <div class="inline-login-form">
+                    <h3>Login to Continue</h3>
+                    <form id="quickLoginForm">
+                        <div class="form-group">
+                            <label>Email:</label>
+                            <input type="email" id="loginEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Password:</label>
+                            <input type="password" id="loginPassword" required>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">Login</button>
+                            <button type="button" onclick="hideInlineLogin()" class="btn-secondary">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.getElementById('withdrawalPage').appendChild(loginContainer);
+            
+            // Handle login form submission
+            document.getElementById('quickLoginForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                
+                try {
+                    if (authManager) {
+                        await authManager.signIn(email, password);
+                        hideInlineLogin();
+                        await loadUserBalance();
+                        showAlert('Login successful! You can now proceed with your withdrawal.', 'success');
+                    }
+                } catch (error) {
+                    showAlert('Login failed: ' + error.message, 'error');
+                }
+            });
+        }
+    
+        function hideInlineLogin() {
+            const loginContainer = document.getElementById('inlineLogin');
+            if (loginContainer) {
+                loginContainer.remove();
+            }
+        }
+        
         function showAlert(message, type) {
             const alertDiv = document.createElement('div');
             alertDiv.className = `alert alert-${type}`;

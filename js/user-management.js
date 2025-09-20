@@ -733,104 +733,118 @@ window.changePage = changePage;
 document.addEventListener('DOMContentLoaded', initializeUserManagement);
 
 
-// Add these new functions for financial data management
-window.updateUserFinancials = async function(userId) {
-    try {
-        const profitsInput = document.getElementById(`edit-profits-${userId}`);
-        const depositsInput = document.getElementById(`edit-deposits-${userId}`);
+// Enhanced user creation with full profile
+async function createNewUser() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New User</h3>
+                <button class="close-btn" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+            </div>
+            <form id="createUserForm" class="modal-form">
+                <div class="form-section">
+                    <h4>Personal Information</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>First Name *</label>
+                            <input type="text" name="firstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name *</label>
+                            <input type="text" name="lastName" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Email *</label>
+                            <input type="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone</label>
+                            <input type="tel" name="phone">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Country</label>
+                            <input type="text" name="country">
+                        </div>
+                        <div class="form-group">
+                            <label>Account Type</label>
+                            <select name="accountType">
+                                <option value="Standard">Standard</option>
+                                <option value="Premium">Premium</option>
+                                <option value="VIP">VIP</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-section">
+                    <h4>Account Settings</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Initial Balance</label>
+                            <input type="number" name="balance" value="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select name="status">
+                                <option value="active">Active</option>
+                                <option value="suspended">Suspended</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" onclick="this.closest('.modal-overlay').remove()" class="btn-secondary">Cancel</button>
+                    <button type="submit" class="btn-primary">Create User</button>
+                </div>
+            </form>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Handle form submission
+    document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const userData = Object.fromEntries(formData.entries());
         
-        const totalProfits = parseFloat(profitsInput.value) || 0;
-        const totalDeposits = parseFloat(depositsInput.value) || 0;
-        
-        if (totalProfits < 0 || totalDeposits < 0) {
-            alert('Profits and deposits cannot be negative');
-            return;
+        try {
+            // Create user in Firebase Auth (you'll need to implement this server-side)
+            const userDoc = {
+                firstName: userData.firstName,
+                lastName: userData.lastName,
+                email: userData.email,
+                phone: userData.phone || '',
+                country: userData.country || '',
+                accountType: userData.accountType,
+                balance: parseFloat(userData.balance) || 0,
+                status: userData.status,
+                emailVerified: false,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            // Add to Firestore
+            await db.collection('users').add(userDoc);
+            
+            showToast('User created successfully', 'success');
+            modal.remove();
+            await loadUsers();
+            
+        } catch (error) {
+            console.error('Error creating user:', error);
+            showToast('Error creating user: ' + error.message, 'error');
         }
-        
-        // Update user document with financial data
-        const userRef = doc(db, 'users', userId);
-        await updateDoc(userRef, {
-            totalProfits: totalProfits,
-            totalDeposits: totalDeposits,
-            financialDataUpdatedAt: new Date().toISOString(),
-            financialDataUpdatedBy: window.currentUser?.email || 'Admin'
-        });
-        
-        // Also update the accounts collection for real-time sync
-        const accountRef = doc(db, 'accounts', userId);
-        const accountDoc = await getDoc(accountRef);
-        if (accountDoc.exists()) {
-            await updateDoc(accountRef, {
-                totalProfits: totalProfits,
-                totalDeposits: totalDeposits,
-                lastSyncedAt: new Date().toISOString(),
-                adminUpdated: true
-            });
-        }
-        
-        showNotification('Financial data updated successfully!', 'success');
-        
-        // Refresh the user details
-        setTimeout(() => {
-            const userRow = document.querySelector(`tr[data-user-id="${userId}"]`);
-            if (userRow) {
-                toggleUserDetails(userRow, userId);
-                setTimeout(() => toggleUserDetails(userRow, userId), 100);
-            }
-        }, 500);
-        
-    } catch (error) {
-        console.error('Error updating financial data:', error);
-        showNotification('Error updating financial data: ' + error.message, 'error');
-    }
-};
+    });
+}
 
-window.calculateBalance = async function(userId) {
-    try {
-        const profitsInput = document.getElementById(`edit-profits-${userId}`);
-        const depositsInput = document.getElementById(`edit-deposits-${userId}`);
-        
-        const totalProfits = parseFloat(profitsInput.value) || 0;
-        const totalDeposits = parseFloat(depositsInput.value) || 0;
-        
-        // Get withdrawal data (you may need to implement this based on your withdrawal tracking)
-        const userRef = doc(db, 'users', userId);
-        const userDoc = await getDoc(userRef);
-        const userData = userDoc.data();
-        const totalWithdrawals = userData.totalWithdrawals || 0;
-        
-        // Calculate new balance
-        const newBalance = totalDeposits + totalProfits - totalWithdrawals;
-        
-        // Update both financial data and balance
-        await updateDoc(userRef, {
-            totalProfits: totalProfits,
-            totalDeposits: totalDeposits,
-            accountBalance: newBalance,
-            balanceUpdatedAt: new Date().toISOString(),
-            balanceUpdatedBy: window.currentUser?.email || 'Admin',
-            financialDataUpdatedAt: new Date().toISOString(),
-            financialDataUpdatedBy: window.currentUser?.email || 'Admin'
-        });
-        
-        showNotification(`Balance auto-calculated and updated to $${newBalance.toFixed(2)}`, 'success');
-        
-        // Refresh the user details
-        setTimeout(() => {
-            const userRow = document.querySelector(`tr[data-user-id="${userId}"]`);
-            if (userRow) {
-                toggleUserDetails(userRow, userId);
-                setTimeout(() => toggleUserDetails(userRow, userId), 100);
-            }
-        }, 500);
-        
-    } catch (error) {
-        console.error('Error calculating balance:', error);
-        showNotification('Error calculating balance: ' + error.message, 'error');
-    }
-};
-
-// Edit user profile function
+// Enhanced user editing with full profile access
 async function editUserProfile(userId) {
     try {
         const userDoc = await db.collection('users').doc(userId).get();
@@ -840,302 +854,298 @@ async function editUserProfile(userId) {
         }
         
         const userData = userDoc.data();
-        const detailsRow = document.getElementById(`details-${userId}`);
-        const contentDiv = document.getElementById(`content-${userId}`);
         
-        contentDiv.innerHTML = `
-            <div class="profile-section">
-                <h3><i class="fas fa-user"></i> Personal Information</h3>
-                <div class="form-group">
-                    <label>Full Name:</label>
-                    <input type="text" id="edit-name-${userId}" value="${userData.displayName || ''}">
+        // Load user's transaction and trade history
+        const [transactions, trades] = await Promise.all([
+            db.collection('transactions').where('userId', '==', userId).orderBy('timestamp', 'desc').get(),
+            db.collection('trades').where('userId', '==', userId).orderBy('timestamp', 'desc').get()
+        ]);
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay large-modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Edit User Profile - ${userData.firstName} ${userData.lastName}</h3>
+                    <button class="close-btn" onclick="this.closest('.modal-overlay').remove()">&times;</button>
                 </div>
-                <div class="form-group">
-                    <label>Email:</label>
-                    <input type="email" id="edit-email-${userId}" value="${userData.email || ''}" readonly>
+                <div class="modal-tabs">
+                    <button class="tab-btn active" onclick="showModalTab('profile-tab', this)">Profile</button>
+                    <button class="tab-btn" onclick="showModalTab('financial-tab', this)">Financial</button>
+                    <button class="tab-btn" onclick="showModalTab('transactions-tab', this)">Transactions</button>
+                    <button class="tab-btn" onclick="showModalTab('trades-tab', this)">Trades</button>
                 </div>
-                <div class="form-group">
-                    <label>Phone:</label>
-                    <input type="tel" id="edit-phone-${userId}" value="${userData.phone || ''}">
-                </div>
-                <div class="form-group">
-                    <label>Country:</label>
-                    <input type="text" id="edit-country-${userId}" value="${userData.country || ''}">
-                </div>
-                <div class="form-group">
-                    <label>Account Status:</label>
-                    <select id="edit-status-${userId}">
-                        <option value="active" ${userData.status === 'active' ? 'selected' : ''}>Active</option>
-                        <option value="suspended" ${userData.status === 'suspended' ? 'selected' : ''}>Suspended</option>
-                        <option value="pending" ${userData.status === 'pending' ? 'selected' : ''}>Pending</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="profile-section">
-                <h3><i class="fas fa-wallet"></i> Balance Management</h3>
-                <div class="form-group">
-                    <label>Current Balance: $${(userData.balance || 0).toFixed(2)}</label>
-                    <div class="balance-controls">
-                        <input type="number" class="balance-input" id="balance-amount-${userId}" placeholder="Amount" step="0.01">
-                        <button class="btn btn-success" onclick="addDeposit('${userId}')">
-                            <i class="fas fa-plus"></i> Add Deposit
-                        </button>
-                        <button class="btn btn-info" onclick="addProfit('${userId}')">
-                            <i class="fas fa-chart-line"></i> Add Profit
-                        </button>
+                <div class="modal-body">
+                    <!-- Profile Tab -->
+                    <div id="profile-tab" class="tab-content active">
+                        <form id="editUserForm">
+                            <div class="form-section">
+                                <h4>Personal Information</h4>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>First Name</label>
+                                        <input type="text" name="firstName" value="${userData.firstName || ''}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Last Name</label>
+                                        <input type="text" name="lastName" value="${userData.lastName || ''}">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Email</label>
+                                        <input type="email" name="email" value="${userData.email || ''}" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Phone</label>
+                                        <input type="tel" name="phone" value="${userData.phone || ''}">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Country</label>
+                                        <input type="text" name="country" value="${userData.country || ''}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Status</label>
+                                        <select name="status">
+                                            <option value="active" ${userData.status === 'active' ? 'selected' : ''}>Active</option>
+                                            <option value="suspended" ${userData.status === 'suspended' ? 'selected' : ''}>Suspended</option>
+                                            <option value="pending" ${userData.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Financial Tab -->
+                    <div id="financial-tab" class="tab-content">
+                        <div class="form-section">
+                            <h4>Account Balance Management</h4>
+                            <div class="balance-display">
+                                <div class="current-balance">
+                                    <label>Current Balance:</label>
+                                    <span class="balance-amount">$${(userData.balance || 0).toLocaleString()}</span>
+                                </div>
+                            </div>
+                            <div class="balance-actions">
+                                <div class="form-group">
+                                    <label>Add Deposit</label>
+                                    <div class="input-group">
+                                        <input type="number" id="depositAmount" placeholder="Amount" step="0.01">
+                                        <button type="button" onclick="addUserDeposit('${userId}')" class="btn-success">Add Deposit</button>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Add Received Profit</label>
+                                    <div class="input-group">
+                                        <input type="number" id="profitAmount" placeholder="Amount" step="0.01">
+                                        <button type="button" onclick="addUserProfit('${userId}')" class="btn-info">Add Profit</button>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Adjust Balance</label>
+                                    <div class="input-group">
+                                        <input type="number" id="adjustAmount" placeholder="Amount (+ or -)" step="0.01">
+                                        <button type="button" onclick="adjustUserBalance('${userId}')" class="btn-warning">Adjust</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Transactions Tab -->
+                    <div id="transactions-tab" class="tab-content">
+                        <div class="transactions-list">
+                            ${transactions.empty ? '<p>No transactions found</p>' : transactions.docs.map(doc => {
+                                const tx = doc.data();
+                                return `
+                                    <div class="transaction-item">
+                                        <div class="transaction-header">
+                                            <span class="transaction-type type-${tx.type}">${tx.type}</span>
+                                            <span class="transaction-amount">$${tx.amount}</span>
+                                            <span class="transaction-date">${new Date(tx.timestamp?.seconds * 1000).toLocaleDateString()}</span>
+                                        </div>
+                                        <div class="transaction-details">
+                                            <p><strong>Status:</strong> ${tx.status}</p>
+                                            ${tx.description ? `<p><strong>Description:</strong> ${tx.description}</p>` : ''}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                    
+                    <!-- Trades Tab -->
+                    <div id="trades-tab" class="tab-content">
+                        <div class="trades-list">
+                            ${trades.empty ? '<p>No trades found</p>' : trades.docs.map(doc => {
+                                const trade = doc.data();
+                                return `
+                                    <div class="trade-item">
+                                        <div class="trade-header">
+                                            <span class="trade-symbol">${trade.symbol}</span>
+                                            <span class="trade-status status-${trade.status}">${trade.status}</span>
+                                            <span class="trade-pnl ${trade.profit >= 0 ? 'positive' : 'negative'}">$${trade.profit}</span>
+                                        </div>
+                                        <div class="trade-details">
+                                            <p><strong>Type:</strong> ${trade.type} | <strong>Volume:</strong> ${trade.volume}</p>
+                                            <p><strong>Open:</strong> ${trade.openPrice} | <strong>Close:</strong> ${trade.closePrice || 'N/A'}</p>
+                                            <p><strong>Date:</strong> ${new Date(trade.timestamp?.seconds * 1000).toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Total Deposits: $${(userData.totalDeposits || 0).toFixed(2)}</label>
+                <div class="form-actions">
+                    <button type="button" onclick="this.closest('.modal-overlay').remove()" class="btn-secondary">Close</button>
+                    <button type="button" onclick="saveUserProfile('${userId}')" class="btn-primary">Save Changes</button>
                 </div>
-                <div class="form-group">
-                    <label>Total Profits: $${(userData.totalProfits || 0).toFixed(2)}</label>
-                </div>
-            </div>
-            
-            <div class="profile-section">
-                <h3><i class="fas fa-history"></i> Recent Transactions</h3>
-                <div class="transaction-history" id="transactions-${userId}">
-                    <p>Loading transactions...</p>
-                </div>
-            </div>
-            
-            <div class="profile-section">
-                <h3><i class="fas fa-chart-bar"></i> Trade History</h3>
-                <div class="trade-history" id="trades-${userId}">
-                    <p>Loading trades...</p>
-                </div>
-            </div>
-            
-            <div class="profile-section">
-                <button class="btn btn-primary" onclick="saveUserProfile('${userId}')">
-                    <i class="fas fa-save"></i> Save Changes
-                </button>
-                <button class="btn btn-secondary" onclick="cancelEdit('${userId}')">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
             </div>
         `;
         
-        detailsRow.classList.add('active');
-        
-        // Load transactions and trades
-        await loadUserTransactions(userId);
-        await loadUserTrades(userId);
+        document.body.appendChild(modal);
         
     } catch (error) {
-        console.error('Error editing user profile:', error);
+        console.error('Error loading user profile:', error);
         showToast('Error loading user profile', 'error');
     }
 }
 
-// Save user profile changes
-async function saveUserProfile(userId) {
-    try {
-        const updates = {
-            displayName: document.getElementById(`edit-name-${userId}`).value,
-            phone: document.getElementById(`edit-phone-${userId}`).value,
-            country: document.getElementById(`edit-country-${userId}`).value,
-            status: document.getElementById(`edit-status-${userId}`).value,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        await db.collection('users').doc(userId).update(updates);
-        showToast('User profile updated successfully', 'success');
-        
-        // Refresh the user list
-        await loadUsers();
-        
-        // Close the details row
-        document.getElementById(`details-${userId}`).classList.remove('active');
-        
-    } catch (error) {
-        console.error('Error saving user profile:', error);
-        showToast('Error saving user profile', 'error');
-    }
-}
-
-// Add deposit function
-async function addDeposit(userId) {
-    const amount = parseFloat(document.getElementById(`balance-amount-${userId}`)?.value || prompt('Enter deposit amount:'));
-    
+// Add deposit function with automatic balance update
+window.addUserDeposit = async function(userId) {
+    const amount = parseFloat(document.getElementById('depositAmount').value);
     if (!amount || amount <= 0) {
-        showToast('Please enter a valid amount', 'error');
+        showToast('Please enter a valid deposit amount', 'error');
         return;
     }
     
     try {
+        const batch = db.batch();
+        
         // Add transaction record
-        await db.collection('transactions').add({
+        const transactionRef = db.collection('transactions').doc();
+        batch.set(transactionRef, {
             userId: userId,
             type: 'deposit',
             amount: amount,
             status: 'completed',
             description: 'Admin deposit',
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            adminId: 'current-admin' // Replace with actual admin ID
+            adminId: window.currentUser?.uid || 'admin'
         });
         
-        // Update user balance and total deposits
-        await db.collection('users').doc(userId).update({
+        // Update user balance
+        const userRef = db.collection('users').doc(userId);
+        batch.update(userRef, {
             balance: firebase.firestore.FieldValue.increment(amount),
-            totalDeposits: firebase.firestore.FieldValue.increment(amount),
-            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
-        showToast(`Deposit of $${amount.toFixed(2)} added successfully`, 'success');
+        await batch.commit();
         
-        // Refresh user data
-        if (document.getElementById(`details-${userId}`).classList.contains('active')) {
-            await editUserProfile(userId);
-        }
-        await loadUsers();
+        showToast(`Deposit of $${amount} added successfully`, 'success');
+        document.getElementById('depositAmount').value = '';
+        
+        // Refresh the modal content
+        setTimeout(() => {
+            document.querySelector('.modal-overlay .close-btn').click();
+            editUserProfile(userId);
+        }, 1000);
         
     } catch (error) {
         console.error('Error adding deposit:', error);
         showToast('Error adding deposit', 'error');
     }
-}
+};
 
-// Add profit function
-async function addProfit(userId) {
-    const amount = parseFloat(document.getElementById(`balance-amount-${userId}`)?.value || prompt('Enter profit amount:'));
-    
+// Add profit function with automatic balance update
+window.addUserProfit = async function(userId) {
+    const amount = parseFloat(document.getElementById('profitAmount').value);
     if (!amount || amount <= 0) {
-        showToast('Please enter a valid amount', 'error');
+        showToast('Please enter a valid profit amount', 'error');
         return;
     }
     
     try {
+        const batch = db.batch();
+        
         // Add transaction record
-        await db.collection('transactions').add({
+        const transactionRef = db.collection('transactions').doc();
+        batch.set(transactionRef, {
             userId: userId,
             type: 'profit',
             amount: amount,
             status: 'completed',
-            description: 'Trading profit',
+            description: 'Received profit',
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            adminId: 'current-admin' // Replace with actual admin ID
+            adminId: window.currentUser?.uid || 'admin'
         });
         
-        // Update user balance and total profits
-        await db.collection('users').doc(userId).update({
+        // Update user balance
+        const userRef = db.collection('users').doc(userId);
+        batch.update(userRef, {
             balance: firebase.firestore.FieldValue.increment(amount),
-            totalProfits: firebase.firestore.FieldValue.increment(amount),
-            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
-        showToast(`Profit of $${amount.toFixed(2)} added successfully`, 'success');
+        await batch.commit();
         
-        // Refresh user data
-        if (document.getElementById(`details-${userId}`).classList.contains('active')) {
-            await editUserProfile(userId);
-        }
-        await loadUsers();
+        showToast(`Profit of $${amount} added successfully`, 'success');
+        document.getElementById('profitAmount').value = '';
+        
+        // Refresh the modal content
+        setTimeout(() => {
+            document.querySelector('.modal-overlay .close-btn').click();
+            editUserProfile(userId);
+        }, 1000);
         
     } catch (error) {
         console.error('Error adding profit:', error);
         showToast('Error adding profit', 'error');
     }
-}
+};
 
-// Load user transactions
-async function loadUserTransactions(userId) {
+// Modal tab switching function
+window.showModalTab = function(tabId, button) {
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Remove active class from all tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected tab and mark button as active
+    document.getElementById(tabId).classList.add('active');
+    button.classList.add('active');
+};
+
+// Save user profile changes
+async function saveUserProfile(userId) {
     try {
-        const transactionsQuery = db.collection('transactions')
-            .where('userId', '==', userId)
-            .orderBy('timestamp', 'desc')
-            .limit(10);
-            
-        const snapshot = await transactionsQuery.get();
-        const transactionsDiv = document.getElementById(`transactions-${userId}`);
+        const form = document.getElementById('editUserForm');
+        const formData = new FormData(form);
+        const updates = Object.fromEntries(formData.entries());
         
-        if (snapshot.empty) {
-            transactionsDiv.innerHTML = '<p>No transactions found</p>';
-            return;
-        }
+        updates.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
         
-        let html = '';
-        snapshot.forEach(doc => {
-            const transaction = doc.data();
-            const date = transaction.timestamp?.toDate()?.toLocaleDateString() || 'N/A';
-            
-            html += `
-                <div class="transaction-item">
-                    <div class="transaction-header">
-                        <span class="transaction-type type-${transaction.type}">
-                            ${transaction.type.toUpperCase()}
-                        </span>
-                        <span>$${transaction.amount.toFixed(2)}</span>
-                    </div>
-                    <div>
-                        <strong>Description:</strong> ${transaction.description || 'N/A'}<br>
-                        <strong>Date:</strong> ${date}<br>
-                        <strong>Status:</strong> ${transaction.status}
-                    </div>
-                </div>
-            `;
-        });
+        await db.collection('users').doc(userId).update(updates);
+        showToast('User profile updated successfully', 'success');
         
-        transactionsDiv.innerHTML = html;
+        // Close the modal
+        document.querySelector('.modal-overlay .close-btn').click();
+        
+        // Refresh the user list
+        await loadUsers();
         
     } catch (error) {
-        console.error('Error loading transactions:', error);
-        document.getElementById(`transactions-${userId}`).innerHTML = '<p>Error loading transactions</p>';
+        console.error('Error saving user profile:', error);
+        showToast('Error saving user profile: ' + error.message, 'error');
     }
-}
-
-// Load user trades
-async function loadUserTrades(userId) {
-    try {
-        const tradesQuery = db.collection('trades')
-            .where('userId', '==', userId)
-            .orderBy('timestamp', 'desc')
-            .limit(10);
-            
-        const snapshot = await tradesQuery.get();
-        const tradesDiv = document.getElementById(`trades-${userId}`);
-        
-        if (snapshot.empty) {
-            tradesDiv.innerHTML = '<p>No trades found</p>';
-            return;
-        }
-        
-        let html = '';
-        snapshot.forEach(doc => {
-            const trade = doc.data();
-            const date = trade.timestamp?.toDate()?.toLocaleDateString() || 'N/A';
-            
-            html += `
-                <div class="trade-item">
-                    <div class="trade-header">
-                        <span>${trade.symbol || 'N/A'}</span>
-                        <span class="trade-status status-${trade.status}">
-                            ${trade.status.toUpperCase()}
-                        </span>
-                    </div>
-                    <div>
-                        <strong>Type:</strong> ${trade.type || 'N/A'}<br>
-                        <strong>Amount:</strong> $${(trade.amount || 0).toFixed(2)}<br>
-                        <strong>P&L:</strong> <span style="color: ${(trade.pnl || 0) >= 0 ? '#28a745' : '#dc3545'}">
-                            $${(trade.pnl || 0).toFixed(2)}
-                        </span><br>
-                        <strong>Date:</strong> ${date}
-                    </div>
-                </div>
-            `;
-        });
-        
-        tradesDiv.innerHTML = html;
-        
-    } catch (error) {
-        console.error('Error loading trades:', error);
-        document.getElementById(`trades-${userId}`).innerHTML = '<p>Error loading trades</p>';
-    }
-}
-
-// Cancel edit function
-function cancelEdit(userId) {
-    document.getElementById(`details-${userId}`).classList.remove('active');
 }

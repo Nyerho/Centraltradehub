@@ -24,6 +24,7 @@ class UserProfileService {
     }
 
     // Load user profile from Firebase
+    // Enhanced user profile loading with complete data
     async loadUserProfile(uid) {
         try {
             const userRef = doc(db, 'users', uid);
@@ -31,9 +32,18 @@ class UserProfileService {
             
             if (userDoc.exists()) {
                 this.userProfile = userDoc.data();
+                
+                // Load additional account data
+                const accountRef = doc(db, 'accounts', uid);
+                const accountDoc = await getDoc(accountRef);
+                
+                if (accountDoc.exists()) {
+                    this.userProfile = { ...this.userProfile, ...accountDoc.data() };
+                }
+                
                 return this.userProfile;
             } else {
-                // Create default profile if doesn't exist
+                // Create comprehensive default profile
                 const defaultProfile = {
                     uid: uid,
                     email: this.currentUser.email,
@@ -47,6 +57,13 @@ class UserProfileService {
                     equity: 0,
                     margin: 0,
                     freeMargin: 0,
+                    totalDeposits: 0,
+                    totalWithdrawals: 0,
+                    totalProfits: 0,
+                    totalTrades: 0,
+                    successfulTrades: 0,
+                    kycStatus: 'pending',
+                    emailVerified: this.currentUser.emailVerified || false,
                     createdAt: serverTimestamp(),
                     updatedAt: serverTimestamp()
                 };
@@ -58,6 +75,53 @@ class UserProfileService {
         } catch (error) {
             console.error('Error loading user profile:', error);
             return null;
+        }
+    }
+
+    // Enhanced UI update with complete profile data
+    updatePlatformUI() {
+        if (!this.userProfile) return;
+    
+        // Update user name in header
+        const userNameEl = document.getElementById('current-user-name');
+        if (userNameEl) {
+            const displayName = this.userProfile.firstName && this.userProfile.lastName 
+                ? `${this.userProfile.firstName} ${this.userProfile.lastName}`
+                : this.userProfile.displayName || this.currentUser.displayName || 'User';
+            userNameEl.textContent = displayName;
+        }
+    
+        // Update all profile fields if on profile page
+        const profileFields = {
+            'firstName': this.userProfile.firstName || '',
+            'lastName': this.userProfile.lastName || '',
+            'email': this.currentUser.email || '',
+            'phone': this.userProfile.phone || '',
+            'country': this.userProfile.country || '',
+            'accountType': this.userProfile.accountType || 'Standard'
+        };
+        
+        Object.entries(profileFields).forEach(([fieldId, value]) => {
+            const element = document.getElementById(fieldId);
+            if (element) {
+                element.value = value;
+            }
+        });
+    
+        // Update account balance information
+        this.updateAccountSummary();
+        
+        // Update user avatar if available
+        const userAvatarEl = document.querySelector('.user-avatar');
+        if (userAvatarEl && this.userProfile.photoURL) {
+            userAvatarEl.src = this.userProfile.photoURL;
+        }
+        
+        // Update KYC status if element exists
+        const kycStatusEl = document.getElementById('kycStatus');
+        if (kycStatusEl) {
+            kycStatusEl.textContent = this.userProfile.kycStatus || 'pending';
+            kycStatusEl.className = `kyc-status ${this.userProfile.kycStatus || 'pending'}`;
         }
     }
 

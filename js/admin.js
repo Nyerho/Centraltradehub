@@ -192,13 +192,46 @@ class AdminDashboard {
             const usersSnapshot = await getDocs(collection(this.db, 'users'));
             this.updateStatCard(0, usersSnapshot.size, 'Total Users');
             
-            // Load other stats (placeholder for now)
-            this.updateStatCard(1, '0', 'Active Trades');
-            this.updateStatCard(2, '$0', 'Total Volume');
-            this.updateStatCard(3, '0%', 'Success Rate');
+            // Load active trades count
+            const tradesQuery = query(collection(this.db, 'trades'), where('status', '==', 'active'));
+            const tradesSnapshot = await getDocs(tradesQuery);
+            this.updateStatCard(1, tradesSnapshot.size, 'Active Trades');
+            
+            // Calculate total volume from all trades
+            let totalVolume = 0;
+            const allTradesSnapshot = await getDocs(collection(this.db, 'trades'));
+            allTradesSnapshot.forEach(doc => {
+                const trade = doc.data();
+                if (trade.volume) {
+                    totalVolume += parseFloat(trade.volume) || 0;
+                }
+            });
+            this.updateStatCard(2, `$${totalVolume.toLocaleString()}`, 'Total Volume');
+            
+            // Calculate success rate
+            let successfulTrades = 0;
+            let totalClosedTrades = 0;
+            allTradesSnapshot.forEach(doc => {
+                const trade = doc.data();
+                if (trade.status === 'closed') {
+                    totalClosedTrades++;
+                    if (trade.profit && parseFloat(trade.profit) > 0) {
+                        successfulTrades++;
+                    }
+                }
+            });
+            const successRate = totalClosedTrades > 0 ? ((successfulTrades / totalClosedTrades) * 100).toFixed(1) : 0;
+            this.updateStatCard(3, `${successRate}%`, 'Success Rate');
+            
+            console.log('Dashboard stats updated successfully');
             
         } catch (error) {
             console.error('Error updating dashboard stats:', error);
+            // Show fallback data
+            this.updateStatCard(0, 'Error', 'Total Users');
+            this.updateStatCard(1, 'Error', 'Active Trades');
+            this.updateStatCard(2, 'Error', 'Total Volume');
+            this.updateStatCard(3, 'Error', 'Success Rate');
         }
     }
 
