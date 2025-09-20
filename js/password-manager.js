@@ -1,0 +1,355 @@
+// Password Manager JavaScript
+class PasswordManager {
+    constructor() {
+        this.currentPage = 1;
+        this.itemsPerPage = 10;
+        this.allUsers = [];
+        this.filteredUsers = [];
+        this.db = null;
+        this.init();
+    }
+
+    async init() {
+        try {
+            // Wait for Firebase to initialize
+            if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+                this.db = firebase.firestore();
+                console.log('Firebase initialized successfully');
+            } else {
+                console.warn('Firebase not available, using sample data');
+            }
+            
+            await this.loadUsers();
+            this.setupEventListeners();
+            
+        } catch (error) {
+            console.error('Error initializing password manager:', error);
+            this.showToast('Error initializing password manager', 'error');
+        }
+    }
+
+    async loadUsers() {
+        try {
+            if (this.db) {
+                // Load from Firestore
+                const snapshot = await this.db.collection('users').get();
+                this.allUsers = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+            } else {
+                // Use sample data for demonstration
+                this.allUsers = this.getSampleUsers();
+            }
+            
+            this.filteredUsers = [...this.allUsers];
+            this.displayUsers();
+            this.showToast('Users loaded successfully', 'success');
+            
+        } catch (error) {
+            console.error('Error loading users:', error);
+            this.allUsers = this.getSampleUsers();
+            this.filteredUsers = [...this.allUsers];
+            this.displayUsers();
+            this.showToast('Loaded sample data due to connection error', 'error');
+        }
+    }
+
+    getSampleUsers() {
+        return [
+            {
+                id: 'user1',
+                email: 'john.doe@example.com',
+                name: 'John Doe',
+                status: 'active',
+                password: 'SecurePass123!',
+                lastLogin: new Date('2024-01-15')
+            },
+            {
+                id: 'user2',
+                email: 'jane.smith@example.com',
+                name: 'Jane Smith',
+                status: 'pending',
+                password: 'MyPassword456@',
+                lastLogin: new Date('2024-01-14')
+            },
+            {
+                id: 'user3',
+                email: 'bob.wilson@example.com',
+                name: 'Bob Wilson',
+                status: 'active',
+                password: 'BobSecure789#',
+                lastLogin: new Date('2024-01-13')
+            },
+            {
+                id: 'user4',
+                email: 'alice.brown@example.com',
+                name: 'Alice Brown',
+                status: 'suspended',
+                password: 'AlicePass321$',
+                lastLogin: new Date('2024-01-12')
+            }
+        ];
+    }
+
+    setupEventListeners() {
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        const statusFilter = document.getElementById('statusFilter');
+        
+        searchInput.addEventListener('input', () => this.filterUsers());
+        statusFilter.addEventListener('change', () => this.filterUsers());
+    }
+
+    filterUsers() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const statusFilter = document.getElementById('statusFilter').value;
+        
+        this.filteredUsers = this.allUsers.filter(user => {
+            const matchesSearch = 
+                user.email.toLowerCase().includes(searchTerm) ||
+                user.name.toLowerCase().includes(searchTerm) ||
+                user.id.toLowerCase().includes(searchTerm);
+            
+            const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
+            
+            return matchesSearch && matchesStatus;
+        });
+        
+        this.currentPage = 1;
+        this.displayUsers();
+    }
+
+    displayUsers() {
+        const tbody = document.getElementById('passwordTableBody');
+        const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+        const endIndex = startIndex + this.itemsPerPage;
+        const usersToShow = this.filteredUsers.slice(startIndex, endIndex);
+        
+        tbody.innerHTML = usersToShow.map(user => `
+            <tr>
+                <td>${user.id}</td>
+                <td>${user.email}</td>
+                <td>${user.name}</td>
+                <td>
+                    <span class="status-badge status-${user.status}">
+                        ${user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                    </span>
+                </td>
+                <td>
+                    <div class="password-field">
+                        <input type="password" 
+                               id="password-${user.id}" 
+                               class="password-input" 
+                               value="${user.password}" 
+                               readonly>
+                    </div>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <button onclick="passwordManager.togglePassword('${user.id}')" 
+                                class="btn btn-sm btn-info">
+                            <i class="fas fa-eye" id="eye-${user.id}"></i>
+                        </button>
+                        <button onclick="passwordManager.copyPassword('${user.id}')" 
+                                class="btn btn-sm btn-success">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                        <button onclick="passwordManager.editPassword('${user.id}')" 
+                                class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="passwordManager.generatePassword('${user.id}')" 
+                                class="btn btn-sm btn-secondary">
+                            <i class="fas fa-random"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+        
+        this.updatePagination();
+    }
+
+    togglePassword(userId) {
+        const passwordInput = document.getElementById(`password-${userId}`);
+        const eyeIcon = document.getElementById(`eye-${userId}`);
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            eyeIcon.className = 'fas fa-eye-slash';
+        } else {
+            passwordInput.type = 'password';
+            eyeIcon.className = 'fas fa-eye';
+        }
+    }
+
+    async copyPassword(userId) {
+        const passwordInput = document.getElementById(`password-${userId}`);
+        
+        try {
+            await navigator.clipboard.writeText(passwordInput.value);
+            this.showToast('Password copied to clipboard', 'success');
+        } catch (error) {
+            // Fallback for older browsers
+            passwordInput.select();
+            document.execCommand('copy');
+            this.showToast('Password copied to clipboard', 'success');
+        }
+    }
+
+    editPassword(userId) {
+        const passwordInput = document.getElementById(`password-${userId}`);
+        const user = this.allUsers.find(u => u.id === userId);
+        
+        if (passwordInput.readOnly) {
+            passwordInput.readOnly = false;
+            passwordInput.focus();
+            passwordInput.style.background = '#fff3cd';
+            
+            // Add save/cancel buttons
+            const actionsCell = passwordInput.closest('tr').querySelector('.action-buttons');
+            actionsCell.innerHTML += `
+                <button onclick="passwordManager.savePassword('${userId}')" 
+                        class="btn btn-sm btn-success" id="save-${userId}">
+                    <i class="fas fa-check"></i>
+                </button>
+                <button onclick="passwordManager.cancelEdit('${userId}')" 
+                        class="btn btn-sm btn-secondary" id="cancel-${userId}">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+        }
+    }
+
+    async savePassword(userId) {
+        const passwordInput = document.getElementById(`password-${userId}`);
+        const newPassword = passwordInput.value;
+        
+        if (newPassword.length < 6) {
+            this.showToast('Password must be at least 6 characters', 'error');
+            return;
+        }
+        
+        try {
+            // Update in database
+            if (this.db) {
+                await this.db.collection('users').doc(userId).update({
+                    password: newPassword,
+                    lastPasswordChange: new Date()
+                });
+            }
+            
+            // Update local data
+            const user = this.allUsers.find(u => u.id === userId);
+            if (user) {
+                user.password = newPassword;
+            }
+            
+            passwordInput.readOnly = true;
+            passwordInput.style.background = '';
+            
+            // Remove save/cancel buttons and refresh display
+            this.displayUsers();
+            this.showToast('Password updated successfully', 'success');
+            
+        } catch (error) {
+            console.error('Error updating password:', error);
+            this.showToast('Error updating password', 'error');
+        }
+    }
+
+    cancelEdit(userId) {
+        const passwordInput = document.getElementById(`password-${userId}`);
+        const user = this.allUsers.find(u => u.id === userId);
+        
+        passwordInput.value = user.password;
+        passwordInput.readOnly = true;
+        passwordInput.style.background = '';
+        
+        this.displayUsers();
+    }
+
+    generatePassword(userId) {
+        const length = 12;
+        const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+        let password = '';
+        
+        for (let i = 0; i < length; i++) {
+            password += charset.charAt(Math.floor(Math.random() * charset.length));
+        }
+        
+        const passwordInput = document.getElementById(`password-${userId}`);
+        passwordInput.value = password;
+        
+        // Auto-save the generated password
+        this.savePassword(userId);
+    }
+
+    updatePagination() {
+        const totalPages = Math.ceil(this.filteredUsers.length / this.itemsPerPage);
+        const paginationContainer = document.getElementById('paginationContainer');
+        
+        if (totalPages <= 1) {
+            paginationContainer.innerHTML = '';
+            return;
+        }
+        
+        let paginationHTML = `
+            <button class="page-btn" onclick="passwordManager.changePage(${this.currentPage - 1})" 
+                    ${this.currentPage === 1 ? 'disabled' : ''}>
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        `;
+        
+        for (let i = 1; i <= totalPages; i++) {
+            paginationHTML += `
+                <button class="page-btn ${i === this.currentPage ? 'active' : ''}" 
+                        onclick="passwordManager.changePage(${i})">
+                    ${i}
+                </button>
+            `;
+        }
+        
+        paginationHTML += `
+            <button class="page-btn" onclick="passwordManager.changePage(${this.currentPage + 1})" 
+                    ${this.currentPage === totalPages ? 'disabled' : ''}>
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        `;
+        
+        paginationContainer.innerHTML = paginationHTML;
+    }
+
+    changePage(page) {
+        const totalPages = Math.ceil(this.filteredUsers.length / this.itemsPerPage);
+        
+        if (page >= 1 && page <= totalPages) {
+            this.currentPage = page;
+            this.displayUsers();
+        }
+    }
+
+    showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        
+        toastMessage.textContent = message;
+        toast.className = `toast toast-${type} show`;
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+}
+
+// Global functions
+function refreshPasswords() {
+    passwordManager.loadUsers();
+}
+
+// Initialize password manager when DOM is loaded
+let passwordManager;
+document.addEventListener('DOMContentLoaded', () => {
+    passwordManager = new PasswordManager();
+});
