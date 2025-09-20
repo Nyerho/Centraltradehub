@@ -44,6 +44,9 @@ class AdminDashboard {
     }
 
     initializeEventListeners() {
+        // Mobile menu toggle
+        this.initializeMobileMenu();
+        
         // User Management Buttons
         const addUserBtn = document.querySelector('#users .btn-primary');
         if (addUserBtn) {
@@ -65,6 +68,60 @@ class AdminDashboard {
         const addContentBtn = document.querySelector('#content .btn-primary');
         if (addContentBtn) {
             addContentBtn.addEventListener('click', () => this.showAddContentModal());
+        }
+    }
+
+    initializeMobileMenu() {
+        const mobileToggle = document.getElementById('mobileMenuToggle');
+        const sidebar = document.querySelector('.admin-sidebar');
+        const body = document.body;
+        
+        if (mobileToggle && sidebar) {
+            // Create mobile overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'mobile-overlay';
+            body.appendChild(overlay);
+            
+            // Toggle menu function
+            const toggleMenu = () => {
+                const isOpen = sidebar.classList.contains('mobile-open');
+                
+                if (isOpen) {
+                    sidebar.classList.remove('mobile-open');
+                    overlay.classList.remove('active');
+                    mobileToggle.classList.remove('active');
+                    body.style.overflow = '';
+                } else {
+                    sidebar.classList.add('mobile-open');
+                    overlay.classList.add('active');
+                    mobileToggle.classList.add('active');
+                    body.style.overflow = 'hidden';
+                }
+            };
+            
+            // Event listeners
+            mobileToggle.addEventListener('click', toggleMenu);
+            overlay.addEventListener('click', toggleMenu);
+            
+            // Close menu when clicking nav items on mobile
+            const navItems = sidebar.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    if (window.innerWidth <= 768) {
+                        toggleMenu();
+                    }
+                });
+            });
+            
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 768) {
+                    sidebar.classList.remove('mobile-open');
+                    overlay.classList.remove('active');
+                    mobileToggle.classList.remove('active');
+                    body.style.overflow = '';
+                }
+            });
         }
     }
 

@@ -113,6 +113,9 @@ class AuthManager {
     try {
         console.log('AuthManager: Starting login process for:', email);
         
+        // Clear any existing session data first
+        sessionStorage.clear();
+        
         const result = await FirebaseAuthService.signIn(email, password);
         console.log('AuthManager: Firebase result:', result);
         
@@ -122,6 +125,13 @@ class AuthManager {
             // Update internal state
             this.currentUser = result.user;
             this.isLoggedIn = true;
+            
+            // Store session info to prevent interference
+            sessionStorage.setItem('currentSession', JSON.stringify({
+                userId: result.user.uid,
+                email: result.user.email,
+                loginTime: Date.now()
+            }));
             
             // Check if user is admin
             const isAdmin = await this.checkAdminStatus();
@@ -136,7 +146,7 @@ class AuthManager {
                     console.log('Redirecting to dashboard');
                     window.location.href = 'dashboard.html';
                 }
-            }, 1000); // Reduced delay
+            }, 1000);
             
             return true;
         } else {
@@ -151,6 +161,32 @@ class AuthManager {
     }
 }
 
+async logout() {
+    try {
+        await FirebaseAuthService.signOut();
+        this.currentUser = null;
+        this.isLoggedIn = false;
+        
+        // Clear session storage
+        sessionStorage.clear();
+        
+        this.showMessage('Logged out successfully', 'success');
+        
+        // Only redirect if not already on index.html to prevent loops
+        if (!window.location.pathname.includes('index.html') && 
+            !window.location.pathname.endsWith('/')) {
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+        } else {
+            // Just update UI if already on index page
+            this.updateUI();
+        }
+    } catch (error) {
+        console.error('Logout error:', error);
+        this.showMessage('Error logging out', 'error');
+    }
+}
   async register(formData) {
     try {
       console.log('Starting registration process...');

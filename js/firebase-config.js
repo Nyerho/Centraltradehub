@@ -6,7 +6,7 @@ import {
   getAuth, 
   onAuthStateChanged,
   setPersistence,
-  browserLocalPersistence
+  browserSessionPersistence  // Changed from browserLocalPersistence
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { getStorage } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
@@ -33,8 +33,8 @@ const storage = getStorage(app);
 // Set authentication persistence (wrapped in async function)
 (async () => {
     try {
-        await setPersistence(auth, browserLocalPersistence);
-        console.log('✅ Auth persistence set to LOCAL');
+        await setPersistence(auth, browserSessionPersistence);
+        console.log('✅ Auth persistence set to SESSION (no auto-login)');
     } catch (error) {
         console.error('❌ Error setting auth persistence:', error);
     }

@@ -677,3 +677,119 @@ body {
         flex-direction: column;
     }
 }
+
+/* Mobile Menu Toggle Button */
+.mobile-menu-toggle {
+  display: none;
+  flex-direction: column;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  z-index: 1001;
+}
+
+.hamburger-line {
+  width: 25px;
+  height: 3px;
+  background-color: #00d4ff;
+  margin: 3px 0;
+  transition: 0.3s;
+  border-radius: 2px;
+}
+
+/* Hamburger Animation */
+.mobile-menu-toggle.active .hamburger-line:nth-child(1) {
+  transform: rotate(-45deg) translate(-5px, 6px);
+}
+
+.mobile-menu-toggle.active .hamburger-line:nth-child(2) {
+  opacity: 0;
+}
+
+.mobile-menu-toggle.active .hamburger-line:nth-child(3) {
+  transform: rotate(45deg) translate(-5px, -6px);
+}
+
+/* Enhanced Mobile Responsiveness */
+@media (max-width: 768px) {
+  .mobile-menu-toggle {
+    display: flex;
+  }
+  
+  .admin-user span {
+    display: none; /* Hide welcome text on mobile */
+  }
+  
+  .admin-nav {
+    padding: 0 1rem;
+  }
+  
+  .admin-logo span {
+    font-size: 1rem;
+  }
+  
+  /* Mobile Sidebar */
+  .admin-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 999;
+  }
+  
+  .admin-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+  
+  /* Overlay for mobile menu */
+  .mobile-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+  }
+  
+  .mobile-overlay.active {
+    display: block;
+  }
+  
+  /* Adjust main content for mobile */
+  .admin-main {
+    margin-left: 0;
+    padding: 1rem;
+  }
+  
+  /* Mobile stats grid */
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  /* Mobile tables */
+  .data-table {
+    font-size: 0.9rem;
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-logo span {
+    display: none; /* Hide logo text on very small screens */
+  }
+  
+  .btn-logout {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+  }
+  
+  .section-header h1 {
+    font-size: 1.5rem;
+  }
+}
