@@ -4,78 +4,23 @@ import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/f
 
 // Wait for page to load before initializing
 window.addEventListener('load', () => {
-    // Give more time for auth manager to be ready and check multiple times
+    // Direct initialization without auth checks
     initializeCotManagement();
 });
 
 async function initializeCotManagement() {
-    let attempts = 0;
-    const maxAttempts = 10;
-    
-    const checkAuth = async () => {
-        attempts++;
+    try {
+        console.log('COT Management: Direct access (no auth required)');
         
-        try {
-            // Check if authManager exists and is initialized
-            if (!window.authManager) {
-                if (attempts < maxAttempts) {
-                    console.log(`Waiting for authManager... attempt ${attempts}`);
-                    setTimeout(checkAuth, 500);
-                    return;
-                } else {
-                    console.error('AuthManager not available after maximum attempts');
-                    window.location.href = 'admin.html';
-                    return;
-                }
-            }
-            
-            // Wait for authManager to be fully initialized
-            if (!window.authManager.isInitialized) {
-                if (attempts < maxAttempts) {
-                    console.log(`Waiting for authManager initialization... attempt ${attempts}`);
-                    setTimeout(checkAuth, 500);
-                    return;
-                } else {
-                    console.error('AuthManager not initialized after maximum attempts');
-                    window.location.href = 'admin.html';
-                    return;
-                }
-            }
-            
-            const currentUser = window.authManager.getCurrentUser();
-            if (!currentUser) {
-                console.error('No authenticated user found');
-                window.location.href = 'auth.html';
-                return;
-            }
-            
-            // Check admin status
-            const isAdmin = await window.authManager.checkAdminStatus();
-            if (!isAdmin) {
-                console.error('Admin access required for COT management');
-                window.location.href = 'admin.html';
-                return;
-            }
-            
-            console.log('COT Management: Authentication verified for', currentUser.email);
-            
-            // Load COT code if everything is authenticated
-            if (typeof loadCurrentCotCode === 'function') {
-                await loadCurrentCotCode();
-            }
-            
-        } catch (error) {
-            console.error('Error during COT authentication check:', error);
-            if (attempts < maxAttempts) {
-                setTimeout(checkAuth, 1000);
-            } else {
-                window.location.href = 'admin.html';
-            }
+        // Load COT code directly without authentication
+        if (typeof loadCurrentCotCode === 'function') {
+            await loadCurrentCotCode();
         }
-    };
-    
-    // Start the authentication check
-    checkAuth();
+        
+    } catch (error) {
+        console.error('Error during COT initialization:', error);
+        showToast('Error initializing COT management', 'error');
+    }
 }
 
 async function loadCurrentCotCode() {
@@ -97,7 +42,7 @@ async function loadCurrentCotCode() {
             
             if (currentCotInput) currentCotInput.value = data.cotCode || '';
             if (lastUpdatedSpan) lastUpdatedSpan.textContent = data.lastUpdated ? new Date(data.lastUpdated).toLocaleString() : 'Never';
-            if (updatedBySpan) updatedBySpan.textContent = data.updatedBy || 'N/A';
+            if (updatedBySpan) updatedBySpan.textContent = data.updatedBy || 'Admin Panel';
             
             console.log('COT code loaded successfully');
         } else {
@@ -120,7 +65,7 @@ async function initializeCotSettings() {
         const cotData = {
             cotCode: defaultCotCode,
             lastUpdated: new Date().toISOString(),
-            updatedBy: window.authManager?.getCurrentUser()?.email || 'admin',
+            updatedBy: 'Admin Panel',
             createdAt: new Date().toISOString()
         };
         

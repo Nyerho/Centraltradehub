@@ -52,41 +52,15 @@ try {
 // Initialize user management
 async function initializeUserManagement() {
     try {
-        console.log('Initializing user management...');
+        console.log('Initializing user management (no auth required)...');
         
-        // Wait for authManager to be available and initialized
-        let attempts = 0;
-        while ((!window.authManager || !window.authManager.isInitialized) && attempts < 100) {
-            console.log(`Waiting for auth manager... attempt ${attempts + 1}/100`);
-            await new Promise(resolve => setTimeout(resolve, 100));
-            attempts++;
-        }
-        
-        if (!window.authManager) {
-            console.error('Auth manager failed to initialize after 100 attempts');
-            // Fallback: redirect to admin page if auth system not available
-            alert('Authentication system not available. Redirecting to admin panel.');
-            window.location.href = 'admin.html';
-            return;
-        }
-        
-        // Initialize AuthManager if not already initialized
-        if (!window.authManager.isInitialized) {
-            console.log('Initializing auth manager...');
-            await window.authManager.initialize();
-        }
-        
-        console.log('Auth manager ready, loading users...');
+        // Direct access - no authentication checks
         await loadUsers();
         setupEventListeners();
         showToast('User management initialized successfully', 'success');
     } catch (error) {
         console.error('Error initializing user management:', error);
         showToast('Failed to initialize user management: ' + error.message, 'error');
-        // Redirect back to admin panel on error
-        setTimeout(() => {
-            window.location.href = 'admin.html';
-        }, 3000);
     }
 }
 
@@ -112,79 +86,13 @@ async function loadUsers() {
     try {
         showLoading(true);
         
-        // Wait for authManager to be fully initialized
-        if (!window.authManager || !window.authManager.isInitialized) {
-            let attempts = 0;
-            await new Promise((resolve, reject) => {
-                const checkAuth = () => {
-                    attempts++;
-                    if (window.authManager && window.authManager.isInitialized) {
-                        resolve();
-                    } else if (attempts > 20) {
-                        reject(new Error('AuthManager initialization timeout'));
-                    } else {
-                        setTimeout(checkAuth, 250);
-                    }
-                };
-                checkAuth();
-            });
-        }
-        
-        // Check if user is authenticated using authManager
-        const currentUser = window.authManager.getCurrentUser();
-        if (!currentUser) {
-            throw new Error('User not authenticated. Please sign in as admin.');
-        }
-        
-        // Check if user is admin using authManager
-        const isAdmin = await window.authManager.checkAdminStatus();
-        if (!isAdmin) {
-            throw new Error('Access denied. Admin privileges required.');
-        }
-
-        // Force token refresh to ensure latest permissions
-        try {
-            // Get fresh token with force refresh
-            const token = await currentUser.getIdToken(true);
-            console.log('Token refreshed for admin user:', currentUser.email);
-            
-            // Get detailed token information for debugging
-            const tokenResult = await currentUser.getIdTokenResult(true);
-            console.log('Token claims:', {
-                email: tokenResult.claims.email,
-                uid: tokenResult.claims.user_id,
-                aud: tokenResult.claims.aud,
-                iss: tokenResult.claims.iss,
-                exp: new Date(tokenResult.claims.exp * 1000),
-                iat: new Date(tokenResult.claims.iat * 1000)
-            });
-            
-            // Verify token is valid and not expired
-            if (tokenResult.claims.exp * 1000 < Date.now()) {
-                throw new Error('Token expired, forcing re-authentication');
-            }
-            
-        } catch (tokenError) {
-            console.error('Token refresh failed:', tokenError);
-            // Force sign out and redirect to auth if token issues persist
-            if (tokenError.code === 'auth/network-request-failed' || 
-                tokenError.message.includes('expired')) {
-                await window.authManager.logout();
-                window.location.href = 'auth.html';
-                return;
-            }
-        }
+        // Skip all authentication checks - direct access
         
         if (window.db) {
-            console.log('Loading users from Firestore...');
-            console.log('Current user email:', currentUser.email);
-            console.log('Expected admin email: owner@centraltradehub.com');
+            console.log('Loading users from Firestore (no auth checks)...');
             
             try {
-                // Add a small delay to ensure token propagation
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                // Try to access Firestore with detailed error logging
+                // Direct Firestore access without authentication
                 const snapshot = await window.db.collection('users').get();
                 
                 allUsers = [];
@@ -207,7 +115,6 @@ async function loadUsers() {
                 
                 if (firestoreError.code === 'permission-denied') {
                     showToast('Firestore access denied. Please update security rules to allow admin access.', 'error');
-                    console.error('Admin user:', currentUser.email, 'lacks Firestore permissions');
                 } else {
                     showToast('Database connection error. Using sample data.', 'warning');
                 }
