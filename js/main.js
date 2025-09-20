@@ -561,9 +561,10 @@ if (typeof API_CONFIG !== 'undefined') {
         console.warn('SendGrid API keys not configured. Email functionality will be disabled.');
     }
 }
-API_CONFIG.setApiKey('SENDGRID_API_KEY', 'SK27e6e57ffe51c05179915eb842710639');
-API_CONFIG.setApiKey('SENDGRID_SECRET_TOKEN', 'VWmQzsyFbwmZM154sPnlRWy59MgdPz3P');
-console.log('SendGrid API keys initialized');
+// Comment out or remove these lines that are causing the error:
+// API_CONFIG.setApiKey('SENDGRID_API_KEY', 'SK27e6e57ffe51c05179915eb842710639');
+// API_CONFIG.setApiKey('SENDGRID_SECRET_TOKEN', 'VWmQzsyFbwmZM154sPnlRWy59MgdPz3P');
+// console.log('SendGrid API keys initialized');
 
 // Disable console logs in production
 if (window.location.protocol !== 'file:') {
