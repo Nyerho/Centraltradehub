@@ -11,27 +11,27 @@ window.addEventListener('error', function(e) {
     showToast('An error occurred. Please refresh the page.', 'error');
 });
 
-// Firebase initialization - Updated with working configuration
+// Firebase initialization with CORRECT configuration
 try {
     if (typeof firebase !== 'undefined' && firebase.apps.length === 0) {
         const firebaseConfig = {
-            apiKey: "AIzaSyDGpAHia_wEmrhnmYjrPf1n1TrAzwEMiAI",
-            authDomain: "usermanagement-34b5c.firebaseapp.com",
-            projectId: "usermanagement-34b5c",
-            storageBucket: "usermanagement-34b5c.appspot.com",
-            messagingSenderId: "888243437180",
-            appId: "1:888243437180:web:5a7b3b7b0b0b0b0b0b0b0b",
-            measurementId: "G-1234567890"
+            apiKey: "AIzaSyAwnWoLfrEc1EtXWCD0by5L0VtCmYf8Unw",
+            authDomain: "centraltradehub-30f00.firebaseapp.com",
+            projectId: "centraltradehub-30f00",
+            storageBucket: "centraltradehub-30f00.firebasestorage.app",
+            messagingSenderId: "745751687877",
+            appId: "1:745751687877:web:4576449aa2e8360931b6ac",
+            measurementId: "G-YHCS5CH450"
         };
         
         firebase.initializeApp(firebaseConfig);
         window.db = firebase.firestore();
-        console.log('Firebase initialized successfully');
+        console.log('Firebase initialized successfully with correct config');
     } else if (typeof firebase !== 'undefined') {
         window.db = firebase.firestore();
         console.log('Using existing Firebase instance');
     } else {
-        console.error('Firebase not available - please check Firebase SDK loading');
+        console.error('Firebase not available');
         window.db = null;
     }
 } catch (error) {
@@ -68,7 +68,7 @@ function setupEventListeners() {
     });
 }
 
-// Load users from Firestore - Modified to prioritize real data
+// Load users from Firestore - Updated to work with real database
 async function loadUsers() {
     try {
         showLoading(true);
@@ -81,12 +81,13 @@ async function loadUsers() {
                 ...doc.data()
             }));
             
-            console.log(`Loaded ${allUsers.length} users from Firestore`);
+            console.log(`Successfully loaded ${allUsers.length} users from database`);
             
-            // Only use sample data if explicitly no users exist and you want to populate initial data
             if (allUsers.length === 0) {
-                console.log('No users found in Firestore. Database appears empty.');
+                console.log('No users found in database');
                 showToast('No users found in database', 'info');
+            } else {
+                showToast(`Loaded ${allUsers.length} users successfully`, 'success');
             }
         } else {
             console.error('Firebase database not available');
