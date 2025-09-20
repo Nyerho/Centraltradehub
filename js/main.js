@@ -246,7 +246,7 @@ class ContentManager {
     }
     
     setupLiveChat() {
-        const chatButton = document.getElementById('liveChatBtn');
+        const chatButton = document.querySelector('.live-chat-btn');
         if (chatButton) {
             chatButton.addEventListener('click', () => {
                 this.openLiveChat();
@@ -254,9 +254,7 @@ class ContentManager {
         }
     }
     
-    import { db } from './firebase-config.js';
-    import { collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-    
+    // Remove the import statements from here - they should be at the top
     async submitContactForm(formData) {
         try {
             // Store message in Firebase
