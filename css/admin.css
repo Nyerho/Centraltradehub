@@ -805,7 +805,7 @@ body {
   transform: rotate(45deg) translate(-5px, -6px);
 }
 
-/* Mobile Overlay */
+/* Mobile Overlay - Fixed */
 .mobile-overlay {
     display: none;
     position: fixed;
@@ -824,14 +824,102 @@ body {
     opacity: 1;
 }
 
-/* Enhanced Mobile Responsiveness */
+/* Laptop/Desktop optimizations */
+@media (min-width: 769px) and (max-width: 1200px) {
+  .admin-main {
+    margin-left: 250px;
+    padding: 2rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+  
+  .users-table {
+    font-size: 13px;
+  }
+}
+
+/* Large desktop */
+@media (min-width: 1201px) {
+  .admin-main {
+    margin-left: 280px;
+    padding: 2rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* User Management Table Styles */
+.user-management-container {
+    background: #1a1f2e;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.users-table-container {
+    overflow-x: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #1a1a2e;
+    min-width: 800px;
+}
+
+.users-table th {
+    background: #16213e;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 15px 12px;
+    text-align: left;
+    border-bottom: 2px solid #2d2d44;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.users-table td {
+    padding: 12px;
+    border-bottom: 1px solid #2d2d44;
+    color: #e8eaed;
+    vertical-align: middle;
+}
+
+.users-table tr:hover {
+    background: #16213e;
+}
+
+.user-details-row {
+    display: none;
+    background: #16213e;
+}
+
+.user-details-row.active {
+    display: table-row;
+}
+
+.user-details-content {
+    padding: 20px;
+    border: 1px solid #2d2d44;
+    border-radius: 8px;
+    background: #1a1a2e;
+}
+
+/* Enhanced Mobile Responsiveness - Fixed Version */
 @media (max-width: 768px) {
   .mobile-menu-toggle {
     display: flex;
   }
   
   .admin-user span {
-    display: none; /* Hide welcome text on mobile */
+    display: none;
   }
   
   .admin-nav {
@@ -842,7 +930,7 @@ body {
     font-size: 1rem;
   }
   
-  /* Mobile Sidebar - Fixed positioning */
+  /* Mobile Sidebar - Improved positioning */
   .admin-sidebar {
     position: fixed;
     top: 60px;
@@ -854,51 +942,47 @@ body {
     width: 280px;
     background: #1a1f2e;
     border-right: 1px solid #2a2f3e;
+    overflow-y: auto;
   }
   
   .admin-sidebar.mobile-open {
     transform: translateX(0);
   }
   
-  /* Overlay for mobile menu */
-  .mobile-overlay {
-    display: none;
-    position: fixed;
-    top: 60px;
-    left: 0;
-    width: 100%;
-    height: calc(100vh - 60px);
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 998;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-  
-  .mobile-overlay.active {
-    display: block;
-    opacity: 1;
-  }
-  
-  /* Adjust main content for mobile - KEEP CONTENT VISIBLE */
+  /* Main content adjustments for mobile */
   .admin-main {
     margin-left: 0;
     padding: 1rem;
     width: 100%;
-    /* Remove any transforms or positioning that might hide content */
-    position: relative;
-    z-index: 1;
+    min-height: calc(100vh - 60px);
   }
   
-  /* Ensure admin sections are always visible */
-  .admin-section {
-    display: block !important;
-    opacity: 1 !important;
-    visibility: visible !important;
+  /* Stats grid responsive */
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
   }
   
-  .admin-section.active {
-    display: block !important;
+  /* Table responsiveness */
+  .users-table {
+    font-size: 12px;
   }
+  
+  .users-table th,
+  .users-table td {
+    padding: 8px 4px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .btn {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+}
   
   .section-header {
     margin-bottom: 2rem;

@@ -244,40 +244,167 @@ class AdminDashboard {
 
     async loadUsers() {
         try {
-            const usersSnapshot = await getDocs(collection(this.db, 'users'));
-            const tableBody = document.getElementById('users-table-body');
+            const usersRef = collection(this.db, 'users');
+            const usersSnapshot = await getDocs(usersRef);
+            const tbody = document.getElementById('usersTableBody');
             
-            if (!tableBody) return;
+            if (!tbody) return;
             
-            tableBody.innerHTML = '';
+            tbody.innerHTML = '';
+            let userCount = 0;
+            let activeCount = 0;
+            let pendingCount = 0;
+            let suspendedCount = 0;
             
-            usersSnapshot.forEach((doc, index) => {
+            usersSnapshot.forEach((doc) => {
                 const user = doc.data();
-                const row = this.createUserRow(doc.id, user, index + 1);
-                tableBody.appendChild(row);
+                const userId = doc.id;
+                
+                // Count users by status
+                userCount++;
+                switch(user.status) {
+                    case 'active': activeCount++; break;
+                    case 'pending': pendingCount++; break;
+                    case 'suspended': suspendedCount++; break;
+                    default: activeCount++; break;
+                }
+                
+                // Create user row
+                const row = this.createUserTableRow(userId, user);
+                tbody.appendChild(row);
+                
+                // Create details row (hidden by default)
+                const detailsRow = this.createUserDetailsRow(userId, user);
+                tbody.appendChild(detailsRow);
             });
+            
+            // Update stats
+            this.updateUserStats(userCount, activeCount, pendingCount, suspendedCount);
             
         } catch (error) {
             console.error('Error loading users:', error);
-            this.showNotification('Error loading users: ' + error.message, 'error');
+            this.showNotification('Failed to load users: ' + error.message, 'error');
         }
     }
-
-    createUserRow(userId, user, index) {
+    
+    createUserTableRow(userId, user) {
         const row = document.createElement('tr');
+        row.dataset.userId = userId;
+        
+        const joinDate = user.createdAt ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : 'N/A';
+        const balance = user.accountBalance || 0;
+        const status = user.status || 'active';
+        
         row.innerHTML = `
-            <td>${index}</td>
-            <td>${user.firstName || ''} ${user.lastName || ''}</td>
-            <td>${user.email || ''}</td>
-            <td><span class="status ${user.emailVerified ? 'active' : 'inactive'}">${user.emailVerified ? 'Verified' : 'Pending'}</span></td>
-            <td>${user.createdAt ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}</td>
             <td>
-                <button class="btn-edit btn-sm"><i class="fas fa-edit"></i></button>
-                <button class="btn-delete btn-sm"><i class="fas fa-trash"></i></button>
+                <div class="user-info">
+                    <strong>${user.firstName || 'N/A'} ${user.lastName || ''}</strong>
+                    <br><small>ID: ${userId.substring(0, 8)}...</small>
+                </div>
+            </td>
+            <td>${user.email || 'N/A'}</td>
+            <td>
+                <span class="status-badge status-${status}">${status.toUpperCase()}</span>
+            </td>
+            <td>$${parseFloat(balance).toFixed(2)}</td>
+            <td>${joinDate}</td>
+            <td>
+                <div class="action-buttons">
+                    <button class="btn btn-info btn-view" onclick="toggleUserDetails('${userId}')">
+                        <i class="fas fa-eye"></i> View
+                    </button>
+                    <button class="btn btn-warning btn-edit" onclick="editUserFinance('${userId}')">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button class="btn btn-success btn-profile" onclick="viewUserProfile('${userId}')">
+                        <i class="fas fa-user"></i> Profile
+                    </button>
+                    <button class="btn btn-primary btn-trades" onclick="viewUserTrades('${userId}')">
+                        <i class="fas fa-chart-line"></i> Trades
+                    </button>
+                    <button class="btn btn-secondary btn-transactions" onclick="viewUserTransactions('${userId}')">
+                        <i class="fas fa-history"></i> History
+                    </button>
+                    <button class="btn btn-danger btn-delete" onclick="deleteUser('${userId}')">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
             </td>
         `;
-        row.dataset.userId = userId;
+        
         return row;
+    }
+    
+    createUserDetailsRow(userId, user) {
+        const detailsRow = document.createElement('tr');
+        detailsRow.className = 'user-details-row';
+        detailsRow.id = `details-${userId}`;
+        
+        detailsRow.innerHTML = `
+            <td colspan="6">
+                <div class="user-details-content">
+                    <div class="profile-section">
+                        <h3><i class="fas fa-user"></i> User Profile</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>First Name:</label>
+                                <span>${user.firstName || 'N/A'}</span>
+                            </div>
+                            <div class="form-group">
+                                <label>Last Name:</label>
+                                <span>${user.lastName || 'N/A'}</span>
+                            </div>
+                            <div class="form-group">
+                                <label>Phone:</label>
+                                <span>${user.phone || 'N/A'}</span>
+                            </div>
+                            <div class="form-group">
+                                <label>Country:</label>
+                                <span>${user.country || 'N/A'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-section">
+                        <h3><i class="fas fa-wallet"></i> Financial Information</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Account Balance:</label>
+                                <span>$${parseFloat(user.accountBalance || 0).toFixed(2)}</span>
+                            </div>
+                            <div class="form-group">
+                                <label>Total Deposits:</label>
+                                <span>$${parseFloat(user.totalDeposits || 0).toFixed(2)}</span>
+                            </div>
+                            <div class="form-group">
+                                <label>Total Received:</label>
+                                <span>$${parseFloat(user.totalReceived || 0).toFixed(2)}</span>
+                            </div>
+                            <div class="form-group">
+                                <label>Profit/Loss:</label>
+                                <span class="${(user.totalProfitLoss || 0) >= 0 ? 'profit' : 'loss'}">
+                                    $${parseFloat(user.totalProfitLoss || 0).toFixed(2)}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </td>
+        `;
+        
+        return detailsRow;
+    }
+    
+    updateUserStats(total, active, pending, suspended) {
+        const totalElement = document.getElementById('totalUsersCount');
+        const activeElement = document.getElementById('activeUsersCount');
+        const pendingElement = document.getElementById('pendingUsersCount');
+        const suspendedElement = document.getElementById('suspendedUsersCount');
+        
+        if (totalElement) totalElement.textContent = total;
+        if (activeElement) activeElement.textContent = active;
+        if (pendingElement) pendingElement.textContent = pending;
+        if (suspendedElement) suspendedElement.textContent = suspended;
     }
 
     async saveTradingSettings() {
@@ -608,3 +735,143 @@ if (document.readyState === 'loading') {
 }
 
 export default AdminDashboard;
+
+// Global functions for user management
+window.toggleUserDetails = function(userId) {
+    const detailsRow = document.getElementById(`details-${userId}`);
+    if (detailsRow) {
+        detailsRow.classList.toggle('active');
+    }
+};
+
+window.editUserFinance = function(userId) {
+    // Create and show finance edit modal
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content finance-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-wallet"></i> Edit User Finance</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="financeEditForm">
+                    <div class="form-group">
+                        <label>Account Balance:</label>
+                        <input type="number" id="editBalance" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Total Deposits:</label>
+                        <input type="number" id="editDeposits" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Total Received:</label>
+                        <input type="number" id="editReceived" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Profit/Loss:</label>
+                        <input type="number" id="editProfitLoss" step="0.01" placeholder="0.00">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveUserFinance('${userId}')">Save Changes</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Load current user data
+    loadUserFinanceData(userId);
+};
+
+window.saveUserFinance = async function(userId) {
+    try {
+        const balance = parseFloat(document.getElementById('editBalance').value) || 0;
+        const deposits = parseFloat(document.getElementById('editDeposits').value) || 0;
+        const received = parseFloat(document.getElementById('editReceived').value) || 0;
+        const profitLoss = parseFloat(document.getElementById('editProfitLoss').value) || 0;
+        
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, {
+            accountBalance: balance,
+            totalDeposits: deposits,
+            totalReceived: received,
+            totalProfitLoss: profitLoss,
+            updatedAt: new Date()
+        });
+        
+        closeModal();
+        window.adminDashboard.showNotification('User finance updated successfully', 'success');
+        window.adminDashboard.loadUsers(); // Refresh the table
+        
+    } catch (error) {
+        console.error('Error updating user finance:', error);
+        window.adminDashboard.showNotification('Failed to update user finance: ' + error.message, 'error');
+    }
+};
+
+window.viewUserProfile = function(userId) {
+    toggleUserDetails(userId);
+};
+
+window.viewUserTrades = function(userId) {
+    window.adminDashboard.showNotification('Loading user trades...', 'info');
+    // Implementation for viewing user trades
+};
+
+window.viewUserTransactions = function(userId) {
+    window.adminDashboard.showNotification('Loading user transactions...', 'info');
+    // Implementation for viewing user transaction history
+};
+
+window.deleteUser = async function(userId) {
+    if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+        try {
+            await deleteDoc(doc(db, 'users', userId));
+            window.adminDashboard.showNotification('User deleted successfully', 'success');
+            window.adminDashboard.loadUsers(); // Refresh the table
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            window.adminDashboard.showNotification('Failed to delete user: ' + error.message, 'error');
+        }
+    }
+};
+
+window.loadAllUsers = function() {
+    window.adminDashboard.loadUsers();
+};
+
+window.refreshUserStats = function() {
+    window.adminDashboard.updateDashboardStats();
+};
+
+window.exportUsers = function() {
+    window.adminDashboard.showNotification('Export functionality coming soon', 'info');
+};
+
+window.closeModal = function() {
+    const modal = document.querySelector('.modal-overlay');
+    if (modal) {
+        modal.remove();
+    }
+};
+
+async function loadUserFinanceData(userId) {
+    try {
+        const userRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userRef);
+        
+        if (userDoc.exists()) {
+            const userData = userDoc.data();
+            document.getElementById('editBalance').value = userData.accountBalance || 0;
+            document.getElementById('editDeposits').value = userData.totalDeposits || 0;
+            document.getElementById('editReceived').value = userData.totalReceived || 0;
+            document.getElementById('editProfitLoss').value = userData.totalProfitLoss || 0;
+        }
+    } catch (error) {
+        console.error('Error loading user finance data:', error);
+    }
+}
