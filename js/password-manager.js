@@ -9,14 +9,29 @@ class PasswordManager {
     }
 
     async init() {
-        // Wait for Firebase to be initialized
-        if (typeof firebase === 'undefined' || !firebase.apps || firebase.apps.length === 0) {
-            console.error('Firebase not initialized');
-            this.showToast('Firebase connection failed', 'error');
-            return;
-        }
-
+        // Initialize Firebase if not already done
         try {
+            if (typeof firebase !== 'undefined' && firebase.apps.length === 0) {
+                const firebaseConfig = {
+                    apiKey: "AIzaSyAwnWoLfrEc1EtXWCD0by5L0VtCmYf8Unw",
+                    authDomain: "centraltradehub-30f00.firebaseapp.com",
+                    projectId: "centraltradehub-30f00",
+                    storageBucket: "centraltradehub-30f00.firebasestorage.app",
+                    messagingSenderId: "745751687877",
+                    appId: "1:745751687877:web:4576449aa2e8360931b6ac",
+                    measurementId: "G-YHCS5CH450"
+                };
+                
+                firebase.initializeApp(firebaseConfig);
+                console.log('Firebase initialized successfully in password manager');
+            } else if (typeof firebase !== 'undefined') {
+                console.log('Using existing Firebase instance in password manager');
+            } else {
+                console.error('Firebase not available');
+                this.showToast('Firebase connection failed', 'error');
+                return;
+            }
+
             console.log('Firebase available, loading real user data...');
             await this.loadUsers();
             this.setupEventListeners();
