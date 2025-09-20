@@ -33,7 +33,7 @@
                         <i class="fas fa-tachometer-alt"></i> Dashboard
                     </a></li>
                     <li><a href="#users" class="nav-item" data-section="users">
-                        <i class="fas fa-users"></i> User Management
+                        <i class="fas fa-users-cog"></i> User Management
                     </a></li>
                     <li><a href="#content" class="nav-item" data-section="content">
                         <i class="fas fa-edit"></i> Content Management
@@ -124,28 +124,69 @@
                 </div>
             </section>
 
-            <!-- User Management Section -->
+            <!-- Users Management Section -->
             <section id="users" class="admin-section">
                 <div class="section-header">
-                    <h1><i class="fas fa-users"></i> User Management</h1>
-                    <button class="btn-primary"><i class="fas fa-plus"></i> Add User</button>
+                    <h2><i class="fas fa-users-cog"></i> User Management</h2>
+                    <p>Comprehensive user account management with full CRUD access</p>
                 </div>
-                <div class="table-container">
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>User ID</th>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Status</th>
-                                <th>Join Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="users-table-body">
-                            <!-- User data will be populated here -->
-                        </tbody>
-                    </table>
+                
+                <div class="quick-actions">
+                    <a href="user-management.html" class="btn-primary">
+                        <i class="fas fa-external-link-alt"></i> Open Full User Management
+                    </a>
+                    <button onclick="refreshUserStats()" class="btn-secondary">
+                        <i class="fas fa-refresh"></i> Refresh Stats
+                    </button>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="totalUsersCount">0</h3>
+                            <p>Total Users</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="activeUsersCount">0</h3>
+                            <p>Active Users</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="pendingUsersCount">0</h3>
+                            <p>Pending Verification</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-times"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="suspendedUsersCount">0</h3>
+                            <p>Suspended Users</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="recent-users">
+                    <h3>Recent User Registrations</h3>
+                    <div class="users-list" id="recentUsersList">
+                        <!-- Recent users will be loaded here -->
+                    </div>
                 </div>
             </section>
 
@@ -233,11 +274,15 @@
             try {
                 console.log('Starting admin page initialization...');
                 
+                // Check if coming from another admin page
+                const urlParams = new URLSearchParams(window.location.search);
+                const fromPage = urlParams.get('from');
+                
                 // Enhanced wait for auth manager with better error handling
                 let attempts = 0;
-                const maxAttempts = 100;
+                const maxAttempts = fromPage ? 50 : 100; // Shorter wait if coming from admin page
                 
-                while (!window.authManager && attempts < maxAttempts) {
+                while ((!window.authManager || !window.authManager.isInitialized) && attempts < maxAttempts) {
                     console.log(`Waiting for auth manager... attempt ${attempts + 1}/${maxAttempts}`);
                     await new Promise(resolve => setTimeout(resolve, 100));
                     attempts++;
@@ -248,12 +293,26 @@
                     throw new Error('Authentication system not available. Please refresh the page.');
                 }
                 
-                console.log('Auth manager found, initializing...');
+                console.log('Auth manager found, ensuring initialization...');
                 
-                // Initialize the AuthManager properly
-                await window.authManager.initialize();
+                // Initialize the AuthManager if not already initialized
+                if (!window.authManager.isInitialized) {
+                    await window.authManager.initialize();
+                }
                 
                 console.log('Auth manager initialized, checking authentication state...');
+                
+                // Wait for authentication state to be determined
+                await new Promise(resolve => {
+                    const checkAuth = () => {
+                        if (window.authManager.getCurrentUser() !== undefined) {
+                            resolve();
+                        } else {
+                            setTimeout(checkAuth, 100);
+                        }
+                    };
+                    checkAuth();
+                });
                 
                 // Check if user is authenticated
                 const user = window.authManager.getCurrentUser();
