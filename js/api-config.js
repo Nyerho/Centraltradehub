@@ -73,8 +73,8 @@ class APIConfig {
             'FINNHUB_API_KEY': 'd2t106pr01qkuv3iqti0d2t106pr01qkuv3iqtig',
             'POLYGON_API_KEY': '3YvkpVuZ9UWlVYGcpEYCnHqNWVt2UQtG',
             'SENDGRID_API_KEY': 'LBQUTKLA22UZF4LUBU3491RD',
-            'METAAPI_TOKEN': 'your-metaapi-token-here',
-            'METAAPI_ACCOUNT_ID': 'your-metaapi-account-id-here'
+            'METAAPI_TOKEN': null, // Add your MetaAPI token here or set to null to disable
+            'METAAPI_ACCOUNT_ID': null // Add your MetaAPI account ID here or set to null to disable
         };
         
         if (keyMappings[keyName]) {

@@ -61,7 +61,7 @@ class FirebaseAuthService {
             this.notifyAuthStateListeners(user);
         });
     } catch (error) {
-        console.error('Auth state listener error:', error);
+        console.error('Auth state listener initialization error:', error);
     }
 }
 
