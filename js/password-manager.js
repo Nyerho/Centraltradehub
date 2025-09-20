@@ -166,20 +166,24 @@ class PasswordManager {
                 </td>
                 <td>
                     <div class="action-buttons">
-                        <button onclick="passwordManager.togglePassword('${user.id}')" 
-                                class="btn btn-sm btn-info">
+                        <button onclick="window.passwordManager.togglePassword('${user.id}')" 
+                                class="btn btn-sm btn-info" 
+                                title="Toggle Password Visibility">
                             <i class="fas fa-eye" id="eye-${user.id}"></i>
                         </button>
-                        <button onclick="passwordManager.copyPassword('${user.id}')" 
-                                class="btn btn-sm btn-success">
+                        <button onclick="window.passwordManager.copyPassword('${user.id}')" 
+                                class="btn btn-sm btn-success" 
+                                title="Copy Password">
                             <i class="fas fa-copy"></i>
                         </button>
-                        <button onclick="passwordManager.editPassword('${user.id}')" 
-                                class="btn btn-sm btn-warning">
+                        <button onclick="window.passwordManager.editPassword('${user.id}')" 
+                                class="btn btn-sm btn-warning" 
+                                title="Edit Password">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button onclick="passwordManager.generatePassword('${user.id}')" 
-                                class="btn btn-sm btn-secondary">
+                        <button onclick="window.passwordManager.generatePassword('${user.id}')" 
+                                class="btn btn-sm btn-secondary" 
+                                title="Generate New Password">
                             <i class="fas fa-random"></i>
                         </button>
                     </div>
@@ -191,15 +195,23 @@ class PasswordManager {
     }
 
     togglePassword(userId) {
+        console.log('Toggling password for user:', userId);
         const passwordInput = document.getElementById(`password-${userId}`);
         const eyeIcon = document.getElementById(`eye-${userId}`);
+        
+        if (!passwordInput || !eyeIcon) {
+            console.error('Password input or eye icon not found for user:', userId);
+            return;
+        }
         
         if (passwordInput.type === 'password') {
             passwordInput.type = 'text';
             eyeIcon.className = 'fas fa-eye-slash';
+            console.log('Password shown for user:', userId);
         } else {
             passwordInput.type = 'password';
             eyeIcon.className = 'fas fa-eye';
+            console.log('Password hidden for user:', userId);
         }
     }
 
@@ -364,8 +376,8 @@ class PasswordManager {
 
 // Global functions
 function refreshPasswords() {
-    if (passwordManager) {
-        passwordManager.loadUsers();
+    if (window.passwordManager) {
+        window.passwordManager.loadUsers();
     }
 }
 
@@ -375,6 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Wait a bit for Firebase to initialize
     setTimeout(() => {
         passwordManager = new PasswordManager();
+        window.passwordManager = passwordManager; // Make it globally accessible
         passwordManager.init();
     }, 1000);
 });
