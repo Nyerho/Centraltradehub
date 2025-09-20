@@ -112,8 +112,26 @@ async function loadUsers() {
     try {
         showLoading(true);
         
+        // Wait for authManager to be fully initialized
+        if (!window.authManager || !window.authManager.isInitialized) {
+            let attempts = 0;
+            await new Promise((resolve, reject) => {
+                const checkAuth = () => {
+                    attempts++;
+                    if (window.authManager && window.authManager.isInitialized) {
+                        resolve();
+                    } else if (attempts > 20) {
+                        reject(new Error('AuthManager initialization timeout'));
+                    } else {
+                        setTimeout(checkAuth, 250);
+                    }
+                };
+                checkAuth();
+            });
+        }
+        
         // Check if user is authenticated using authManager
-        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
+        const currentUser = window.authManager.getCurrentUser();
         if (!currentUser) {
             throw new Error('User not authenticated. Please sign in as admin.');
         }
@@ -123,21 +141,47 @@ async function loadUsers() {
         if (!isAdmin) {
             throw new Error('Access denied. Admin privileges required.');
         }
+
+        // Force token refresh to ensure latest permissions
+        try {
+            await currentUser.getIdToken(true);
+            console.log('Token refreshed for admin user:', currentUser.email);
+        } catch (tokenError) {
+            console.warn('Token refresh failed:', tokenError);
+        }
         
         if (window.db) {
             console.log('Loading users from Firestore...');
-            const snapshot = await window.db.collection('users').get();
             
-            allUsers = [];
-            snapshot.forEach((doc) => {
-                allUsers.push({
-                    id: doc.id,
-                    ...doc.data()
+            try {
+                const snapshot = await window.db.collection('users').get();
+                
+                allUsers = [];
+                snapshot.forEach((doc) => {
+                    allUsers.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
                 });
-            });
-            
-            if (allUsers.length === 0) {
-                throw new Error('No users found in Firestore');
+                
+                if (allUsers.length === 0) {
+                    console.warn('No users found in Firestore, using sample data');
+                    loadSampleData();
+                    return;
+                }
+                
+                console.log(`Successfully loaded ${allUsers.length} users from Firestore`);
+            } catch (firestoreError) {
+                console.error('Firestore access error:', firestoreError);
+                
+                if (firestoreError.code === 'permission-denied') {
+                    showToast('Firestore access denied. Please update security rules to allow admin access.', 'error');
+                    console.error('Admin user:', currentUser.email, 'lacks Firestore permissions');
+                } else {
+                    showToast('Database connection error. Using sample data.', 'warning');
+                }
+                
+                throw firestoreError;
             }
         } else {
             throw new Error('Firebase not available');
@@ -149,6 +193,7 @@ async function loadUsers() {
         
     } catch (error) {
         console.warn('Using sample data due to error:', error);
+        showToast('Unable to load real user data. Displaying sample data instead.', 'warning');
         loadSampleData();
     } finally {
         showLoading(false);

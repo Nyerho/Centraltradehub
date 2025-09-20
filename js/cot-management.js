@@ -4,23 +4,79 @@ import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/f
 
 // Wait for page to load before initializing
 window.addEventListener('load', () => {
-    // Wait for auth manager to be ready (since we're coming from admin panel)
-    setTimeout(async () => {
-        // Verify we still have admin access
-        if (window.authManager && window.authManager.getCurrentUser()) {
+    // Give more time for auth manager to be ready and check multiple times
+    initializeCotManagement();
+});
+
+async function initializeCotManagement() {
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    const checkAuth = async () => {
+        attempts++;
+        
+        try {
+            // Check if authManager exists and is initialized
+            if (!window.authManager) {
+                if (attempts < maxAttempts) {
+                    console.log(`Waiting for authManager... attempt ${attempts}`);
+                    setTimeout(checkAuth, 500);
+                    return;
+                } else {
+                    console.error('AuthManager not available after maximum attempts');
+                    window.location.href = 'admin.html';
+                    return;
+                }
+            }
+            
+            // Wait for authManager to be fully initialized
+            if (!window.authManager.isInitialized) {
+                if (attempts < maxAttempts) {
+                    console.log(`Waiting for authManager initialization... attempt ${attempts}`);
+                    setTimeout(checkAuth, 500);
+                    return;
+                } else {
+                    console.error('AuthManager not initialized after maximum attempts');
+                    window.location.href = 'admin.html';
+                    return;
+                }
+            }
+            
+            const currentUser = window.authManager.getCurrentUser();
+            if (!currentUser) {
+                console.error('No authenticated user found');
+                window.location.href = 'auth.html';
+                return;
+            }
+            
+            // Check admin status
             const isAdmin = await window.authManager.checkAdminStatus();
-            if (isAdmin && typeof loadCurrentCotCode === 'function') {
-                await loadCurrentCotCode();
-            } else {
+            if (!isAdmin) {
                 console.error('Admin access required for COT management');
                 window.location.href = 'admin.html';
+                return;
             }
-        } else {
-            console.error('Authentication required for COT management');
-            window.location.href = 'auth.html';
+            
+            console.log('COT Management: Authentication verified for', currentUser.email);
+            
+            // Load COT code if everything is authenticated
+            if (typeof loadCurrentCotCode === 'function') {
+                await loadCurrentCotCode();
+            }
+            
+        } catch (error) {
+            console.error('Error during COT authentication check:', error);
+            if (attempts < maxAttempts) {
+                setTimeout(checkAuth, 1000);
+            } else {
+                window.location.href = 'admin.html';
+            }
         }
-    }, 1000); // Reduced timeout since auth should already be ready
-});
+    };
+    
+    // Start the authentication check
+    checkAuth();
+}
 
 async function loadCurrentCotCode() {
     try {
@@ -42,13 +98,19 @@ async function loadCurrentCotCode() {
             if (currentCotInput) currentCotInput.value = data.cotCode || '';
             if (lastUpdatedSpan) lastUpdatedSpan.textContent = data.lastUpdated ? new Date(data.lastUpdated).toLocaleString() : 'Never';
             if (updatedBySpan) updatedBySpan.textContent = data.updatedBy || 'N/A';
+            
+            console.log('COT code loaded successfully');
         } else {
             // Initialize with default COT code
             await initializeCotSettings();
         }
     } catch (error) {
         console.error('Error loading COT code:', error);
-        showToast('Error loading COT settings: ' + error.message, 'error');
+        if (error.code === 'permission-denied') {
+            showToast('Access denied. Please ensure Firestore security rules allow admin access.', 'error');
+        } else {
+            showToast('Error loading COT settings. Please try again.', 'error');
+        }
     }
 }
 
