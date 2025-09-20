@@ -53,6 +53,15 @@ try {
 async function initializeUserManagement() {
     try {
         console.log('Initializing user management...');
+        
+        // Wait for Firebase auth state to be ready
+        await new Promise((resolve) => {
+            const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
+                unsubscribe(); // Stop listening after first state change
+                resolve(user);
+            });
+        });
+        
         await loadUsers();
         setupEventListeners();
         showToast('User management initialized successfully', 'success');
