@@ -108,13 +108,8 @@ function isValidPhone(phone) {
     return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''));
 }
 
-// Enhanced Modal functionality (keep only for contact modal)
+// Enhanced Modal functionality (updated to allow all modals)
 function openModal(modalId) {
-    // Only allow contact modal
-    if (modalId !== 'contactModal') {
-        return;
-    }
-    
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'flex';
@@ -571,3 +566,10 @@ if (typeof API_CONFIG !== 'undefined') {
 API_CONFIG.setApiKey('SENDGRID_API_KEY', 'SK27e6e57ffe51c05179915eb842710639');
 API_CONFIG.setApiKey('SENDGRID_SECRET_TOKEN', 'VWmQzsyFbwmZM154sPnlRWy59MgdPz3P');
 console.log('SendGrid API keys initialized');
+
+// Disable console logs in production
+if (window.location.protocol !== 'file:') {
+    console.log = function() {};
+    console.warn = function() {};
+    console.info = function() {};
+}
