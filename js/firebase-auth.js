@@ -52,14 +52,18 @@ class FirebaseAuthService {
   }
   // Initialize authentication state listener
   initializeAuthListener() {
-    onAuthStateChanged(auth, async (user) => {
-      this.currentUser = user;
-      if (user) {
-        await this.syncUserProfile(user);
-      }
-      this.notifyAuthStateListeners(user);
-    });
-  }
+    try {
+        onAuthStateChanged(auth, async (user) => {
+            this.currentUser = user;
+            if (user) {
+                await this.syncUserProfile(user);
+            }
+            this.notifyAuthStateListeners(user);
+        });
+    } catch (error) {
+        console.error('Auth state listener error:', error);
+    }
+}
 
   // Register new user
   async register(email, password, userData = {}) {

@@ -56,8 +56,8 @@ class APIConfig {
             metaApi: {
                 baseUrl: 'https://mt-client-api-v1.london.agiliumtrade.ai',
                 wsUrl: 'wss://mt-client-api-v1.london.agiliumtrade.ai',
-                apiKey: this.getApiKey('METAAPI_TOKEN'),
-                accountId: this.getApiKey('METAAPI_ACCOUNT_ID')
+                apiKey: this.getApiKey('METAAPI_TOKEN') || null,
+                accountId: this.getApiKey('METAAPI_ACCOUNT_ID') || null
             }
         };
         
@@ -72,7 +72,9 @@ class APIConfig {
             'ALPHA_VANTAGE_API_KEY': 'ADRGNOMDU7WHDIST',
             'FINNHUB_API_KEY': 'd2t106pr01qkuv3iqti0d2t106pr01qkuv3iqtig',
             'POLYGON_API_KEY': '3YvkpVuZ9UWlVYGcpEYCnHqNWVt2UQtG',
-            'SENDGRID_API_KEY': 'LBQUTKLA22UZF4LUBU3491RD'
+            'SENDGRID_API_KEY': 'LBQUTKLA22UZF4LUBU3491RD',
+            'METAAPI_TOKEN': 'your-metaapi-token-here',
+            'METAAPI_ACCOUNT_ID': 'your-metaapi-account-id-here'
         };
         
         if (keyMappings[keyName]) {
