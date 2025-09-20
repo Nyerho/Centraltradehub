@@ -58,7 +58,7 @@ async function loadUsers(searchTerm = '', statusFilter = 'all', roleFilter = 'al
             throw new Error('Database not available');
         }
 
-        // Build query
+        // Build query - Remove orderBy to avoid issues with missing fields
         let usersQuery = collection(database, 'users');
         
         // Apply filters
@@ -69,9 +69,6 @@ async function loadUsers(searchTerm = '', statusFilter = 'all', roleFilter = 'al
         if (roleFilter !== 'all') {
             usersQuery = query(usersQuery, where('role', '==', roleFilter));
         }
-        
-        // Order by registration date
-        usersQuery = query(usersQuery, orderBy('registrationDate', 'desc'));
         
         const querySnapshot = await getDocs(usersQuery);
         currentUsers = [];
@@ -84,6 +81,14 @@ async function loadUsers(searchTerm = '', statusFilter = 'all', roleFilter = 'al
             });
         });
         
+        // Sort by registration date if available, otherwise by email
+        currentUsers.sort((a, b) => {
+            if (a.registrationDate && b.registrationDate) {
+                return new Date(b.registrationDate) - new Date(a.registrationDate);
+            }
+            return (a.email || '').localeCompare(b.email || '');
+        });
+
         // Apply search filter if provided
         if (searchTerm) {
             currentUsers = currentUsers.filter(user => 
@@ -92,8 +97,9 @@ async function loadUsers(searchTerm = '', statusFilter = 'all', roleFilter = 'al
                 user.id.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
-        
+
         totalUsers = currentUsers.length;
+        console.log(`Loaded ${totalUsers} users`);
         displayUsers();
         updatePagination();
         
@@ -159,36 +165,65 @@ function refreshUserList() {
     loadUsers();
 }
 
-// View user details
+// Enhanced viewUserDetails function with complete profile information
 async function viewUserDetails(userId) {
     try {
         selectedUserId = userId;
-        const user = currentUsers.find(u => u.id === userId);
+        const database = window.db || db;
+        const userRef = doc(database, 'users', userId);
+        const userDoc = await getDoc(userRef);
         
-        if (!user) {
+        if (!userDoc.exists()) {
             throw new Error('User not found');
         }
         
-        // Populate modal with user data
-        document.getElementById('modalUserId').value = user.id;
-        document.getElementById('modalUserEmail').value = user.email || '';
-        document.getElementById('modalUserName').value = user.fullName || '';
-        document.getElementById('modalUserPhone').value = user.phone || '';
-        document.getElementById('modalUserCountry').value = user.country || '';
-        document.getElementById('modalRegDate').value = user.registrationDate ? new Date(user.registrationDate).toLocaleString() : 'N/A';
-        document.getElementById('modalBalance').value = user.balance || 0;
-        document.getElementById('modalKycStatus').value = user.kycStatus || 'pending';
-        document.getElementById('modalPasswordHash').value = user.passwordHash || 'N/A';
-        document.getElementById('modal2FA').value = user.twoFactorEnabled ? 'enabled' : 'disabled';
-        document.getElementById('modalLoginAttempts').value = user.loginAttempts || 0;
-        document.getElementById('modalUserStatus').value = user.status || 'pending';
-        document.getElementById('modalUserRole').value = user.role || 'user';
+        const userData = userDoc.data();
+        
+        // Populate all profile fields
+        document.getElementById('modalUserId').value = userId;
+        document.getElementById('modalUserEmail').value = userData.email || '';
+        document.getElementById('modalUserName').value = userData.fullName || userData.displayName || '';
+        document.getElementById('modalUserPhone').value = userData.phone || '';
+        document.getElementById('modalUserCountry').value = userData.country || '';
+        document.getElementById('modalRegDate').value = userData.registrationDate ? 
+            new Date(userData.registrationDate).toLocaleDateString() : 'N/A';
+        document.getElementById('modalBalance').value = userData.balance || 0;
+        document.getElementById('modalKycStatus').value = userData.kycStatus || 'pending';
+        
+        // Enhanced profile fields
+        document.getElementById('modalUserAddress').value = userData.address || '';
+        document.getElementById('modalUserCity').value = userData.city || '';
+        document.getElementById('modalUserZip').value = userData.zipCode || '';
+        document.getElementById('modalUserBirthdate').value = userData.birthdate || '';
+        document.getElementById('modalUserGender').value = userData.gender || '';
+        document.getElementById('modalUserOccupation').value = userData.occupation || '';
+        document.getElementById('modalUserIncome').value = userData.annualIncome || '';
+        document.getElementById('modalUserExperience').value = userData.tradingExperience || '';
+        document.getElementById('modalUserRiskTolerance').value = userData.riskTolerance || '';
+        document.getElementById('modalUserNotes').value = userData.adminNotes || '';
+        
+        // Security fields
+        document.getElementById('modalPasswordHash').value = userData.passwordHash || 'Not available';
+        document.getElementById('modal2FA').value = userData.twoFactorEnabled ? 'enabled' : 'disabled';
+        document.getElementById('modalLoginAttempts').value = userData.loginAttempts || 0;
+        document.getElementById('modalLastLogin').value = userData.lastLogin ? 
+            new Date(userData.lastLogin).toLocaleString() : 'Never';
+        document.getElementById('modalAccountCreated').value = userData.createdAt ? 
+            new Date(userData.createdAt).toLocaleString() : 'N/A';
+        document.getElementById('modalLastModified').value = userData.lastModified ? 
+            new Date(userData.lastModified).toLocaleString() : 'N/A';
+        document.getElementById('modalModifiedBy').value = userData.modifiedBy || 'N/A';
+        
+        // Status and role
+        document.getElementById('modalUserStatus').value = userData.status || 'active';
+        document.getElementById('modalUserRole').value = userData.role || 'user';
         
         // Load trading history
         await loadUserTradingHistory(userId);
         
         // Show modal
         document.getElementById('userDetailsModal').style.display = 'block';
+        showTab('profile');
         
     } catch (error) {
         console.error('Error viewing user details:', error);
@@ -267,23 +302,39 @@ async function saveUserChanges() {
         const userRef = doc(database, 'users', selectedUserId);
         
         const updatedData = {
+            // Basic profile information
             email: document.getElementById('modalUserEmail').value,
             fullName: document.getElementById('modalUserName').value,
             phone: document.getElementById('modalUserPhone').value,
             country: document.getElementById('modalUserCountry').value,
             balance: parseFloat(document.getElementById('modalBalance').value) || 0,
             kycStatus: document.getElementById('modalKycStatus').value,
+            
+            // Enhanced profile fields
+            address: document.getElementById('modalUserAddress').value,
+            city: document.getElementById('modalUserCity').value,
+            zipCode: document.getElementById('modalUserZip').value,
+            birthdate: document.getElementById('modalUserBirthdate').value,
+            gender: document.getElementById('modalUserGender').value,
+            occupation: document.getElementById('modalUserOccupation').value,
+            annualIncome: document.getElementById('modalUserIncome').value,
+            tradingExperience: document.getElementById('modalUserExperience').value,
+            riskTolerance: document.getElementById('modalUserRiskTolerance').value,
+            adminNotes: document.getElementById('modalUserNotes').value,
+            
+            // Security settings
             twoFactorEnabled: document.getElementById('modal2FA').value === 'enabled',
             status: document.getElementById('modalUserStatus').value,
             role: document.getElementById('modalUserRole').value,
+            
+            // Audit fields
             lastModified: new Date().toISOString(),
             modifiedBy: window.currentUser?.email || 'admin'
         };
         
         await updateDoc(userRef, updatedData);
         
-        showToast('User updated successfully!', 'success');
-        closeUserModal();
+        showToast('User profile updated successfully!', 'success');
         refreshUserList();
         
     } catch (error) {
@@ -297,37 +348,170 @@ async function resetUserPassword() {
     try {
         const newPassword = document.getElementById('modalNewPassword').value;
         
-        if (!newPassword || newPassword.length < 6) {
-            throw new Error('Password must be at least 6 characters long');
+        if (!newPassword || newPassword.length < 8) {
+            throw new Error('Password must be at least 8 characters long');
+        }
+        
+        // Validate password strength
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
+        if (!passwordRegex.test(newPassword)) {
+            throw new Error('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character');
         }
         
         if (!selectedUserId) {
             throw new Error('No user selected');
         }
         
-        // Update password hash in database
         const database = window.db || db;
         const userRef = doc(database, 'users', selectedUserId);
         
-        // In a real implementation, you would hash the password properly
-        const passwordHash = btoa(newPassword); // Simple base64 encoding for demo
+        // Generate a more secure password hash (in production, use proper bcrypt or similar)
+        const passwordHash = await hashPassword(newPassword);
         
         await updateDoc(userRef, {
             passwordHash: passwordHash,
             passwordResetRequired: true,
             lastPasswordReset: new Date().toISOString(),
-            resetBy: window.currentUser?.email || 'admin'
+            resetBy: window.currentUser?.email || 'admin',
+            passwordStrength: calculatePasswordStrength(newPassword)
         });
         
+        // Clear the password field
         document.getElementById('modalNewPassword').value = '';
         document.getElementById('modalPasswordHash').value = passwordHash;
         
-        showToast('Password reset successfully!', 'success');
+        // Log the password reset action
+        await logAdminAction('password_reset', selectedUserId, {
+            resetBy: window.currentUser?.email || 'admin',
+            timestamp: new Date().toISOString()
+        });
+        
+        showToast('Password reset successfully! User will be required to change password on next login.', 'success');
         
     } catch (error) {
         console.error('Error resetting password:', error);
         showToast('Error resetting password: ' + error.message, 'error');
     }
+}
+
+// Helper function to hash password (simplified for demo)
+async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password + 'salt_' + Date.now());
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Helper function to calculate password strength
+function calculatePasswordStrength(password) {
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (password.length >= 12) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/\d/.test(password)) strength++;
+    if (/[@$!%*?&]/.test(password)) strength++;
+    
+    if (strength <= 2) return 'weak';
+    if (strength <= 4) return 'medium';
+    return 'strong';
+}
+
+// Function to log admin actions for audit trail
+async function logAdminAction(action, targetUserId, details = {}) {
+    try {
+        const database = window.db || db;
+        const logRef = doc(collection(database, 'admin_logs'));
+        
+        await setDoc(logRef, {
+            action: action,
+            targetUserId: targetUserId,
+            adminId: window.currentUser?.uid || 'unknown',
+            adminEmail: window.currentUser?.email || 'unknown',
+            timestamp: new Date().toISOString(),
+            details: details,
+            ipAddress: await getUserIP() // Optional: get user IP
+        });
+    } catch (error) {
+        console.error('Error logging admin action:', error);
+    }
+}
+
+// Helper function to get user IP (optional)
+async function getUserIP() {
+    try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        return data.ip;
+    } catch (error) {
+        return 'unknown';
+    }
+}
+
+// Function to view user activity logs
+async function viewUserLogs() {
+    try {
+        if (!selectedUserId) {
+            throw new Error('No user selected');
+        }
+        
+        const database = window.db || db;
+        const logsQuery = query(
+            collection(database, 'admin_logs'),
+            where('targetUserId', '==', selectedUserId),
+            orderBy('timestamp', 'desc'),
+            limit(50)
+        );
+        
+        const querySnapshot = await getDocs(logsQuery);
+        const logs = [];
+        
+        querySnapshot.forEach((doc) => {
+            logs.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+        
+        // Display logs in a new modal or tab
+        displayUserLogs(logs);
+        
+    } catch (error) {
+        console.error('Error loading user logs:', error);
+        showToast('Error loading user activity logs: ' + error.message, 'error');
+    }
+}
+
+// Function to display user logs
+function displayUserLogs(logs) {
+    let logHtml = '<div class="user-logs-container">';
+    logHtml += '<h3>User Activity Logs</h3>';
+    
+    if (logs.length === 0) {
+        logHtml += '<p>No activity logs found for this user.</p>';
+    } else {
+        logHtml += '<table class="logs-table">';
+        logHtml += '<thead><tr><th>Date</th><th>Action</th><th>Admin</th><th>Details</th></tr></thead>';
+        logHtml += '<tbody>';
+        
+        logs.forEach(log => {
+            logHtml += `<tr>
+                <td>${new Date(log.timestamp).toLocaleString()}</td>
+                <td>${log.action}</td>
+                <td>${log.adminEmail}</td>
+                <td>${JSON.stringify(log.details || {})}</td>
+            </tr>`;
+        });
+        
+        logHtml += '</tbody></table>';
+    }
+    
+    logHtml += '</div>';
+    
+    // Show in a new modal or replace current tab content
+    const actionsTab = document.getElementById('actionsTab');
+    actionsTab.innerHTML = logHtml + actionsTab.innerHTML;
 }
 
 // Reset login attempts
@@ -601,13 +785,13 @@ function showTab(tabName) {
         tab.classList.remove('active');
     });
     
-    // Remove active class from all buttons
+    // Remove active class from all tab buttons
     document.querySelectorAll('.tab-button').forEach(btn => {
         btn.classList.remove('active');
     });
     
     // Show selected tab
-    document.getElementById(tabName + 'Tab').classList.add('active');
+    document.getElementById(`${tabName}Tab`).classList.add('active');
     
     // Add active class to clicked button
     event.target.classList.add('active');
@@ -665,29 +849,632 @@ function debounce(func, wait) {
     };
 }
 
-// Export functions to global scope
-window.initializeUserManagement = initializeUserManagement;
-window.searchUsers = searchUsers;
-window.filterUsers = filterUsers;
-window.refreshUserList = refreshUserList;
-window.viewUserDetails = viewUserDetails;
-window.editUser = editUser;
-window.saveUserChanges = saveUserChanges;
-window.resetUserPassword = resetUserPassword;
-window.resetLoginAttempts = resetLoginAttempts;
-window.updateUserStatus = updateUserStatus;
-window.updateUserRole = updateUserRole;
-window.suspendUser = suspendUser;
-window.activateUser = activateUser;
-window.deleteUser = deleteUser;
-window.toggleUserStatus = toggleUserStatus;
-window.confirmDeleteUser = confirmDeleteUser;
-window.addTradeRecord = addTradeRecord;
-window.saveTradeRecord = saveTradeRecord;
-window.exportTradingHistory = exportTradingHistory;
-window.sendUserEmail = sendUserEmail;
-window.viewUserLogs = viewUserLogs;
-window.showTab = showTab;
-window.closeUserModal = closeUserModal;
-window.closeAddTradeModal = closeAddTradeModal;
+// Add the missing showToast function
+function showToast(message, type = 'info') {
+    // Create toast element if it doesn't exist
+    let toast = document.getElementById('toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        toast.className = 'toast';
+        document.body.appendChild(toast);
+    }
+    
+    toast.textContent = message;
+    toast.className = `toast show ${type}`;
+    
+    setTimeout(() => {
+        toast.className = 'toast';
+    }, 3000);
+}
+window.showToast = showToast;
 window.changePage = changePage;
+
+// Global variables for transaction management
+let currentEditingTransaction = null;
+let currentTransactionType = null;
+
+// Enhanced viewUserDetails function with financial data
+async function viewUserDetails(userId) {
+    try {
+        selectedUserId = userId;
+        const database = window.db || db;
+        const userRef = doc(database, 'users', userId);
+        const userDoc = await getDoc(userRef);
+        
+        if (!userDoc.exists()) {
+            throw new Error('User not found');
+        }
+        
+        const userData = userDoc.data();
+        
+        // Populate all profile fields
+        document.getElementById('modalUserId').value = userId;
+        document.getElementById('modalUserEmail').value = userData.email || '';
+        document.getElementById('modalUserName').value = userData.fullName || userData.displayName || '';
+        document.getElementById('modalUserPhone').value = userData.phone || '';
+        document.getElementById('modalUserCountry').value = userData.country || '';
+        document.getElementById('modalUserAddress').value = userData.address || '';
+        document.getElementById('modalUserCity').value = userData.city || '';
+        document.getElementById('modalUserZip').value = userData.zipCode || '';
+        document.getElementById('modalUserBirthdate').value = userData.birthdate || '';
+        document.getElementById('modalUserGender').value = userData.gender || '';
+        document.getElementById('modalUserOccupation').value = userData.occupation || '';
+        document.getElementById('modalRegDate').value = userData.registrationDate ? 
+            new Date(userData.registrationDate).toLocaleDateString() : 'N/A';
+        document.getElementById('modalBalance').value = userData.balance || 0;
+        document.getElementById('modalKycStatus').value = userData.kycStatus || 'pending';
+        document.getElementById('modalUserNotes').value = userData.adminNotes || '';
+        
+        // Security fields
+        document.getElementById('modalPasswordHash').value = userData.passwordHash || 'Not available';
+        document.getElementById('modal2FA').value = userData.twoFactorEnabled ? 'enabled' : 'disabled';
+        document.getElementById('modalLoginAttempts').value = userData.loginAttempts || 0;
+        
+        // Status and role
+        document.getElementById('modalUserStatus').value = userData.status || 'active';
+        document.getElementById('modalUserRole').value = userData.role || 'user';
+        
+        // Load financial data
+        await loadUserFinancialData(userId);
+        
+        // Load trading history
+        await loadUserTradingHistory(userId);
+        
+        // Show modal
+        document.getElementById('userDetailsModal').style.display = 'block';
+        showTab('profile');
+        
+    } catch (error) {
+        console.error('Error viewing user details:', error);
+        showToast('Error loading user details: ' + error.message, 'error');
+    }
+}
+
+// Load user financial data (deposits, withdrawals, adjustments)
+async function loadUserFinancialData(userId) {
+    try {
+        const database = window.db || db;
+        
+        // Load deposits
+        const depositsQuery = query(
+            collection(database, 'deposits'),
+            where('userId', '==', userId),
+            orderBy('timestamp', 'desc')
+        );
+        const depositsSnapshot = await getDocs(depositsQuery);
+        const deposits = [];
+        depositsSnapshot.forEach((doc) => {
+            deposits.push({ id: doc.id, ...doc.data() });
+        });
+        displayTransactions('deposits', deposits);
+        
+        // Load withdrawals
+        const withdrawalsQuery = query(
+            collection(database, 'withdrawals'),
+            where('userId', '==', userId),
+            orderBy('timestamp', 'desc')
+        );
+        const withdrawalsSnapshot = await getDocs(withdrawalsQuery);
+        const withdrawals = [];
+        withdrawalsSnapshot.forEach((doc) => {
+            withdrawals.push({ id: doc.id, ...doc.data() });
+        });
+        displayTransactions('withdrawals', withdrawals);
+        
+        // Load balance adjustments
+        const adjustmentsQuery = query(
+            collection(database, 'balance_adjustments'),
+            where('userId', '==', userId),
+            orderBy('timestamp', 'desc')
+        );
+        const adjustmentsSnapshot = await getDocs(adjustmentsQuery);
+        const adjustments = [];
+        adjustmentsSnapshot.forEach((doc) => {
+            adjustments.push({ id: doc.id, ...doc.data() });
+        });
+        displayTransactions('adjustments', adjustments);
+        
+    } catch (error) {
+        console.error('Error loading financial data:', error);
+        showToast('Error loading financial data: ' + error.message, 'error');
+    }
+}
+
+// Display transactions in the appropriate table
+function displayTransactions(type, transactions) {
+    const tbody = document.getElementById(`${type}TableBody`);
+    tbody.innerHTML = '';
+    
+    transactions.forEach(transaction => {
+        const row = document.createElement('tr');
+        
+        if (type === 'adjustments') {
+            row.innerHTML = `
+                <td>${transaction.timestamp ? new Date(transaction.timestamp).toLocaleString() : 'N/A'}</td>
+                <td class="${transaction.type === 'add' ? 'text-success' : 'text-danger'}">
+                    ${transaction.type === 'add' ? '+' : '-'}$${Math.abs(transaction.amount || 0).toFixed(2)}
+                </td>
+                <td><span class="badge badge-${transaction.type === 'add' ? 'success' : 'warning'}">${transaction.type || 'N/A'}</span></td>
+                <td>${transaction.reason || 'N/A'}</td>
+                <td>${transaction.adminEmail || 'N/A'}</td>
+                <td>
+                    <button onclick="editTransaction('${transaction.id}', 'adjustments')" class="btn-sm btn-primary"><i class="fas fa-edit"></i></button>
+                    <button onclick="deleteTransaction('${transaction.id}', 'adjustments')" class="btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                </td>
+            `;
+        } else {
+            row.innerHTML = `
+                <td>${transaction.timestamp ? new Date(transaction.timestamp).toLocaleString() : 'N/A'}</td>
+                <td>$${(transaction.amount || 0).toFixed(2)}</td>
+                <td>${transaction.method || 'N/A'}</td>
+                <td><span class="status-badge status-${transaction.status || 'pending'}">${(transaction.status || 'pending').toUpperCase()}</span></td>
+                <td>${transaction.reference || 'N/A'}</td>
+                <td>${transaction.notes || 'N/A'}</td>
+                <td>
+                    <button onclick="editTransaction('${transaction.id}', '${type}')" class="btn-sm btn-primary"><i class="fas fa-edit"></i></button>
+                    <button onclick="deleteTransaction('${transaction.id}', '${type}')" class="btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                </td>
+            `;
+        }
+        
+        tbody.appendChild(row);
+    });
+}
+
+// Update user balance
+async function updateUserBalance() {
+    try {
+        if (!selectedUserId) {
+            throw new Error('No user selected');
+        }
+        
+        const newBalance = parseFloat(document.getElementById('modalBalance').value) || 0;
+        
+        const database = window.db || db;
+        const userRef = doc(database, 'users', selectedUserId);
+        
+        await updateDoc(userRef, {
+            balance: newBalance,
+            lastModified: new Date().toISOString(),
+            modifiedBy: window.currentUser?.email || 'admin'
+        });
+        
+        // Log the balance update
+        await logAdminAction('balance_update', selectedUserId, {
+            newBalance: newBalance,
+            updatedBy: window.currentUser?.email || 'admin'
+        });
+        
+        showToast('Balance updated successfully!', 'success');
+        refreshUserList();
+        
+    } catch (error) {
+        console.error('Error updating balance:', error);
+        showToast('Error updating balance: ' + error.message, 'error');
+    }
+}
+
+// Adjust user balance (add or subtract)
+async function adjustUserBalance() {
+    try {
+        if (!selectedUserId) {
+            throw new Error('No user selected');
+        }
+        
+        const adjustmentAmount = parseFloat(document.getElementById('balanceAdjustment').value);
+        const adjustmentType = document.getElementById('adjustmentType').value;
+        const reason = document.getElementById('adjustmentReason').value;
+        
+        if (!adjustmentAmount || adjustmentAmount <= 0) {
+            throw new Error('Please enter a valid adjustment amount');
+        }
+        
+        if (!reason.trim()) {
+            throw new Error('Please provide a reason for the adjustment');
+        }
+        
+        const currentBalance = parseFloat(document.getElementById('modalBalance').value) || 0;
+        const newBalance = adjustmentType === 'add' ? 
+            currentBalance + adjustmentAmount : 
+            currentBalance - adjustmentAmount;
+        
+        if (newBalance < 0) {
+            throw new Error('Adjustment would result in negative balance');
+        }
+        
+        const database = window.db || db;
+        
+        // Update user balance
+        const userRef = doc(database, 'users', selectedUserId);
+        await updateDoc(userRef, {
+            balance: newBalance,
+            lastModified: new Date().toISOString(),
+            modifiedBy: window.currentUser?.email || 'admin'
+        });
+        
+        // Record the adjustment
+        const adjustmentRef = doc(collection(database, 'balance_adjustments'));
+        await setDoc(adjustmentRef, {
+            userId: selectedUserId,
+            amount: adjustmentType === 'add' ? adjustmentAmount : -adjustmentAmount,
+            type: adjustmentType,
+            reason: reason,
+            previousBalance: currentBalance,
+            newBalance: newBalance,
+            timestamp: new Date().toISOString(),
+            adminId: window.currentUser?.uid || 'unknown',
+            adminEmail: window.currentUser?.email || 'admin'
+        });
+        
+        // Update UI
+        document.getElementById('modalBalance').value = newBalance.toFixed(2);
+        document.getElementById('balanceAdjustment').value = '';
+        document.getElementById('adjustmentReason').value = '';
+        
+        // Reload financial data
+        await loadUserFinancialData(selectedUserId);
+        
+        showToast(`Balance ${adjustmentType === 'add' ? 'increased' : 'decreased'} by $${adjustmentAmount.toFixed(2)}`, 'success');
+        refreshUserList();
+        
+    } catch (error) {
+        console.error('Error adjusting balance:', error);
+        showToast('Error adjusting balance: ' + error.message, 'error');
+    }
+}
+
+// Add deposit record
+function addDepositRecord() {
+    currentEditingTransaction = null;
+    currentTransactionType = 'deposit';
+    
+    // Clear form
+    document.getElementById('depositAmount').value = '';
+    document.getElementById('depositMethod').value = '';
+    document.getElementById('depositStatus').value = 'completed';
+    document.getElementById('depositReference').value = '';
+    document.getElementById('depositDate').value = new Date().toISOString().slice(0, 16);
+    document.getElementById('depositNotes').value = '';
+    
+    document.getElementById('depositModalTitle').textContent = 'Add Deposit Record';
+    document.getElementById('depositModal').style.display = 'block';
+}
+
+// Add withdrawal record
+function addWithdrawalRecord() {
+    currentEditingTransaction = null;
+    currentTransactionType = 'withdrawal';
+    
+    // Clear form
+    document.getElementById('withdrawalAmount').value = '';
+    document.getElementById('withdrawalMethod').value = '';
+    document.getElementById('withdrawalStatus').value = 'completed';
+    document.getElementById('withdrawalReference').value = '';
+    document.getElementById('withdrawalDate').value = new Date().toISOString().slice(0, 16);
+    document.getElementById('withdrawalNotes').value = '';
+    
+    document.getElementById('withdrawalModalTitle').textContent = 'Add Withdrawal Record';
+    document.getElementById('withdrawalModal').style.display = 'block';
+}
+
+// Save deposit record
+async function saveDepositRecord() {
+    try {
+        const amount = parseFloat(document.getElementById('depositAmount').value);
+        const method = document.getElementById('depositMethod').value;
+        const status = document.getElementById('depositStatus').value;
+        const reference = document.getElementById('depositReference').value;
+        const date = document.getElementById('depositDate').value;
+        const notes = document.getElementById('depositNotes').value;
+        
+        if (!amount || amount <= 0) {
+            throw new Error('Please enter a valid amount');
+        }
+        
+        if (!method || !status || !date) {
+            throw new Error('Please fill in all required fields');
+        }
+        
+        const database = window.db || db;
+        const depositData = {
+            userId: selectedUserId,
+            amount: amount,
+            method: method,
+            status: status,
+            reference: reference,
+            notes: notes,
+            timestamp: new Date(date).toISOString(),
+            createdBy: window.currentUser?.email || 'admin',
+            createdAt: new Date().toISOString()
+        };
+        
+        if (currentEditingTransaction) {
+            // Update existing deposit
+            const depositRef = doc(database, 'deposits', currentEditingTransaction);
+            await updateDoc(depositRef, {
+                ...depositData,
+                updatedAt: new Date().toISOString(),
+                updatedBy: window.currentUser?.email || 'admin'
+            });
+            showToast('Deposit record updated successfully!', 'success');
+        } else {
+            // Create new deposit
+            const depositRef = doc(collection(database, 'deposits'));
+            await setDoc(depositRef, depositData);
+            showToast('Deposit record added successfully!', 'success');
+        }
+        
+        closeDepositModal();
+        await loadUserFinancialData(selectedUserId);
+        
+    } catch (error) {
+        console.error('Error saving deposit record:', error);
+        showToast('Error saving deposit record: ' + error.message, 'error');
+    }
+}
+
+// Save withdrawal record
+async function saveWithdrawalRecord() {
+    try {
+        const amount = parseFloat(document.getElementById('withdrawalAmount').value);
+        const method = document.getElementById('withdrawalMethod').value;
+        const status = document.getElementById('withdrawalStatus').value;
+        const reference = document.getElementById('withdrawalReference').value;
+        const date = document.getElementById('withdrawalDate').value;
+        const notes = document.getElementById('withdrawalNotes').value;
+        
+        if (!amount || amount <= 0) {
+            throw new Error('Please enter a valid amount');
+        }
+        
+        if (!method || !status || !date) {
+            throw new Error('Please fill in all required fields');
+        }
+        
+        const database = window.db || db;
+        const withdrawalData = {
+            userId: selectedUserId,
+            amount: amount,
+            method: method,
+            status: status,
+            reference: reference,
+            notes: notes,
+            timestamp: new Date(date).toISOString(),
+            createdBy: window.currentUser?.email || 'admin',
+            createdAt: new Date().toISOString()
+        };
+        
+        if (currentEditingTransaction) {
+            // Update existing withdrawal
+            const withdrawalRef = doc(database, 'withdrawals', currentEditingTransaction);
+            await updateDoc(withdrawalRef, {
+                ...withdrawalData,
+                updatedAt: new Date().toISOString(),
+                updatedBy: window.currentUser?.email || 'admin'
+            });
+            showToast('Withdrawal record updated successfully!', 'success');
+        } else {
+            // Create new withdrawal
+            const withdrawalRef = doc(collection(database, 'withdrawals'));
+            await setDoc(withdrawalRef, withdrawalData);
+            showToast('Withdrawal record added successfully!', 'success');
+        }
+        
+        closeWithdrawalModal();
+        await loadUserFinancialData(selectedUserId);
+        
+    } catch (error) {
+        console.error('Error saving withdrawal record:', error);
+        showToast('Error saving withdrawal record: ' + error.message, 'error');
+    }
+}
+
+// Edit transaction
+async function editTransaction(transactionId, type) {
+    try {
+        currentEditingTransaction = transactionId;
+        currentTransactionType = type;
+        
+        const database = window.db || db;
+        let collectionName;
+        
+        switch (type) {
+            case 'deposits':
+                collectionName = 'deposits';
+                break;
+            case 'withdrawals':
+                collectionName = 'withdrawals';
+                break;
+            case 'adjustments':
+                collectionName = 'balance_adjustments';
+                break;
+            default:
+                throw new Error('Invalid transaction type');
+        }
+        
+        const transactionRef = doc(database, collectionName, transactionId);
+        const transactionDoc = await getDoc(transactionRef);
+        
+        if (!transactionDoc.exists()) {
+            throw new Error('Transaction not found');
+        }
+        
+        const transactionData = transactionDoc.data();
+        
+        if (type === 'deposits') {
+            document.getElementById('depositAmount').value = transactionData.amount || '';
+            document.getElementById('depositMethod').value = transactionData.method || '';
+            document.getElementById('depositStatus').value = transactionData.status || '';
+            document.getElementById('depositReference').value = transactionData.reference || '';
+            document.getElementById('depositDate').value = transactionData.timestamp ? 
+                new Date(transactionData.timestamp).toISOString().slice(0, 16) : '';
+            document.getElementById('depositNotes').value = transactionData.notes || '';
+            
+            document.getElementById('depositModalTitle').textContent = 'Edit Deposit Record';
+            document.getElementById('depositModal').style.display = 'block';
+        } else if (type === 'withdrawals') {
+            document.getElementById('withdrawalAmount').value = transactionData.amount || '';
+            document.getElementById('withdrawalMethod').value = transactionData.method || '';
+            document.getElementById('withdrawalStatus').value = transactionData.status || '';
+            document.getElementById('withdrawalReference').value = transactionData.reference || '';
+            document.getElementById('withdrawalDate').value = transactionData.timestamp ? 
+                new Date(transactionData.timestamp).toISOString().slice(0, 16) : '';
+            document.getElementById('withdrawalNotes').value = transactionData.notes || '';
+            
+            document.getElementById('withdrawalModalTitle').textContent = 'Edit Withdrawal Record';
+            document.getElementById('withdrawalModal').style.display = 'block';
+        }
+        
+    } catch (error) {
+        console.error('Error loading transaction for edit:', error);
+        showToast('Error loading transaction: ' + error.message, 'error');
+    }
+}
+
+// Delete transaction
+async function deleteTransaction(transactionId, type) {
+    if (!confirm('Are you sure you want to delete this transaction record?')) {
+        return;
+    }
+    
+    try {
+        const database = window.db || db;
+        let collectionName;
+        
+        switch (type) {
+            case 'deposits':
+                collectionName = 'deposits';
+                break;
+            case 'withdrawals':
+                collectionName = 'withdrawals';
+                break;
+            case 'adjustments':
+                collectionName = 'balance_adjustments';
+                break;
+            default:
+                throw new Error('Invalid transaction type');
+        }
+        
+        const transactionRef = doc(database, collectionName, transactionId);
+        await deleteDoc(transactionRef);
+        
+        showToast('Transaction record deleted successfully!', 'success');
+        await loadUserFinancialData(selectedUserId);
+        
+    } catch (error) {
+        console.error('Error deleting transaction:', error);
+        showToast('Error deleting transaction: ' + error.message, 'error');
+    }
+}
+
+// Show transaction tab
+function showTransactionTab(tabName) {
+    // Hide all transaction tabs
+    document.querySelectorAll('.transaction-tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Remove active class from all tab buttons
+    document.querySelectorAll('.transaction-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected tab
+    document.getElementById(`${tabName}Tab`).classList.add('active');
+    
+    // Add active class to clicked button
+    event.target.classList.add('active');
+}
+
+// Export transaction history
+function exportTransactionHistory(type) {
+    try {
+        const tableBody = document.getElementById(`${type}TableBody`);
+        const rows = tableBody.querySelectorAll('tr');
+        
+        if (rows.length === 0) {
+            showToast('No data to export', 'warning');
+            return;
+        }
+        
+        let csvContent = '';
+        
+        // Add headers based on type
+        if (type === 'adjustments') {
+            csvContent += 'Date,Amount,Type,Reason,Admin\n';
+        } else {
+            csvContent += 'Date,Amount,Method,Status,Reference,Notes\n';
+        }
+        
+        // Add data rows
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            const rowData = [];
+            
+            // Skip the last cell (actions column)
+            for (let i = 0; i < cells.length - 1; i++) {
+                let cellText = cells[i].textContent.trim();
+                // Remove any commas and wrap in quotes if necessary
+                if (cellText.includes(',')) {
+                    cellText = `"${cellText}"`;
+                }
+                rowData.push(cellText);
+            }
+            
+            csvContent += rowData.join(',') + '\n';
+        });
+        
+        // Create and download file
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${type}_${selectedUserId}_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} history exported successfully!`, 'success');
+        
+    } catch (error) {
+        console.error('Error exporting transaction history:', error);
+        showToast('Error exporting data: ' + error.message, 'error');
+    }
+}
+
+// Close modals
+function closeDepositModal() {
+    document.getElementById('depositModal').style.display = 'none';
+    currentEditingTransaction = null;
+}
+
+function closeWithdrawalModal() {
+    document.getElementById('withdrawalModal').style.display = 'none';
+    currentEditingTransaction = null;
+}
+
+// Enhanced showTab function to handle financial tab
+function showTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Remove active class from all tab buttons
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected tab
+    document.getElementById(`${tabName}Tab`).classList.add('active');
+    
+    // Add active class to clicked button
+    event.target.classList.add('active');
+    
+    // Load financial data when financial tab is shown
+    if (tabName === 'financial' && selectedUserId) {
+        loadUserFinancialData(selectedUserId);
+    }
+}
