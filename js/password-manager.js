@@ -1,57 +1,71 @@
 // Password Manager JavaScript
 class PasswordManager {
     constructor() {
-        this.currentPage = 1;
-        this.itemsPerPage = 10;
         this.allUsers = [];
         this.filteredUsers = [];
-        this.db = null;
-        this.init();
+        this.currentPage = 1;
+        this.itemsPerPage = 10;
+        this.editingUserId = null;
     }
 
     async init() {
+        // Wait for Firebase to be initialized
+        if (typeof firebase === 'undefined' || !firebase.apps || firebase.apps.length === 0) {
+            console.error('Firebase not initialized');
+            this.showToast('Firebase connection failed', 'error');
+            return;
+        }
+
         try {
-            // Wait for Firebase to initialize
-            if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
-                this.db = firebase.firestore();
-                console.log('Firebase initialized successfully');
-            } else {
-                console.warn('Firebase not available, using sample data');
-            }
-            
+            console.log('Firebase available, loading real user data...');
             await this.loadUsers();
             this.setupEventListeners();
-            
         } catch (error) {
             console.error('Error initializing password manager:', error);
-            this.showToast('Error initializing password manager', 'error');
+            this.showToast('Failed to initialize password manager', 'error');
         }
     }
 
     async loadUsers() {
         try {
-            if (this.db) {
-                // Load from Firestore
-                const snapshot = await this.db.collection('users').get();
-                this.allUsers = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-            } else {
-                // Use sample data for demonstration
-                this.allUsers = this.getSampleUsers();
-            }
+            // Show loading state
+            const tbody = document.getElementById('passwordTableBody');
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">Loading users...</td></tr>';
+
+            // Load users from Firestore
+            const usersSnapshot = await firebase.firestore().collection('users').get();
             
+            if (usersSnapshot.empty) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No users found in database</td></tr>';
+                this.allUsers = [];
+                this.filteredUsers = [];
+                return;
+            }
+
+            this.allUsers = [];
+            usersSnapshot.forEach(doc => {
+                const userData = doc.data();
+                this.allUsers.push({
+                    id: doc.id,
+                    email: userData.email || 'N/A',
+                    name: userData.displayName || (userData.firstName && userData.lastName ? userData.firstName + ' ' + userData.lastName : 'N/A'),
+                    status: userData.emailVerified ? 'active' : 'pending',
+                    password: userData.password || '••••••••', // Show masked if no password stored
+                    createdAt: userData.createdAt || new Date()
+                });
+            });
+
             this.filteredUsers = [...this.allUsers];
             this.displayUsers();
-            this.showToast('Users loaded successfully', 'success');
+            this.showToast(`Loaded ${this.allUsers.length} users successfully`, 'success');
             
         } catch (error) {
-            console.error('Error loading users:', error);
-            this.allUsers = this.getSampleUsers();
-            this.filteredUsers = [...this.allUsers];
-            this.displayUsers();
-            this.showToast('Loaded sample data due to connection error', 'error');
+            console.error('Error loading users from Firestore:', error);
+            this.showToast('Failed to load users from database', 'error');
+            
+            // Show error message in table
+            const tbody = document.getElementById('passwordTableBody');
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #dc3545;">Error loading users. Please check your connection and try refreshing.</td></tr>';
         }
     }
 
@@ -350,12 +364,17 @@ class PasswordManager {
 
 // Global functions
 function refreshPasswords() {
-    passwordManager.loadUsers();
+    if (passwordManager) {
+        passwordManager.loadUsers();
+    }
 }
 
 // Initialize when DOM is loaded
 let passwordManager;
 document.addEventListener('DOMContentLoaded', () => {
-    passwordManager = new PasswordManager();
-    passwordManager.init();
+    // Wait a bit for Firebase to initialize
+    setTimeout(() => {
+        passwordManager = new PasswordManager();
+        passwordManager.init();
+    }, 1000);
 });
