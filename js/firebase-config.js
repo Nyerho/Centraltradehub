@@ -30,13 +30,15 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// Set authentication persistence to LOCAL (survives browser restarts)
-try {
-    await setPersistence(auth, browserLocalPersistence);
-    console.log('✅ Auth persistence set to LOCAL');
-} catch (error) {
-    console.error('❌ Error setting auth persistence:', error);
-}
+// Set authentication persistence (wrapped in async function)
+(async () => {
+    try {
+        await setPersistence(auth, browserLocalPersistence);
+        console.log('✅ Auth persistence set to LOCAL');
+    } catch (error) {
+        console.error('❌ Error setting auth persistence:', error);
+    }
+})();
 
 // Debug: Log successful initialization
 console.log('✅ Firebase initialized successfully (Modular SDK)');
@@ -48,8 +50,12 @@ onAuthStateChanged(auth,
     (user) => {
         if (user) {
             console.log('👤 User signed in:', user.email);
+            // Dispatch custom event for other modules
+            window.dispatchEvent(new CustomEvent('firebaseUserSignedIn', { detail: user }));
         } else {
             console.log('👤 User signed out');
+            // Dispatch custom event for other modules
+            window.dispatchEvent(new CustomEvent('firebaseUserSignedOut'));
         }
     },
     (error) => {
@@ -57,7 +63,7 @@ onAuthStateChanged(auth,
     }
 );
 
-// Make services globally available for backward compatibility
+// Make services globally available for compatibility
 window.firebaseAuth = auth;
 window.firebaseDb = db;
 window.firebaseStorage = storage;
@@ -65,12 +71,10 @@ window.auth = auth;
 window.db = db;
 window.storage = storage;
 
-// Global error handler for unhandled Firebase errors
+// Global error handler for unhandled Firebase promises
 window.addEventListener('unhandledrejection', (event) => {
-    if (event.reason?.code?.startsWith('auth/') || 
-        event.reason?.code?.startsWith('firestore/') ||
-        event.reason?.code?.startsWith('storage/')) {
-        console.error('🔥 Firebase Error:', event.reason);
+    if (event.reason && event.reason.code && event.reason.code.startsWith('auth/')) {
+        console.error('🔥 Firebase Auth Error:', event.reason);
         // Prevent the error from appearing in console as unhandled
         event.preventDefault();
     }
@@ -78,6 +82,6 @@ window.addEventListener('unhandledrejection', (event) => {
 
 console.log('🚀 Firebase services ready and globally available');
 
-// Export services for ES6 modules
+// Export for ES6 modules
 export { auth, db, storage, app };
 export default { auth, db, storage, app };
