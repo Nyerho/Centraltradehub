@@ -11,7 +11,7 @@ window.addEventListener('error', function(e) {
     showToast('An error occurred. Please refresh the page.', 'error');
 });
 
-// Firebase initialization
+// Firebase initialization - Updated with working configuration
 try {
     if (typeof firebase !== 'undefined' && firebase.apps.length === 0) {
         const firebaseConfig = {
@@ -31,11 +31,11 @@ try {
         window.db = firebase.firestore();
         console.log('Using existing Firebase instance');
     } else {
-        console.warn('Firebase not available, using sample data');
+        console.error('Firebase not available - please check Firebase SDK loading');
         window.db = null;
     }
 } catch (error) {
-    console.warn('Firebase initialization failed, using sample data:', error);
+    console.error('Firebase initialization failed:', error);
     window.db = null;
 }
 
@@ -68,35 +68,44 @@ function setupEventListeners() {
     });
 }
 
-// Load users from Firestore or sample data
+// Load users from Firestore - Modified to prioritize real data
 async function loadUsers() {
     try {
+        showLoading(true);
+        
         if (window.db) {
+            console.log('Loading users from Firestore...');
             const usersSnapshot = await window.db.collection('users').get();
             allUsers = usersSnapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             }));
             
+            console.log(`Loaded ${allUsers.length} users from Firestore`);
+            
+            // Only use sample data if explicitly no users exist and you want to populate initial data
             if (allUsers.length === 0) {
-                console.log('No users found in Firestore, loading sample data');
-                loadSampleData();
+                console.log('No users found in Firestore. Database appears empty.');
+                showToast('No users found in database', 'info');
             }
         } else {
-            console.log('Firestore not available, loading sample data');
-            loadSampleData();
+            console.error('Firebase database not available');
+            showToast('Database connection failed', 'error');
+            allUsers = [];
         }
         
         filteredUsers = [...allUsers];
         displayUsers();
         updatePagination();
         updateDashboardStats();
+        showLoading(false);
         
     } catch (error) {
         console.error('Error loading users:', error);
-        showToast('Error loading users, using sample data', 'warning');
-        loadSampleData();
-        filteredUsers = [...allUsers];
+        showToast(`Error loading users: ${error.message}`, 'error');
+        showLoading(false);
+        allUsers = [];
+        filteredUsers = [];
         displayUsers();
         updatePagination();
         updateDashboardStats();
