@@ -356,7 +356,7 @@
     <script>
         // Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyBQf8T7_9_9_9_9_9_9_9_9_9_9_9_9_9_9",
+            apiKey: "AIzaSyBQf8T7_9_9_9_9_9_9_9_9_9_9_9_9_9",
             authDomain: "centraltradehub-30f00.firebaseapp.com",
             projectId: "centraltradehub-30f00",
             storageBucket: "centraltradehub-30f00.firebasestorage.app",
@@ -407,7 +407,7 @@
         }
     
         async function verifyCotCode() {
-            const cotCode = document.getElementById('cotCodeInput').value.trim();
+            const cotCode = document.getElementById('cotCode').value.trim();
             
             if (!cotCode) {
                 showAlert('Please enter the COT code', 'error');
@@ -415,8 +415,17 @@
             }
             
             try {
-                if (!window.firebase || !window.firebase.firestore) {
-                    throw new Error('Firebase not initialized');
+                // Add proper Firebase initialization check
+                if (typeof firebase === 'undefined') {
+                    console.error('Firebase SDK not loaded');
+                    showAlert('System error: Please refresh the page', 'error');
+                    return;
+                }
+                
+                if (!firebase.apps.length) {
+                    console.error('Firebase not initialized');
+                    showAlert('System error: Please refresh the page', 'error');
+                    return;
                 }
                 
                 const db = firebase.firestore();

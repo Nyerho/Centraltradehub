@@ -563,35 +563,38 @@ window.saveSiteSettings = function() {
 window.toggleMobileMenu = function() {
     const sidebar = document.getElementById('adminSidebar');
     const toggle = document.getElementById('mobileMenuToggle');
+    const overlay = document.getElementById('mobileOverlay');
     
     if (sidebar && toggle) {
-        sidebar.classList.toggle('mobile-open');
-        toggle.classList.toggle('active');
+        const isOpen = sidebar.classList.contains('mobile-open');
         
-        // Toggle icon
-        const icon = toggle.querySelector('i');
-        if (icon) {
-            if (sidebar.classList.contains('mobile-open')) {
-                icon.className = 'fas fa-times';
-            } else {
-                icon.className = 'fas fa-bars';
-            }
+        if (isOpen) {
+            // Close menu
+            sidebar.classList.remove('mobile-open');
+            toggle.classList.remove('active');
+            if (overlay) overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        } else {
+            // Open menu
+            sidebar.classList.add('mobile-open');
+            toggle.classList.add('active');
+            if (overlay) overlay.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Prevent background scroll
         }
     }
 };
 
-// Close mobile menu when clicking outside
+// Close mobile menu when clicking overlay
 document.addEventListener('click', function(event) {
     const sidebar = document.getElementById('adminSidebar');
     const toggle = document.getElementById('mobileMenuToggle');
+    const overlay = document.getElementById('mobileOverlay');
     
-    if (sidebar && toggle && sidebar.classList.contains('mobile-open')) {
-        if (!sidebar.contains(event.target) && !toggle.contains(event.target)) {
-            sidebar.classList.remove('mobile-open');
-            toggle.classList.remove('active');
-            const icon = toggle.querySelector('i');
-            if (icon) icon.className = 'fas fa-bars';
-        }
+    if (overlay && event.target === overlay) {
+        sidebar.classList.remove('mobile-open');
+        toggle.classList.remove('active');
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
     }
 });
 

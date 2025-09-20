@@ -684,18 +684,98 @@ function toggle2FA(userId) {
     showToast('2FA settings updated', 'success');
 }
 
-function editUser(userId) {
-    showToast('Edit user functionality not implemented', 'info');
-}
-
-function deleteUser(userId) {
-    if (confirm('Are you sure you want to delete this user?')) {
-        showToast('User deleted successfully', 'success');
+async function editUser(userId) {
+    try {
+        if (!window.db) {
+            showToast('Database connection not available', 'error');
+            return;
+        }
+        
+        const userDoc = await window.db.collection('users').doc(userId).get();
+        if (!userDoc.exists) {
+            showToast('User not found', 'error');
+            return;
+        }
+        
+        const userData = userDoc.data();
+        
+        // Create edit modal
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Edit User: ${userData.email}</h3>
+                    <button onclick="closeEditModal()" class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="editUserForm">
+                        <div class="form-group">
+                            <label>Full Name:</label>
+                            <input type="text" id="editFullName" value="${userData.fullName || ''}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email:</label>
+                            <input type="email" id="editEmail" value="${userData.email || ''}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone:</label>
+                            <input type="tel" id="editPhone" value="${userData.phone || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Balance ($):</label>
+                            <input type="number" id="editBalance" value="${userData.balance || 0}" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Status:</label>
+                            <select id="editStatus">
+                                <option value="active" ${userData.status === 'active' ? 'selected' : ''}>Active</option>
+                                <option value="suspended" ${userData.status === 'suspended' ? 'selected' : ''}>Suspended</option>
+                                <option value="pending" ${userData.status === 'pending' ? 'selected' : ''}>Pending</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Account Type:</label>
+                            <select id="editAccountType">
+                                <option value="basic" ${userData.accountType === 'basic' ? 'selected' : ''}>Basic</option>
+                                <option value="premium" ${userData.accountType === 'premium' ? 'selected' : ''}>Premium</option>
+                                <option value="vip" ${userData.accountType === 'vip' ? 'selected' : ''}>VIP</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button onclick="saveUserEdits('${userId}')" class="btn-primary">Save Changes</button>
+                    <button onclick="closeEditModal()" class="btn-secondary">Cancel</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+    } catch (error) {
+        console.error('Error loading user for edit:', error);
+        showToast('Failed to load user data', 'error');
     }
 }
 
-function editTransaction(transactionId) {
-    showToast('Edit transaction functionality not implemented', 'info');
+async function deleteUser(userId) {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        await window.db.collection('users').doc(userId).delete();
+        await loadUsers(); // Refresh the user list
+        showToast('User deleted successfully', 'success');
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        showToast('Failed to delete user', 'error');
+    }
+}
+
+async function editTransaction(transactionId) {
+    showToast('Transaction editing feature coming soon', 'info');
 }
 
 function deleteTransaction(transactionId) {
@@ -704,14 +784,161 @@ function deleteTransaction(transactionId) {
     }
 }
 
-function editTrade(tradeId) {
-    showToast('Edit trade functionality not implemented', 'info');
+async function editTrade(tradeId) {
+    showToast('Trade editing feature coming soon', 'info');
 }
 
 function deleteTrade(tradeId) {
     if (confirm('Are you sure you want to delete this trade?')) {
         showToast('Trade deleted successfully', 'success');
     }
+}
+
+// Add these new functions
+async function saveUserEdits(userId) {
+    try {
+        const updatedData = {
+            fullName: document.getElementById('editFullName').value.trim(),
+            email: document.getElementById('editEmail').value.trim(),
+            phone: document.getElementById('editPhone').value.trim(),
+            balance: parseFloat(document.getElementById('editBalance').value) || 0,
+            status: document.getElementById('editStatus').value,
+            accountType: document.getElementById('editAccountType').value,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        await window.db.collection('users').doc(userId).update(updatedData);
+        
+        closeEditModal();
+        await loadUsers(); // Refresh the user list
+        showToast('User updated successfully', 'success');
+        
+    } catch (error) {
+        console.error('Error updating user:', error);
+        showToast('Failed to update user', 'error');
+    }
+}
+
+function closeEditModal() {
+    const modal = document.querySelector('.modal-overlay');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Add modal styles
+const modalStyles = `
+<style>
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.modal-content {
+    background: #16213e;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #2a3f5f;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    color: #e8eaed;
+    margin: 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: #b3c1d1;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    color: #b3c1d1;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #2a3f5f;
+    border-radius: 5px;
+    background: #0f1419;
+    color: #e8eaed;
+    font-size: 1rem;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #00d4ff;
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #2a3f5f;
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+</style>
+`;
+
+if (!document.querySelector('#modal-styles')) {
+    const styleElement = document.createElement('div');
+    styleElement.id = 'modal-styles';
+    styleElement.innerHTML = modalStyles;
+    document.head.appendChild(styleElement);
 }
 
 // Make functions globally available
@@ -728,6 +955,8 @@ window.deleteTransaction = deleteTransaction;
 window.editTrade = editTrade;
 window.deleteTrade = deleteTrade;
 window.changePage = changePage;
+window.saveUserEdits = saveUserEdits;
+window.closeEditModal = closeEditModal;
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', initializeUserManagement);

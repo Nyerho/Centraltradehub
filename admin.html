@@ -14,19 +14,19 @@
     <header class="admin-header">
         <div class="admin-nav">
             <div class="admin-logo">
-                <i class="fas fa-chart-line"></i>
-                <span>Central Trade Hub Admin</span>
+                <i class="fas fa-shield-alt"></i>
+                <span class="logo-text">Admin Panel</span>
             </div>
-            <!-- Single mobile toggle button -->
-            <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle navigation">
+            <!-- Single mobile toggle button with correct ID -->
+            <button class="mobile-menu-toggle" id="mobileMenuToggle" onclick="toggleMobileMenu()">
                 <span class="hamburger-line"></span>
                 <span class="hamburger-line"></span>
                 <span class="hamburger-line"></span>
             </button>
             <div class="admin-user">
-                <span>Welcome, Admin</span>
-                <a href="#" class="btn-logout" onclick="handleSimpleLogout()">
-                  <i class="fas fa-sign-out-alt"></i> Logout
+                <span id="adminUserName">Administrator</span>
+                <a href="#" onclick="logout()" class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> Logout
                 </a>
             </div>
         </div>
@@ -273,155 +273,11 @@
     </div>
 
     <!-- Scripts -->
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+    
+    <!-- Firebase Scripts -->
     <script type="module" src="js/firebase-config.js"></script>
-    <script type="module" src="js/firebase-auth.js"></script>
-    <script type="module" src="js/firebase-database.js"></script>
-    <script type="module" src="js/auth-integration.js"></script>
     <script type="module" src="js/admin.js"></script>
-
-    <script type="module">
-        import AdminDashboard from './js/admin.js';
-        
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                console.log('Starting admin page initialization...');
-                
-                // Check if coming from another admin page
-                const urlParams = new URLSearchParams(window.location.search);
-                const fromPage = urlParams.get('from');
-                
-                // Enhanced wait for auth manager with better error handling
-                let attempts = 0;
-                const maxAttempts = fromPage ? 50 : 100; // Shorter wait if coming from admin page
-                
-                while ((!window.authManager || !window.authManager.isInitialized) && attempts < maxAttempts) {
-                    console.log(`Waiting for auth manager... attempt ${attempts + 1}/${maxAttempts}`);
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    attempts++;
-                }
-                
-                if (!window.authManager) {
-                    console.error('Auth manager failed to initialize after', maxAttempts, 'attempts');
-                    throw new Error('Authentication system not available. Please refresh the page.');
-                }
-                
-                console.log('Auth manager found, ensuring initialization...');
-                
-                // Initialize the AuthManager if not already initialized
-                if (!window.authManager.isInitialized) {
-                    await window.authManager.initialize();
-                }
-                
-                console.log('Auth manager initialized, checking authentication state...');
-                
-                // Wait for authentication state to be determined
-                await new Promise(resolve => {
-                    const checkAuth = () => {
-                        if (window.authManager.getCurrentUser() !== undefined) {
-                            resolve();
-                        } else {
-                            setTimeout(checkAuth, 100);
-                        }
-                    };
-                    checkAuth();
-                });
-                
-                // Check if user is authenticated
-                const user = window.authManager.getCurrentUser();
-                console.log('Current user:', user ? user.email : 'No user');
-                
-                if (!user) {
-                    console.log('No authenticated user found, redirecting to auth page');
-                    alert('Please log in to access the admin panel.');
-                    window.location.href = 'auth.html';
-                    return;
-                }
-                
-                console.log('Checking admin status for user:', user.email);
-                
-                // Check admin status with retry mechanism
-                let isAdmin = false;
-                let adminCheckAttempts = 0;
-                const maxAdminAttempts = 3;
-                
-                while (!isAdmin && adminCheckAttempts < maxAdminAttempts) {
-                    try {
-                        isAdmin = await window.authManager.checkAdminStatus();
-                        if (!isAdmin) {
-                            adminCheckAttempts++;
-                            if (adminCheckAttempts < maxAdminAttempts) {
-                                console.log(`Admin check failed, retrying... (${adminCheckAttempts}/${maxAdminAttempts})`);
-                                await new Promise(resolve => setTimeout(resolve, 1000));
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Error checking admin status:', error);
-                        adminCheckAttempts++;
-                        if (adminCheckAttempts < maxAdminAttempts) {
-                            await new Promise(resolve => setTimeout(resolve, 1000));
-                        }
-                    }
-                }
-                
-                if (!isAdmin) {
-                    console.log('User is not an admin, redirecting to dashboard');
-                    alert('Access denied. Admin privileges required.');
-                    window.location.href = 'dashboard.html';
-                    return;
-                }
-                
-                console.log('Admin access confirmed, initializing dashboard...');
-                
-                // Initialize admin dashboard
-                window.adminDashboard = new AdminDashboard();
-                console.log('Admin dashboard initialized successfully');
-                
-            } catch (error) {
-                console.error('Authentication error:', error);
-                
-                if (error.message.includes('Authentication system not available')) {
-                    alert('Authentication system is not ready. Please refresh the page and try again.');
-                } else if (error.message.includes('Auth manager not available')) {
-                    alert('Authentication service failed to load. Please check your internet connection and refresh.');
-                } else {
-                    alert('Authentication error occurred: ' + error.message + '. Please try logging in again.');
-                }
-                
-                setTimeout(() => {
-                    window.location.href = 'auth.html';
-                }, 2000);
-            }
-        });
-
-        // Simple logout function
-        window.handleSimpleLogout = async function() {
-            try {
-                if (window.authManager) {
-                    await window.authManager.logout();
-                }
-                window.location.href = 'auth.html';
-            } catch (error) {
-                console.error('Logout error:', error);
-                window.location.href = 'auth.html';
-            }
-        };
-    </script>
-
-    <!-- Smartsupp Live Chat script -->
-    <script type="text/javascript">
-    var _smartsupp = _smartsupp || {};
-    _smartsupp.key = '5a12e502e39d89519fbf29c7014792f8d6540920';
-    window.smartsupp||(function(d) {
-      var s,c,o=smartsupp=function(){ o._.push(arguments)};
-      o._=[];
-      s=d.getElementsByTagName('script')[0];
-      c=d.createElement('script');
-      c.type='text/javascript';
-      c.charset='utf-8';
-      c.async=true;
-      c.src='https://www.smartsuppchat.com/loader.js?';
-      s.parentNode.insertBefore(c,s);
-    })(document);
-    </script>
 </body>
 </html>
