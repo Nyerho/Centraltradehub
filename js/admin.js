@@ -249,14 +249,22 @@ class EnhancedAdminDashboard {
         try {
             this.showLoading(true);
             
-            // Load all data concurrently
-            await Promise.all([
+            // Load data with individual error handling
+            const results = await Promise.allSettled([
                 this.loadUsers(),
                 this.loadTransactions(),
                 this.loadTrades(),
                 this.loadWithdrawals(),
                 this.loadSiteSettings()
             ]);
+            
+            // Log any failures for debugging
+            results.forEach((result, index) => {
+                if (result.status === 'rejected') {
+                    const methods = ['loadUsers', 'loadTransactions', 'loadTrades', 'loadWithdrawals', 'loadSiteSettings'];
+                    console.warn(`${methods[index]} failed (likely empty collection):`, result.reason.message);
+                }
+            });
             
             // Update dashboard stats
             this.updateDashboardStats();
