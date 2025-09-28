@@ -216,13 +216,30 @@
                     <div class="card metric-card border-0 shadow-sm">
                         <div class="card-body">
                             <div class="d-flex align-items-center">
-                                <div class="metric-icon bg-success bg-gradient">
-                                    <i class="fas fa-dollar-sign text-white"></i>
+                                <div class="metric-icon bg-info bg-gradient">
+                                    <i class="fas fa-user-check text-white"></i>
                                 </div>
                                 <div class="ms-3 flex-grow-1">
-                                    <h6 class="text-muted mb-1">Total Balance</h6>
-                                    <h3 class="mb-0" id="totalBalance">$0</h3>
-                                    <small class="text-success"><i class="fas fa-arrow-up"></i> <span id="balanceGrowth">0%</span> from last month</small>
+                                    <h6 class="text-muted mb-1">Active Users</h6>
+                                    <h3 class="mb-0" id="activeUsers">0</h3>
+                                    <small class="text-info"><span id="newUsersToday">0</span> new today</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-md-6">
+                    <div class="card metric-card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="metric-icon bg-success bg-gradient">
+                                    <i class="fas fa-chart-line text-white"></i>
+                                </div>
+                                <div class="ms-3 flex-grow-1">
+                                    <h6 class="text-muted mb-1">Trading Volume</h6>
+                                    <h3 class="mb-0" id="totalVolume">$0</h3>
+                                    <small class="text-success"><span id="successRate">0%</span> success rate</small>
                                 </div>
                             </div>
                         </div>
@@ -237,9 +254,46 @@
                                     <i class="fas fa-exchange-alt text-white"></i>
                                 </div>
                                 <div class="ms-3 flex-grow-1">
-                                    <h6 class="text-muted mb-1">Pending Withdrawals</h6>
-                                    <h3 class="mb-0" id="pendingWithdrawalCount">0</h3>
-                                    <small class="text-warning"><span id="withdrawalAmount">$0</span> total amount</small>
+                                    <h6 class="text-muted mb-1">Active Trades</h6>
+                                    <h3 class="mb-0" id="activeTrades">0</h3>
+                                    <small class="text-warning"><span id="activeTradesCount">0</span> pending</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Trading Stats Row -->
+            <div class="row g-4 mb-4">
+                <div class="col-xl-3 col-md-6">
+                    <div class="card metric-card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="metric-icon bg-primary bg-gradient">
+                                    <i class="fas fa-dollar-sign text-white"></i>
+                                </div>
+                                <div class="ms-3 flex-grow-1">
+                                    <h6 class="text-muted mb-1">Daily Volume</h6>
+                                    <h3 class="mb-0" id="dailyVolumeAmount">$0</h3>
+                                    <small class="text-primary">Today's trading</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-md-6">
+                    <div class="card metric-card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="metric-icon bg-success bg-gradient">
+                                    <i class="fas fa-percentage text-white"></i>
+                                </div>
+                                <div class="ms-3 flex-grow-1">
+                                    <h6 class="text-muted mb-1">Success Rate</h6>
+                                    <h3 class="mb-0" id="successRatePercent">0%</h3>
+                                    <small class="text-success">Completed trades</small>
                                 </div>
                             </div>
                         </div>
@@ -251,12 +305,29 @@
                         <div class="card-body">
                             <div class="d-flex align-items-center">
                                 <div class="metric-icon bg-info bg-gradient">
-                                    <i class="fas fa-chart-line text-white"></i>
+                                    <i class="fas fa-coins text-white"></i>
                                 </div>
                                 <div class="ms-3 flex-grow-1">
-                                    <h6 class="text-muted mb-1">Active Trades</h6>
-                                    <h3 class="mb-0" id="activeTrades">0</h3>
-                                    <small class="text-info"><span id="tradeVolume">$0</span> volume today</small>
+                                    <h6 class="text-muted mb-1">Total Commission</h6>
+                                    <h3 class="mb-0" id="totalCommissionAmount">$0</h3>
+                                    <small class="text-info">Platform earnings</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-md-6">
+                    <div class="card metric-card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="metric-icon bg-warning bg-gradient">
+                                    <i class="fas fa-clock text-white"></i>
+                                </div>
+                                <div class="ms-3 flex-grow-1">
+                                    <h6 class="text-muted mb-1">Pending Withdrawals</h6>
+                                    <h3 class="mb-0" id="pendingWithdrawalCount">0</h3>
+                                    <small class="text-warning"><span id="withdrawalAmount">$0</span> total</small>
                                 </div>
                             </div>
                         </div>
