@@ -1377,3 +1377,155 @@ async function saveUserProfile(userId) {
         showToast('Error saving user profile: ' + error.message, 'error');
     }
 }
+
+// Update user financial data (profits and deposits)
+window.updateUserFinancials = async function(userId) {
+    const profitsInput = document.getElementById(`edit-profits-${userId}`);
+    const depositsInput = document.getElementById(`edit-deposits-${userId}`);
+    
+    if (!profitsInput || !depositsInput) {
+        showToast('Error: Financial input fields not found', 'error');
+        return;
+    }
+    
+    const newProfits = parseFloat(profitsInput.value) || 0;
+    const newDeposits = parseFloat(depositsInput.value) || 0;
+    
+    if (newProfits < 0 || newDeposits < 0) {
+        showToast('Financial values cannot be negative', 'error');
+        return;
+    }
+    
+    try {
+        const userRef = db.collection('users').doc(userId);
+        const userDoc = await userRef.get();
+        
+        if (!userDoc.exists) {
+            showToast('User not found', 'error');
+            return;
+        }
+        
+        const currentData = userDoc.data();
+        const oldProfits = currentData.totalProfits || 0;
+        const oldDeposits = currentData.totalDeposits || 0;
+        
+        // Calculate balance adjustment
+        const profitsDiff = newProfits - oldProfits;
+        const depositsDiff = newDeposits - oldDeposits;
+        const totalBalanceChange = profitsDiff + depositsDiff;
+        
+        // Update user data
+        await userRef.update({
+            totalProfits: newProfits,
+            totalDeposits: newDeposits,
+            balance: firebase.firestore.FieldValue.increment(totalBalanceChange),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        // Create transaction records for the changes
+        const batch = db.batch();
+        
+        if (profitsDiff !== 0) {
+            const profitTransactionRef = db.collection('transactions').doc();
+            batch.set(profitTransactionRef, {
+                userId: userId,
+                type: profitsDiff > 0 ? 'profit_adjustment_add' : 'profit_adjustment_subtract',
+                amount: Math.abs(profitsDiff),
+                status: 'completed',
+                description: `Admin adjustment: Profits ${profitsDiff > 0 ? 'increased' : 'decreased'} by $${Math.abs(profitsDiff).toFixed(2)}`,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                adminId: window.currentUser?.uid || 'admin'
+            });
+        }
+        
+        if (depositsDiff !== 0) {
+            const depositTransactionRef = db.collection('transactions').doc();
+            batch.set(depositTransactionRef, {
+                userId: userId,
+                type: depositsDiff > 0 ? 'deposit_adjustment_add' : 'deposit_adjustment_subtract',
+                amount: Math.abs(depositsDiff),
+                status: 'completed',
+                description: `Admin adjustment: Deposits ${depositsDiff > 0 ? 'increased' : 'decreased'} by $${Math.abs(depositsDiff).toFixed(2)}`,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                adminId: window.currentUser?.uid || 'admin'
+            });
+        }
+        
+        await batch.commit();
+        
+        showToast('Financial data updated successfully', 'success');
+        
+        // Refresh the user details display
+        setTimeout(() => {
+            toggleUserDetails(userId);
+        }, 1000);
+        
+    } catch (error) {
+        console.error('Error updating financial data:', error);
+        showToast('Error updating financial data: ' + error.message, 'error');
+    }
+};
+
+// Calculate and update user balance based on transactions
+window.calculateBalance = async function(userId) {
+    try {
+        // Get all user transactions
+        const transactionsSnapshot = await db.collection('transactions')
+            .where('userId', '==', userId)
+            .where('status', '==', 'completed')
+            .get();
+        
+        let totalDeposits = 0;
+        let totalProfits = 0;
+        let totalWithdrawals = 0;
+        
+        transactionsSnapshot.forEach(doc => {
+            const transaction = doc.data();
+            const amount = transaction.amount || 0;
+            
+            switch (transaction.type) {
+                case 'deposit':
+                case 'deposit_adjustment_add':
+                    totalDeposits += amount;
+                    break;
+                case 'profit':
+                case 'profit_adjustment_add':
+                    totalProfits += amount;
+                    break;
+                case 'withdrawal':
+                    totalWithdrawals += amount;
+                    break;
+                case 'deposit_adjustment_subtract':
+                    totalDeposits -= amount;
+                    break;
+                case 'profit_adjustment_subtract':
+                    totalProfits -= amount;
+                    break;
+            }
+        });
+        
+        // Calculate new balance
+        const calculatedBalance = totalDeposits + totalProfits - totalWithdrawals;
+        
+        // Update user document
+        const userRef = db.collection('users').doc(userId);
+        await userRef.update({
+            balance: Math.max(0, calculatedBalance), // Ensure balance doesn't go negative
+            totalDeposits: Math.max(0, totalDeposits),
+            totalProfits: Math.max(0, totalProfits),
+            calculatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        showToast(`Balance recalculated successfully. New balance: $${calculatedBalance.toFixed(2)}`, 'success');
+        
+        // Refresh the user details display
+        setTimeout(() => {
+            toggleUserDetails(userId);
+        }, 1000);
+        
+    } catch (error) {
+        console.error('Error calculating balance:', error);
+        showToast('Error calculating balance: ' + error.message, 'error');
+    }
+};

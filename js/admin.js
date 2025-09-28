@@ -1260,190 +1260,178 @@ class EnhancedAdminDashboard {
     }
 
     async initializeTradingVolumeChart() {
-        const ctx = document.getElementById('tradingVolumeChart');
-        if (!ctx) return;
+        // Destroy existing chart instance if it exists
+        const existingChart = Chart.getChart('tradingVolumeChart');
+        if (existingChart) {
+            existingChart.destroy();
+        }
         
+        const ctx = document.getElementById('tradingVolumeChart');
+        if (!ctx) {
+            console.error('Canvas element with ID "tradingVolumeChart" not found.');
+            return;
+        }
         try {
-            // Destroy existing chart if it exists
-            if (this.chartInstances.tradingVolume) {
-                this.chartInstances.tradingVolume.destroy();
-            }
-            
-            // Fetch real trading volume data from Firebase
-            const volumeData = await this.getTradingVolumeData();
-            
+            const data = await this.getTradingVolumeData();
             this.chartInstances.tradingVolume = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: volumeData.labels,
+                    labels: data.labels,
                     datasets: [{
-                        label: 'Trading Volume ($)',
-                        data: volumeData.values,
-                        borderColor: 'rgb(75, 192, 192)',
+                        label: 'Trading Volume',
+                        data: data.values,
+                        borderColor: 'rgba(75, 192, 192, 1)',
                         backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        tension: 0.1
-                    }]
+                        fill: true,
+                    }],
                 },
                 options: {
                     responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Monthly Trading Volume'
-                        }
-                    },
+                    maintainAspectRatio: false,
                     scales: {
+                        x: {
+                            beginAtZero: true,
+                        },
                         y: {
                             beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return '$' + value.toLocaleString();
-                                }
-                            }
-                        }
-                    }
-                }
+                        },
+                    },
+                },
             });
         } catch (error) {
             console.error('Error initializing trading volume chart:', error);
-            this.showEmptyChart(ctx, 'Failed to load trading volume data');
+            this.showEmptyChart(ctx, 'Error loading trading volume data.');
         }
     }
 
     async initializeUserGrowthChart() {
-        const ctx = document.getElementById('userGrowthChart');
-        if (!ctx) return;
+        // Destroy existing chart instance if it exists
+        const existingChart = Chart.getChart('userGrowthChart');
+        if (existingChart) {
+            existingChart.destroy();
+        }
         
+        const ctx = document.getElementById('userGrowthChart');
+        if (!ctx) {
+            console.error('Canvas element with ID "userGrowthChart" not found.');
+            return;
+        }
         try {
-            // Destroy existing chart if it exists
-            if (this.chartInstances.userGrowth) {
-                this.chartInstances.userGrowth.destroy();
-            }
-            
-            const growthData = await this.getUserGrowthData();
-            
+            const data = await this.getUserGrowthData();
             this.chartInstances.userGrowth = new Chart(ctx, {
-                type: 'bar',
+                type: 'line',
                 data: {
-                    labels: growthData.labels,
+                    labels: data.labels,
                     datasets: [{
-                        label: 'New Users',
-                        data: growthData.values,
-                        backgroundColor: 'rgba(54, 162, 235, 0.8)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        borderWidth: 1
-                    }]
+                        label: 'User Growth',
+                        data: data.values,
+                        borderColor: 'rgba(153, 102, 255, 1)',
+                        backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                        fill: true,
+                    }],
                 },
                 options: {
                     responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Monthly User Growth'
-                        }
-                    },
+                    maintainAspectRatio: false,
                     scales: {
+                        x: {
+                            beginAtZero: true,
+                        },
                         y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
+                            beginAtZero: true,
+                        },
+                    },
+                },
             });
         } catch (error) {
             console.error('Error initializing user growth chart:', error);
-            this.showEmptyChart(ctx, 'Failed to load user growth data');
+            this.showEmptyChart(ctx, 'Error loading user growth data.');
         }
     }
 
     async initializeRevenueChart() {
-        const ctx = document.getElementById('revenueChart');
-        if (!ctx) return;
+        // Destroy existing chart instance if it exists
+        const existingChart = Chart.getChart('revenueChart');
+        if (existingChart) {
+            existingChart.destroy();
+        }
         
+        const ctx = document.getElementById('revenueChart');
+        if (!ctx) {
+            console.error('Canvas element with ID "revenueChart" not found.');
+            return;
+        }
         try {
-            // Destroy existing chart if it exists
-            if (this.chartInstances.revenue) {
-                this.chartInstances.revenue.destroy();
-            }
-            
-            const revenueData = await this.getRevenueData();
-            
+            const data = await this.getRevenueData();
             this.chartInstances.revenue = new Chart(ctx, {
-                type: 'line',
+                type: 'bar',
                 data: {
-                    labels: revenueData.labels,
+                    labels: data.labels,
                     datasets: [{
-                        label: 'Revenue ($)',
-                        data: revenueData.values,
-                        borderColor: 'rgb(255, 99, 132)',
-                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                        tension: 0.1
-                    }]
+                        label: 'Revenue',
+                        data: data.values,
+                        backgroundColor: 'rgba(255, 159, 64, 0.7)',
+                    }],
                 },
                 options: {
                     responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Monthly Revenue'
-                        }
-                    },
+                    maintainAspectRatio: false,
                     scales: {
+                        x: {
+                            beginAtZero: true,
+                        },
                         y: {
                             beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return '$' + value.toLocaleString();
-                                }
-                            }
-                        }
-                    }
-                }
+                        },
+                    },
+                },
             });
         } catch (error) {
             console.error('Error initializing revenue chart:', error);
-            this.showEmptyChart(ctx, 'Failed to load revenue data');
+            this.showEmptyChart(ctx, 'Error loading revenue data.');
         }
     }
 
     async initializeUserActivityChart() {
-        const ctx = document.getElementById('userActivityChart');
-        if (!ctx) return;
+        // Destroy existing chart instance if it exists
+        const existingChart = Chart.getChart('userActivityChart');
+        if (existingChart) {
+            existingChart.destroy();
+        }
         
+        const ctx = document.getElementById('userActivityChart');
+        if (!ctx) {
+            console.error('Canvas element with ID "userActivityChart" not found.');
+            return;
+        }
         try {
-            // Destroy existing chart if it exists
-            if (this.chartInstances.userActivity) {
-                this.chartInstances.userActivity.destroy();
-            }
-            
-            const activityData = await this.getUserActivityData();
-            
+            const data = await this.getUserActivityData();
             this.chartInstances.userActivity = new Chart(ctx, {
-                type: 'doughnut',
+                type: 'bar',
                 data: {
-                    labels: activityData.labels,
+                    labels: data.labels,
                     datasets: [{
-                        data: activityData.values,
-                        backgroundColor: [
-                            'rgba(255, 99, 132, 0.8)',
-                            'rgba(54, 162, 235, 0.8)',
-                            'rgba(255, 205, 86, 0.8)',
-                            'rgba(75, 192, 192, 0.8)'
-                        ]
-                    }]
+                        label: 'User Activity',
+                        data: data.values,
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    }],
                 },
                 options: {
                     responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'User Activity Distribution'
-                        }
-                    }
-                }
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                        },
+                        y: {
+                            beginAtZero: true,
+                        },
+                    },
+                },
             });
         } catch (error) {
             console.error('Error initializing user activity chart:', error);
-            this.showEmptyChart(ctx, 'Failed to load user activity data');
+            this.showEmptyChart(ctx, 'Error loading user activity data.');
         }
     }
 
