@@ -1175,7 +1175,7 @@ class EnhancedAdminDashboard {
         });
         
         // Show selected section
-        const targetSection = document.getElementById(page); // Remove 'Section' suffix
+        const targetSection = document.getElementById(page);
         if (targetSection) {
             targetSection.classList.add('active');
         }
@@ -1185,7 +1185,7 @@ class EnhancedAdminDashboard {
             item.classList.remove('active');
         });
         
-        const activeNavItem = document.querySelector(`[data-section="${page}"]`); // Changed from data-page
+        const activeNavItem = document.querySelector(`[data-section="${page}"]`);
         if (activeNavItem) {
             activeNavItem.classList.add('active');
         }
@@ -1194,6 +1194,11 @@ class EnhancedAdminDashboard {
         
         // Load page-specific data
         this.loadPageData(page);
+    }
+    
+    // Add showSection method for backward compatibility
+    showSection(sectionId) {
+        this.navigateToPage(sectionId);
     }
 
     async loadPageData(page) {
@@ -1396,6 +1401,24 @@ class EnhancedAdminDashboard {
 document.addEventListener('DOMContentLoaded', () => {
     window.adminDashboard = new EnhancedAdminDashboard();
 });
+
+// Global instance and exports (add at the end of the file)
+const adminDashboard = new EnhancedAdminDashboard();
+
+// Global exports for external access
+window.adminDashboard = adminDashboard;
+window.showSection = (sectionId) => adminDashboard.showSection(sectionId);
+window.viewUser = (userId) => adminDashboard.viewUser(userId);
+window.editUser = (userId) => adminDashboard.editUser(userId);
+window.deleteUser = (userId) => adminDashboard.handleDeleteUser(userId);
+window.filterUsers = () => adminDashboard.filterUsers();
+window.clearUserFilters = () => {
+    document.getElementById('userSearchInput').value = '';
+    document.getElementById('userStatusFilter').value = 'all';
+    document.getElementById('userRoleFilter').value = 'all';
+    adminDashboard.filteredUsers = adminDashboard.users;
+    adminDashboard.renderUsersTable();
+};
 
 // Export for module usage
 export default EnhancedAdminDashboard;
