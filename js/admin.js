@@ -50,24 +50,24 @@ class EnhancedAdminDashboard {
 
     async init() {
         try {
+            // Initialize event listeners first
+            this.setupEventListeners();
+            
             // Check authentication state
-            onAuthStateChanged(this.auth, (user) => {
+            onAuthStateChanged(this.auth, async (user) => {
                 if (user) {
                     this.currentUser = user;
-                    this.checkAdminAccess();
+                    // Wait for admin access check to complete
+                    const hasAdminAccess = await this.checkAdminAccess();
+                    if (hasAdminAccess) {
+                        // Only load data after confirming admin access
+                        await this.loadDashboardData();
+                        this.setupRealtimeListeners();
+                    }
                 } else {
                     this.redirectToLogin();
                 }
             });
-
-            // Initialize event listeners
-            this.setupEventListeners();
-            
-            // Initialize dashboard
-            await this.loadDashboardData();
-            
-            // Setup real-time listeners
-            this.setupRealtimeListeners();
             
         } catch (error) {
             console.error('Admin initialization error:', error);
@@ -81,15 +81,17 @@ class EnhancedAdminDashboard {
             if (!userDoc.exists() || userDoc.data().role !== 'admin') {
                 this.showNotification('Access denied. Admin privileges required.', 'error');
                 await signOut(this.auth);
-                return;
+                return false;
             }
             
             // Update UI with admin info
             this.updateAdminInfo(userDoc.data());
+            return true;
             
         } catch (error) {
             console.error('Admin access check error:', error);
             this.redirectToLogin();
+            return false;
         }
     }
 
