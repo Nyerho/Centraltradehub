@@ -683,7 +683,6 @@ function resetUserPassword(userId) {
 function toggle2FA(userId) {
     showToast('2FA settings updated', 'success');
 }
-
 async function editUser(userId) {
     try {
         if (!window.db) {
