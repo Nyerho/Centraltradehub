@@ -46,6 +46,14 @@ class EnhancedAdminDashboard {
         this.usersPerPage = 10;
         this.currentUserPage = 1;
         
+        // Add chart instances to track and destroy them
+        this.chartInstances = {
+            tradingVolume: null,
+            userGrowth: null,
+            revenue: null,
+            userActivity: null
+        };
+        
         this.init();
     }
 
@@ -1206,11 +1214,16 @@ class EnhancedAdminDashboard {
         const adminEmail = document.getElementById('adminEmail');
         
         if (adminName) {
-            adminName.textContent = `${adminData.firstName} ${adminData.lastName}`;
+            // Handle cases where firstName/lastName might be undefined
+            const firstName = adminData.firstName || '';
+            const lastName = adminData.lastName || '';
+            const displayName = firstName && lastName ? `${firstName} ${lastName}` : 
+                               firstName || lastName || adminData.email?.split('@')[0] || 'Admin';
+            adminName.textContent = displayName;
         }
         
         if (adminEmail) {
-            adminEmail.textContent = adminData.email;
+            adminEmail.textContent = adminData.email || 'No email';
         }
     }
 
@@ -1231,6 +1244,14 @@ class EnhancedAdminDashboard {
     }
 
     initializeCharts() {
+        // Destroy existing charts before creating new ones
+        Object.keys(this.chartInstances).forEach(key => {
+            if (this.chartInstances[key]) {
+                this.chartInstances[key].destroy();
+                this.chartInstances[key] = null;
+            }
+        });
+        
         // Initialize Chart.js charts with real data
         this.initializeTradingVolumeChart();
         this.initializeUserGrowthChart();
@@ -1243,10 +1264,15 @@ class EnhancedAdminDashboard {
         if (!ctx) return;
         
         try {
+            // Destroy existing chart if it exists
+            if (this.chartInstances.tradingVolume) {
+                this.chartInstances.tradingVolume.destroy();
+            }
+            
             // Fetch real trading volume data from Firebase
             const volumeData = await this.getTradingVolumeData();
             
-            new Chart(ctx, {
+            this.chartInstances.tradingVolume = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: volumeData.labels,
@@ -1279,9 +1305,8 @@ class EnhancedAdminDashboard {
                 }
             });
         } catch (error) {
-            console.error('Error loading trading volume chart:', error);
-            // Show empty chart with message
-            this.showEmptyChart(ctx, 'Trading Volume data unavailable');
+            console.error('Error initializing trading volume chart:', error);
+            this.showEmptyChart(ctx, 'Failed to load trading volume data');
         }
     }
 
@@ -1290,17 +1315,21 @@ class EnhancedAdminDashboard {
         if (!ctx) return;
         
         try {
-            // Fetch real user growth data from Firebase
+            // Destroy existing chart if it exists
+            if (this.chartInstances.userGrowth) {
+                this.chartInstances.userGrowth.destroy();
+            }
+            
             const growthData = await this.getUserGrowthData();
             
-            new Chart(ctx, {
+            this.chartInstances.userGrowth = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: growthData.labels,
                     datasets: [{
                         label: 'New Users',
                         data: growthData.values,
-                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.8)',
                         borderColor: 'rgba(54, 162, 235, 1)',
                         borderWidth: 1
                     }]
@@ -1315,17 +1344,14 @@ class EnhancedAdminDashboard {
                     },
                     scales: {
                         y: {
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 1
-                            }
+                            beginAtZero: true
                         }
                     }
                 }
             });
         } catch (error) {
-            console.error('Error loading user growth chart:', error);
-            this.showEmptyChart(ctx, 'User growth data unavailable');
+            console.error('Error initializing user growth chart:', error);
+            this.showEmptyChart(ctx, 'Failed to load user growth data');
         }
     }
 
@@ -1334,60 +1360,22 @@ class EnhancedAdminDashboard {
         if (!ctx) return;
         
         try {
-            // Fetch real revenue data from Firebase
+            // Destroy existing chart if it exists
+            if (this.chartInstances.revenue) {
+                this.chartInstances.revenue.destroy();
+            }
+            
             const revenueData = await this.getRevenueData();
             
-            new Chart(ctx, {
-                type: 'doughnut',
+            this.chartInstances.revenue = new Chart(ctx, {
+                type: 'line',
                 data: {
                     labels: revenueData.labels,
                     datasets: [{
+                        label: 'Revenue ($)',
                         data: revenueData.values,
-                        backgroundColor: [
-                            'rgb(255, 99, 132)',
-                            'rgb(54, 162, 235)',
-                            'rgb(255, 205, 86)',
-                            'rgb(75, 192, 192)',
-                            'rgb(153, 102, 255)'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Revenue Sources'
-                        },
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
-            });
-        } catch (error) {
-            console.error('Error loading revenue chart:', error);
-            this.showEmptyChart(ctx, 'Revenue data unavailable');
-        }
-    }
-
-    async initializeUserActivityChart() {
-        const ctx = document.getElementById('userActivityChart');
-        if (!ctx) return;
-        
-        try {
-            // Fetch real user activity data from Firebase
-            const activityData = await this.getUserActivityData();
-            
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: activityData.labels,
-                    datasets: [{
-                        label: 'Active Users',
-                        data: activityData.values,
-                        borderColor: 'rgb(153, 102, 255)',
-                        backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
                         tension: 0.1
                     }]
                 },
@@ -1396,22 +1384,66 @@ class EnhancedAdminDashboard {
                     plugins: {
                         title: {
                             display: true,
-                            text: 'Daily User Activity'
+                            text: 'Monthly Revenue'
                         }
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
                             ticks: {
-                                stepSize: 1
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
                             }
                         }
                     }
                 }
             });
         } catch (error) {
-            console.error('Error loading user activity chart:', error);
-            this.showEmptyChart(ctx, 'User activity data unavailable');
+            console.error('Error initializing revenue chart:', error);
+            this.showEmptyChart(ctx, 'Failed to load revenue data');
+        }
+    }
+
+    async initializeUserActivityChart() {
+        const ctx = document.getElementById('userActivityChart');
+        if (!ctx) return;
+        
+        try {
+            // Destroy existing chart if it exists
+            if (this.chartInstances.userActivity) {
+                this.chartInstances.userActivity.destroy();
+            }
+            
+            const activityData = await this.getUserActivityData();
+            
+            this.chartInstances.userActivity = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: activityData.labels,
+                    datasets: [{
+                        data: activityData.values,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.8)',
+                            'rgba(54, 162, 235, 0.8)',
+                            'rgba(255, 205, 86, 0.8)',
+                            'rgba(75, 192, 192, 0.8)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'User Activity Distribution'
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error initializing user activity chart:', error);
+            this.showEmptyChart(ctx, 'Failed to load user activity data');
         }
     }
 
@@ -1763,23 +1795,41 @@ class EnhancedAdminDashboard {
     }
 
     populateUserDetailsModal(userData) {
-        document.getElementById('userDetailName').textContent = `${userData.firstName} ${userData.lastName}`;
-        document.getElementById('userDetailEmail').textContent = userData.email;
-        document.getElementById('userDetailRole').textContent = userData.role;
-        document.getElementById('userDetailStatus').textContent = userData.status;
-        document.getElementById('userDetailBalance').textContent = `$${userData.balance?.toFixed(2) || '0.00'}`;
-        document.getElementById('userDetailCreated').textContent = userData.createdAt ? 
-            new Date(userData.createdAt.toDate()).toLocaleString() : 'N/A';
+        const elements = {
+            'userDetailName': `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'N/A',
+            'userDetailEmail': userData.email || 'N/A',
+            'userDetailRole': userData.role || 'N/A',
+            'userDetailStatus': userData.status || 'N/A',
+            'userDetailBalance': `$${userData.balance?.toFixed(2) || '0.00'}`,
+            'userDetailCreated': userData.createdAt ? 
+                new Date(userData.createdAt.toDate()).toLocaleString() : 'N/A'
+        };
+        
+        Object.keys(elements).forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = elements[id];
+            }
+        });
     }
 
     populateEditUserModal(userData, userId) {
-        document.getElementById('editUserId').value = userId;
-        document.getElementById('editFirstName').value = userData.firstName || '';
-        document.getElementById('editLastName').value = userData.lastName || '';
-        document.getElementById('editEmail').value = userData.email || '';
-        document.getElementById('editRole').value = userData.role || 'user';
-        document.getElementById('editStatus').value = userData.status || 'active';
-        document.getElementById('editBalance').value = userData.balance || 0;
+        const elements = {
+            'editUserId': userId,
+            'editUserFirstName': userData.firstName || '',
+            'editUserLastName': userData.lastName || '',
+            'editUserEmail': userData.email || '',
+            'editUserRole': userData.role || 'user',
+            'editUserStatus': userData.status || 'active',
+            'editUserBalance': userData.balance || 0
+        };
+        
+        Object.keys(elements).forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.value = elements[id];
+            }
+        });
     }
 
     // Transaction and Trade Detail Methods
@@ -1910,4 +1960,14 @@ window.clearUserFilters = () => {
 };
 
 // Export for module usage
+// Add the missing openAdminProfile function
+window.openAdminProfile = function() {
+    // You can implement admin profile functionality here
+    console.log('Opening admin profile...');
+    // For now, just show a notification
+    if (window.adminDashboard) {
+        window.adminDashboard.showNotification('Admin profile feature coming soon!', 'info');
+    }
+};
+
 export default EnhancedAdminDashboard;
