@@ -126,8 +126,8 @@ class EnhancedAdminDashboard {
             });
         });
 
-        // Mobile menu toggle
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        // Mobile menu toggle - Fixed ID
+        const mobileMenuBtn = document.getElementById('sidebarToggle');
         if (mobileMenuBtn) {
             mobileMenuBtn.addEventListener('click', this.toggleMobileMenu.bind(this));
         }
@@ -1244,15 +1244,24 @@ class EnhancedAdminDashboard {
     }
 
     initializeCharts() {
-        // Destroy existing charts before creating new ones
+        // Destroy all existing charts first
         Object.keys(this.chartInstances).forEach(key => {
             if (this.chartInstances[key]) {
                 this.chartInstances[key].destroy();
-                this.chartInstances[key] = null;
+                delete this.chartInstances[key];
             }
         });
         
-        // Initialize Chart.js charts with real data
+        // Also destroy any charts that might exist by canvas ID
+        const chartCanvasIds = ['tradingVolumeChart', 'userGrowthChart', 'revenueChart', 'userActivityChart'];
+        chartCanvasIds.forEach(canvasId => {
+            const existingChart = Chart.getChart(canvasId);
+            if (existingChart) {
+                existingChart.destroy();
+            }
+        });
+        
+        // Initialize all charts
         this.initializeTradingVolumeChart();
         this.initializeUserGrowthChart();
         this.initializeRevenueChart();
@@ -1731,12 +1740,15 @@ class EnhancedAdminDashboard {
     }
 
     toggleMobileMenu() {
-        const sidebar = document.getElementById('sidebar');
+        const sidebar = document.getElementById('adminSidebar');
         const overlay = document.getElementById('mobileOverlay');
         
-        if (sidebar && overlay) {
-            sidebar.classList.toggle('show');
-            overlay.classList.toggle('show');
+        if (sidebar) {
+            sidebar.classList.toggle('mobile-open');
+        }
+        
+        if (overlay) {
+            overlay.classList.toggle('active');
         }
     }
 
