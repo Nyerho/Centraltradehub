@@ -77,13 +77,25 @@ class EnhancedAdminDashboard {
 
     async checkAdminAccess() {
         try {
+            console.log('Checking admin access for user:', this.currentUser.uid);
             const userDoc = await getDoc(doc(this.db, 'users', this.currentUser.uid));
+            
+            console.log('User document exists:', userDoc.exists());
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                console.log('User data:', userData);
+                console.log('User role:', userData.role);
+                console.log('Role check result:', userData.role === 'admin');
+            }
+            
             if (!userDoc.exists() || userDoc.data().role !== 'admin') {
+                console.log('Access denied - redirecting to login');
                 this.showNotification('Access denied. Admin privileges required.', 'error');
                 await signOut(this.auth);
                 return false;
             }
             
+            console.log('Admin access granted');
             // Update UI with admin info
             this.updateAdminInfo(userDoc.data());
             return true;
