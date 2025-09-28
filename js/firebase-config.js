@@ -83,5 +83,5 @@ window.addEventListener('unhandledrejection', (event) => {
 console.log('🚀 Firebase services ready and globally available');
 
 // Export for ES6 modules
-export { auth, db, storage, app };
-export default { auth, db, storage, app };
+export { auth, db, storage, app, firebaseConfig };
+export default { auth, db, storage, app, firebaseConfig };

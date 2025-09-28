@@ -95,10 +95,10 @@ class EnhancedAdminDashboard {
 
     setupEventListeners() {
         // Navigation
-        document.querySelectorAll('.nav-item').forEach(item => {
+        document.querySelectorAll('.nav-link').forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
-                const page = item.dataset.page;
+                const page = item.dataset.section; // Changed from dataset.page
                 this.navigateToPage(page);
             });
         });
@@ -1149,21 +1149,21 @@ class EnhancedAdminDashboard {
     navigateToPage(page) {
         // Hide all sections
         document.querySelectorAll('.admin-section').forEach(section => {
-            section.style.display = 'none';
+            section.classList.remove('active');
         });
         
         // Show selected section
-        const targetSection = document.getElementById(`${page}Section`);
+        const targetSection = document.getElementById(page); // Remove 'Section' suffix
         if (targetSection) {
-            targetSection.style.display = 'block';
+            targetSection.classList.add('active');
         }
         
         // Update navigation
-        document.querySelectorAll('.nav-item').forEach(item => {
+        document.querySelectorAll('.nav-link').forEach(item => {
             item.classList.remove('active');
         });
         
-        const activeNavItem = document.querySelector(`[data-page="${page}"]`);
+        const activeNavItem = document.querySelector(`[data-section="${page}"]`); // Changed from data-page
         if (activeNavItem) {
             activeNavItem.classList.add('active');
         }
