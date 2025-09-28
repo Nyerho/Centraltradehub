@@ -25,7 +25,8 @@ import {
     orderBy,
     where,
     limit,
-    serverTimestamp
+    serverTimestamp,
+    setDoc
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 // Firebase configuration (import from existing config)
@@ -143,6 +144,9 @@ class EnhancedAdminDashboard {
         
         // Withdrawal management events
         this.setupWithdrawalEvents();
+        
+        // COT management events
+        this.setupCotEventListeners();
     }
 
     setupUserManagementEvents() {
@@ -258,6 +262,29 @@ class EnhancedAdminDashboard {
             }
         });
     }
+    
+    setupCotEventListeners() {
+        const updateBtn = document.getElementById('updateGlobalCot');
+        const generateBtn = document.getElementById('generateRandomGlobalCot');
+        const copyBtn = document.getElementById('copyGlobalCot');
+        
+        if (updateBtn) {
+            updateBtn.addEventListener('click', () => this.updateGlobalCotCode());
+        }
+        
+        if (generateBtn) {
+            generateBtn.addEventListener('click', () => {
+                const newCodeInput = document.getElementById('newGlobalCot');
+                if (newCodeInput) {
+                    newCodeInput.value = this.generateRandomCotCode();
+                }
+            });
+        }
+        
+        if (copyBtn) {
+            copyBtn.addEventListener('click', () => this.copyGlobalCotCode());
+        }
+    }
 
     async loadDashboardData() {
         try {
@@ -269,13 +296,14 @@ class EnhancedAdminDashboard {
                 this.loadTransactions(),
                 this.loadTrades(),
                 this.loadWithdrawals(),
-                this.loadSiteSettings()
+                this.loadSiteSettings(),
+                this.loadGlobalCotCode()
             ]);
             
             // Log any failures for debugging
             results.forEach((result, index) => {
                 if (result.status === 'rejected') {
-                    const methods = ['loadUsers', 'loadTransactions', 'loadTrades', 'loadWithdrawals', 'loadSiteSettings'];
+                    const methods = ['loadUsers', 'loadTransactions', 'loadTrades', 'loadWithdrawals', 'loadSiteSettings', 'loadGlobalCotCode'];
                     console.warn(`${methods[index]} failed (likely empty collection):`, result.reason.message);
                 }
             });
@@ -381,6 +409,163 @@ class EnhancedAdminDashboard {
             console.error('Withdrawals loading error:', error);
             this.showNotification('Failed to load withdrawals', 'error');
         }
+    }
+    
+    async loadGlobalCotCode() {
+        try {
+            const docRef = doc(this.db, 'admin', 'withdrawal-settings');
+            const docSnap = await getDoc(docRef);
+            
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                const currentCotInput = document.getElementById('currentGlobalCot');
+                const lastUpdatedSpan = document.getElementById('cotLastUpdated');
+                const updatedBySpan = document.getElementById('cotUpdatedBy');
+                
+                if (currentCotInput) currentCotInput.value = data.cotCode || '';
+                if (lastUpdatedSpan) lastUpdatedSpan.textContent = data.lastUpdated ? new Date(data.lastUpdated).toLocaleString() : 'Never';
+                if (updatedBySpan) updatedBySpan.textContent = data.updatedBy || 'Admin';
+            } else {
+                // Initialize with default COT code
+                await this.initializeGlobalCot();
+            }
+        } catch (error) {
+            console.error('Error loading global COT code:', error);
+            this.showNotification('Failed to load COT code', 'error');
+        }
+    }
+    
+    async initializeGlobalCot() {
+        try {
+            const defaultCode = this.generateRandomCotCode();
+            const cotData = {
+                cotCode: defaultCode,
+                lastUpdated: new Date().toISOString(),
+                updatedBy: 'System',
+                createdAt: new Date().toISOString()
+            };
+            
+            const docRef = doc(this.db, 'admin', 'withdrawal-settings');
+            await setDoc(docRef, cotData);
+            
+            await this.loadGlobalCotCode();
+            this.showNotification('Global COT code initialized', 'success');
+        } catch (error) {
+            console.error('Error initializing global COT:', error);
+        }
+    }
+    
+    async updateGlobalCotCode() {
+        try {
+            const newCodeInput = document.getElementById('newGlobalCot');
+            let newCode = newCodeInput.value.trim();
+            
+            if (!newCode) {
+                this.showNotification('Please enter a new COT code', 'error');
+                return;
+            }
+            
+            if (newCode.length < 4) {
+                this.showNotification('COT code must be at least 4 characters long', 'error');
+                return;
+            }
+            
+            const cotData = {
+                cotCode: newCode,
+                lastUpdated: new Date().toISOString(),
+                updatedBy: this.currentUser?.email || 'Admin'
+            };
+            
+            const docRef = doc(this.db, 'admin', 'withdrawal-settings');
+            await setDoc(docRef, cotData, { merge: true });
+            
+            await this.loadGlobalCotCode();
+            newCodeInput.value = '';
+            
+            this.showNotification('Global COT code updated successfully!', 'success');
+        } catch (error) {
+            console.error('Error updating global COT code:', error);
+            this.showNotification('Error updating COT code', 'error');
+        }
+    }
+    
+    generateRandomCotCode() {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let result = '';
+        for (let i = 0; i < 8; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+    }
+    
+    copyGlobalCotCode() {
+        const currentCotInput = document.getElementById('currentGlobalCot');
+        const cotCode = currentCotInput?.value || '';
+        
+        if (!cotCode) {
+            this.showNotification('No COT code to copy', 'error');
+            return;
+        }
+        
+        navigator.clipboard.writeText(cotCode).then(() => {
+            this.showNotification('COT code copied to clipboard', 'success');
+        }).catch(() => {
+            this.showNotification('Failed to copy COT code', 'error');
+        });
+    }
+    
+    async loadUsersSection() {
+        try {
+            const usersSnapshot = await getDocs(collection(this.db, 'users'));
+            const tbody = document.getElementById('usersTableBody');
+            
+            if (!tbody) return;
+            
+            if (usersSnapshot.empty) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">No users found</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            usersSnapshot.forEach(doc => {
+                const user = doc.data();
+                html += `
+                    <tr>
+                        <td>${user.email || 'N/A'}</td>
+                        <td>${user.displayName || user.firstName + ' ' + user.lastName || 'N/A'}</td>
+                        <td>$${(user.balance || 0).toFixed(2)}</td>
+                        <td><span class="badge bg-${user.isActive ? 'success' : 'danger'}">${user.isActive ? 'Active' : 'Inactive'}</span></td>
+                        <td>${user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary me-1" onclick="adminDashboard.viewUser('${doc.id}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-warning me-1" onclick="adminDashboard.editUser('${doc.id}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        } catch (error) {
+            console.error('Error loading users:', error);
+            const tbody = document.getElementById('usersTableBody');
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-danger">Error loading users</td></tr>';
+            }
+        }
+    }
+    
+    loadFinancialData() {
+        // Placeholder for financial data loading
+        console.log('Loading financial data...');
+    }
+    
+    loadFundingData() {
+        // Placeholder for funding data loading
+        console.log('Loading funding data...');
     }
 
     async loadSiteSettings() {
@@ -1046,55 +1231,394 @@ class EnhancedAdminDashboard {
     }
 
     initializeCharts() {
-        // Initialize Chart.js charts
+        // Initialize Chart.js charts with real data
         this.initializeTradingVolumeChart();
         this.initializeUserGrowthChart();
         this.initializeRevenueChart();
         this.initializeUserActivityChart();
     }
 
-    initializeTradingVolumeChart() {
+    async initializeTradingVolumeChart() {
         const ctx = document.getElementById('tradingVolumeChart');
         if (!ctx) return;
         
-        // Sample data - replace with real data
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                datasets: [{
-                    label: 'Trading Volume',
-                    data: [12000, 19000, 15000, 25000, 22000, 30000],
-                    borderColor: 'rgb(75, 192, 192)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    tension: 0.1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Monthly Trading Volume'
+        try {
+            // Fetch real trading volume data from Firebase
+            const volumeData = await this.getTradingVolumeData();
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: volumeData.labels,
+                    datasets: [{
+                        label: 'Trading Volume ($)',
+                        data: volumeData.values,
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Monthly Trading Volume'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
                     }
                 }
-            }
-        });
+            });
+        } catch (error) {
+            console.error('Error loading trading volume chart:', error);
+            // Show empty chart with message
+            this.showEmptyChart(ctx, 'Trading Volume data unavailable');
+        }
     }
 
-    initializeUserGrowthChart() {
+    async initializeUserGrowthChart() {
         const ctx = document.getElementById('userGrowthChart');
         if (!ctx) return;
         
+        try {
+            // Fetch real user growth data from Firebase
+            const growthData = await this.getUserGrowthData();
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: growthData.labels,
+                    datasets: [{
+                        label: 'New Users',
+                        data: growthData.values,
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Monthly User Growth'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error loading user growth chart:', error);
+            this.showEmptyChart(ctx, 'User growth data unavailable');
+        }
+    }
+
+    async initializeRevenueChart() {
+        const ctx = document.getElementById('revenueChart');
+        if (!ctx) return;
+        
+        try {
+            // Fetch real revenue data from Firebase
+            const revenueData = await this.getRevenueData();
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: revenueData.labels,
+                    datasets: [{
+                        data: revenueData.values,
+                        backgroundColor: [
+                            'rgb(255, 99, 132)',
+                            'rgb(54, 162, 235)',
+                            'rgb(255, 205, 86)',
+                            'rgb(75, 192, 192)',
+                            'rgb(153, 102, 255)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Revenue Sources'
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error loading revenue chart:', error);
+            this.showEmptyChart(ctx, 'Revenue data unavailable');
+        }
+    }
+
+    async initializeUserActivityChart() {
+        const ctx = document.getElementById('userActivityChart');
+        if (!ctx) return;
+        
+        try {
+            // Fetch real user activity data from Firebase
+            const activityData = await this.getUserActivityData();
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: activityData.labels,
+                    datasets: [{
+                        label: 'Active Users',
+                        data: activityData.values,
+                        borderColor: 'rgb(153, 102, 255)',
+                        backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Daily User Activity'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error loading user activity chart:', error);
+            this.showEmptyChart(ctx, 'User activity data unavailable');
+        }
+    }
+
+    // Data fetching methods for charts
+    async getTradingVolumeData() {
+        try {
+            // Get trades from last 6 months
+            const sixMonthsAgo = new Date();
+            sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+            
+            const tradesQuery = query(
+                collection(this.db, 'trades'),
+                where('timestamp', '>=', sixMonthsAgo),
+                orderBy('timestamp', 'desc')
+            );
+            
+            const snapshot = await getDocs(tradesQuery);
+            const trades = snapshot.docs.map(doc => doc.data());
+            
+            // Group trades by month and calculate volume
+            const monthlyVolume = {};
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            
+            trades.forEach(trade => {
+                const date = new Date(trade.timestamp.toDate ? trade.timestamp.toDate() : trade.timestamp);
+                const monthKey = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+                
+                if (!monthlyVolume[monthKey]) {
+                    monthlyVolume[monthKey] = 0;
+                }
+                
+                // Add trade volume (amount * price or just amount)
+                const volume = trade.amount * (trade.price || 1);
+                monthlyVolume[monthKey] += volume;
+            });
+            
+            // Convert to chart format
+            const labels = Object.keys(monthlyVolume).slice(-6); // Last 6 months
+            const values = labels.map(label => monthlyVolume[label] || 0);
+            
+            return { labels, values };
+            
+        } catch (error) {
+            console.error('Error fetching trading volume data:', error);
+            // Return empty data if no trades found
+            return {
+                labels: ['No Data'],
+                values: [0]
+            };
+        }
+    }
+
+    async getUserGrowthData() {
+        try {
+            // Get user registrations from last 6 months
+            const sixMonthsAgo = new Date();
+            sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+            
+            const usersQuery = query(
+                collection(this.db, 'users'),
+                where('createdAt', '>=', sixMonthsAgo),
+                orderBy('createdAt', 'desc')
+            );
+            
+            const snapshot = await getDocs(usersQuery);
+            const users = snapshot.docs.map(doc => doc.data());
+            
+            // Group users by month
+            const monthlyGrowth = {};
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            
+            users.forEach(user => {
+                const date = new Date(user.createdAt.toDate ? user.createdAt.toDate() : user.createdAt);
+                const monthKey = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+                
+                if (!monthlyGrowth[monthKey]) {
+                    monthlyGrowth[monthKey] = 0;
+                }
+                monthlyGrowth[monthKey]++;
+            });
+            
+            // Convert to chart format
+            const labels = Object.keys(monthlyGrowth).slice(-6); // Last 6 months
+            const values = labels.map(label => monthlyGrowth[label] || 0);
+            
+            return { labels, values };
+            
+        } catch (error) {
+            console.error('Error fetching user growth data:', error);
+            return {
+                labels: ['No Data'],
+                values: [0]
+            };
+        }
+    }
+
+    async getRevenueData() {
+        try {
+            // Get transactions for revenue calculation
+            const transactionsQuery = query(
+                collection(this.db, 'transactions'),
+                where('type', 'in', ['trading_fee', 'withdrawal_fee', 'premium_plan']),
+                orderBy('timestamp', 'desc'),
+                limit(1000)
+            );
+            
+            const snapshot = await getDocs(transactionsQuery);
+            const transactions = snapshot.docs.map(doc => doc.data());
+            
+            // Calculate revenue by type
+            const revenueByType = {
+                'Trading Fees': 0,
+                'Withdrawal Fees': 0,
+                'Premium Plans': 0
+            };
+            
+            transactions.forEach(transaction => {
+                const amount = Math.abs(transaction.amount || 0);
+                
+                switch (transaction.type) {
+                    case 'trading_fee':
+                        revenueByType['Trading Fees'] += amount;
+                        break;
+                    case 'withdrawal_fee':
+                        revenueByType['Withdrawal Fees'] += amount;
+                        break;
+                    case 'premium_plan':
+                        revenueByType['Premium Plans'] += amount;
+                        break;
+                }
+            });
+            
+            return {
+                labels: Object.keys(revenueByType),
+                values: Object.values(revenueByType)
+            };
+            
+        } catch (error) {
+            console.error('Error fetching revenue data:', error);
+            return {
+                labels: ['No Data'],
+                values: [0]
+            };
+        }
+    }
+
+    async getUserActivityData() {
+        try {
+            // Get user login/activity data for today
+            const today = new Date();
+            const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+            
+            // Query user sessions or login events
+            const activityQuery = query(
+                collection(this.db, 'user_sessions'),
+                where('timestamp', '>=', startOfDay),
+                where('timestamp', '<', endOfDay),
+                orderBy('timestamp', 'desc')
+            );
+            
+            const snapshot = await getDocs(activityQuery);
+            const sessions = snapshot.docs.map(doc => doc.data());
+            
+            // Group by hour
+            const hourlyActivity = {};
+            for (let i = 0; i < 24; i += 4) {
+                const hourLabel = `${i.toString().padStart(2, '0')}:00`;
+                hourlyActivity[hourLabel] = 0;
+            }
+            
+            sessions.forEach(session => {
+                const date = new Date(session.timestamp.toDate ? session.timestamp.toDate() : session.timestamp);
+                const hour = Math.floor(date.getHours() / 4) * 4;
+                const hourLabel = `${hour.toString().padStart(2, '0')}:00`;
+                
+                if (hourlyActivity[hourLabel] !== undefined) {
+                    hourlyActivity[hourLabel]++;
+                }
+            });
+            
+            return {
+                labels: Object.keys(hourlyActivity),
+                values: Object.values(hourlyActivity)
+            };
+            
+        } catch (error) {
+            console.error('Error fetching user activity data:', error);
+            // Return default time labels with zero values
+            return {
+                labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                values: [0, 0, 0, 0, 0, 0]
+            };
+        }
+    }
+
+    showEmptyChart(ctx, message) {
+        // Create a simple chart showing no data message
         new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                labels: ['No Data'],
                 datasets: [{
-                    label: 'New Users',
-                    data: [65, 59, 80, 81, 56, 55],
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
+                    label: message,
+                    data: [0],
+                    backgroundColor: 'rgba(128, 128, 128, 0.2)',
+                    borderColor: 'rgba(128, 128, 128, 1)',
                     borderWidth: 1
                 }]
             },
@@ -1103,64 +1627,13 @@ class EnhancedAdminDashboard {
                 plugins: {
                     title: {
                         display: true,
-                        text: 'Monthly User Growth'
+                        text: message
                     }
-                }
-            }
-        });
-    }
-
-    initializeRevenueChart() {
-        const ctx = document.getElementById('revenueChart');
-        if (!ctx) return;
-        
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Trading Fees', 'Withdrawal Fees', 'Premium Plans'],
-                datasets: [{
-                    data: [300, 50, 100],
-                    backgroundColor: [
-                        'rgb(255, 99, 132)',
-                        'rgb(54, 162, 235)',
-                        'rgb(255, 205, 86)'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Revenue Sources'
-                    }
-                }
-            }
-        });
-    }
-
-    initializeUserActivityChart() {
-        const ctx = document.getElementById('userActivityChart');
-        if (!ctx) return;
-        
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
-                datasets: [{
-                    label: 'Active Users',
-                    data: [20, 10, 45, 80, 65, 35],
-                    borderColor: 'rgb(153, 102, 255)',
-                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
-                    tension: 0.1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Daily User Activity'
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 1
                     }
                 }
             }
@@ -1194,6 +1667,22 @@ class EnhancedAdminDashboard {
         
         // Load page-specific data
         this.loadPageData(page);
+        
+        // Load section-specific content
+        switch(page) {
+            case 'users':
+                this.loadUsersSection();
+                break;
+            case 'withdrawals':
+                this.loadGlobalCotCode();
+                break;
+            case 'financial':
+                this.loadFinancialData();
+                break;
+            case 'funding':
+                this.loadFundingData();
+                break;
+        }
     }
     
     // Add showSection method for backward compatibility

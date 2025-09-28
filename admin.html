@@ -8,6 +8,36 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .activity-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        
+        .activity-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        
+        .activity-text {
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .activity-feed {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
 </head>
 <body class="admin-body">
     <!-- Loading Screen -->
@@ -350,7 +380,17 @@
                             </div>
                         </div>
                         <div class="card-body">
-                            <canvas id="mainChart" height="300"></canvas>
+                            <!-- Combined chart container -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-muted mb-3">User Growth</h6>
+                                    <canvas id="userGrowthChart" height="200"></canvas>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-muted mb-3">Trading Volume</h6>
+                                    <canvas id="tradingVolumeChart" height="200"></canvas>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -361,7 +401,10 @@
                             <h5 class="card-title mb-0">Recent Activity</h5>
                         </div>
                         <div class="card-body">
-                            <div class="activity-feed" id="recentActivity">
+                            <!-- Add chart for recent activity -->
+                            <canvas id="userActivityChart" height="250"></canvas>
+                            <!-- Keep activity feed below chart -->
+                            <div class="activity-feed mt-3" id="recentActivity">
                                 <!-- Activity items will be loaded here -->
                             </div>
                         </div>
@@ -415,7 +458,49 @@
                 <h1 class="h3 mb-1"><i class="fas fa-users me-2"></i>User Management</h1>
                 <p class="text-muted">Manage user accounts, roles, and permissions</p>
             </div>
-            <!-- User management content will be loaded here -->
+            
+            <!-- User Management Content -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="userSearchInput" placeholder="Search users...">
+                        <button class="btn btn-outline-primary" id="searchUsersBtn">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-primary" id="refreshUsersBtn">
+                        <i class="fas fa-refresh"></i> Refresh
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card bg-dark">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Name</th>
+                                    <th>Balance</th>
+                                    <th>Status</th>
+                                    <th>Joined</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <i class="fas fa-spinner fa-spin me-2"></i>Loading users...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- Financial Section -->
@@ -424,7 +509,75 @@
                 <h1 class="h3 mb-1"><i class="fas fa-wallet me-2"></i>Financial Management</h1>
                 <p class="text-muted">Monitor transactions, balances, and financial operations</p>
             </div>
-            <!-- Financial management content will be loaded here -->
+            
+            <!-- Financial Overview Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary">
+                        <div class="card-body text-center">
+                            <i class="fas fa-dollar-sign fa-2x mb-2"></i>
+                            <h4 id="totalPlatformBalance">$0.00</h4>
+                            <p class="mb-0">Total Platform Balance</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success">
+                        <div class="card-body text-center">
+                            <i class="fas fa-arrow-up fa-2x mb-2"></i>
+                            <h4 id="totalDeposits">$0.00</h4>
+                            <p class="mb-0">Total Deposits</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning">
+                        <div class="card-body text-center">
+                            <i class="fas fa-arrow-down fa-2x mb-2"></i>
+                            <h4 id="totalWithdrawals">$0.00</h4>
+                            <p class="mb-0">Total Withdrawals</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info">
+                        <div class="card-body text-center">
+                            <i class="fas fa-chart-line fa-2x mb-2"></i>
+                            <h4 id="totalProfit">$0.00</h4>
+                            <p class="mb-0">Platform Profit</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Transactions -->
+            <div class="card bg-dark">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Transactions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>User</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionsTableBody">
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        <i class="fas fa-spinner fa-spin me-2"></i>Loading transactions...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- Withdrawals Section -->
@@ -434,13 +587,48 @@
                 <p class="text-muted">Review and process withdrawal requests</p>
             </div>
             <div class="row mb-4">
-                <div class="col-12">
+                <div class="col-md-6">
                     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#cotCodeModal">
-                        <i class="fas fa-key me-2"></i>Generate COT Code
+                        <i class="fas fa-key me-2"></i>Manage Global COT Code
+                    </button>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-success" id="refreshWithdrawalsBtn">
+                        <i class="fas fa-refresh"></i> Refresh
                     </button>
                 </div>
             </div>
-            <!-- Withdrawal management content will be loaded here -->
+            
+            <!-- Pending Withdrawals -->
+            <div class="card bg-dark">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Pending Withdrawal Requests</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>User</th>
+                                    <th>Amount</th>
+                                    <th>Method</th>
+                                    <th>Address</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="withdrawalsTableBody">
+                                <tr>
+                                    <td colspan="7" class="text-center py-4">
+                                        <i class="fas fa-spinner fa-spin me-2"></i>Loading withdrawal requests...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- Funding Section -->
@@ -449,7 +637,67 @@
                 <h1 class="h3 mb-1"><i class="fas fa-credit-card me-2"></i>Funding Management</h1>
                 <p class="text-muted">Manage user funding and deposits</p>
             </div>
-            <!-- Funding management content will be loaded here -->
+            
+            <!-- Funding Overview -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card bg-success">
+                        <div class="card-body text-center">
+                            <i class="fas fa-plus-circle fa-2x mb-2"></i>
+                            <h4 id="pendingDeposits">0</h4>
+                            <p class="mb-0">Pending Deposits</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-primary">
+                        <div class="card-body text-center">
+                            <i class="fas fa-check-circle fa-2x mb-2"></i>
+                            <h4 id="approvedDeposits">0</h4>
+                            <p class="mb-0">Approved Today</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-info">
+                        <div class="card-body text-center">
+                            <i class="fas fa-money-bill-wave fa-2x mb-2"></i>
+                            <h4 id="todayDepositAmount">$0.00</h4>
+                            <p class="mb-0">Today's Deposits</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Deposit Requests -->
+            <div class="card bg-dark">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Recent Deposit Requests</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>User</th>
+                                    <th>Amount</th>
+                                    <th>Method</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="depositsTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <i class="fas fa-spinner fa-spin me-2"></i>Loading deposit requests...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- AI Chat Section -->
@@ -556,33 +804,42 @@
         <div class="modal-dialog">
             <div class="modal-content bg-dark text-white">
                 <div class="modal-header border-secondary">
-                    <h5 class="modal-title" id="cotCodeModalLabel">Generate COT Code</h5>
+                    <h5 class="modal-title" id="cotCodeModalLabel">Manage Global COT Code</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="cotUserSelect" class="form-label">Select User</label>
-                        <select class="form-select bg-secondary text-white" id="cotUserSelect">
-                            <option value="">Choose user...</option>
-                        </select>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        This is a single global COT code used by all users for withdrawals.
                     </div>
                     <div class="mb-3">
-                        <label for="cotAmount" class="form-label">Withdrawal Amount</label>
-                        <input type="number" class="form-control bg-secondary text-white" id="cotAmount" step="0.01" placeholder="Enter amount">
-                    </div>
-                    <div class="mb-3">
-                        <label for="generatedCotCode" class="form-label">Generated COT Code</label>
+                        <label for="currentGlobalCot" class="form-label">Current Global COT Code</label>
                         <div class="input-group">
-                            <input type="text" class="form-control bg-secondary text-white" id="generatedCotCode" readonly>
-                            <button class="btn btn-outline-primary" type="button" id="copyCotCode">
+                            <input type="text" class="form-control bg-secondary text-white" id="currentGlobalCot" readonly>
+                            <button class="btn btn-outline-primary" type="button" id="copyGlobalCot">
                                 <i class="fas fa-copy"></i> Copy
                             </button>
                         </div>
                     </div>
+                    <div class="mb-3">
+                        <label for="newGlobalCot" class="form-label">New COT Code</label>
+                        <input type="text" class="form-control bg-secondary text-white" id="newGlobalCot" placeholder="Enter new COT code (min 4 chars)" maxlength="20">
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted">
+                            <strong>Last Updated:</strong> <span id="cotLastUpdated">Never</span><br>
+                            <strong>Updated By:</strong> <span id="cotUpdatedBy">N/A</span>
+                        </small>
+                    </div>
                 </div>
                 <div class="modal-footer border-secondary">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" id="generateCotCode">Generate Code</button>
+                    <button type="button" class="btn btn-warning" id="generateRandomGlobalCot">
+                        <i class="fas fa-random"></i> Generate Random
+                    </button>
+                    <button type="button" class="btn btn-primary" id="updateGlobalCot">
+                        <i class="fas fa-save"></i> Update Code
+                    </button>
                 </div>
             </div>
         </div>
