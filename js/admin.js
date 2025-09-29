@@ -692,15 +692,23 @@ class EnhancedAdminDashboard {
         });
     }
     
-    async loadUsersSection() {
+    async async loadUsersSection() {
         try {
+            console.log('Starting to load users section...'); // Debug log
             const usersSnapshot = await getDocs(collection(this.db, 'users'));
             const tbody = document.getElementById('usersTableBody');
             
-            if (!tbody) return;
+            console.log('Users table body element:', tbody); // Debug log
+            console.log('Users snapshot size:', usersSnapshot.size); // Debug log
+            
+            if (!tbody) {
+                console.error('usersTableBody element not found!');
+                return;
+            }
             
             if (usersSnapshot.empty) {
                 tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">No users found</td></tr>';
+                console.log('No users found in database');
                 return;
             }
             
@@ -727,6 +735,7 @@ class EnhancedAdminDashboard {
             });
             
             tbody.innerHTML = html;
+            console.log('Users table populated successfully'); // Debug log
         } catch (error) {
             console.error('Error loading users:', error);
             const tbody = document.getElementById('usersTableBody');
@@ -2296,6 +2305,8 @@ class EnhancedAdminDashboard {
 
     // Navigation Methods
     navigateToPage(page) {
+        console.log('Navigating to page:', page); // Debug log
+        
         // Hide all sections
         document.querySelectorAll('.admin-section').forEach(section => {
             section.classList.remove('active');
@@ -2303,8 +2314,13 @@ class EnhancedAdminDashboard {
         
         // Show selected section
         const targetSection = document.getElementById(page);
+        console.log('Target section found:', targetSection); // Debug log
+        
         if (targetSection) {
             targetSection.classList.add('active');
+            console.log('Added active class to section:', page); // Debug log
+        } else {
+            console.error('Section not found:', page); // Error log
         }
         
         // Update navigation
@@ -2325,6 +2341,7 @@ class EnhancedAdminDashboard {
         // Load section-specific content
         switch(page) {
             case 'users':
+                console.log('Loading users section...'); // Debug log
                 this.loadUsersSection();
                 break;
             case 'withdrawals':
@@ -2339,6 +2356,8 @@ class EnhancedAdminDashboard {
             case 'user-financial':
                 this.loadUserFinancialSection();
                 break;
+            default:
+                console.warn('Unknown page:', page); // Warning log
         }
     }
     
