@@ -28,7 +28,8 @@ import {
     serverTimestamp,
     setDoc,
     enableNetwork,
-    disableNetwork
+    disableNetwork,
+    increment
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 // Firebase configuration (import from existing config)
@@ -79,7 +80,8 @@ class EnhancedAdminDashboard {
             userActivity: null
         };
         
-        this.init();
+        // Remove this.init() call to prevent double initialization
+        // this.init();
     }
 
     async init() {
@@ -2407,10 +2409,10 @@ class EnhancedAdminDashboard {
             // Calculate the adjustment amount (negative for subtract)
             const adjustmentAmount = action === 'add' ? amount : -amount;
             
-            // Update user balance
+            // Update user balance using correct v9 syntax
             const userRef = doc(this.db, 'users', this.currentViewingUserId);
             await updateDoc(userRef, {
-                balance: firebase.firestore.FieldValue.increment(adjustmentAmount),
+                balance: increment(adjustmentAmount),
                 updatedAt: serverTimestamp()
             });
             
@@ -2628,6 +2630,9 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded, initializing admin dashboard...');
     adminDashboard = new EnhancedAdminDashboard();
     window.adminDashboard = adminDashboard;
+    
+    // Initialize the dashboard after creating the instance
+    adminDashboard.init();
     
     // Set up global exports after initialization
     setupGlobalExports();

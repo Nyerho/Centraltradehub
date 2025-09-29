@@ -403,18 +403,62 @@
         }
     
         async function loadUserBalance() {
-            if (!firebase?.firestore || !currentUser) return;
-            
-            const db = firebase.firestore();
             try {
-                const userDoc = await db.collection('users').doc(currentUser.uid).get();
-                if (userDoc.exists) {
+                // First check if we have a current user from auth manager
+                let user = currentUser;
+                
+                // If no current user, try to get from Firebase auth directly
+                if (!user && firebase?.auth) {
+                    user = firebase.auth().currentUser;
+                }
+                
+                // If still no user, try auth manager
+                if (!user && authManager) {
+                    user = authManager.getCurrentUser();
+                }
+                
+                if (!user) {
+                    console.log('No authenticated user found');
+                    document.getElementById('accountBalance').textContent = '$0.00';
+                    return;
+                }
+                
+                if (!firebase?.firestore) {
+                    console.error('Firestore not available');
+                    return;
+                }
+                
+                const db = firebase.firestore();
+                console.log('Loading balance for user:', user.uid);
+                
+                // Try to get user data from users collection first (matches dashboard logic)
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists()) {
                     const userData = userDoc.data();
-                    const balance = userData.balance || userData.accountBalance || 0;
+                    console.log('User data loaded:', userData);
+                    
+                    // Check multiple possible balance fields (matching dashboard.js logic)
+                    let balance = userData.accountBalance || userData.balance || 0;
+                    
+                    // If no balance in users collection, check accounts collection
+                    if (balance === 0) {
+                        const accountDoc = await db.collection('accounts').doc(user.uid).get();
+                        if (accountDoc.exists()) {
+                            const accountData = accountDoc.data();
+                            balance = accountData.balance || 0;
+                            console.log('Account data loaded:', accountData);
+                        }
+                    }
+                    
+                    console.log('Final balance:', balance);
                     document.getElementById('accountBalance').textContent = `$${balance.toFixed(2)}`;
+                } else {
+                    console.log('User document does not exist');
+                    document.getElementById('accountBalance').textContent = '$0.00';
                 }
             } catch (error) {
                 console.error('Error loading balance:', error);
+                document.getElementById('accountBalance').textContent = '$0.00';
             }
         }
     
@@ -535,6 +579,144 @@
             }
         }
         
+        // Add the missing submitWithdrawal function
+        async function submitWithdrawal() {
+            try {
+                // Get form values
+                const amount = parseFloat(document.getElementById('withdrawalAmount').value);
+                const selectedMethodCard = document.querySelector('.method-card.selected');
+                
+                // Validation
+                if (!amount || amount < 50) {
+                    showAlert('Minimum withdrawal amount is $50', 'error');
+                    return;
+                }
+                
+                if (!selectedMethodCard) {
+                    showAlert('Please select a withdrawal method', 'error');
+                    return;
+                }
+                
+                // Check authentication
+                if (!currentUser) {
+                    showAlert('Please log in to process withdrawal', 'error');
+                    return;
+                }
+                
+                const method = selectedMethodCard.dataset.method;
+                let withdrawalDetails = {};
+                
+                // Get method-specific details
+                if (method === 'bank') {
+                    const bankName = document.getElementById('bankName')?.value;
+                    const accountNumber = document.getElementById('accountNumber')?.value;
+                    const routingNumber = document.getElementById('routingNumber')?.value;
+                    const accountHolder = document.getElementById('accountHolder')?.value;
+                    
+                    if (!bankName || !accountNumber || !routingNumber || !accountHolder) {
+                        showAlert('Please fill in all bank details', 'error');
+                        return;
+                    }
+                    
+                    withdrawalDetails = {
+                        bankName,
+                        accountNumber,
+                        routingNumber,
+                        accountHolder
+                    };
+                } else if (method === 'crypto') {
+                    const cryptoType = document.getElementById('cryptoType')?.value;
+                    const walletAddress = document.getElementById('walletAddress')?.value;
+                    
+                    if (!cryptoType || !walletAddress) {
+                        showAlert('Please fill in all crypto details', 'error');
+                        return;
+                    }
+                    
+                    withdrawalDetails = {
+                        cryptoType,
+                        walletAddress
+                    };
+                }
+                
+                // Show loading state
+                const submitBtn = document.getElementById('submitWithdrawal');
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = 'Processing...';
+                submitBtn.disabled = true;
+                
+                // Create withdrawal request
+                const withdrawalRequest = {
+                    userId: currentUser.uid,
+                    userEmail: currentUser.email,
+                    amount: amount,
+                    method: method,
+                    details: withdrawalDetails,
+                    status: 'pending',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    id: 'WD-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9)
+                };
+                
+                // Save withdrawal request to Firestore
+                const db = firebase.firestore();
+                await db.collection('withdrawals').add(withdrawalRequest);
+                
+                // Update user balance (subtract withdrawal amount)
+                const userRef = db.collection('users').doc(currentUser.uid);
+                const userDoc = await userRef.get();
+                
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    const currentBalance = userData.accountBalance || userData.balance || 0;
+                    
+                    if (currentBalance >= amount) {
+                        // Update balance
+                        await userRef.update({
+                            accountBalance: currentBalance - amount,
+                            balance: currentBalance - amount
+                        });
+                        
+                        // Also update accounts collection if it exists
+                        const accountRef = db.collection('accounts').doc(currentUser.uid);
+                        const accountDoc = await accountRef.get();
+                        if (accountDoc.exists()) {
+                            await accountRef.update({
+                                balance: currentBalance - amount
+                            });
+                        }
+                        
+                        // Show success message
+                        showAlert(`Withdrawal request of $${amount.toFixed(2)} submitted successfully! Processing time: ${method === 'bank' ? '1-3 business days' : '30-60 minutes'}`, 'success');
+                        
+                        // Reset form
+                        document.getElementById('withdrawalAmount').value = '';
+                        document.querySelectorAll('.method-card').forEach(card => card.classList.remove('selected'));
+                        document.getElementById('bankDetails').style.display = 'none';
+                        document.getElementById('cryptoDetails').style.display = 'none';
+                        
+                        // Reload balance
+                        await loadUserBalance();
+                        
+                    } else {
+                        showAlert('Insufficient balance for this withdrawal', 'error');
+                    }
+                } else {
+                    showAlert('User account not found', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Withdrawal processing error:', error);
+                showAlert('Error processing withdrawal: ' + error.message, 'error');
+            } finally {
+                // Reset button state
+                const submitBtn = document.getElementById('submitWithdrawal');
+                if (submitBtn) {
+                    submitBtn.textContent = 'Submit Withdrawal Request';
+                    submitBtn.disabled = false;
+                }
+            }
+        }
+        
         function showAlert(message, type) {
             const alertDiv = document.createElement('div');
             alertDiv.className = `alert alert-${type}`;
@@ -564,58 +746,6 @@
             document.getElementById('withdrawalPage').classList.add('hidden');
         }
     
-        async function processWithdrawal() {
-            const amount = parseFloat(document.getElementById('withdrawalAmount').value);
-            const method = document.getElementById('withdrawalMethod').value;
-            const address = document.getElementById('withdrawalAddress').value;
-            
-            if (!amount || amount <= 0) {
-                showAlert('Please enter a valid withdrawal amount', 'error');
-                return;
-            }
-            
-            if (!method) {
-                showAlert('Please select a withdrawal method', 'error');
-                return;
-            }
-            
-            if (!address) {
-                showAlert('Please enter withdrawal address/details', 'error');
-                return;
-            }
-            
-            try {
-                // Save to Firebase
-                const db = firebase.firestore();
-                await db.collection('withdrawals').add({
-                    userId: currentUser.uid,
-                    amount: amount,
-                    method: method,
-                    address: address,
-                    status: 'pending',
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                // Update user balance
-                await db.collection('users').doc(currentUser.uid).update({
-                    balance: firebase.firestore.FieldValue.increment(-amount),
-                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                showAlert('Withdrawal request submitted successfully!', 'success');
-                
-                // Reset form
-                document.getElementById('withdrawalForm').reset();
-                
-                // Reload balance
-                await loadUserBalance();
-                
-            } catch (error) {
-                console.error('Withdrawal error:', error);
-                showAlert('Error processing withdrawal. Please try again.', 'error');
-            }
-        }
-    
         // Initialize on page load
         window.addEventListener('load', async () => {
             const cotVerified = sessionStorage.getItem('cotVerified');
@@ -630,7 +760,18 @@
                     if (authSuccess && currentUser) {
                         document.getElementById('cotModal').style.display = 'none';
                         document.getElementById('withdrawalPage').classList.remove('hidden');
+                        // Load balance with retry mechanism
                         await loadUserBalance();
+                        
+                        // Set up a listener for auth state changes to reload balance
+                        if (firebase?.auth) {
+                            firebase.auth().onAuthStateChanged(async (user) => {
+                                if (user) {
+                                    currentUser = user;
+                                    await loadUserBalance();
+                                }
+                            });
+                        }
                     } else {
                         // COT valid but not logged in, show COT modal with login prompt
                         showCotModal();
