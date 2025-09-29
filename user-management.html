@@ -434,10 +434,81 @@
         }
         
         .pagination button:disabled {
-            background: #6c757d;
-            color: #adb5bd;
+            opacity: 0.5;
             cursor: not-allowed;
-            opacity: 0.6;
+        }
+        
+        .form-section {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #2d2d44;
+            margin-bottom: 20px;
+        }
+        
+        .form-section h4 {
+            color: #00d4ff;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .balance-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .balance-actions .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .balance-actions .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .balance-actions .input-group input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #2d2d44;
+            border-radius: 4px;
+            background: #0f1419;
+            color: #e8eaed;
+        }
+        
+        .balance-actions .input-group button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            min-width: 120px;
+        }
+        
+        .current-balance {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #0f1419;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        
+        .current-balance label {
+            color: #b3c1d1;
+            font-weight: 500;
+        }
+        
+        .balance-amount {
+            color: #00d4ff;
+            font-size: 1.5rem;
+            font-weight: 600;
         }
         
         .toast {
