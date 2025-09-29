@@ -497,22 +497,22 @@ function renderUserDetails(userData, trades, transactions, userId) {
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Total Profits (Received):</label>
-                                    <input type="number" id="edit-profits-${userData.uid}" 
+                                    <input type="number" id="edit-profits-${userId}" 
                                            value="${userData.totalProfits || 0}" 
                                            step="0.01" min="0" class="form-control">
                                 </div>
                                 <div class="form-group">
                                     <label>Total Deposits:</label>
-                                    <input type="number" id="edit-deposits-${userData.uid}" 
+                                    <input type="number" id="edit-deposits-${userId}" 
                                            value="${userData.totalDeposits || 0}" 
                                            step="0.01" min="0" class="form-control">
                                 </div>
                             </div>
                             <div class="form-group">
-                                <button onclick="updateUserFinancials('${userData.uid}')" class="btn btn-primary">
+                                <button onclick="updateUserFinancials('${userId}')" class="btn btn-primary">
                                     <i class="fas fa-save"></i> Update Financial Data
                                 </button>
-                                <button onclick="calculateBalance('${userData.uid}')" class="btn btn-info">
+                                <button onclick="calculateBalance('${userId}')" class="btn btn-info">
                                     <i class="fas fa-calculator"></i> Auto-Calculate Balance
                                 </button>
                             </div>
