@@ -1209,15 +1209,36 @@ class EnhancedAdminDashboard {
 
     // UI Rendering Methods
     renderUsersTable() {
-        const tbody = document.getElementById('usersTableBody');
-        if (!tbody) return;
+        const tableBody = document.getElementById('usersTableBody');
+        if (!tableBody) {
+            console.error('Users table body not found');
+            return;
+        }
         
-        const usersToShow = this.filteredUsers || this.users;
+        // Use filteredUsers if available, otherwise use all users
+        const usersToRender = this.filteredUsers.length > 0 ? this.filteredUsers : this.users;
+        
+        if (usersToRender.length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-4">
+                        <div class="text-muted">
+                            <i class="fas fa-users fa-2x mb-2"></i>
+                            <p>No users found</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        // Calculate pagination
         const startIndex = (this.currentUserPage - 1) * this.usersPerPage;
         const endIndex = startIndex + this.usersPerPage;
-        const paginatedUsers = usersToShow.slice(startIndex, endIndex);
+        const paginatedUsers = usersToRender.slice(startIndex, endIndex);
         
-        tbody.innerHTML = paginatedUsers.map(user => `
+        // Render user rows
+        tableBody.innerHTML = paginatedUsers.map(user => `
             <tr>
                 <td><input type="checkbox" class="user-checkbox" value="${user.id}"></td>
                 <td>
@@ -1252,7 +1273,8 @@ class EnhancedAdminDashboard {
             </tr>
         `).join('');
         
-        this.renderUsersPagination(usersToShow.length);
+        // Update pagination
+        this.renderUsersPagination(usersToRender.length);
     }
 
     renderUsersPagination(totalUsers) {
@@ -2378,33 +2400,40 @@ class EnhancedAdminDashboard {
     }
 }
 
+// Declare adminDashboard variable in global scope
+let adminDashboard;
+
 // Initialize admin dashboard when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.adminDashboard = new EnhancedAdminDashboard();
+    console.log('DOM loaded, initializing admin dashboard...');
+    adminDashboard = new EnhancedAdminDashboard();
+    window.adminDashboard = adminDashboard;
+    
+    // Set up global exports after initialization
+    setupGlobalExports();
 });
 
-// Global instance and exports (add at the end of the file)
-const adminDashboard = new EnhancedAdminDashboard();
-
-// Global exports for external access
-window.adminDashboard = adminDashboard;
-window.showSection = (sectionId) => adminDashboard.showSection(sectionId);
-window.viewUser = (userId) => adminDashboard.viewUser(userId);
-window.editUser = (userId) => adminDashboard.editUser(userId);
-window.deleteUser = (userId) => adminDashboard.handleDeleteUser(userId);
-window.filterUsers = () => adminDashboard.filterUsers();
-window.clearUserFilters = () => {
-    document.getElementById('userSearchInput').value = '';
-    document.getElementById('userStatusFilter').value = 'all';
-    document.getElementById('userRoleFilter').value = 'all';
-    adminDashboard.filteredUsers = adminDashboard.users;
-    adminDashboard.renderUsersTable();
-};
-window.viewTrade = (tradeId) => adminDashboard.viewTrade(tradeId);
-window.openEditTradeModal = (tradeId) => adminDashboard.openEditTradeModal(tradeId);
-window.deleteTradeRecord = (tradeId) => adminDashboard.deleteTradeRecord(tradeId);
-window.openEditTransactionModal = (transactionId) => adminDashboard.openEditTransactionModal(transactionId);
-window.deleteTransactionRecord = (transactionId) => adminDashboard.deleteTransactionRecord(transactionId);
+// Function to set up global exports
+function setupGlobalExports() {
+    // Global exports for external access
+    window.showSection = (sectionId) => adminDashboard.showSection(sectionId);
+    window.viewUser = (userId) => adminDashboard.viewUser(userId);
+    window.editUser = (userId) => adminDashboard.editUser(userId);
+    window.deleteUser = (userId) => adminDashboard.handleDeleteUser(userId);
+    window.filterUsers = () => adminDashboard.filterUsers();
+    window.clearUserFilters = () => {
+        document.getElementById('userSearchInput').value = '';
+        document.getElementById('userStatusFilter').value = 'all';
+        document.getElementById('userRoleFilter').value = 'all';
+        adminDashboard.filteredUsers = adminDashboard.users;
+        adminDashboard.renderUsersTable();
+    };
+    window.viewTrade = (tradeId) => adminDashboard.viewTrade(tradeId);
+    window.openEditTradeModal = (tradeId) => adminDashboard.openEditTradeModal(tradeId);
+    window.deleteTradeRecord = (tradeId) => adminDashboard.deleteTradeRecord(tradeId);
+    window.openEditTransactionModal = (transactionId) => adminDashboard.openEditTransactionModal(transactionId);
+    window.deleteTransactionRecord = (transactionId) => adminDashboard.deleteTransactionRecord(transactionId);
+}
 
 // Export for module usage
 // Add the missing openAdminProfile function
