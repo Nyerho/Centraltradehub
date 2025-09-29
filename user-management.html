@@ -269,11 +269,31 @@
             font-weight: 600;
         }
         
+        .tab-btn {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            color: #e8eaed;
+        }
+        
+        .tab-btn.active {
+            border-bottom-color: #007bff;
+            color: #007bff;
+            font-weight: 600;
+        }
+        
         .tab-content {
             display: none;
         }
         
-        .tab-content.active {
+        .tab-pane {
+            display: none;
+        }
+        
+        .tab-pane.active {
             display: block;
         }
         
