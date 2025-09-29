@@ -825,6 +825,116 @@ class EnhancedAdminDashboard {
             this.isLoadingFunding = false;
         });
     }
+    
+    loadUserFinancialSection() {
+        // Prevent duplicate loading
+        if (this.isLoadingUserFinancial) {
+            return;
+        }
+        this.isLoadingUserFinancial = true;
+        console.log('Loading user financial data...');
+        
+        this.executeWithRetry(async () => {
+            if (!this.isOnline) {
+                throw new Error('No network connection');
+            }
+
+            // Load all users with their financial data
+            const usersQuery = query(
+                collection(this.db, 'users'),
+                orderBy('createdAt', 'desc')
+            );
+            
+            const usersSnapshot = await getDocs(usersQuery);
+            const usersFinancialData = [];
+            
+            for (const userDoc of usersSnapshot.docs) {
+                const userData = userDoc.data();
+                const userId = userDoc.id;
+                
+                // Get user's transaction summary
+                const transactionsQuery = query(
+                    collection(this.db, 'transactions'),
+                    where('uid', '==', userId)
+                );
+                
+                const transactionsSnapshot = await getDocs(transactionsQuery);
+                let totalDeposits = 0;
+                let totalWithdrawals = 0;
+                let transactionCount = 0;
+                
+                transactionsSnapshot.forEach(doc => {
+                    const transaction = doc.data();
+                    transactionCount++;
+                    if (transaction.type === 'deposit' && transaction.status === 'completed') {
+                        totalDeposits += transaction.amount || 0;
+                    } else if (transaction.type === 'withdrawal' && transaction.status === 'completed') {
+                        totalWithdrawals += transaction.amount || 0;
+                    }
+                });
+                
+                usersFinancialData.push({
+                    id: userId,
+                    email: userData.email,
+                    displayName: userData.displayName || 'N/A',
+                    balance: userData.balance || 0,
+                    totalDeposits,
+                    totalWithdrawals,
+                    transactionCount,
+                    lastActivity: userData.lastActivity || userData.createdAt
+                });
+            }
+            
+            // Render the user financial table
+            this.renderUserFinancialTable(usersFinancialData);
+            
+            console.log('User financial data loaded successfully');
+        }, 'User financial data loading')
+        .catch(error => {
+            console.error('Failed to load user financial data:', error);
+            this.showNotification('Failed to load user financial data. Please check your connection.', 'error');
+        })
+        .finally(() => {
+            this.isLoadingUserFinancial = false;
+        });
+    }
+    
+    renderUserFinancialTable(usersData) {
+        const tableBody = document.getElementById('userFinancialTableBody');
+        if (!tableBody) {
+            console.error('User financial table body not found');
+            return;
+        }
+        
+        // Hide loading spinner
+        const loadingSpinner = document.querySelector('#user-financial .loading-spinner');
+        if (loadingSpinner) {
+            loadingSpinner.style.display = 'none';
+        }
+        
+        if (usersData.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No users found</td></tr>';
+            return;
+        }
+        
+        tableBody.innerHTML = usersData.map(user => {
+            const lastActivity = user.lastActivity ? 
+                (user.lastActivity.toDate ? user.lastActivity.toDate().toLocaleDateString() : 
+                 new Date(user.lastActivity).toLocaleDateString()) : 'Never';
+            
+            return `
+                <tr>
+                    <td>${user.email}</td>
+                    <td>${user.displayName}</td>
+                    <td>$${user.balance.toFixed(2)}</td>
+                    <td>$${user.totalDeposits.toFixed(2)}</td>
+                    <td>$${user.totalWithdrawals.toFixed(2)}</td>
+                    <td>${user.transactionCount}</td>
+                    <td>${lastActivity}</td>
+                </tr>
+            `;
+        }).join('');
+    }
 
     updateFinancialStats(transactions) {
         // Calculate financial statistics
@@ -2225,6 +2335,9 @@ class EnhancedAdminDashboard {
                 break;
             case 'funding':
                 this.loadFundingData();
+                break;
+            case 'user-financial':
+                this.loadUserFinancialSection();
                 break;
         }
     }
