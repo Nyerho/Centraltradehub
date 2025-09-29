@@ -1208,14 +1208,14 @@ async function editUserProfile(userId) {
                     <button class="close-btn" onclick="this.closest('.modal-overlay').remove()">&times;</button>
                 </div>
                 <div class="modal-tabs">
-                    <button class="tab-btn active" onclick="showModalTab('profile-tab', this)">Profile</button>
-                    <button class="tab-btn" onclick="showModalTab('financial-tab', this)">Financial</button>
-                    <button class="tab-btn" onclick="showModalTab('transactions-tab', this)">Transactions</button>
-                    <button class="tab-btn" onclick="showModalTab('trades-tab', this)">Trades</button>
+                    <button class="tab-btn active" onclick="showModalTab('modal-profile-tab', this)">Profile</button>
+                    <button class="tab-btn" onclick="showModalTab('modal-financial-tab', this)">Financial</button>
+                    <button class="tab-btn" onclick="showModalTab('modal-transactions-tab', this)">Transactions</button>
+                    <button class="tab-btn" onclick="showModalTab('modal-trades-tab', this)">Trades</button>
                 </div>
                 <div class="modal-body">
                     <!-- Profile Tab -->
-                    <div id="profile-tab" class="tab-content active">
+                    <div id="modal-profile-tab" class="tab-content active">
                         <form id="editUserForm">
                             <div class="form-section">
                                 <h4>Personal Information</h4>
@@ -1258,7 +1258,7 @@ async function editUserProfile(userId) {
                     </div>
                     
                     <!-- Financial Tab -->
-                    <div id="financial-tab" class="tab-content">
+                    <div id="modal-financial-tab" class="tab-content">
                         <div class="form-section">
                             <h4>Account Balance Management</h4>
                             <div class="balance-display">
@@ -1294,7 +1294,7 @@ async function editUserProfile(userId) {
                     </div>
                     
                     <!-- Transactions Tab -->
-                    <div id="transactions-tab" class="tab-content">
+                    <div id="modal-transactions-tab" class="tab-content">
                         <div class="transactions-list">
                             ${transactions.empty ? '<p>No transactions found</p>' : transactions.docs.map(doc => {
                                 const tx = doc.data();
@@ -1316,7 +1316,7 @@ async function editUserProfile(userId) {
                     </div>
                     
                     <!-- Trades Tab -->
-                    <div id="trades-tab" class="tab-content">
+                    <div id="modal-trades-tab" class="tab-content\>
                         <div class="trades-list">
                             ${trades.empty ? '<p>No trades found</p>' : trades.docs.map(doc => {
                                 const trade = doc.data();
