@@ -1038,6 +1038,8 @@ window.deleteTrade = deleteTrade;
 window.changePage = changePage;
 window.saveUserEdits = saveUserEdits;
 window.closeEditModal = closeEditModal;
+window.saveUserProfile = saveUserProfile;
+window.editUserProfile = editUserProfile;
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', initializeUserManagement);
@@ -1421,19 +1423,26 @@ window.addUserProfit = async function(userId) {
 
 // Modal tab switching function
 window.showModalTab = function(tabId, button) {
-    // Hide all tab contents
-    document.querySelectorAll('.tab-content').forEach(tab => {
+    // Get the modal container to limit scope
+    const modal = button.closest('.modal-overlay');
+    if (!modal) return;
+    
+    // Hide all tab contents within this modal only
+    modal.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
     
-    // Remove active class from all tab buttons
-    document.querySelectorAll('.tab-btn').forEach(btn => {
+    // Remove active class from all tab buttons within this modal only
+    modal.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
     });
     
     // Show selected tab and mark button as active
-    document.getElementById(tabId).classList.add('active');
-    button.classList.add('active');
+    const targetTab = document.getElementById(tabId);
+    if (targetTab) {
+        targetTab.classList.add('active');
+        button.classList.add('active');
+    }
 };
 
 // Save user profile changes
