@@ -537,8 +537,14 @@
                     sessionStorage.setItem('cotVerified', 'true');
                     sessionStorage.setItem('cotTimestamp', Date.now().toString());
                     
+                    // Ensure authentication is initialized before loading balance
+                    if (!authManager) {
+                        await initializeAuth();
+                    }
+                    
                     // Load user balance if user is authenticated
-                    if (authManager && authManager.getCurrentUser()) {
+                    const currentUser = authManager ? authManager.getCurrentUser() : firebase.auth().currentUser;
+                    if (currentUser) {
                         await loadUserBalance();
                         showAlert('COT code verified! You can now proceed with your withdrawal.', 'success');
                     } else {
@@ -782,6 +788,13 @@
             // Clear any previous verification to force fresh COT entry
             sessionStorage.removeItem('cotVerified');
             sessionStorage.removeItem('cotTimestamp');
+            
+            // Initialize authentication first
+            const authInitialized = await initializeAuth();
+            if (authInitialized) {
+                console.log('Auth initialized successfully');
+            }
+            
             showCotModal();
         });
     </script>
