@@ -11,9 +11,16 @@ window.addEventListener('error', function(e) {
     showToast('An error occurred. Please refresh the page.', 'error');
 });
 
-// Firebase initialization with CORRECT configuration
+// Enhanced Firebase initialization with better error handling
 try {
-    if (typeof firebase !== 'undefined' && firebase.apps.length === 0) {
+    // Check if Firebase is available
+    if (typeof firebase === 'undefined') {
+        console.error('Firebase not loaded from CDN');
+        showToast('Firebase connection failed. Please check your internet connection and refresh the page.', 'error');
+        return;
+    }
+    
+    if (firebase.apps.length === 0) {
         const firebaseConfig = {
             apiKey: "AIzaSyAwnWoLfrEc1EtXWCD0by5L0VtCmYf8Unw",
             authDomain: "centraltradehub-30f00.firebaseapp.com",
@@ -27,38 +34,57 @@ try {
         firebase.initializeApp(firebaseConfig);
         window.db = firebase.firestore();
         console.log('Firebase initialized successfully with correct config');
-    } else if (typeof firebase !== 'undefined') {
+    } else {
         window.db = firebase.firestore();
         console.log('Using existing Firebase instance');
-    } else {
-        console.error('Firebase not available');
-        window.db = null;
     }
 } catch (error) {
     console.error('Firebase initialization failed:', error);
     window.db = null;
+    showToast('Database connection failed. Please refresh the page.', 'error');
 }
 
-// Initialize user management
+// Enhanced initialization with timeout
 async function initializeUserManagement() {
     try {
-        setupEventListeners();
+        // Wait for Firebase to be ready
+        let attempts = 0;
+        const maxAttempts = 50; // 5 seconds
         
-        // Show loading state immediately
+        while (typeof firebase === 'undefined' && attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+        
+        if (typeof firebase === 'undefined') {
+            throw new Error('Firebase failed to load after 5 seconds');
+        }
+        
+        setupEventListeners();
         showLoading(true);
         
-        // Add a small delay to ensure DOM is ready
         await new Promise(resolve => setTimeout(resolve, 100));
         
         await loadUsers();
         updateDashboardStats();
         
-        // Hide loading with a slight delay for smoother transition
         setTimeout(() => showLoading(false), 200);
     } catch (error) {
         console.error('Failed to initialize user management:', error);
-        showToast('Failed to load user data', 'error');
+        showToast('Failed to load user management system. Please refresh the page.', 'error');
         showLoading(false);
+        
+        // Show error message in the main content area
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) {
+            mainContent.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #dc3545;">
+                    <h3>Failed to Load User Management</h3>
+                    <p>Please check your internet connection and refresh the page.</p>
+                    <button onclick="location.reload()" class="btn-primary">Refresh Page</button>
+                </div>
+            `;
+        }
     }
 }
 
