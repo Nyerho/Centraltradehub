@@ -409,6 +409,11 @@
             }
         };
     
+        // Add the missing goBack function
+        window.goBack = function() {
+            window.location.href = 'dashboard.html';
+        };
+    
         // Initialize auth manager
         async function initializeAuth() {
             try {
@@ -773,39 +778,8 @@
     
         // Initialize on page load
         window.addEventListener('load', async () => {
-            const cotVerified = sessionStorage.getItem('cotVerified');
-            const cotTimestamp = sessionStorage.getItem('cotTimestamp');
-            
-            // COT verification expires after 1 hour
-            if (cotVerified === 'true' && cotTimestamp) {
-                const elapsed = Date.now() - parseInt(cotTimestamp);
-                if (elapsed < 3600000) { // 1 hour
-                    // COT is still valid, check auth and show page if user is logged in
-                    const authSuccess = await initializeAuth();
-                    if (authSuccess && currentUser) {
-                        document.getElementById('cotModal').style.display = 'none';
-                        document.getElementById('withdrawalPage').classList.remove('hidden');
-                        // Load balance with retry mechanism
-                        await loadUserBalance();
-                        
-                        // Set up a listener for auth state changes to reload balance
-                        if (firebase?.auth) {
-                            firebase.auth().onAuthStateChanged(async (user) => {
-                                if (user) {
-                                    currentUser = user;
-                                    await loadUserBalance();
-                                }
-                            });
-                        }
-                    } else {
-                        // COT valid but not logged in, show COT modal with login prompt
-                        showCotModal();
-                    }
-                    return;
-                }
-            }
-            
-            // Clear expired verification and show COT modal
+            // Always show COT modal first - remove the bypass logic
+            // Clear any previous verification to force fresh COT entry
             sessionStorage.removeItem('cotVerified');
             sessionStorage.removeItem('cotTimestamp');
             showCotModal();
