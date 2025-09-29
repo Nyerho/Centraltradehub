@@ -48,6 +48,10 @@ class EnhancedAdminDashboard {
         this.usersPerPage = 10;
         this.currentUserPage = 1;
         
+        // Add filtered collections
+        this.filteredUsers = [];
+        this.filteredTrades = [];
+        this.filteredTransactions = [];
           
         // Add loading flags to prevent duplicates
         this.isLoadingFinancial = false;
@@ -274,6 +278,40 @@ class EnhancedAdminDashboard {
         if (tradingConfigForm) {
             tradingConfigForm.addEventListener('submit', this.handleTradingConfig.bind(this));
         }
+        
+        // Trade management buttons
+        const addTradeBtn = document.getElementById('addTradeBtn');
+        if (addTradeBtn) {
+            addTradeBtn.addEventListener('click', this.openAddTradeModal.bind(this));
+        }
+        
+        // Trade search and filters
+        const tradeSearchInput = document.getElementById('tradeSearchInput');
+        const tradeStatusFilter = document.getElementById('tradeStatusFilter');
+        const tradeTypeFilter = document.getElementById('tradeTypeFilter');
+        const tradeDateFilter = document.getElementById('tradeDateFilter');
+        
+        if (tradeSearchInput) {
+            tradeSearchInput.addEventListener('input', this.filterTrades.bind(this));
+        }
+        
+        if (tradeStatusFilter) {
+            tradeStatusFilter.addEventListener('change', this.filterTrades.bind(this));
+        }
+        
+        if (tradeTypeFilter) {
+            tradeTypeFilter.addEventListener('change', this.filterTrades.bind(this));
+        }
+        
+        if (tradeDateFilter) {
+            tradeDateFilter.addEventListener('change', this.filterTrades.bind(this));
+        }
+        
+        // Save trade form
+        const saveTradeBtn = document.getElementById('saveTradeBtn');
+        if (saveTradeBtn) {
+            saveTradeBtn.addEventListener('click', this.saveTradeRecord.bind(this));
+        }
     }
 
     setupTransactionEvents() {
@@ -292,6 +330,18 @@ class EnhancedAdminDashboard {
         
         if (transactionDateFilter) {
             transactionDateFilter.addEventListener('change', this.filterTransactions.bind(this));
+        }
+        
+        // Transaction management buttons
+        const addTransactionBtn = document.getElementById('addTransactionBtn');
+        if (addTransactionBtn) {
+            addTransactionBtn.addEventListener('click', this.openAddTransactionModal.bind(this));
+        }
+        
+        // Save transaction form
+        const saveTransactionBtn = document.getElementById('saveTransactionBtn');
+        if (saveTransactionBtn) {
+            saveTransactionBtn.addEventListener('click', this.saveTransactionRecord.bind(this));
         }
     }
 
@@ -771,7 +821,7 @@ class EnhancedAdminDashboard {
     }
 
     renderFundingTable(fundingData) {
-        const tableBody = document.getElementById('funding-transactions-body');
+        const tableBody = document.getElementById('depositsTableBody');
         if (!tableBody) return;
         
         tableBody.innerHTML = fundingData.map(funding => `
@@ -793,7 +843,7 @@ class EnhancedAdminDashboard {
     }
 
     showOfflineFundingData() {
-        const tableBody = document.getElementById('funding-transactions-body');
+        const tableBody = document.getElementById('depositsTableBody');
         if (tableBody) {
             tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Offline - Unable to load funding data</td></tr>';
         }
@@ -1243,7 +1293,20 @@ class EnhancedAdminDashboard {
         const tbody = document.getElementById('transactionsTableBody');
         if (!tbody) return;
         
-        tbody.innerHTML = this.transactions.map(transaction => `
+        const transactionsToRender = this.filteredTransactions || this.transactions;
+        
+        if (transactionsToRender.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center py-4">
+                        <i class="fas fa-exchange-alt me-2"></i>No transactions found
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        tbody.innerHTML = transactionsToRender.map(transaction => `
             <tr>
                 <td>${transaction.id}</td>
                 <td>${transaction.userEmail || 'N/A'}</td>
@@ -1252,9 +1315,17 @@ class EnhancedAdminDashboard {
                 <td><span class="badge bg-${this.getTransactionStatusColor(transaction.status)}">${transaction.status}</span></td>
                 <td>${transaction.timestamp ? new Date(transaction.timestamp.toDate()).toLocaleString() : 'N/A'}</td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="adminDashboard.viewTransaction('${transaction.id}')">
-                        <i class="fas fa-eye"></i>
-                    </button>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary" onclick="adminDashboard.viewTransaction('${transaction.id}')" title="View">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-outline-warning" onclick="adminDashboard.openEditTransactionModal('${transaction.id}')" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="adminDashboard.deleteTransactionRecord('${transaction.id}')" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `).join('');
@@ -1264,22 +1335,50 @@ class EnhancedAdminDashboard {
         const tbody = document.getElementById('tradesTableBody');
         if (!tbody) return;
         
-        tbody.innerHTML = this.trades.map(trade => `
-            <tr>
-                <td>${trade.id}</td>
-                <td>${trade.userEmail || 'N/A'}</td>
-                <td>${trade.symbol || 'N/A'}</td>
-                <td><span class="badge bg-${trade.type === 'buy' ? 'success' : 'danger'}">${trade.type}</span></td>
-                <td>$${trade.amount?.toFixed(2) || '0.00'}</td>
-                <td><span class="badge bg-${this.getTradeStatusColor(trade.status)}">${trade.status}</span></td>
-                <td>${trade.timestamp ? new Date(trade.timestamp.toDate()).toLocaleString() : 'N/A'}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="adminDashboard.viewTrade('${trade.id}')">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
+        if (this.trades.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="11" class="text-center py-4">
+                        <i class="fas fa-chart-line me-2"></i>No trades found
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        tbody.innerHTML = this.trades.map(trade => {
+            const pnl = trade.pnl ? parseFloat(trade.pnl) : 0;
+            const pnlClass = pnl >= 0 ? 'text-success' : 'text-danger';
+            const pnlSign = pnl >= 0 ? '+' : '';
+            
+            return `
+                <tr>
+                    <td>${trade.id}</td>
+                    <td>${trade.userEmail || 'N/A'}</td>
+                    <td>${trade.symbol || 'N/A'}</td>
+                    <td><span class="badge bg-${trade.type === 'buy' ? 'success' : 'danger'}">${trade.type?.toUpperCase()}</span></td>
+                    <td>$${trade.amount?.toFixed(2) || '0.00'}</td>
+                    <td>$${trade.entryPrice?.toFixed(5) || '0.00000'}</td>
+                    <td>$${trade.currentPrice?.toFixed(5) || trade.entryPrice?.toFixed(5) || '0.00000'}</td>
+                    <td class="${pnlClass}">${pnlSign}$${Math.abs(pnl).toFixed(2)}</td>
+                    <td><span class="badge bg-${this.getTradeStatusColor(trade.status)}">${trade.status}</span></td>
+                    <td>${trade.timestamp ? new Date(trade.timestamp.toDate()).toLocaleString() : 'N/A'}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary" onclick="adminDashboard.viewTrade('${trade.id}')" title="View">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-warning" onclick="adminDashboard.openEditTradeModal('${trade.id}')" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="adminDashboard.deleteTradeRecord('${trade.id}')" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
     }
 
     renderWithdrawalsTable() {
@@ -1521,7 +1620,7 @@ class EnhancedAdminDashboard {
     }
 
     async initializeTradingVolumeChart() {
-        // Destroy existing chart instance if it exists
+        // Destroy existing chart instance if it exists (enhanced cleanup)
         try {
             const existingChart = Chart.getChart('tradingVolumeChart');
             if (existingChart) {
@@ -1529,6 +1628,12 @@ class EnhancedAdminDashboard {
             }
         } catch (error) {
             console.warn('Error destroying existing trading volume chart:', error);
+        }
+        
+        // Also destroy from local chartInstances if it exists
+        if (this.chartInstances.tradingVolume) {
+            this.chartInstances.tradingVolume.destroy();
+            this.chartInstances.tradingVolume = null;
         }
         
         const canvas = document.getElementById('tradingVolumeChart');
@@ -1589,10 +1694,16 @@ class EnhancedAdminDashboard {
     }
 
     async initializeUserGrowthChart() {
-        // Destroy existing chart instance if it exists
+        // Destroy existing chart instance if it exists (enhanced cleanup)
         const existingChart = Chart.getChart('userGrowthChart');
         if (existingChart) {
             existingChart.destroy();
+        }
+        
+        // Also destroy from local chartInstances if it exists
+        if (this.chartInstances.userGrowth) {
+            this.chartInstances.userGrowth.destroy();
+            this.chartInstances.userGrowth = null;
         }
         
         const ctx = document.getElementById('userGrowthChart');
@@ -1634,10 +1745,16 @@ class EnhancedAdminDashboard {
     }
 
     async initializeRevenueChart() {
-        // Destroy existing chart instance if it exists
+        // Destroy existing chart instance if it exists (enhanced cleanup)
         const existingChart = Chart.getChart('revenueChart');
         if (existingChart) {
             existingChart.destroy();
+        }
+        
+        // Also destroy from local chartInstances if it exists
+        if (this.chartInstances.revenue) {
+            this.chartInstances.revenue.destroy();
+            this.chartInstances.revenue = null;
         }
         
         const ctx = document.getElementById('revenueChart');
@@ -1645,6 +1762,7 @@ class EnhancedAdminDashboard {
             console.error('Canvas element with ID "revenueChart" not found.');
             return;
         }
+        
         try {
             const data = await this.getRevenueData();
             this.chartInstances.revenue = new Chart(ctx, {
@@ -1677,10 +1795,20 @@ class EnhancedAdminDashboard {
     }
 
     async initializeUserActivityChart() {
-        // Destroy existing chart instance if it exists
-        const existingChart = Chart.getChart('userActivityChart');
-        if (existingChart) {
-            existingChart.destroy();
+        // Destroy existing chart instance if it exists (enhanced cleanup)
+        try {
+            const existingChart = Chart.getChart('userActivityChart');
+            if (existingChart) {
+                existingChart.destroy();
+            }
+        } catch (error) {
+            console.warn('Error destroying existing user activity chart:', error);
+        }
+        
+        // Also destroy from local chartInstances if it exists
+        if (this.chartInstances.userActivity) {
+            this.chartInstances.userActivity.destroy();
+            this.chartInstances.userActivity = null;
         }
         
         const ctx = document.getElementById('userActivityChart');
@@ -1913,6 +2041,13 @@ class EnhancedAdminDashboard {
     }
 
     showEmptyChart(ctx, message) {
+        // Destroy existing chart instance if it exists
+        const canvasId = ctx.id;
+        const existingChart = Chart.getChart(canvasId);
+        if (existingChart) {
+            existingChart.destroy();
+        }
+        
         // Create a simple chart showing no data message
         new Chart(ctx, {
             type: 'bar',
@@ -2127,8 +2262,40 @@ class EnhancedAdminDashboard {
             const tradeDoc = await getDoc(doc(this.db, 'trades', tradeId));
             if (tradeDoc.exists()) {
                 const tradeData = tradeDoc.data();
-                // Implement trade details modal
-                console.log('Trade details:', tradeData);
+                // Populate trade details modal
+                const modalBody = document.getElementById('tradeDetailsModalBody');
+                if (modalBody) {
+                    const pnl = tradeData.pnl ? parseFloat(tradeData.pnl) : 0;
+                    const pnlClass = pnl >= 0 ? 'text-success' : 'text-danger';
+                    const pnlSign = pnl >= 0 ? '+' : '';
+                    
+                    modalBody.innerHTML = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>User:</strong> ${tradeData.userEmail || 'N/A'}</p>
+                                <p><strong>Symbol:</strong> ${tradeData.symbol || 'N/A'}</p>
+                                <p><strong>Type:</strong> <span class="badge bg-${tradeData.type === 'buy' ? 'success' : 'danger'}">${tradeData.type?.toUpperCase() || 'N/A'}</span></p>
+                                <p><strong>Amount:</strong> $${tradeData.amount?.toFixed(2) || '0.00'}</p>
+                                <p><strong>Leverage:</strong> ${tradeData.leverage || '1'}x</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Entry Price:</strong> $${tradeData.entryPrice?.toFixed(5) || '0.00000'}</p>
+                                <p><strong>Current Price:</strong> $${tradeData.currentPrice?.toFixed(5) || '0.00000'}</p>
+                                <p><strong>P&L:</strong> <span class="${pnlClass}">${pnlSign}$${Math.abs(pnl).toFixed(2)}</span></p>
+                                <p><strong>Status:</strong> <span class="badge bg-${this.getTradeStatusColor(tradeData.status)}">${tradeData.status || 'N/A'}</span></p>
+                                <p><strong>Date:</strong> ${tradeData.timestamp ? new Date(tradeData.timestamp.toDate()).toLocaleString() : 'N/A'}</p>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <p><strong>Stop Loss:</strong> ${tradeData.stopLoss ? '$' + tradeData.stopLoss.toFixed(5) : 'Not set'}</p>
+                                <p><strong>Take Profit:</strong> ${tradeData.takeProfit ? '$' + tradeData.takeProfit.toFixed(5) : 'Not set'}</p>
+                                <p><strong>Notes:</strong> ${tradeData.notes || 'No notes'}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+                this.openModal('tradeDetailsModal');
             }
         } catch (error) {
             console.error('View trade error:', error);
@@ -2233,6 +2400,11 @@ window.clearUserFilters = () => {
     adminDashboard.filteredUsers = adminDashboard.users;
     adminDashboard.renderUsersTable();
 };
+window.viewTrade = (tradeId) => adminDashboard.viewTrade(tradeId);
+window.openEditTradeModal = (tradeId) => adminDashboard.openEditTradeModal(tradeId);
+window.deleteTradeRecord = (tradeId) => adminDashboard.deleteTradeRecord(tradeId);
+window.openEditTransactionModal = (transactionId) => adminDashboard.openEditTransactionModal(transactionId);
+window.deleteTransactionRecord = (transactionId) => adminDashboard.deleteTransactionRecord(transactionId);
 
 // Export for module usage
 // Add the missing openAdminProfile function
@@ -2243,6 +2415,349 @@ window.openAdminProfile = function() {
     if (window.adminDashboard) {
         window.adminDashboard.showNotification('Admin profile feature coming soon!', 'info');
     }
+};
+
+// Trading History CRUD Methods
+EnhancedAdminDashboard.prototype.openAddTradeModal = function() {
+    // Clear form
+    document.getElementById('addEditTradeForm').reset();
+    document.getElementById('tradeId').value = '';
+    document.getElementById('addEditTradeModalLabel').textContent = 'Add New Trade';
+    
+    // Set current date/time for new trades
+    const now = new Date();
+    const currentDateTime = now.toISOString().slice(0, 16);
+    const tradeDateInput = document.getElementById('tradeDate');
+    if (tradeDateInput) {
+        tradeDateInput.value = currentDateTime;
+    }
+    
+    this.openModal('addEditTradeModal');
+};
+
+EnhancedAdminDashboard.prototype.openEditTradeModal = async function(tradeId) {
+    try {
+        const tradeDoc = await getDoc(doc(this.db, 'trades', tradeId));
+        if (tradeDoc.exists()) {
+            const tradeData = tradeDoc.data();
+            
+            // Populate form with existing data
+            document.getElementById('tradeId').value = tradeId;
+            document.getElementById('tradeUserEmail').value = tradeData.userEmail || '';
+            document.getElementById('tradeSymbol').value = tradeData.symbol || '';
+            document.getElementById('tradeType').value = tradeData.type || '';
+            document.getElementById('tradeAmount').value = tradeData.amount || '';
+            document.getElementById('tradeEntryPrice').value = tradeData.entryPrice || '';
+            document.getElementById('tradeCurrentPrice').value = tradeData.currentPrice || '';
+            document.getElementById('tradeStopLoss').value = tradeData.stopLoss || '';
+            document.getElementById('tradeTakeProfit').value = tradeData.takeProfit || '';
+            document.getElementById('tradeStatus').value = tradeData.status || '';
+            document.getElementById('tradeLeverage').value = tradeData.leverage || 1;
+            document.getElementById('tradeNotes').value = tradeData.notes || '';
+            
+            document.getElementById('addEditTradeModalLabel').textContent = 'Edit Trade';
+            this.openModal('addEditTradeModal');
+        }
+    } catch (error) {
+        console.error('Error loading trade for edit:', error);
+        this.showNotification('Failed to load trade details', 'error');
+    }
+};
+
+EnhancedAdminDashboard.prototype.saveTradeRecord = async function() {
+    try {
+        const form = document.getElementById('addEditTradeForm');
+        const formData = new FormData(form);
+        const tradeId = document.getElementById('tradeId').value;
+        
+        // Validate required fields
+        const userEmail = document.getElementById('tradeUserEmail').value.trim();
+        const symbol = document.getElementById('tradeSymbol').value.trim();
+        const type = document.getElementById('tradeType').value;
+        const amount = parseFloat(document.getElementById('tradeAmount').value);
+        const entryPrice = parseFloat(document.getElementById('tradeEntryPrice').value);
+        const status = document.getElementById('tradeStatus').value;
+        
+        if (!userEmail || !symbol || !type || !amount || !entryPrice || !status) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+        
+        // Prepare trade data
+        const tradeData = {
+            userEmail: userEmail,
+            symbol: symbol.toUpperCase(),
+            type: type,
+            amount: amount,
+            entryPrice: entryPrice,
+            currentPrice: parseFloat(document.getElementById('tradeCurrentPrice').value) || entryPrice,
+            stopLoss: parseFloat(document.getElementById('tradeStopLoss').value) || null,
+            takeProfit: parseFloat(document.getElementById('tradeTakeProfit').value) || null,
+            status: status,
+            leverage: parseInt(document.getElementById('tradeLeverage').value) || 1,
+            notes: document.getElementById('tradeNotes').value.trim() || '',
+            updatedAt: serverTimestamp()
+        };
+        
+        // Calculate P&L if current price is available
+        if (tradeData.currentPrice && tradeData.currentPrice !== tradeData.entryPrice) {
+            const priceDiff = tradeData.currentPrice - tradeData.entryPrice;
+            const multiplier = tradeData.type === 'buy' ? 1 : -1;
+            tradeData.pnl = (priceDiff * multiplier * tradeData.amount).toFixed(2);
+        }
+        
+        if (tradeId) {
+            // Update existing trade
+            await updateDoc(doc(this.db, 'trades', tradeId), tradeData);
+            this.showNotification('Trade updated successfully', 'success');
+        } else {
+            // Add new trade
+            tradeData.createdAt = serverTimestamp();
+            tradeData.createdBy = this.currentUser.uid;
+            await addDoc(collection(this.db, 'trades'), tradeData);
+            this.showNotification('Trade added successfully', 'success');
+        }
+        
+        this.closeModal('addEditTradeModal');
+        await this.loadTrades(); // Refresh the trades table
+        
+    } catch (error) {
+        console.error('Error saving trade:', error);
+        this.showNotification('Failed to save trade', 'error');
+    }
+};
+
+EnhancedAdminDashboard.prototype.deleteTradeRecord = async function(tradeId) {
+    // Set up the confirmation modal
+    document.getElementById('deleteConfirmText').textContent = 
+        'Are you sure you want to delete this trade record? This action cannot be undone.';
+    
+    // Set up the delete button click handler
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    confirmBtn.onclick = async () => {
+        try {
+            await deleteDoc(doc(this.db, 'trades', tradeId));
+            this.showNotification('Trade deleted successfully', 'success');
+            this.closeModal('confirmDeleteModal');
+            await this.loadTrades(); // Refresh the trades table
+        } catch (error) {
+            console.error('Error deleting trade:', error);
+            this.showNotification('Failed to delete trade', 'error');
+        }
+    };
+    
+    this.openModal('confirmDeleteModal');
+};
+
+EnhancedAdminDashboard.prototype.filterTrades = function() {
+    const searchTerm = document.getElementById('tradeSearchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('tradeStatusFilter').value;
+    const typeFilter = document.getElementById('tradeTypeFilter').value;
+    const dateFilter = document.getElementById('tradeDateFilter').value;
+    
+    this.filteredTrades = this.trades.filter(trade => {
+        const searchMatch = !searchTerm || 
+            trade.userEmail?.toLowerCase().includes(searchTerm) ||
+            trade.symbol?.toLowerCase().includes(searchTerm) ||
+            trade.id?.toLowerCase().includes(searchTerm);
+        
+        const statusMatch = !statusFilter || trade.status === statusFilter;
+        const typeMatch = !typeFilter || trade.type === typeFilter;
+        
+        let dateMatch = true;
+        if (dateFilter && trade.timestamp) {
+            const tradeDate = trade.timestamp.toDate();
+            const filterDate = new Date(dateFilter);
+            dateMatch = tradeDate.toDateString() === filterDate.toDateString();
+        }
+        
+        return searchMatch && statusMatch && typeMatch && dateMatch;
+    });
+    
+    this.renderFilteredTradesTable();
+};
+
+EnhancedAdminDashboard.prototype.renderFilteredTradesTable = function() {
+    const tbody = document.getElementById('tradesTableBody');
+    if (!tbody) return;
+    
+    const tradesToRender = this.filteredTrades || this.trades;
+    
+    if (tradesToRender.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="11" class="text-center py-4">
+                    <i class="fas fa-search me-2"></i>No trades found
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = tradesToRender.map(trade => {
+        const pnl = trade.pnl ? parseFloat(trade.pnl) : 0;
+        const pnlClass = pnl >= 0 ? 'text-success' : 'text-danger';
+        const pnlSign = pnl >= 0 ? '+' : '';
+        
+        return `
+            <tr>
+                <td>${trade.id}</td>
+                <td>${trade.userEmail || 'N/A'}</td>
+                <td>${trade.symbol || 'N/A'}</td>
+                <td><span class="badge bg-${trade.type === 'buy' ? 'success' : 'danger'}">${trade.type?.toUpperCase()}</span></td>
+                <td>$${trade.amount?.toFixed(2) || '0.00'}</td>
+                <td>$${trade.entryPrice?.toFixed(5) || '0.00000'}</td>
+                <td>$${trade.currentPrice?.toFixed(5) || trade.entryPrice?.toFixed(5) || '0.00000'}</td>
+                <td class="${pnlClass}">${pnlSign}$${Math.abs(pnl).toFixed(2)}</td>
+                <td><span class="badge bg-${this.getTradeStatusColor(trade.status)}">${trade.status}</span></td>
+                <td>${trade.timestamp ? new Date(trade.timestamp.toDate()).toLocaleString() : 'N/A'}</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary" onclick="adminDashboard.viewTrade('${trade.id}')" title="View">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-outline-warning" onclick="adminDashboard.openEditTradeModal('${trade.id}')" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="adminDashboard.deleteTradeRecord('${trade.id}')" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+};
+
+// Transaction History CRUD Methods
+EnhancedAdminDashboard.prototype.openAddTransactionModal = function() {
+    // Clear form
+    document.getElementById('addEditTransactionForm').reset();
+    document.getElementById('transactionId').value = '';
+    document.getElementById('addEditTransactionModalLabel').textContent = 'Add New Transaction';
+    
+    // Set current date/time for new transactions
+    const now = new Date();
+    const currentDateTime = now.toISOString().slice(0, 16);
+    const transactionDateInput = document.getElementById('transactionDate');
+    if (transactionDateInput) {
+        transactionDateInput.value = currentDateTime;
+    }
+    
+    this.openModal('addEditTransactionModal');
+};
+
+EnhancedAdminDashboard.prototype.openEditTransactionModal = async function(transactionId) {
+    try {
+        const transactionDoc = await getDoc(doc(this.db, 'transactions', transactionId));
+        if (transactionDoc.exists()) {
+            const transactionData = transactionDoc.data();
+            
+            // Populate form with existing data
+            document.getElementById('transactionId').value = transactionId;
+            document.getElementById('transactionUserEmail').value = transactionData.userEmail || '';
+            document.getElementById('transactionType').value = transactionData.type || '';
+            document.getElementById('transactionAmount').value = transactionData.amount || '';
+            document.getElementById('transactionFee').value = transactionData.fee || 0;
+            document.getElementById('transactionStatus').value = transactionData.status || '';
+            document.getElementById('transactionMethod').value = transactionData.method || '';
+            document.getElementById('transactionReference').value = transactionData.reference || '';
+            document.getElementById('transactionDescription').value = transactionData.description || '';
+            
+            // Set date if available
+            if (transactionData.timestamp) {
+                const date = transactionData.timestamp.toDate();
+                document.getElementById('transactionDate').value = date.toISOString().slice(0, 16);
+            }
+            
+            document.getElementById('addEditTransactionModalLabel').textContent = 'Edit Transaction';
+            this.openModal('addEditTransactionModal');
+        }
+    } catch (error) {
+        console.error('Error loading transaction for edit:', error);
+        this.showNotification('Failed to load transaction details', 'error');
+    }
+};
+
+EnhancedAdminDashboard.prototype.saveTransactionRecord = async function() {
+    try {
+        const form = document.getElementById('addEditTransactionForm');
+        const transactionId = document.getElementById('transactionId').value;
+        
+        // Validate required fields
+        const userEmail = document.getElementById('transactionUserEmail').value.trim();
+        const type = document.getElementById('transactionType').value;
+        const amount = parseFloat(document.getElementById('transactionAmount').value);
+        const status = document.getElementById('transactionStatus').value;
+        
+        if (!userEmail || !type || !amount || !status) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+        
+        // Prepare transaction data
+        const transactionData = {
+            userEmail: userEmail,
+            type: type,
+            amount: amount,
+            fee: parseFloat(document.getElementById('transactionFee').value) || 0,
+            status: status,
+            method: document.getElementById('transactionMethod').value || '',
+            reference: document.getElementById('transactionReference').value.trim() || '',
+            description: document.getElementById('transactionDescription').value.trim() || '',
+            updatedAt: serverTimestamp()
+        };
+        
+        // Set custom date if provided, otherwise use current timestamp
+        const customDate = document.getElementById('transactionDate').value;
+        if (customDate) {
+            transactionData.timestamp = new Date(customDate);
+        }
+        
+        if (transactionId) {
+            // Update existing transaction
+            await updateDoc(doc(this.db, 'transactions', transactionId), transactionData);
+            this.showNotification('Transaction updated successfully', 'success');
+        } else {
+            // Add new transaction
+            if (!transactionData.timestamp) {
+                transactionData.timestamp = serverTimestamp();
+            }
+            transactionData.createdAt = serverTimestamp();
+            transactionData.createdBy = this.currentUser.uid;
+            await addDoc(collection(this.db, 'transactions'), transactionData);
+            this.showNotification('Transaction added successfully', 'success');
+        }
+        
+        this.closeModal('addEditTransactionModal');
+        await this.loadTransactions(); // Refresh the transactions table
+        
+    } catch (error) {
+        console.error('Error saving transaction:', error);
+        this.showNotification('Failed to save transaction', 'error');
+    }
+};
+
+EnhancedAdminDashboard.prototype.deleteTransactionRecord = async function(transactionId) {
+    // Set up the confirmation modal
+    document.getElementById('deleteConfirmText').textContent = 
+        'Are you sure you want to delete this transaction record? This action cannot be undone.';
+    
+    // Set up the delete button click handler
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    confirmBtn.onclick = async () => {
+        try {
+            await deleteDoc(doc(this.db, 'transactions', transactionId));
+            this.showNotification('Transaction deleted successfully', 'success');
+            this.closeModal('confirmDeleteModal');
+            await this.loadTransactions(); // Refresh the transactions table
+        } catch (error) {
+            console.error('Error deleting transaction:', error);
+            this.showNotification('Failed to delete transaction', 'error');
+        }
+    };
+    
+    this.openModal('confirmDeleteModal');
 };
 
 export default EnhancedAdminDashboard;

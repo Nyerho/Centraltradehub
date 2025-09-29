@@ -221,13 +221,20 @@ function displayUsers() {
     
     usersToShow.forEach(user => {
         const row = document.createElement('tr');
+        // Fix the name display logic
+        const displayName = user.displayName || 
+                           (user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : '') ||
+                           (user.profile?.firstName && user.profile?.lastName ? `${user.profile.firstName} ${user.profile.lastName}` : '') ||
+                           user.fullName ||
+                           'N/A';
+        
         row.innerHTML = `
             <td>${user.id}</td>
-            <td>${user.email}</td>
-            <td>${user.fullName}</td>
-            <td>$${user.accountBalance?.toFixed(2) || '0.00'}</td>
-            <td><span class="status-badge status-${user.status}">${user.status}</span></td>
-            <td>${user.joinDate}</td>
+            <td>${user.email || 'N/A'}</td>
+            <td>${displayName}</td>
+            <td>$${user.accountBalance?.toFixed(2) || user.balance?.toFixed(2) || user.trading?.balance?.toFixed(2) || '0.00'}</td>
+            <td><span class="status-badge status-${user.status || user.trading?.accountStatus || 'active'}">${user.status || user.trading?.accountStatus || 'active'}</span></td>
+            <td>${user.joinDate || (user.createdAt ? new Date(user.createdAt.toDate ? user.createdAt.toDate() : user.createdAt).toLocaleDateString() : 'N/A')}</td>
             <td>
                 <button class="btn btn-sm btn-primary" onclick="toggleUserDetails('${user.id}')">
                     <i class="fas fa-eye"></i> Details
@@ -376,6 +383,13 @@ function generateSampleTransactions(userId) {
 function renderUserDetails(userData, trades, transactions, userId) {
     const stats = calculateUserStats(trades, transactions);
     
+    // Fix name display in user details
+    const fullName = userData.displayName || 
+                    (userData.firstName && userData.lastName ? `${userData.firstName} ${userData.lastName}` : '') ||
+                    (userData.profile?.firstName && userData.profile?.lastName ? `${userData.profile.firstName} ${userData.profile.lastName}` : '') ||
+                    userData.fullName ||
+                    'N/A';
+    
     return `
         <div class="user-details-container">
             <div class="details-tabs">
@@ -392,11 +406,11 @@ function renderUserDetails(userData, trades, transactions, userId) {
                         <h4>User Profile</h4>
                         <div class="form-group">
                             <label>Full Name:</label>
-                            <input type="text" value="${userData.fullName}" id="fullName-${userId}">
+                            <input type="text" value="${fullName}" id="fullName-${userId}">
                         </div>
                         <div class="form-group">
                             <label>Email:</label>
-                            <input type="email" value="${userData.email}" id="email-${userId}">
+                            <input type="email" value="${userData.email || 'N/A'}" id="email-${userId}">
                         </div>
                         <div class="form-group">
                             <label>Phone:</label>
