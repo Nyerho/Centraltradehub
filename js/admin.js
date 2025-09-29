@@ -193,10 +193,24 @@ class EnhancedAdminDashboard {
             });
         });
 
-        // Mobile menu toggle - Fixed ID
-        const mobileMenuBtn = document.getElementById('sidebarToggle');
+        // Mobile menu toggle - Improved with multiple fallbacks
+        const mobileMenuBtn = document.getElementById('sidebarToggle') || 
+                             document.querySelector('.sidebar-toggle') ||
+                             document.querySelector('.mobile-menu-toggle');
+        
         if (mobileMenuBtn) {
-            mobileMenuBtn.addEventListener('click', this.toggleMobileMenu.bind(this));
+            console.log('Mobile menu button found:', mobileMenuBtn);
+            mobileMenuBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggleMobileMenu();
+            });
+        } else {
+            console.error('Mobile menu button not found! Available elements:', {
+                sidebarToggle: document.getElementById('sidebarToggle'),
+                sidebarToggleClass: document.querySelector('.sidebar-toggle'),
+                mobileToggleClass: document.querySelector('.mobile-menu-toggle')
+            });
         }
 
         // Logout
@@ -204,6 +218,18 @@ class EnhancedAdminDashboard {
         if (logoutBtn) {
             logoutBtn.addEventListener('click', this.handleLogout.bind(this));
         }
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', (e) => {
+            const sidebar = document.getElementById('adminSidebar');
+            const toggleBtn = document.getElementById('sidebarToggle');
+            
+            if (sidebar && sidebar.classList.contains('mobile-open')) {
+                if (!sidebar.contains(e.target) && !toggleBtn?.contains(e.target)) {
+                    this.toggleMobileMenu();
+                }
+            }
+        });
 
         // User management events
         this.setupUserManagementEvents();
@@ -446,23 +472,52 @@ class EnhancedAdminDashboard {
 
     async loadUsers() {
         try {
+            console.log('Loading users from Firestore...');
             const usersQuery = query(
                 collection(this.db, 'users'),
                 orderBy('createdAt', 'desc')
             );
             
             const snapshot = await getDocs(usersQuery);
-            this.users = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
+            console.log(`Found ${snapshot.docs.length} users`);
             
+            this.users = snapshot.docs.map(doc => {
+                const userData = { id: doc.id, ...doc.data() };
+                console.log('User data:', userData); // Debug log
+                return userData;
+            });
+            
+            console.log('Users loaded:', this.users);
             this.renderUsersTable();
             this.updateUserStats();
             
         } catch (error) {
             console.error('Users loading error:', error);
-            this.showNotification('Failed to load users', 'error');
+            
+            // Show more specific error messages
+            if (error.code === 'permission-denied') {
+                this.showNotification('Access denied. Please check your admin permissions.', 'error');
+            } else if (error.code === 'unavailable') {
+                this.showNotification('Database temporarily unavailable. Please try again.', 'error');
+            } else {
+                this.showNotification('Failed to load users: ' + error.message, 'error');
+            }
+            
+            // Show empty state in table
+            const tableBody = document.getElementById('usersTableBody');
+            if (tableBody) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="fas fa-exclamation-triangle fa-2x mb-2 text-warning"></i>
+                                <p>Failed to load users</p>
+                                <button class="btn btn-sm btn-primary" onclick="adminDashboard.loadUsers()">Retry</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
         }
     }
 
@@ -905,6 +960,21 @@ class EnhancedAdminDashboard {
             this.renderTransactionsTable();
         });
 
+        // Real-time trades listener
+        const tradesQuery = query(
+            collection(this.db, 'trades'),
+            orderBy('timestamp', 'desc'),
+            limit(100)
+        );
+        onSnapshot(tradesQuery, (snapshot) => {
+            this.trades = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            this.renderTradesTable();
+            this.updateTradingStats();
+        });
+
         // Real-time withdrawals listener
         const withdrawalsQuery = query(
             collection(this.db, 'withdrawals'),
@@ -1237,41 +1307,51 @@ class EnhancedAdminDashboard {
         const endIndex = startIndex + this.usersPerPage;
         const paginatedUsers = usersToRender.slice(startIndex, endIndex);
         
-        // Render user rows
-        tableBody.innerHTML = paginatedUsers.map(user => `
-            <tr>
-                <td><input type="checkbox" class="user-checkbox" value="${user.id}"></td>
-                <td>
-                    <div class="d-flex align-items-center">
-                        <img src="assets/images/user-avatar.png" alt="Avatar" class="rounded-circle me-2" width="32" height="32">
-                        <div>
-                            <div class="fw-semibold">${user.firstName} ${user.lastName}</div>
-                            <small class="text-muted">${user.email}</small>
+        // Render user rows with fallback values
+        tableBody.innerHTML = paginatedUsers.map(user => {
+            // Handle different possible field names and provide fallbacks
+            const firstName = user.firstName || user.first_name || user.displayName?.split(' ')[0] || 'Unknown';
+            const lastName = user.lastName || user.last_name || user.displayName?.split(' ')[1] || 'User';
+            const email = user.email || 'No email';
+            const role = user.role || 'user';
+            const status = user.status || 'active';
+            const balance = user.balance || user.accountBalance || 0;
+            
+            return `
+                <tr>
+                    <td><input type="checkbox" class="user-checkbox" value="${user.id}"></td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <img src="assets/images/user-avatar.png" alt="Avatar" class="rounded-circle me-2" width="32" height="32">
+                            <div>
+                                <div class="fw-semibold">${firstName} ${lastName}</div>
+                                <small class="text-muted">${email}</small>
+                            </div>
                         </div>
-                    </div>
-                </td>
-                <td><span class="badge bg-${user.role === 'admin' ? 'danger' : 'primary'}">${user.role}</span></td>
-                <td><span class="badge bg-${user.status === 'active' ? 'success' : 'secondary'}">${user.status}</span></td>
-                <td>$${user.balance?.toFixed(2) || '0.00'}</td>
-                <td>${user.createdAt ? new Date(user.createdAt.toDate()).toLocaleDateString() : 'N/A'}</td>
-                <td>
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary" onclick="adminDashboard.viewUser('${user.id}')">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn btn-outline-warning" onclick="adminDashboard.editUser('${user.id}')">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-outline-info" onclick="adminDashboard.handlePasswordReset('${user.id}', '${user.email}')">
-                            <i class="fas fa-key"></i>
-                        </button>
-                        <button class="btn btn-outline-danger" onclick="adminDashboard.handleDeleteUser('${user.id}')">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
+                    </td>
+                    <td><span class="badge bg-${role === 'admin' ? 'danger' : 'primary'}">${role}</span></td>
+                    <td><span class="badge bg-${status === 'active' ? 'success' : 'secondary'}">${status}</span></td>
+                    <td>$${balance.toFixed ? balance.toFixed(2) : parseFloat(balance || 0).toFixed(2)}</td>
+                    <td>${user.createdAt ? (user.createdAt.toDate ? new Date(user.createdAt.toDate()).toLocaleDateString() : new Date(user.createdAt).toLocaleDateString()) : 'N/A'}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary" onclick="adminDashboard.viewUser('${user.id}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-warning" onclick="adminDashboard.editUser('${user.id}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-info" onclick="adminDashboard.handlePasswordReset('${user.id}', '${email}')">
+                                <i class="fas fa-key"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="adminDashboard.handleDeleteUser('${user.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
         
         // Update pagination
         this.renderUsersPagination(usersToRender.length);
@@ -1357,18 +1437,21 @@ class EnhancedAdminDashboard {
         const tbody = document.getElementById('tradesTableBody');
         if (!tbody) return;
         
-        if (this.trades.length === 0) {
+        // Use filtered trades if available, otherwise use all trades
+        const tradesToRender = this.filteredTrades || this.trades;
+        
+        if (tradesToRender.length === 0) {
             tbody.innerHTML = `
                 <tr>
                     <td colspan="11" class="text-center py-4">
-                        <i class="fas fa-chart-line me-2"></i>No trades found
+                        <i class="fas fa-chart-line me-2"></i>${this.filteredTrades ? 'No trades match the current filters' : 'No trades found'}
                     </td>
                 </tr>
             `;
             return;
         }
         
-        tbody.innerHTML = this.trades.map(trade => {
+        tbody.innerHTML = tradesToRender.map(trade => {
             const pnl = trade.pnl ? parseFloat(trade.pnl) : 0;
             const pnlClass = pnl >= 0 ? 'text-success' : 'text-danger';
             const pnlSign = pnl >= 0 ? '+' : '';
@@ -2172,15 +2255,41 @@ class EnhancedAdminDashboard {
     }
 
     toggleMobileMenu() {
+        console.log('Toggle mobile menu called'); // Debug log
+        
         const sidebar = document.getElementById('adminSidebar');
         const overlay = document.getElementById('mobileOverlay');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        
+        console.log('Sidebar found:', !!sidebar);
+        console.log('Overlay found:', !!overlay);
         
         if (sidebar) {
+            const isOpen = sidebar.classList.contains('mobile-open');
             sidebar.classList.toggle('mobile-open');
+            
+            // Update toggle button icon
+            if (toggleBtn) {
+                const icon = toggleBtn.querySelector('i');
+                if (icon) {
+                    icon.className = isOpen ? 'fas fa-bars' : 'fas fa-times';
+                }
+            }
+        } else {
+            console.error('Admin sidebar not found!');
         }
         
         if (overlay) {
             overlay.classList.toggle('active');
+            
+            // Add click handler to close menu when clicking overlay
+            if (overlay.classList.contains('active')) {
+                overlay.onclick = () => {
+                    this.toggleMobileMenu();
+                };
+            }
+        } else {
+            console.error('Mobile overlay not found!');
         }
     }
 
@@ -2431,6 +2540,7 @@ function setupGlobalExports() {
     window.viewTrade = (tradeId) => adminDashboard.viewTrade(tradeId);
     window.openEditTradeModal = (tradeId) => adminDashboard.openEditTradeModal(tradeId);
     window.deleteTradeRecord = (tradeId) => adminDashboard.deleteTradeRecord(tradeId);
+    window.clearTradeFilters = () => adminDashboard.clearTradeFilters();
     window.openEditTransactionModal = (transactionId) => adminDashboard.openEditTransactionModal(transactionId);
     window.deleteTransactionRecord = (transactionId) => adminDashboard.deleteTransactionRecord(transactionId);
 }
@@ -2444,6 +2554,46 @@ window.openAdminProfile = function() {
     if (window.adminDashboard) {
         window.adminDashboard.showNotification('Admin profile feature coming soon!', 'info');
     }
+};
+
+// Add method to clear trade filters
+EnhancedAdminDashboard.prototype.clearTradeFilters = function() {
+    // Clear all filter inputs
+    const searchInput = document.getElementById('tradeSearchInput');
+    const statusFilter = document.getElementById('tradeStatusFilter');
+    const typeFilter = document.getElementById('tradeTypeFilter');
+    const dateFilter = document.getElementById('tradeDateFilter');
+    
+    if (searchInput) searchInput.value = '';
+    if (statusFilter) statusFilter.value = '';
+    if (typeFilter) typeFilter.value = '';
+    if (dateFilter) dateFilter.value = '';
+    
+    // Clear filtered trades to show all trades
+    this.filteredTrades = null;
+    
+    // Re-render the table with all trades
+    this.renderTradesTable();
+};
+
+// Add method to clear trade filters
+EnhancedAdminDashboard.prototype.clearTradeFilters = function() {
+    // Clear all filter inputs
+    const searchInput = document.getElementById('tradeSearchInput');
+    const statusFilter = document.getElementById('tradeStatusFilter');
+    const typeFilter = document.getElementById('tradeTypeFilter');
+    const dateFilter = document.getElementById('tradeDateFilter');
+    
+    if (searchInput) searchInput.value = '';
+    if (statusFilter) statusFilter.value = '';
+    if (typeFilter) typeFilter.value = '';
+    if (dateFilter) dateFilter.value = '';
+    
+    // Clear filtered trades to show all trades
+    this.filteredTrades = null;
+    
+    // Re-render the table with all trades
+    this.renderTradesTable();
 };
 
 // Trading History CRUD Methods
@@ -2493,66 +2643,107 @@ EnhancedAdminDashboard.prototype.openEditTradeModal = async function(tradeId) {
     }
 };
 
-EnhancedAdminDashboard.prototype.saveTradeRecord = async function() {
+EnhancedAdminDashboard.prototype.saveTradeRecord = async function(tradeId = null) {
     try {
-        const form = document.getElementById('addEditTradeForm');
-        const formData = new FormData(form);
-        const tradeId = document.getElementById('tradeId').value;
+        this.showLoading(true);
+        console.log('Saving trade record...', { tradeId });
         
-        // Validate required fields
+        // Get form data
         const userEmail = document.getElementById('tradeUserEmail').value.trim();
         const symbol = document.getElementById('tradeSymbol').value.trim();
         const type = document.getElementById('tradeType').value;
         const amount = parseFloat(document.getElementById('tradeAmount').value);
         const entryPrice = parseFloat(document.getElementById('tradeEntryPrice').value);
+        const exitPrice = parseFloat(document.getElementById('tradeExitPrice').value) || null;
         const status = document.getElementById('tradeStatus').value;
+        const leverage = parseFloat(document.getElementById('tradeLeverage').value) || 1;
+        const customDate = document.getElementById('tradeDate').value;
         
+        // Validation
         if (!userEmail || !symbol || !type || !amount || !entryPrice || !status) {
             this.showNotification('Please fill in all required fields', 'error');
+            this.showLoading(false);
             return;
         }
         
-        // Prepare trade data
+        // Get user UID from email
+        const userUid = await this.getUserUidByEmail(userEmail);
+        if (!userUid) {
+            this.showNotification('User not found with the provided email', 'error');
+            this.showLoading(false);
+            return;
+        }
+        
+        // Calculate PnL if exit price is provided
+        let pnl = 0;
+        if (exitPrice && status === 'closed') {
+            if (type === 'buy') {
+                pnl = (exitPrice - entryPrice) * amount * leverage;
+            } else {
+                pnl = (entryPrice - exitPrice) * amount * leverage;
+            }
+        }
+        
+        // Prepare trade data with both userEmail and uid
         const tradeData = {
             userEmail: userEmail,
+            uid: userUid, // Add UID for user history queries
             symbol: symbol.toUpperCase(),
             type: type,
             amount: amount,
             entryPrice: entryPrice,
-            currentPrice: parseFloat(document.getElementById('tradeCurrentPrice').value) || entryPrice,
+            exitPrice: exitPrice,
+            status: status,
+            leverage: leverage,
+            pnl: pnl,
             stopLoss: parseFloat(document.getElementById('tradeStopLoss').value) || null,
             takeProfit: parseFloat(document.getElementById('tradeTakeProfit').value) || null,
-            status: status,
-            leverage: parseInt(document.getElementById('tradeLeverage').value) || 1,
             notes: document.getElementById('tradeNotes').value.trim() || '',
             updatedAt: serverTimestamp()
         };
         
-        // Calculate P&L if current price is available
-        if (tradeData.currentPrice && tradeData.currentPrice !== tradeData.entryPrice) {
-            const priceDiff = tradeData.currentPrice - tradeData.entryPrice;
-            const multiplier = tradeData.type === 'buy' ? 1 : -1;
-            tradeData.pnl = (priceDiff * multiplier * tradeData.amount).toFixed(2);
+        // Set custom date if provided
+        if (customDate) {
+            tradeData.timestamp = new Date(customDate);
         }
+        
+        let success = false;
         
         if (tradeId) {
             // Update existing trade
+            console.log('Updating existing trade:', tradeId, tradeData);
             await updateDoc(doc(this.db, 'trades', tradeId), tradeData);
-            this.showNotification('Trade updated successfully', 'success');
+            success = true;
+            console.log('Trade updated successfully');
         } else {
             // Add new trade
+            if (!tradeData.timestamp) {
+                tradeData.timestamp = serverTimestamp();
+            }
             tradeData.createdAt = serverTimestamp();
             tradeData.createdBy = this.currentUser.uid;
-            await addDoc(collection(this.db, 'trades'), tradeData);
-            this.showNotification('Trade added successfully', 'success');
+            
+            console.log('Adding new trade:', tradeData);
+            const docRef = await addDoc(collection(this.db, 'trades'), tradeData);
+            success = true;
+            console.log('Trade added successfully with ID:', docRef.id);
         }
         
-        this.closeModal('addEditTradeModal');
-        await this.loadTrades(); // Refresh the trades table
+        this.showLoading(false);
+        
+        if (success) {
+            this.showNotification('Trade saved successfully!', 'success');
+            this.closeModal('addEditTradeModal');
+            this.clearTradeFilters(); // Clear filters after saving
+            this.loadTrades(); // Ensure the table is reloaded with the new trade
+        } else {
+            this.showNotification('Failed to save trade.', 'error');
+        }
         
     } catch (error) {
         console.error('Error saving trade:', error);
-        this.showNotification('Failed to save trade', 'error');
+        this.showLoading(false);
+        this.showNotification('Error saving trade: ' + error.message, 'error');
     }
 };
 
@@ -2584,78 +2775,54 @@ EnhancedAdminDashboard.prototype.filterTrades = function() {
     const typeFilter = document.getElementById('tradeTypeFilter').value;
     const dateFilter = document.getElementById('tradeDateFilter').value;
     
-    this.filteredTrades = this.trades.filter(trade => {
-        const searchMatch = !searchTerm || 
-            trade.userEmail?.toLowerCase().includes(searchTerm) ||
-            trade.symbol?.toLowerCase().includes(searchTerm) ||
-            trade.id?.toLowerCase().includes(searchTerm);
-        
-        const statusMatch = !statusFilter || trade.status === statusFilter;
-        const typeMatch = !typeFilter || trade.type === typeFilter;
-        
-        let dateMatch = true;
-        if (dateFilter && trade.timestamp) {
-            const tradeDate = trade.timestamp.toDate();
-            const filterDate = new Date(dateFilter);
-            dateMatch = tradeDate.toDateString() === filterDate.toDateString();
-        }
-        
-        return searchMatch && statusMatch && typeMatch && dateMatch;
-    });
-    
-    this.renderFilteredTradesTable();
-};
-
-EnhancedAdminDashboard.prototype.renderFilteredTradesTable = function() {
-    const tbody = document.getElementById('tradesTableBody');
-    if (!tbody) return;
-    
-    const tradesToRender = this.filteredTrades || this.trades;
-    
-    if (tradesToRender.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="11" class="text-center py-4">
-                    <i class="fas fa-search me-2"></i>No trades found
-                </td>
-            </tr>
-        `;
-        return;
+    // If no filters are active, clear filteredTrades
+    if (!searchTerm && !statusFilter && !typeFilter && !dateFilter) {
+        this.filteredTrades = null;
+    } else {
+        this.filteredTrades = this.trades.filter(trade => {
+            const searchMatch = !searchTerm || 
+                trade.userEmail?.toLowerCase().includes(searchTerm) ||
+                trade.symbol?.toLowerCase().includes(searchTerm) ||
+                trade.id?.toLowerCase().includes(searchTerm);
+            
+            const statusMatch = !statusFilter || trade.status === statusFilter;
+            const typeMatch = !typeFilter || trade.type === typeFilter;
+            
+            let dateMatch = true;
+            if (dateFilter && trade.timestamp) {
+                const tradeDate = trade.timestamp.toDate();
+                const filterDate = new Date(dateFilter);
+                dateMatch = tradeDate.toDateString() === filterDate.toDateString();
+            }
+            
+            return searchMatch && statusMatch && typeMatch && dateMatch;
+        });
     }
     
-    tbody.innerHTML = tradesToRender.map(trade => {
-        const pnl = trade.pnl ? parseFloat(trade.pnl) : 0;
-        const pnlClass = pnl >= 0 ? 'text-success' : 'text-danger';
-        const pnlSign = pnl >= 0 ? '+' : '';
+    // Use the unified renderTradesTable method
+    this.renderTradesTable();
+};
+
+
+
+// Add this helper function to get user UID from email
+EnhancedAdminDashboard.prototype.getUserUidByEmail = async function(email) {
+    try {
+        const usersQuery = query(
+            collection(this.db, 'users'),
+            where('email', '==', email),
+            limit(1)
+        );
         
-        return `
-            <tr>
-                <td>${trade.id}</td>
-                <td>${trade.userEmail || 'N/A'}</td>
-                <td>${trade.symbol || 'N/A'}</td>
-                <td><span class="badge bg-${trade.type === 'buy' ? 'success' : 'danger'}">${trade.type?.toUpperCase()}</span></td>
-                <td>$${trade.amount?.toFixed(2) || '0.00'}</td>
-                <td>$${trade.entryPrice?.toFixed(5) || '0.00000'}</td>
-                <td>$${trade.currentPrice?.toFixed(5) || trade.entryPrice?.toFixed(5) || '0.00000'}</td>
-                <td class="${pnlClass}">${pnlSign}$${Math.abs(pnl).toFixed(2)}</td>
-                <td><span class="badge bg-${this.getTradeStatusColor(trade.status)}">${trade.status}</span></td>
-                <td>${trade.timestamp ? new Date(trade.timestamp.toDate()).toLocaleString() : 'N/A'}</td>
-                <td>
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary" onclick="adminDashboard.viewTrade('${trade.id}')" title="View">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn btn-outline-warning" onclick="adminDashboard.openEditTradeModal('${trade.id}')" title="Edit">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-outline-danger" onclick="adminDashboard.deleteTradeRecord('${trade.id}')" title="Delete">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `;
-    }).join('');
+        const snapshot = await getDocs(usersQuery);
+        if (!snapshot.empty) {
+            return snapshot.docs[0].id; // Document ID is the UID
+        }
+        return null;
+    } catch (error) {
+        console.error('Error getting user UID by email:', error);
+        return null;
+    }
 };
 
 // Transaction History CRUD Methods
@@ -2724,9 +2891,17 @@ EnhancedAdminDashboard.prototype.saveTransactionRecord = async function() {
             return;
         }
         
-        // Prepare transaction data
+        // Get user UID from email
+        const userUid = await this.getUserUidByEmail(userEmail);
+        if (!userUid) {
+            this.showNotification('User not found with the provided email', 'error');
+            return;
+        }
+        
+        // Prepare transaction data with both userEmail and uid
         const transactionData = {
             userEmail: userEmail,
+            uid: userUid, // Add UID for user history queries
             type: type,
             amount: amount,
             fee: parseFloat(document.getElementById('transactionFee').value) || 0,

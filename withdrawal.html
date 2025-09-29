@@ -88,8 +88,20 @@
         }
         
         .method-card.selected {
-            border-color: #007bff;
-            background: rgba(0, 123, 255, 0.1);
+            border: 2px solid #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .method-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .method-card:hover {
+            border-color: #6b7280;
+        }
+        border-color: #007bff;
+        background: rgba(0, 123, 255, 0.1);
         }
         
         .modal {
@@ -356,7 +368,7 @@
     <script>
         // Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyBQf8T7_9_9_9_9_9_9_9_9_9_9_9_9_9",
+            apiKey: "AIzaSyBQf8T7_9_9_9_9_9_9_9_9_9_9_9_9",
             authDomain: "centraltradehub-30f00.firebaseapp.com",
             projectId: "centraltradehub-30f00",
             storageBucket: "centraltradehub-30f00.firebasestorage.app",
@@ -398,8 +410,8 @@
                 const userDoc = await db.collection('users').doc(currentUser.uid).get();
                 if (userDoc.exists) {
                     const userData = userDoc.data();
-                    const balance = userData.balance || 0;
-                    document.getElementById('currentBalance').textContent = `$${balance.toFixed(2)}`;
+                    const balance = userData.balance || userData.accountBalance || 0;
+                    document.getElementById('accountBalance').textContent = `$${balance.toFixed(2)}`;
                 }
             } catch (error) {
                 console.error('Error loading balance:', error);

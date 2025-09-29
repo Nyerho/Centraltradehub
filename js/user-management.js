@@ -678,16 +678,71 @@ function saveInlineUserChanges(userId) {
     showToast('User changes saved successfully', 'success');
 }
 
-function adjustUserBalance(userId, action) {
-    const amount = document.getElementById(`balanceAdjustment-${userId}`).value;
-    const reason = document.getElementById(`adjustmentReason-${userId}`).value;
+async function adjustUserBalance(userId, action) {
+    const amountInput = document.getElementById(`balanceAdjustment-${userId}`);
+    const reasonInput = document.getElementById(`adjustmentReason-${userId}`);
     
-    if (!amount || !reason) {
-        showToast('Please enter amount and reason', 'error');
+    if (!amountInput || !reasonInput) {
+        showToast('Error: Input fields not found', 'error');
         return;
     }
     
-    showToast(`Balance ${action === 'add' ? 'increased' : 'decreased'} by $${amount}`, 'success');
+    const amount = parseFloat(amountInput.value);
+    const reason = reasonInput.value.trim();
+    
+    if (!amount || amount <= 0) {
+        showToast('Please enter a valid amount', 'error');
+        return;
+    }
+    
+    if (!reason) {
+        showToast('Please enter a reason for the adjustment', 'error');
+        return;
+    }
+    
+    try {
+        const batch = db.batch();
+        
+        // Calculate the adjustment amount (negative for subtract)
+        const adjustmentAmount = action === 'add' ? amount : -amount;
+        
+        // Update user balance
+        const userRef = db.collection('users').doc(userId);
+        batch.update(userRef, {
+            balance: firebase.firestore.FieldValue.increment(adjustmentAmount),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        // Create transaction record
+        const transactionRef = db.collection('transactions').doc();
+        batch.set(transactionRef, {
+            userId: userId,
+            type: action === 'add' ? 'manual_adjustment_add' : 'manual_adjustment_subtract',
+            amount: amount,
+            status: 'completed',
+            description: `Manual balance adjustment: ${reason}`,
+            reason: reason,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            adminId: window.currentUser?.uid || 'admin'
+        });
+        
+        await batch.commit();
+        
+        showToast(`Balance ${action === 'add' ? 'increased' : 'decreased'} by $${amount.toFixed(2)}`, 'success');
+        
+        // Clear the input fields
+        amountInput.value = '';
+        reasonInput.value = '';
+        
+        // Refresh the user details display
+        setTimeout(() => {
+            toggleUserDetails(userId);
+        }, 1000);
+        
+    } catch (error) {
+        console.error('Error adjusting balance:', error);
+        showToast('Error adjusting balance: ' + error.message, 'error');
+    }
 }
 
 function resetUserPassword(userId) {

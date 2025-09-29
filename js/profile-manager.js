@@ -104,21 +104,61 @@ class ProfileManager {
         }
     }
 
-    async loadTransactionHistory() {
+    setupRealtimeTransactionListener() {
         const transactionList = document.getElementById('transactionList');
         if (!transactionList) return;
+
+        // Clean up existing listener
+        if (this.transactionListener) {
+            this.transactionListener();
+        }
 
         transactionList.innerHTML = '<div class="loading">Loading transactions...</div>';
 
         try {
-            const transactions = await userProfileService.getTransactionHistory(auth.currentUser.uid);
-            this.displayTransactions(transactions);
+            // Setup real-time listener for transactions
+            const transactionsRef = collection(db, 'transactions');
+            const q = query(
+                transactionsRef,
+                where('uid', '==', auth.currentUser.uid),
+                orderBy('timestamp', 'desc'),
+                limit(50)
+            );
+            
+            this.transactionListener = onSnapshot(q, (querySnapshot) => {
+                const transactions = [];
+                
+                querySnapshot.forEach((doc) => {
+                    transactions.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                
+                this.displayTransactions(transactions);
+                
+            }, (error) => {
+                console.error('Error in transactions listener:', error);
+                transactionList.innerHTML = '<div class="error">Error loading transactions</div>';
+            });
+            
         } catch (error) {
-            console.error('Error loading transactions:', error);
+            console.error('Error setting up transactions listener:', error);
             transactionList.innerHTML = '<div class="error">Error loading transactions</div>';
         }
     }
 
+    async loadTransactionHistory() {
+        // Replace the old method with real-time listener
+        this.setupRealtimeTransactionListener();
+    }
+
+    cleanup() {
+        if (this.transactionListener) {
+            this.transactionListener();
+            this.transactionListener = null;
+        }
+    }
     displayTransactions(transactions) {
         const transactionList = document.getElementById('transactionList');
         

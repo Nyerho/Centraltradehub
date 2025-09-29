@@ -110,11 +110,12 @@
     <script type="module">
         import { auth, db } from './js/firebase-config.js';
         import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { collection, query, where, orderBy, getDocs, limit } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { collection, query, where, orderBy, onSnapshot, limit } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
         class TradingHistoryManager {
             constructor() {
                 this.currentUser = null;
+                this.tradesListener = null;
                 this.init();
             }
 
@@ -122,19 +123,25 @@
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         this.currentUser = user;
-                        this.loadTradingHistory();
+                        this.setupRealtimeTradesListener();
                     } else {
+                        this.cleanup();
                         window.location.href = 'auth.html';
                     }
                 });
             }
 
-            async loadTradingHistory() {
+            setupRealtimeTradesListener() {
                 const tableBody = document.getElementById('historyTableBody');
                 const noDataMessage = document.getElementById('noDataMessage');
                 
+                // Clean up existing listener
+                if (this.tradesListener) {
+                    this.tradesListener();
+                }
+                
                 try {
-                    // Query user's trading history from Firebase
+                    // Setup real-time listener for trades
                     const tradesRef = collection(db, 'trades');
                     const q = query(
                         tradesRef,
@@ -143,35 +150,48 @@
                         limit(50)
                     );
                     
-                    const querySnapshot = await getDocs(q);
-                    const trades = [];
-                    
-                    querySnapshot.forEach((doc) => {
-                        trades.push({
-                            id: doc.id,
-                            ...doc.data()
+                    this.tradesListener = onSnapshot(q, (querySnapshot) => {
+                        const trades = [];
+                        
+                        querySnapshot.forEach((doc) => {
+                            trades.push({
+                                id: doc.id,
+                                ...doc.data()
+                            });
                         });
+                        
+                        if (trades.length === 0) {
+                            tableBody.style.display = 'none';
+                            noDataMessage.style.display = 'block';
+                            return;
+                        }
+                        
+                        // Display real trading data with real-time updates
+                        this.displayTrades(trades);
+                        tableBody.style.display = 'table-tbody';
+                        noDataMessage.style.display = 'none';
+                        
+                    }, (error) => {
+                        console.error('Error in trades listener:', error);
+                        tableBody.innerHTML = `
+                            <tr>
+                                <td colspan="8" class="error-row">
+                                    <i class="fas fa-exclamation-triangle"></i> 
+                                    Error loading trading history. Please try again.
+                                </td>
+                            </tr>
+                        `;
                     });
                     
-                    if (trades.length === 0) {
-                        tableBody.style.display = 'none';
-                        noDataMessage.style.display = 'block';
-                        return;
-                    }
-                    
-                    // Display real trading data
-                    this.displayTrades(trades);
-                    
                 } catch (error) {
-                    console.error('Error loading trading history:', error);
-                    tableBody.innerHTML = `
-                        <tr>
-                            <td colspan="8" class="error-row">
-                                <i class="fas fa-exclamation-triangle"></i> 
-                                Error loading trading history. Please try again.
-                            </td>
-                        </tr>
-                    `;
+                    console.error('Error setting up trades listener:', error);
+                }
+            }
+
+            cleanup() {
+                if (this.tradesListener) {
+                    this.tradesListener();
+                    this.tradesListener = null;
                 }
             }
 
