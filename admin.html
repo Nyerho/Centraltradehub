@@ -124,6 +124,14 @@
                         </a>
                     </li>
                     
+                    <!-- User Financial Management -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="#user-financial" data-section="user-financial">
+                            <i class="fas fa-user-dollar me-2"></i>
+                            <span>User Financial Management</span>
+                        </a>
+                    </li>
+                    
                     <!-- Financial Management -->
                     <li class="nav-item">
                         <a class="nav-link" href="#financial" data-section="financial">
@@ -464,6 +472,191 @@
                             <!-- Pagination will be generated here -->
                         </ul>
                     </nav>
+                </div>
+            </div>
+        </section>
+
+        <!-- User Financial Management Section -->
+        <section id="user-financial" class="admin-section">
+            <div class="section-header mb-4">
+                <h1 class="h3 mb-1"><i class="fas fa-user-dollar me-2"></i>User Financial Management</h1>
+                <p class="text-muted">Manually adjust user account balances and received profits</p>
+            </div>
+            
+            <!-- User Search and Selection -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="userFinancialSearch" placeholder="Search users by email or name...">
+                        <button class="btn btn-outline-primary" onclick="searchUsersForFinancial()">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <button class="btn btn-success" onclick="refreshUserFinancialList()">
+                        <i class="fas fa-refresh"></i> Refresh
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Users List for Financial Management -->
+            <div class="card bg-dark mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>Select User for Financial Management</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Name</th>
+                                    <th>Current Balance</th>
+                                    <th>Total Profits</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userFinancialTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <i class="fas fa-spinner fa-spin me-2"></i>Loading users...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Financial Management Panel -->
+            <div class="card bg-dark" id="financialManagementPanel" style="display: none;">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-dollar-sign me-2"></i>Financial Management - <span id="selectedUserName"></span></h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Current Financial Info -->
+                        <div class="col-md-6">
+                            <div class="card bg-secondary mb-3">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Current Financial Status</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <p><strong>Account Balance:</strong></p>
+                                            <h4 class="text-success" id="currentUserBalance">$0.00</h4>
+                                        </div>
+                                        <div class="col-6">
+                                            <p><strong>Total Profits:</strong></p>
+                                            <h4 class="text-info" id="currentUserProfits">$0.00</h4>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-2">
+                                        <div class="col-6">
+                                            <p><strong>Total Deposits:</strong></p>
+                                            <h5 class="text-warning" id="currentUserDeposits">$0.00</h5>
+                                        </div>
+                                        <div class="col-6">
+                                            <p><strong>Total Withdrawals:</strong></p>
+                                            <h5 class="text-danger" id="currentUserWithdrawals">$0.00</h5>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Balance Adjustment Controls -->
+                        <div class="col-md-6">
+                            <div class="card bg-secondary mb-3">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-edit me-2"></i>Balance Adjustments</h6>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Add/Subtract Balance -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Adjust Account Balance</label>
+                                        <div class="input-group mb-2">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" class="form-control" id="balanceAdjustAmount" placeholder="Amount" step="0.01">
+                                        </div>
+                                        <div class="input-group mb-2">
+                                            <input type="text" class="form-control" id="balanceAdjustReason" placeholder="Reason for adjustment">
+                                        </div>
+                                        <div class="btn-group w-100">
+                                            <button class="btn btn-success" onclick="adjustUserBalance('add')">
+                                                <i class="fas fa-plus me-1"></i>Add Funds
+                                            </button>
+                                            <button class="btn btn-danger" onclick="adjustUserBalance('subtract')">
+                                                <i class="fas fa-minus me-1"></i>Subtract Funds
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Add Received Profit -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Add Received Profit</label>
+                                        <div class="input-group mb-2">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" class="form-control" id="profitAmount" placeholder="Profit Amount" step="0.01">
+                                        </div>
+                                        <div class="input-group mb-2">
+                                            <input type="text" class="form-control" id="profitDescription" placeholder="Profit description">
+                                        </div>
+                                        <button class="btn btn-info w-100" onclick="addUserProfit()">
+                                            <i class="fas fa-chart-line me-1"></i>Add Received Profit
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Set Exact Balance -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Set Exact Balance</label>
+                                        <div class="input-group mb-2">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" class="form-control" id="exactBalanceAmount" placeholder="New Balance" step="0.01">
+                                        </div>
+                                        <div class="input-group mb-2">
+                                            <input type="text" class="form-control" id="exactBalanceReason" placeholder="Reason for setting exact balance">
+                                        </div>
+                                        <button class="btn btn-warning w-100" onclick="setExactBalance()">
+                                            <i class="fas fa-equals me-1"></i>Set Exact Balance
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Financial Activities -->
+                    <div class="card bg-secondary">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-history me-2"></i>Recent Financial Activities</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-dark table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Type</th>
+                                            <th>Amount</th>
+                                            <th>Description</th>
+                                            <th>Admin</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="userFinancialHistory">
+                                        <tr>
+                                            <td colspan="5" class="text-center py-3">
+                                                <i class="fas fa-info-circle me-2"></i>Select a user to view financial history
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -1011,7 +1204,59 @@
             <!-- Security management content will be loaded here -->
         </section>
 
-        <!-- Additional sections will be added here -->
+        <!-- Analytics & Reports Section -->
+        <section id="analytics" class="admin-section">
+            <div class="section-header mb-4">
+                <h1 class="h3 mb-1"><i class="fas fa-chart-bar me-2"></i>Analytics & Reports</h1>
+                <p class="text-muted">View detailed analytics and generate reports</p>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="card bg-dark">
+                        <div class="card-body">
+                            <h5 class="card-title">Analytics Dashboard</h5>
+                            <p class="text-muted">Analytics functionality will be implemented here.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Site Settings Section -->
+        <section id="settings" class="admin-section">
+            <div class="section-header mb-4">
+                <h1 class="h3 mb-1"><i class="fas fa-cog me-2"></i>Site Settings</h1>
+                <p class="text-muted">Configure platform settings and preferences</p>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="card bg-dark">
+                        <div class="card-body">
+                            <h5 class="card-title">Platform Configuration</h5>
+                            <p class="text-muted">Settings management functionality will be implemented here.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- System Logs Section -->
+        <section id="logs" class="admin-section">
+            <div class="section-header mb-4">
+                <h1 class="h3 mb-1"><i class="fas fa-file-alt me-2"></i>System Logs</h1>
+                <p class="text-muted">Monitor system activities and error logs</p>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="card bg-dark">
+                        <div class="card-body">
+                            <h5 class="card-title">Activity Logs</h5>
+                            <p class="text-muted">System logging functionality will be implemented here.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <!-- User Details Modal -->
