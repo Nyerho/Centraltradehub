@@ -1481,6 +1481,49 @@
             setTimeout(() => {
                 document.getElementById('loadingScreen').style.display = 'none';
             }, 1500);
+            
+            // Fix Bootstrap modal accessibility issues
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                // Store the element that triggered the modal
+                let triggerElement = null;
+                
+                // When modal is about to be shown
+                modal.addEventListener('show.bs.modal', function(event) {
+                    triggerElement = event.relatedTarget || document.activeElement;
+                });
+                
+                // When modal is shown, focus on the modal itself
+                modal.addEventListener('shown.bs.modal', function() {
+                    // Remove aria-hidden when modal is shown
+                    modal.removeAttribute('aria-hidden');
+                    // Focus on the modal dialog for screen readers
+                    const modalDialog = modal.querySelector('.modal-dialog');
+                    if (modalDialog) {
+                        modalDialog.focus();
+                    }
+                });
+                
+                // When modal is about to be hidden
+                modal.addEventListener('hide.bs.modal', function() {
+                    // Blur any focused elements inside the modal
+                    const focusedElement = modal.querySelector(':focus');
+                    if (focusedElement) {
+                        focusedElement.blur();
+                    }
+                });
+                
+                // When modal is hidden, restore focus and set aria-hidden
+                modal.addEventListener('hidden.bs.modal', function() {
+                    // Set aria-hidden back to true
+                    modal.setAttribute('aria-hidden', 'true');
+                    // Restore focus to the trigger element
+                    if (triggerElement && typeof triggerElement.focus === 'function') {
+                        triggerElement.focus();
+                    }
+                    triggerElement = null;
+                });
+            });
         });
     </script>
 </body>
