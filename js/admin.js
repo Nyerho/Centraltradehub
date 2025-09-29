@@ -46,6 +46,11 @@ class EnhancedAdminDashboard {
         this.usersPerPage = 10;
         this.currentUserPage = 1;
         
+          
+        // Add loading flags to prevent duplicates
+        this.isLoadingFinancial = false;
+        this.isLoadingFunding = false;
+        
         // Add chart instances to track and destroy them
         this.chartInstances = {
             tradingVolume: null,
@@ -566,14 +571,32 @@ class EnhancedAdminDashboard {
         }
     }
     
-    loadFinancialData() {
-        // Placeholder for financial data loading
+       loadFinancialData() {
+        // Prevent duplicate loading
+        if (this.isLoadingFinancial) {
+            return;
+        }
+        this.isLoadingFinancial = true;
         console.log('Loading financial data...');
+        
+        // Reset flag after loading
+        setTimeout(() => {
+            this.isLoadingFinancial = false;
+        }, 1000);
     }
     
     loadFundingData() {
-        // Placeholder for funding data loading
+        // Prevent duplicate loading
+        if (this.isLoadingFunding) {
+            return;
+        }
+        this.isLoadingFunding = true;
         console.log('Loading funding data...');
+        
+        // Reset flag after loading
+        setTimeout(() => {
+            this.isLoadingFunding = false;
+        }, 1000);
     }
 
     async loadSiteSettings() {
@@ -1244,72 +1267,106 @@ class EnhancedAdminDashboard {
     }
 
     initializeCharts() {
-        // Destroy all existing charts first
+        // Destroy all existing charts first with better error handling
         Object.keys(this.chartInstances).forEach(key => {
             if (this.chartInstances[key]) {
-                this.chartInstances[key].destroy();
-                delete this.chartInstances[key];
+                try {
+                    this.chartInstances[key].destroy();
+                } catch (error) {
+                    console.warn(`Error destroying chart instance ${key}:`, error);
+                }
+                this.chartInstances[key] = null;
             }
         });
         
-        // Also destroy any charts that might exist by canvas ID
+        // Also destroy any charts that might exist by canvas ID with better error handling
         const chartCanvasIds = ['tradingVolumeChart', 'userGrowthChart', 'revenueChart', 'userActivityChart'];
         chartCanvasIds.forEach(canvasId => {
-            const existingChart = Chart.getChart(canvasId);
-            if (existingChart) {
-                existingChart.destroy();
+            try {
+                const existingChart = Chart.getChart(canvasId);
+                if (existingChart) {
+                    existingChart.destroy();
+                }
+            } catch (error) {
+                console.warn(`Error destroying chart with canvas ID ${canvasId}:`, error);
             }
         });
         
-        // Initialize all charts
-        this.initializeTradingVolumeChart();
-        this.initializeUserGrowthChart();
-        this.initializeRevenueChart();
-        this.initializeUserActivityChart();
+        // Add small delay to ensure cleanup is complete
+        setTimeout(() => {
+            // Initialize all charts
+            this.initializeTradingVolumeChart();
+            this.initializeUserGrowthChart();
+            this.initializeRevenueChart();
+            this.initializeUserActivityChart();
+        }, 100);
     }
 
     async initializeTradingVolumeChart() {
         // Destroy existing chart instance if it exists
-        const existingChart = Chart.getChart('tradingVolumeChart');
-        if (existingChart) {
-            existingChart.destroy();
+        try {
+            const existingChart = Chart.getChart('tradingVolumeChart');
+            if (existingChart) {
+                existingChart.destroy();
+            }
+        } catch (error) {
+            console.warn('Error destroying existing trading volume chart:', error);
         }
         
-        const ctx = document.getElementById('tradingVolumeChart');
-        if (!ctx) {
+        const canvas = document.getElementById('tradingVolumeChart');
+        if (!canvas) {
             console.error('Canvas element with ID "tradingVolumeChart" not found.');
             return;
         }
+        
         try {
             const data = await this.getTradingVolumeData();
-            this.chartInstances.tradingVolume = new Chart(ctx, {
+            this.chartInstances.tradingVolume = new Chart(canvas, {
                 type: 'line',
                 data: {
                     labels: data.labels,
                     datasets: [{
                         label: 'Trading Volume',
                         data: data.values,
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
                         fill: true,
-                    }],
+                        tension: 0.4
+                    }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
                     scales: {
                         x: {
-                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#8b9dc3'
+                            }
                         },
                         y: {
                             beginAtZero: true,
-                        },
-                    },
-                },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#8b9dc3'
+                            }
+                        }
+                    }
+                }
             });
         } catch (error) {
             console.error('Error initializing trading volume chart:', error);
-            this.showEmptyChart(ctx, 'Error loading trading volume data.');
+            this.showEmptyChart(canvas, 'Error loading trading volume data.');
         }
     }
 
