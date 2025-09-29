@@ -1304,13 +1304,8 @@ class EnhancedAdminDashboard {
             return;
         }
         
-        // Calculate pagination
-        const startIndex = (this.currentUserPage - 1) * this.usersPerPage;
-        const endIndex = startIndex + this.usersPerPage;
-        const paginatedUsers = usersToRender.slice(startIndex, endIndex);
-        
-        // Render user rows with fallback values
-        tableBody.innerHTML = paginatedUsers.map(user => {
+        // Render all users without pagination
+        tableBody.innerHTML = usersToRender.map(user => {
             // Handle different possible field names and provide fallbacks
             const firstName = user.firstName || user.first_name || user.displayName?.split(' ')[0] || 'Unknown';
             const lastName = user.lastName || user.last_name || user.displayName?.split(' ')[1] || 'User';
@@ -1355,8 +1350,11 @@ class EnhancedAdminDashboard {
             `;
         }).join('');
         
-        // Update pagination
-        this.renderUsersPagination(usersToRender.length);
+        // Hide pagination since we're showing all users
+        const pagination = document.getElementById('usersPagination');
+        if (pagination) {
+            pagination.style.display = 'none';
+        }
     }
 
     renderUsersPagination(totalUsers) {
