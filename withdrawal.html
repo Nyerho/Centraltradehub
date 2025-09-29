@@ -384,30 +384,30 @@
         let currentUser = null;
         let authManager = null;
     
-        // Add the missing selectMethod function
-        function selectMethod(method) {
+        // Add the missing selectMethod function - make it globally accessible
+        window.selectMethod = function(method) {
             // Remove selected class from all method cards
             document.querySelectorAll('.method-card').forEach(card => {
                 card.classList.remove('selected');
             });
             
-            // Add selected class to clicked card
+            // Add selected class to clicked method
             const selectedCard = document.querySelector(`[data-method="${method}"]`);
             if (selectedCard) {
                 selectedCard.classList.add('selected');
             }
             
             // Hide all detail forms
-            document.getElementById('bankDetails').style.display = 'none';
-            document.getElementById('cryptoDetails').style.display = 'none';
+            document.getElementById('bankForm').style.display = 'none';
+            document.getElementById('cryptoForm').style.display = 'none';
             
             // Show relevant detail form
             if (method === 'bank') {
-                document.getElementById('bankDetails').style.display = 'block';
+                document.getElementById('bankForm').style.display = 'block';
             } else if (method === 'crypto') {
-                document.getElementById('cryptoDetails').style.display = 'block';
+                document.getElementById('cryptoForm').style.display = 'block';
             }
-        }
+        };
     
         // Initialize auth manager
         async function initializeAuth() {

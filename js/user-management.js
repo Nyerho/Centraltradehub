@@ -43,10 +43,18 @@ try {
 async function initializeUserManagement() {
     try {
         setupEventListeners();
+        
+        // Show loading state immediately
         showLoading(true);
+        
+        // Add a small delay to ensure DOM is ready
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         await loadUsers();
         updateDashboardStats();
-        showLoading(false);
+        
+        // Hide loading with a slight delay for smoother transition
+        setTimeout(() => showLoading(false), 200);
     } catch (error) {
         console.error('Failed to initialize user management:', error);
         showToast('Failed to load user data', 'error');
@@ -217,7 +225,8 @@ function displayUsers() {
     const endIndex = startIndex + usersPerPage;
     const usersToShow = filteredUsers.slice(startIndex, endIndex);
     
-    tbody.innerHTML = '';
+    // Create a document fragment to build the new content
+    const fragment = document.createDocumentFragment();
     
     usersToShow.forEach(user => {
         const row = document.createElement('tr');
@@ -247,8 +256,12 @@ function displayUsers() {
                 </button>
             </td>
         `;
-        tbody.appendChild(row);
+        fragment.appendChild(row);
     });
+    
+    // Replace all content at once to prevent flashing
+    tbody.innerHTML = '';
+    tbody.appendChild(fragment);
 }
 
 // Update pagination
