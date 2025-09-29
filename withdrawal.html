@@ -384,6 +384,31 @@
         let currentUser = null;
         let authManager = null;
     
+        // Add the missing selectMethod function
+        function selectMethod(method) {
+            // Remove selected class from all method cards
+            document.querySelectorAll('.method-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Add selected class to clicked card
+            const selectedCard = document.querySelector(`[data-method="${method}"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+            }
+            
+            // Hide all detail forms
+            document.getElementById('bankDetails').style.display = 'none';
+            document.getElementById('cryptoDetails').style.display = 'none';
+            
+            // Show relevant detail form
+            if (method === 'bank') {
+                document.getElementById('bankDetails').style.display = 'block';
+            } else if (method === 'crypto') {
+                document.getElementById('cryptoDetails').style.display = 'block';
+            }
+        }
+    
         // Initialize auth manager
         async function initializeAuth() {
             try {
@@ -433,7 +458,7 @@
                 
                 // Try to get user data from users collection first (matches dashboard logic)
                 const userDoc = await db.collection('users').doc(user.uid).get();
-                if (userDoc.exists()) {
+                if (userDoc.exists) {
                     const userData = userDoc.data();
                     console.log('User data loaded:', userData);
                     
@@ -443,7 +468,7 @@
                     // If no balance in users collection, check accounts collection
                     if (balance === 0) {
                         const accountDoc = await db.collection('accounts').doc(user.uid).get();
-                        if (accountDoc.exists()) {
+                        if (accountDoc.exists) {
                             const accountData = accountDoc.data();
                             balance = accountData.balance || 0;
                             console.log('Account data loaded:', accountData);
