@@ -26,7 +26,9 @@ import {
     where,
     limit,
     serverTimestamp,
-    setDoc
+    setDoc,
+    enableNetwork,
+    disableNetwork
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 // Firebase configuration (import from existing config)
@@ -50,6 +52,20 @@ class EnhancedAdminDashboard {
         // Add loading flags to prevent duplicates
         this.isLoadingFinancial = false;
         this.isLoadingFunding = false;
+        this.retryAttempts = 0;
+        this.maxRetries = 3;
+        this.isOnline = navigator.onLine;
+        
+        // Setup network listeners
+        window.addEventListener('online', () => {
+            this.isOnline = true;
+            console.log('Network connection restored');
+        });
+        
+        window.addEventListener('offline', () => {
+            this.isOnline = false;
+            console.log('Network connection lost');
+        });
         
         // Add chart instances to track and destroy them
         this.chartInstances = {
@@ -118,6 +134,48 @@ class EnhancedAdminDashboard {
             console.error('Admin access check error:', error);
             this.redirectToLogin();
             return false;
+        }
+    }
+
+    setupNetworkListeners() {
+        window.addEventListener('online', () => {
+            this.isOnline = true;
+            console.log('Network connection restored');
+            this.handleNetworkReconnection();
+        });
+
+        window.addEventListener('offline', () => {
+            this.isOnline = false;
+            console.log('Network connection lost');
+            this.showNotification('Network connection lost. Working in offline mode.', 'warning');
+        });
+    }
+
+    async handleNetworkReconnection() {
+        try {
+            await enableNetwork(this.db);
+            this.showNotification('Connection restored. Syncing data...', 'success');
+            await this.loadDashboardData();
+        } catch (error) {
+            console.error('Error reconnecting to Firebase:', error);
+        }
+    }
+
+    async executeWithRetry(operation, context = 'operation') {
+        for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
+            try {
+                return await operation();
+            } catch (error) {
+                console.error(`${context} attempt ${attempt} failed:`, error);
+                
+                if (attempt === this.maxRetries) {
+                    throw new Error(`${context} failed after ${this.maxRetries} attempts: ${error.message}`);
+                }
+                
+                // Exponential backoff
+                const delay = Math.pow(2, attempt) * 1000;
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
         }
     }
 
@@ -579,10 +637,41 @@ class EnhancedAdminDashboard {
         this.isLoadingFinancial = true;
         console.log('Loading financial data...');
         
-        // Reset flag after loading
-        setTimeout(() => {
+        this.executeWithRetry(async () => {
+            if (!this.isOnline) {
+                throw new Error('No network connection');
+            }
+
+            // Load financial transactions
+            const transactionsQuery = query(
+                collection(this.db, 'transactions'),
+                orderBy('timestamp', 'desc'),
+                limit(50)
+            );
+            
+            const transactionsSnapshot = await getDocs(transactionsQuery);
+            const transactions = [];
+            
+            transactionsSnapshot.forEach(doc => {
+                transactions.push({ id: doc.id, ...doc.data() });
+            });
+            
+            // Update financial dashboard
+            this.updateFinancialStats(transactions);
+            this.renderFinancialTable(transactions);
+            
+            console.log('Financial data loaded successfully');
+        }, 'Financial data loading')
+        .catch(error => {
+            console.error('Failed to load financial data:', error);
+            this.showNotification('Failed to load financial data. Please check your connection.', 'error');
+            
+            // Show offline message or cached data
+            this.showOfflineFinancialData();
+        })
+        .finally(() => {
             this.isLoadingFinancial = false;
-        }, 1000);
+        });
     }
     
     loadFundingData() {
@@ -593,10 +682,139 @@ class EnhancedAdminDashboard {
         this.isLoadingFunding = true;
         console.log('Loading funding data...');
         
-        // Reset flag after loading
-        setTimeout(() => {
+        this.executeWithRetry(async () => {
+            if (!this.isOnline) {
+                throw new Error('No network connection');
+            }
+
+            // Load funding transactions
+            const fundingQuery = query(
+                collection(this.db, 'funding'),
+                orderBy('timestamp', 'desc'),
+                limit(50)
+            );
+            
+            const fundingSnapshot = await getDocs(fundingQuery);
+            const fundingData = [];
+            
+            fundingSnapshot.forEach(doc => {
+                fundingData.push({ id: doc.id, ...doc.data() });
+            });
+            
+            // Update funding dashboard
+            this.updateFundingStats(fundingData);
+            this.renderFundingTable(fundingData);
+            
+            console.log('Funding data loaded successfully');
+        }, 'Funding data loading')
+        .catch(error => {
+            console.error('Failed to load funding data:', error);
+            this.showNotification('Failed to load funding data. Please check your connection.', 'error');
+            
+            // Show offline message or cached data
+            this.showOfflineFundingData();
+        })
+        .finally(() => {
             this.isLoadingFunding = false;
-        }, 1000);
+        });
+    }
+
+    updateFinancialStats(transactions) {
+        // Calculate financial statistics
+        const totalRevenue = transactions
+            .filter(t => t.type === 'deposit' && t.status === 'completed')
+            .reduce((sum, t) => sum + (t.amount || 0), 0);
+        
+        const totalWithdrawals = transactions
+            .filter(t => t.type === 'withdrawal' && t.status === 'completed')
+            .reduce((sum, t) => sum + (t.amount || 0), 0);
+        
+        // Update UI elements
+        const revenueElement = document.getElementById('total-revenue');
+        const withdrawalsElement = document.getElementById('total-withdrawals');
+        
+        if (revenueElement) revenueElement.textContent = `$${totalRevenue.toLocaleString()}`;
+        if (withdrawalsElement) withdrawalsElement.textContent = `$${totalWithdrawals.toLocaleString()}`;
+    }
+
+    updateFundingStats(fundingData) {
+        // Calculate funding statistics
+        const totalFunding = fundingData
+            .filter(f => f.status === 'completed')
+            .reduce((sum, f) => sum + (f.amount || 0), 0);
+        
+        const pendingFunding = fundingData
+            .filter(f => f.status === 'pending')
+            .reduce((sum, f) => sum + (f.amount || 0), 0);
+        
+        // Update UI elements
+        const totalFundingElement = document.getElementById('total-funding');
+        const pendingFundingElement = document.getElementById('pending-funding');
+        
+        if (totalFundingElement) totalFundingElement.textContent = `$${totalFunding.toLocaleString()}`;
+        if (pendingFundingElement) pendingFundingElement.textContent = `$${pendingFunding.toLocaleString()}`;
+    }
+
+    renderFinancialTable(transactions) {
+        const tableBody = document.getElementById('financial-transactions-body');
+        if (!tableBody) return;
+        
+        tableBody.innerHTML = transactions.map(transaction => `
+            <tr>
+                <td>${transaction.id}</td>
+                <td>${transaction.type}</td>
+                <td>$${transaction.amount?.toLocaleString() || '0'}</td>
+                <td><span class="status-${transaction.status}">${transaction.status}</span></td>
+                <td>${new Date(transaction.timestamp).toLocaleDateString()}</td>
+            </tr>
+        `).join('');
+    }
+
+    renderFundingTable(fundingData) {
+        const tableBody = document.getElementById('funding-transactions-body');
+        if (!tableBody) return;
+        
+        tableBody.innerHTML = fundingData.map(funding => `
+            <tr>
+                <td>${funding.id}</td>
+                <td>${funding.method}</td>
+                <td>$${funding.amount?.toLocaleString() || '0'}</td>
+                <td><span class="status-${funding.status}">${funding.status}</span></td>
+                <td>${new Date(funding.timestamp).toLocaleDateString()}</td>
+            </tr>
+        `).join('');
+    }
+
+    showOfflineFinancialData() {
+        const tableBody = document.getElementById('financial-transactions-body');
+        if (tableBody) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Offline - Unable to load financial data</td></tr>';
+        }
+    }
+
+    showOfflineFundingData() {
+        const tableBody = document.getElementById('funding-transactions-body');
+        if (tableBody) {
+            tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Offline - Unable to load funding data</td></tr>';
+        }
+    }
+    
+    showFundingError(errorMessage) {
+        const fundingSection = document.getElementById('funding-section');
+        if (fundingSection) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Error loading funding data:</strong> ${errorMessage}
+                    <button onclick="adminDashboard.loadFundingData()" class="btn btn-sm btn-primary ml-2">
+                        <i class="fas fa-refresh"></i> Retry
+                    </button>
+                </div>
+            `;
+            fundingSection.appendChild(errorDiv);
+        }
     }
 
     async loadSiteSettings() {
