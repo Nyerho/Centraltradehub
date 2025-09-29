@@ -2343,7 +2343,10 @@ class EnhancedAdminDashboard {
             'userDetailStatus': userData.status || 'N/A',
             'userDetailBalance': `$${userData.balance?.toFixed(2) || '0.00'}`,
             'userDetailCreated': userData.createdAt ? 
-                new Date(userData.createdAt.toDate()).toLocaleString() : 'N/A'
+                new Date(userData.createdAt.toDate()).toLocaleString() : 'N/A',
+            'currentBalance': `$${userData.balance?.toFixed(2) || '0.00'}`,
+            'totalDeposits': `$${userData.totalDeposits?.toFixed(2) || '0.00'}`,
+            'totalWithdrawals': `$${userData.totalWithdrawals?.toFixed(2) || '0.00'}`
         };
         
         Object.keys(elements).forEach(id => {
@@ -2352,6 +2355,114 @@ class EnhancedAdminDashboard {
                 element.textContent = elements[id];
             }
         });
+        
+        // Store current user ID for balance adjustment
+        this.currentViewingUserId = userData.uid || userData.id;
+        
+        // Setup balance adjustment event listeners
+        this.setupBalanceAdjustmentEvents();
+    }
+
+    setupBalanceAdjustmentEvents() {
+        const addFundsBtn = document.getElementById('addFundsBtn');
+        const subtractFundsBtn = document.getElementById('subtractFundsBtn');
+        
+        if (addFundsBtn) {
+            addFundsBtn.onclick = () => this.adjustUserBalance('add');
+        }
+        
+        if (subtractFundsBtn) {
+            subtractFundsBtn.onclick = () => this.adjustUserBalance('subtract');
+        }
+    }
+
+    async adjustUserBalance(action) {
+        const amountInput = document.getElementById('adjustmentAmount');
+        const reasonInput = document.getElementById('adjustmentReason');
+        
+        if (!amountInput || !reasonInput) {
+            this.showNotification('Error: Input fields not found', 'error');
+            return;
+        }
+        
+        const amount = parseFloat(amountInput.value);
+        const reason = reasonInput.value.trim();
+        
+        if (!amount || amount <= 0) {
+            this.showNotification('Please enter a valid amount', 'error');
+            return;
+        }
+        
+        if (!reason) {
+            this.showNotification('Please enter a reason for the adjustment', 'error');
+            return;
+        }
+        
+        if (!this.currentViewingUserId) {
+            this.showNotification('Error: User ID not found', 'error');
+            return;
+        }
+        
+        try {
+            // Calculate the adjustment amount (negative for subtract)
+            const adjustmentAmount = action === 'add' ? amount : -amount;
+            
+            // Update user balance
+            const userRef = doc(this.db, 'users', this.currentViewingUserId);
+            await updateDoc(userRef, {
+                balance: firebase.firestore.FieldValue.increment(adjustmentAmount),
+                updatedAt: serverTimestamp()
+            });
+            
+            // Create transaction record
+            await addDoc(collection(this.db, 'transactions'), {
+                userId: this.currentViewingUserId,
+                type: action === 'add' ? 'manual_adjustment_add' : 'manual_adjustment_subtract',
+                amount: amount,
+                status: 'completed',
+                description: `Manual balance adjustment: ${reason}`,
+                reason: reason,
+                timestamp: serverTimestamp(),
+                adminId: this.auth.currentUser?.uid || 'admin'
+            });
+            
+            this.showNotification(`Balance ${action === 'add' ? 'increased' : 'decreased'} by $${amount.toFixed(2)}`, 'success');
+            
+            // Clear the input fields
+            amountInput.value = '';
+            reasonInput.value = '';
+            
+            // Refresh the user data
+            await this.refreshUserDetails(this.currentViewingUserId);
+            
+            // Reload users table to reflect changes
+            await this.loadUsers();
+            
+        } catch (error) {
+            console.error('Error adjusting balance:', error);
+            this.showNotification('Error adjusting balance: ' + error.message, 'error');
+        }
+    }
+
+    async refreshUserDetails(userId) {
+        try {
+            const userDoc = await getDoc(doc(this.db, 'users', userId));
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                // Update the balance display in the modal
+                const currentBalanceElement = document.getElementById('currentBalance');
+                const userDetailBalanceElement = document.getElementById('userDetailBalance');
+                
+                if (currentBalanceElement) {
+                    currentBalanceElement.textContent = `$${userData.balance?.toFixed(2) || '0.00'}`;
+                }
+                if (userDetailBalanceElement) {
+                    userDetailBalanceElement.textContent = `$${userData.balance?.toFixed(2) || '0.00'}`;
+                }
+            }
+        } catch (error) {
+            console.error('Error refreshing user details:', error);
+        }
     }
 
     populateEditUserModal(userData, userId) {

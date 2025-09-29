@@ -1008,23 +1008,104 @@
 
     <!-- User Details Modal -->
     <div class="modal fade" id="userDetailsModal" tabindex="-1" aria-labelledby="userDetailsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content bg-dark text-white">
                 <div class="modal-header border-secondary">
                     <h5 class="modal-title" id="userDetailsModalLabel">User Details</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><strong>Name:</strong> <span id="userDetailName"></span></p>
-                            <p><strong>Email:</strong> <span id="userDetailEmail"></span></p>
-                            <p><strong>Role:</strong> <span id="userDetailRole"></span></p>
+                    <!-- Tab Navigation -->
+                    <ul class="nav nav-tabs mb-3" id="userDetailsTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab">Profile</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="financial-tab" data-bs-toggle="tab" data-bs-target="#financial" type="button" role="tab">Financial</button>
+                        </li>
+                    </ul>
+                    
+                    <!-- Tab Content -->
+                    <div class="tab-content" id="userDetailsTabContent">
+                        <!-- Profile Tab -->
+                        <div class="tab-pane fade show active" id="profile" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Name:</strong> <span id="userDetailName"></span></p>
+                                    <p><strong>Email:</strong> <span id="userDetailEmail"></span></p>
+                                    <p><strong>Role:</strong> <span id="userDetailRole"></span></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Status:</strong> <span id="userDetailStatus"></span></p>
+                                    <p><strong>Balance:</strong> <span id="userDetailBalance"></span></p>
+                                    <p><strong>Created:</strong> <span id="userDetailCreated"></span></p>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <p><strong>Status:</strong> <span id="userDetailStatus"></span></p>
-                            <p><strong>Balance:</strong> <span id="userDetailBalance"></span></p>
-                            <p><strong>Created:</strong> <span id="userDetailCreated"></span></p>
+                        
+                        <!-- Financial Tab -->
+                        <div class="tab-pane fade" id="financial" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card bg-secondary">
+                                        <div class="card-header">
+                                            <h6 class="mb-0"><i class="fas fa-wallet me-2"></i>Account Balance</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <h4 class="text-success" id="currentBalance">$0.00</h4>
+                                            <small class="text-muted">Current account balance</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card bg-secondary">
+                                        <div class="card-header">
+                                            <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>Financial Stats</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="mb-1"><strong>Total Deposits:</strong> <span id="totalDeposits">$0.00</span></p>
+                                            <p class="mb-0"><strong>Total Withdrawals:</strong> <span id="totalWithdrawals">$0.00</span></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Manual Balance Adjustment Section -->
+                            <div class="card bg-secondary mt-3">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-edit me-2"></i>Manual Balance Adjustment</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="adjustmentAmount" class="form-label">Amount ($)</label>
+                                                <input type="number" class="form-control bg-dark text-white" id="adjustmentAmount" step="0.01" min="0" placeholder="Enter amount">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="adjustmentReason" class="form-label">Reason</label>
+                                                <input type="text" class="form-control bg-dark text-white" id="adjustmentReason" placeholder="Reason for adjustment">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="button" class="btn btn-success" id="addFundsBtn">
+                                            <i class="fas fa-plus me-1"></i>Add Funds
+                                        </button>
+                                        <button type="button" class="btn btn-danger" id="subtractFundsBtn">
+                                            <i class="fas fa-minus me-1"></i>Subtract Funds
+                                        </button>
+                                    </div>
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            All balance adjustments are logged for audit purposes.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1188,8 +1269,22 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
+                                    <label for="tradeExitPrice" class="form-label">Exit Price</label>
+                                    <input type="number" class="form-control bg-secondary text-white" id="tradeExitPrice" step="0.00001" min="0">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
                                     <label for="tradeCurrentPrice" class="form-label">Current Price</label>
                                     <input type="number" class="form-control bg-secondary text-white" id="tradeCurrentPrice" step="0.00001" min="0">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="tradeDate" class="form-label">Trade Date</label>
+                                    <input type="datetime-local" class="form-control bg-secondary text-white" id="tradeDate">
                                 </div>
                             </div>
                         </div>
