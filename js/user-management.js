@@ -740,17 +740,39 @@ async function adjustUserBalance(userId, action) {
     }
     
     try {
+        // Get current user data first
+        const userRef = db.collection('users').doc(userId);
+        const userDoc = await userRef.get();
+        const currentBalance = userDoc.exists() ? (userDoc.data().accountBalance || userDoc.data().balance || 0) : 0;
+        
+        // Calculate new balance
+        const newBalance = action === 'add' ? currentBalance + amount : currentBalance - amount;
+        
         const batch = db.batch();
         
-        // Calculate the adjustment amount (negative for subtract)
-        const adjustmentAmount = action === 'add' ? amount : -amount;
-        
-        // Update user balance
-        const userRef = db.collection('users').doc(userId);
+        // Update users collection with ALL balance fields
         batch.update(userRef, {
-            balance: firebase.firestore.FieldValue.increment(adjustmentAmount),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            balance: newBalance,
+            accountBalance: newBalance,
+            walletBalance: newBalance,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            balanceUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            lastAdminUpdate: firebase.firestore.FieldValue.serverTimestamp()
         });
+        
+        // Also update accounts collection if it exists
+        const accountRef = db.collection('accounts').doc(userId);
+        const accountDoc = await accountRef.get();
+        
+        if (accountDoc.exists()) {
+            batch.update(accountRef, {
+                balance: newBalance,
+                accountBalance: newBalance,
+                walletBalance: newBalance,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                syncedFromUsers: true
+            });
+        }
         
         // Create transaction record
         const transactionRef = db.collection('transactions').doc();
