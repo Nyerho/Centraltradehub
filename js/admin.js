@@ -809,7 +809,6 @@ class EnhancedAdminDashboard {
             // Load financial transactions
             const transactionsQuery = query(
                 collection(this.db, 'transactions'),
-                orderBy('timestamp', 'desc'),
                 limit(50)
             );
             
@@ -818,6 +817,20 @@ class EnhancedAdminDashboard {
             
             transactionsSnapshot.forEach(doc => {
                 transactions.push({ id: doc.id, ...doc.data() });
+            });
+            
+            // Sort transactions by createdAt or timestamp, whichever exists
+            transactions.sort((a, b) => {
+                const aTime = a.createdAt || a.timestamp;
+                const bTime = b.createdAt || b.timestamp;
+                
+                if (!aTime || !bTime) return 0;
+                
+                // Handle both Firestore timestamps and regular dates
+                const aDate = aTime.toDate ? aTime.toDate() : new Date(aTime);
+                const bDate = bTime.toDate ? bTime.toDate() : new Date(bTime);
+                
+                return bDate - aDate; // Descending order
             });
             
             // Update financial dashboard
