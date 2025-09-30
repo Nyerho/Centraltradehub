@@ -559,7 +559,6 @@ class EnhancedAdminDashboard {
         try {
             const transactionsQuery = query(
                 collection(this.db, 'transactions'),
-                orderBy('createdAt', 'desc'),
                 limit(100)
             );
             
@@ -567,31 +566,25 @@ class EnhancedAdminDashboard {
             this.transactions = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
-            }));
+            })).sort((a, b) => {
+                // Sort by createdAt or timestamp, whichever exists
+                const aTime = a.createdAt || a.timestamp;
+                const bTime = b.createdAt || b.timestamp;
+                
+                if (!aTime || !bTime) return 0;
+                
+                // Handle both Firestore timestamps and regular dates
+                const aDate = aTime.toDate ? aTime.toDate() : new Date(aTime);
+                const bDate = bTime.toDate ? bTime.toDate() : new Date(bTime);
+                
+                return bDate - aDate; // Descending order
+            });
             
             this.renderTransactionsTable();
             
         } catch (error) {
             console.error('Transactions loading error:', error);
-            // Fallback to timestamp if createdAt fails
-            try {
-                const fallbackQuery = query(
-                    collection(this.db, 'transactions'),
-                    orderBy('timestamp', 'desc'),
-                    limit(100)
-                );
-                
-                const fallbackSnapshot = await getDocs(fallbackQuery);
-                this.transactions = fallbackSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-                
-                this.renderTransactionsTable();
-            } catch (fallbackError) {
-                console.error('Fallback transactions loading error:', fallbackError);
-                this.showNotification('Failed to load transactions', 'error');
-            }
+            this.showNotification('Failed to load transactions', 'error');
         }
     }
 
