@@ -617,6 +617,21 @@
                                         </button>
                                     </div>
                                     
+                                    <!-- Add User Deposit -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Add User Deposit</label>
+                                        <div class="input-group mb-2">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" class="form-control" id="depositAmount" placeholder="Deposit Amount" step="0.01" min="0.01">
+                                        </div>
+                                        <div class="input-group mb-2">
+                                            <input type="text" class="form-control" id="depositDescription" placeholder="Deposit Description (e.g., Bank Transfer, Credit Card)">
+                                        </div>
+                                        <button class="btn btn-primary w-100" onclick="adminDashboard.addUserDeposit()">
+                                            <i class="fas fa-money-bill-wave me-1"></i>Add Deposit
+                                        </button>
+                                    </div>
+                                    
                                     <!-- Set Exact Balance -->
                                     <div class="mb-3">
                                         <label class="form-label">Set Exact Balance</label>

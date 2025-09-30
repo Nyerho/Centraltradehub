@@ -3213,6 +3213,115 @@ EnhancedAdminDashboard.prototype.addUserProfit = async function() {
     }
 };
 
+EnhancedAdminDashboard.prototype.addUserDeposit = async function() {
+    const amountInput = document.getElementById('depositAmount');
+    const descriptionInput = document.getElementById('depositDescription');
+    
+    if (!amountInput || !descriptionInput) {
+        this.showNotification('Error: Input fields not found', 'error');
+        return;
+    }
+    
+    const amount = parseFloat(amountInput.value);
+    const description = descriptionInput.value.trim();
+    
+    if (amount <= 0 || isNaN(amount)) {
+        this.showNotification('Please enter a valid deposit amount', 'error');
+        return;
+    }
+    
+    if (!description) {
+        this.showNotification('Please enter a deposit description', 'error');
+        return;
+    }
+    
+    if (!this.selectedUserId) {
+        this.showNotification('Please select a user first', 'error');
+        return;
+    }
+    
+    try {
+        const timestamp = serverTimestamp();
+        
+        // Use batch write for atomic updates
+        const batch = writeBatch(this.db);
+        
+        // Update users collection
+        const userRef = doc(this.db, 'users', this.selectedUserId);
+        batch.update(userRef, {
+            balance: increment(amount),
+            accountBalance: increment(amount),
+            walletBalance: increment(amount),
+            totalDeposits: increment(amount),
+            updatedAt: timestamp,
+            balanceUpdatedAt: timestamp,
+            lastAdminUpdate: timestamp
+        });
+        
+        // Update accounts collection
+        const accountRef = doc(this.db, 'accounts', this.selectedUserId);
+        const accountDoc = await getDoc(accountRef);
+        
+        if (accountDoc.exists()) {
+            batch.update(accountRef, {
+                balance: increment(amount),
+                accountBalance: increment(amount),
+                walletBalance: increment(amount),
+                totalDeposits: increment(amount),
+                updatedAt: timestamp,
+                lastAdminUpdate: timestamp
+            });
+        } else {
+            // Create account document if it doesn't exist
+            const userDoc = await getDoc(userRef);
+            const userData = userDoc.exists() ? userDoc.data() : {};
+            
+            batch.set(accountRef, {
+                balance: amount,
+                accountBalance: amount,
+                walletBalance: amount,
+                totalProfits: userData.totalProfits || 0,
+                totalDeposits: amount,
+                currency: 'USD',
+                createdAt: timestamp,
+                updatedAt: timestamp,
+                lastAdminUpdate: timestamp
+            });
+        }
+        
+        // Create transaction record
+        const transactionRef = doc(collection(this.db, 'transactions'));
+        batch.set(transactionRef, {
+            uid: this.selectedUserId,
+            userId: this.selectedUserId,
+            userEmail: this.selectedUserEmail,
+            type: 'deposit',
+            amount: amount,
+            status: 'completed',
+            description: description,
+            timestamp: timestamp,
+            createdAt: timestamp,
+            adminId: this.currentUser?.uid || 'admin',
+            adminEmail: this.currentUser?.email || 'admin',
+            source: 'admin_panel'
+        });
+        
+        // Execute all updates atomically
+        await batch.commit();
+        
+        this.showNotification(`Deposit of $${amount.toFixed(2)} added successfully`, 'success');
+        
+        // Clear inputs and refresh
+        amountInput.value = '';
+        descriptionInput.value = '';
+        await this.loadUserFinancialSection();
+        
+    } catch (error) {
+        console.error('Error adding deposit:', error);
+        this.showNotification('Failed to add deposit', 'error');
+    }
+};
+
 EnhancedAdminDashboard.prototype.setExactBalance = async function() {
     const amountInput = document.getElementById('exactBalanceAmount');
     const reasonInput = document.getElementById('exactBalanceReason');

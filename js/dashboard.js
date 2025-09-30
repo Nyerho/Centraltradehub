@@ -438,8 +438,20 @@ class DashboardManager {
             totalDepositsElement: !!totalDepositsElement
         });
         
+        // Calculate wallet balance as deposits + profits
+        const deposits = this.accountData.totalDeposits || 0;
+        const profits = this.accountData.totalProfits || 0;
+        const calculatedWalletBalance = deposits + profits;
+        
+        console.log('Balance calculation:', {
+            deposits,
+            profits,
+            calculatedWalletBalance,
+            storedBalance: this.accountData.balance
+        });
+        
         if (balanceElement) {
-            const formattedBalance = `${(this.accountData.balance || 0).toLocaleString('en-US', {
+            const formattedBalance = `${calculatedWalletBalance.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             })}`;
@@ -449,7 +461,7 @@ class DashboardManager {
         }
         
         if (accountBalanceElement) {
-            const formattedBalance = `${(this.accountData.balance || 0).toLocaleString('en-US', {
+            const formattedBalance = `${calculatedWalletBalance.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             })}`;
@@ -460,7 +472,7 @@ class DashboardManager {
         
         // Display received profits separately
         if (receivedProfitsElement) {
-            const formattedProfits = `${(this.accountData.totalProfits || 0).toLocaleString('en-US', {
+            const formattedProfits = `${profits.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             })}`;
@@ -470,7 +482,7 @@ class DashboardManager {
         
         // Display total deposits
         if (totalDepositsElement) {
-            const formattedDeposits = `${(this.accountData.totalDeposits || 0).toLocaleString('en-US', {
+            const formattedDeposits = `${deposits.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             })}`;

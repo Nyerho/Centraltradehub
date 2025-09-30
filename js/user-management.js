@@ -1389,21 +1389,37 @@ window.addUserDeposit = async function(userId) {
         // Add transaction record
         const transactionRef = db.collection('transactions').doc();
         batch.set(transactionRef, {
-            userId: userId,
+            uid: userId, // Changed from 'userId' to 'uid' for consistency
             type: 'deposit',
             amount: amount,
             status: 'completed',
             description: 'Admin deposit',
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             adminId: window.currentUser?.uid || 'admin'
         });
         
-        // Update user balance
+        // Update user balance AND totalDeposits
         const userRef = db.collection('users').doc(userId);
         batch.update(userRef, {
             balance: firebase.firestore.FieldValue.increment(amount),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            accountBalance: firebase.firestore.FieldValue.increment(amount),
+            walletBalance: firebase.firestore.FieldValue.increment(amount),
+            totalDeposits: firebase.firestore.FieldValue.increment(amount),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            balanceUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            lastAdminUpdate: firebase.firestore.FieldValue.serverTimestamp()
         });
+        
+        // Update accounts collection for consistency
+        const accountRef = db.collection('accounts').doc(userId);
+        batch.set(accountRef, {
+            balance: firebase.firestore.FieldValue.increment(amount),
+            accountBalance: firebase.firestore.FieldValue.increment(amount),
+            walletBalance: firebase.firestore.FieldValue.increment(amount),
+            totalDeposits: firebase.firestore.FieldValue.increment(amount),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
         
         await batch.commit();
         
@@ -1446,14 +1462,27 @@ window.addUserProfit = async function(userId) {
             adminId: window.currentUser?.uid || 'admin'
         });
         
-        // Update user balance and profit tracking
+        // Update user balance, accountBalance, and profit tracking
         const userRef = db.collection('users').doc(userId);
         batch.update(userRef, {
+            balance: firebase.firestore.FieldValue.increment(amount),
             accountBalance: firebase.firestore.FieldValue.increment(amount),
+            walletBalance: firebase.firestore.FieldValue.increment(amount),
             totalProfits: firebase.firestore.FieldValue.increment(amount),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            balanceUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            balanceUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            lastAdminUpdate: firebase.firestore.FieldValue.serverTimestamp()
         });
+        
+        // Update accounts collection for consistency
+        const accountRef = db.collection('accounts').doc(userId);
+        batch.set(accountRef, {
+            balance: firebase.firestore.FieldValue.increment(amount),
+            accountBalance: firebase.firestore.FieldValue.increment(amount),
+            walletBalance: firebase.firestore.FieldValue.increment(amount),
+            totalProfits: firebase.firestore.FieldValue.increment(amount),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
         
         await batch.commit();
         
