@@ -347,84 +347,84 @@ class DashboardManager {
 
     async loadAccountData(user) {
         try {
-            // First, get the most up-to-date data from users collection
+            // Clear any cached data first
+            this.accountData = null;
+            localStorage.removeItem('cachedAccountData');
+            localStorage.removeItem('lastAccountUpdate');
+            
+            console.log('=== FORCE REFRESH: Loading fresh account data ===');
+            
+            // First, get the most up-to-date data from users collection (admin source of truth)
             const userRef = doc(db, 'users', user.uid);
             const userDoc = await getDoc(userRef);
-            const userData = userDoc.exists() ? userDoc.data() : {};
             
-            // Prioritize users collection data (admin updates)
-            const userBalance = userData.accountBalance || userData.balance || 0;
-            const totalProfits = userData.totalProfits || 0;
-            const totalDeposits = userData.totalDeposits || 0;
-            
-            console.log('Loading account data - Users collection data:', {
-                balance: userBalance,
-                totalProfits: totalProfits,
-                totalDeposits: totalDeposits
-            });
-            
-            // Check accounts collection
-            const accountRef = doc(db, 'accounts', user.uid);
-            const accountDoc = await getDoc(accountRef);
-            
-            if (accountDoc.exists()) {
-                const accountData = accountDoc.data();
-                
-                // Check if accounts collection needs updating
-                const needsSync = 
-                    accountData.balance !== userBalance ||
-                    accountData.totalProfits !== totalProfits ||
-                    accountData.totalDeposits !== totalDeposits;
-                
-                if (needsSync) {
-                    console.log('Syncing accounts collection with users data');
-                    // Update accounts collection with users data
-                    await updateDoc(accountRef, {
-                        balance: userBalance,
-                        accountBalance: userBalance,
-                        walletBalance: userBalance,
-                        totalProfits: totalProfits,
-                        totalDeposits: totalDeposits,
-                        lastSyncedAt: new Date().toISOString(),
-                        syncedFromUsers: true
-                    });
-                }
-                
-                // Use the corrected data
-                this.accountData = {
-                    ...accountData,
-                    balance: userBalance,
-                    accountBalance: userBalance,
-                    walletBalance: userBalance,
-                    totalProfits: totalProfits,
-                    totalDeposits: totalDeposits
-                };
-            } else {
-                // Create account with users data
-                this.accountData = {
-                    balance: userBalance,
-                    accountBalance: userBalance,
-                    walletBalance: userBalance,
-                    totalProfits: totalProfits,
-                    totalDeposits: totalDeposits,
-                    currency: 'USD',
-                    createdAt: new Date().toISOString()
-                };
-                await setDoc(accountRef, this.accountData);
+            if (!userDoc.exists()) {
+                console.error('User document not found');
+                return;
             }
             
-            console.log('Final accountData:', this.accountData);
+            const userData = userDoc.data();
+            
+            // Use users collection as the authoritative source (admin updates)
+            const authoritativeBalance = userData.accountBalance || userData.balance || 0;
+            const authoritativeProfits = userData.totalProfits || 0;
+            const authoritativeDeposits = userData.totalDeposits || 0;
+            
+            console.log('AUTHORITATIVE DATA from users collection:', {
+                balance: authoritativeBalance,
+                totalProfits: authoritativeProfits,
+                totalDeposits: authoritativeDeposits,
+                rawUserData: userData
+            });
+            
+            // Force update accounts collection to match users collection
+            const accountRef = doc(db, 'accounts', user.uid);
+            const syncedAccountData = {
+                balance: authoritativeBalance,
+                accountBalance: authoritativeBalance,
+                walletBalance: authoritativeBalance,
+                totalProfits: authoritativeProfits,
+                totalDeposits: authoritativeDeposits,
+                currency: 'USD',
+                lastSyncedAt: new Date().toISOString(),
+                syncedFromUsers: true,
+                forceRefreshAt: new Date().toISOString()
+            };
+            
+            // Always update/create the accounts document with fresh data
+            await setDoc(accountRef, syncedAccountData, { merge: true });
+            console.log('FORCED SYNC: Updated accounts collection with users data');
+            
+            // Set the dashboard data to the authoritative values
+            this.accountData = {
+                balance: authoritativeBalance,
+                accountBalance: authoritativeBalance,
+                walletBalance: authoritativeBalance,
+                totalProfits: authoritativeProfits,
+                totalDeposits: authoritativeDeposits,
+                currency: 'USD'
+            };
+            
+            console.log('FINAL DASHBOARD DATA:', this.accountData);
+            
+            // Force UI update
             this.updateAccountSummary();
             
+            // Clear any change indicators that might show old cached values
+            this.clearChangeIndicators();
+            
+            console.log('=== FORCE REFRESH COMPLETE ===');
+            
         } catch (error) {
-            console.error('Error loading account data:', error);
-            this.showErrorState();
+            console.error('Error in force refresh loadAccountData:', error);
+            // Show error to user
+            this.showNotification('Error loading account data. Please refresh the page.', 'error');
         }
     }
 
     updateAccountSummary() {
-        console.log('=== DEBUG: updateAccountSummary called ===');
-        console.log('this.accountData:', this.accountData);
+        console.log('=== UPDATING UI ===');
+        console.log('updateAccountSummary called with accountData:', this.accountData);
         
         const balanceElement = document.getElementById('walletBalance');
         const accountBalanceElement = document.getElementById('accountBalance');
@@ -432,58 +432,56 @@ class DashboardManager {
         const totalDepositsElement = document.getElementById('totalDeposits');
         
         console.log('DOM elements found:', {
-            walletBalance: !!balanceElement,
-            accountBalance: !!accountBalanceElement,
-            receivedProfits: !!receivedProfitsElement,
-            totalDeposits: !!totalDepositsElement
+            balanceElement: !!balanceElement,
+            accountBalanceElement: !!accountBalanceElement,
+            receivedProfitsElement: !!receivedProfitsElement,
+            totalDepositsElement: !!totalDepositsElement
         });
         
         if (balanceElement) {
-            const currentDisplayed = balanceElement.textContent;
-            const newValue = `${(this.accountData.balance || 0).toLocaleString('en-US', {
+            const formattedBalance = `${(this.accountData.balance || 0).toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             })}`;
-            console.log('walletBalance - Current:', currentDisplayed, 'New:', newValue);
-            balanceElement.textContent = newValue;
-            console.log('walletBalance - After update:', balanceElement.textContent);
+            console.log('Setting walletBalance to:', formattedBalance);
+            balanceElement.textContent = formattedBalance;
+            balanceElement.style.fontWeight = 'bold'; // Visual confirmation of update
         }
         
         if (accountBalanceElement) {
-            const currentDisplayed = accountBalanceElement.textContent;
-            const newValue = `${(this.accountData.balance || 0).toLocaleString('en-US', {
+            const formattedBalance = `${(this.accountData.balance || 0).toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             })}`;
-            console.log('accountBalance - Current:', currentDisplayed, 'New:', newValue);
-            accountBalanceElement.textContent = newValue;
-            console.log('accountBalance - After update:', accountBalanceElement.textContent);
+            console.log('Setting accountBalance to:', formattedBalance);
+            accountBalanceElement.textContent = formattedBalance;
+            accountBalanceElement.style.fontWeight = 'bold'; // Visual confirmation of update
         }
         
         // Display received profits separately
         if (receivedProfitsElement) {
-            const currentDisplayed = receivedProfitsElement.textContent;
-            const newValue = `${(this.accountData.totalProfits || 0).toLocaleString('en-US', {
+            const formattedProfits = `${(this.accountData.totalProfits || 0).toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             })}`;
-            console.log('receivedProfits - Current:', currentDisplayed, 'New:', newValue);
-            receivedProfitsElement.textContent = newValue;
+            console.log('Setting receivedProfits to:', formattedProfits);
+            receivedProfitsElement.textContent = formattedProfits;
         }
         
         // Display total deposits
         if (totalDepositsElement) {
-            const currentDisplayed = totalDepositsElement.textContent;
-            const newValue = `${(this.accountData.totalDeposits || 0).toLocaleString('en-US', {
+            const formattedDeposits = `${(this.accountData.totalDeposits || 0).toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             })}`;
-            console.log('totalDeposits - Current:', currentDisplayed, 'New:', newValue);
-            totalDepositsElement.textContent = newValue;
+            console.log('Setting totalDeposits to:', formattedDeposits);
+            totalDepositsElement.textContent = formattedDeposits;
         }
         
-        console.log('=== END DEBUG ===');
-        this.updateChangeIndicators();
+        console.log('=== UI UPDATE COMPLETE ===');
+        
+        // Update change indicators with fresh data (no cached comparisons)
+        // this.updateChangeIndicators(); // Commented out to prevent cached value conflicts
     }
 
     updateChangeIndicators() {
@@ -502,6 +500,20 @@ class DashboardManager {
             element.textContent = `${change >= 0 ? '+' : ''}$${change.toFixed(2)} (${changePercent.toFixed(2)}%)`;
             element.className = `change-indicator ${change >= 0 ? 'positive' : 'negative'}`;
         });
+    }
+    
+    clearChangeIndicators() {
+        // Clear any change indicators that might show cached values
+        const changeElements = document.querySelectorAll('.change-indicator, .balance-change');
+        changeElements.forEach(element => {
+            element.textContent = '';
+            element.className = element.className.replace(/positive|negative/g, '');
+        });
+        
+        // Clear localStorage change tracking
+        localStorage.removeItem('previousBalance');
+        localStorage.removeItem('previousProfits');
+        localStorage.removeItem('balanceChangeTimestamp');
     }
 
     showErrorState() {
