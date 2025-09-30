@@ -86,28 +86,25 @@ class EnhancedAdminDashboard {
 
     async init() {
         try {
-            // Initialize event listeners first
+            this.app = initializeApp(firebaseConfig);
+            this.auth = getAuth(this.app);
+            this.db = getFirestore(this.app);
+            
+            await this.checkAdminAccess();
             this.setupEventListeners();
+            this.setupNetworkListeners();
             
-            // Check authentication state
-            onAuthStateChanged(this.auth, async (user) => {
-                if (user) {
-                    this.currentUser = user;
-                    // Wait for admin access check to complete
-                    const hasAdminAccess = await this.checkAdminAccess();
-                    if (hasAdminAccess) {
-                        // Only load data after confirming admin access
-                        await this.loadDashboardData();
-                        this.setupRealtimeListeners();
-                    }
-                } else {
-                    this.redirectToLogin();
-                }
-            });
+            // Initialize dashboard by default
+            this.navigateToPage('dashboard');
             
+            console.log('Enhanced Admin Dashboard initialized successfully');
         } catch (error) {
-            console.error('Admin initialization error:', error);
-            this.showNotification('Failed to initialize admin panel', 'error');
+            console.error('Failed to initialize admin dashboard:', error);
+            if (error.code === 'auth/network-request-failed') {
+                this.showNotification('Network error. Please check your connection.', 'error');
+            } else {
+                this.redirectToLogin();
+            }
         }
     }
 
@@ -692,7 +689,7 @@ class EnhancedAdminDashboard {
         });
     }
     
-    async async loadUsersSection() {
+    async loadUsersSection() {
         try {
             console.log('Starting to load users section...'); // Debug log
             const usersSnapshot = await getDocs(collection(this.db, 'users'));
@@ -2340,9 +2337,14 @@ class EnhancedAdminDashboard {
         
         // Load section-specific content
         switch(page) {
+            case 'dashboard':
+                this.loadDashboardData();
+                this.updateDashboardStats();
+                break;
             case 'users':
                 console.log('Loading users section...'); // Debug log
                 this.loadUsersSection();
+                this.updateUserStats();
                 break;
             case 'withdrawals':
                 this.loadGlobalCotCode();
