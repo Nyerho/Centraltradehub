@@ -953,7 +953,7 @@ class EnhancedAdminDashboard {
         }
         
         if (usersData.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No users found</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="8" class="text-center">No users found</td></tr>';
             return;
         }
         
@@ -971,6 +971,11 @@ class EnhancedAdminDashboard {
                     <td>$${user.totalWithdrawals.toFixed(2)}</td>
                     <td>${user.transactionCount}</td>
                     <td>${lastActivity}</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" onclick="adminDashboard.selectUserForFinancialManagement('${user.id}', '${user.email}', '${user.displayName}', ${user.balance}, ${user.totalDeposits}, ${user.totalWithdrawals})">
+                            <i class="fas fa-edit me-1"></i>Manage
+                        </button>
+                    </td>
                 </tr>
             `;
         }).join('');
@@ -2545,8 +2550,8 @@ class EnhancedAdminDashboard {
     }
 
     async adjustUserBalance(action) {
-        const amountInput = document.getElementById('adjustmentAmount');
-        const reasonInput = document.getElementById('adjustmentReason');
+        const amountInput = document.getElementById('balanceAdjustAmount');
+        const reasonInput = document.getElementById('balanceAdjustReason');
         
         if (!amountInput || !reasonInput) {
             this.showNotification('Error: Input fields not found', 'error');
@@ -2566,8 +2571,8 @@ class EnhancedAdminDashboard {
             return;
         }
         
-        if (!this.currentViewingUserId) {
-            this.showNotification('Error: User ID not found', 'error');
+        if (!this.selectedUserId) {
+            this.showNotification('Please select a user first', 'error');
             return;
         }
         
@@ -2576,51 +2581,27 @@ class EnhancedAdminDashboard {
             const adjustmentAmount = action === 'add' ? amount : -amount;
             
             // Update user balance using correct v9 syntax
-            const userRef = doc(this.db, 'users', this.currentViewingUserId);
+            const userRef = doc(this.db, 'users', this.selectedUserId);
             await updateDoc(userRef, {
-                accountBalance: increment(adjustmentAmount),
+                balance: increment(adjustmentAmount),
                 updatedAt: serverTimestamp(),
                 balanceUpdatedAt: serverTimestamp()
             });
             
             // Create transaction record with 'uid' field for user history
             await addDoc(collection(this.db, 'transactions'), {
-                uid: this.currentViewingUserId, // Changed from 'userId' to 'uid'
-                type: action === 'add' ? 'deposit' : 'withdrawal', // Use standard transaction types
+                uid: this.selectedUserId,
+                userEmail: this.selectedUserEmail,
+                type: action === 'add' ? 'deposit' : 'withdrawal',
                 amount: amount,
                 status: 'completed',
                 description: `Manual balance adjustment: ${reason}`,
                 reason: reason,
                 timestamp: serverTimestamp(),
                 createdAt: serverTimestamp(),
-                adminId: this.auth.currentUser?.uid || 'admin',
+                adminId: this.currentUser?.uid || 'admin',
                 method: 'admin_adjustment'
             });
-            
-            // Also update the accounts collection for synchronization
-            const accountRef = doc(this.db, 'accounts', this.currentViewingUserId);
-            const accountDoc = await getDoc(accountRef);
-            
-            if (accountDoc.exists()) {
-                await updateDoc(accountRef, {
-                    balance: increment(adjustmentAmount),
-                    lastSyncedAt: serverTimestamp(),
-                    adminUpdated: true
-                });
-            } else {
-                // Create account document if it doesn't exist
-                const userDoc = await getDoc(userRef);
-                const userData = userDoc.data();
-                await setDoc(accountRef, {
-                    balance: userData.accountBalance || adjustmentAmount,
-                    totalDeposits: action === 'add' ? amount : 0,
-                    totalWithdrawals: action === 'subtract' ? amount : 0,
-                    currency: 'USD',
-                    createdAt: serverTimestamp(),
-                    lastSyncedAt: serverTimestamp(),
-                    adminUpdated: true
-                });
-            }
             
             this.showNotification(`Balance ${action === 'add' ? 'increased' : 'decreased'} by $${amount.toFixed(2)}`, 'success');
             
@@ -2628,15 +2609,12 @@ class EnhancedAdminDashboard {
             amountInput.value = '';
             reasonInput.value = '';
             
-            // Refresh the user data
-            await this.refreshUserDetails(this.currentViewingUserId);
-            
-            // Reload users table to reflect changes
-            await this.loadUsers();
+            // Refresh the user financial data
+            await this.loadUserFinancialSection();
             
         } catch (error) {
             console.error('Error adjusting balance:', error);
-            this.showNotification('Error adjusting balance: ' + error.message, 'error');
+            this.showNotification('Failed to adjust balance', 'error');
         }
     }
 
@@ -2863,6 +2841,152 @@ window.openAdminProfile = function() {
     // For now, just show a notification
     if (window.adminDashboard) {
         window.adminDashboard.showNotification('Admin profile feature coming soon!', 'info');
+    }
+};
+
+// Add method to select user for financial management
+EnhancedAdminDashboard.prototype.selectUserForFinancialManagement = function(userId, userEmail, displayName, balance, totalDeposits, totalWithdrawals) {
+    // Store the selected user information
+    this.selectedUserId = userId;
+    this.selectedUserEmail = userEmail;
+    
+    // Update the financial management panel
+    document.getElementById('selectedUserName').textContent = `${displayName} (${userEmail})`;
+    document.getElementById('currentUserBalance').textContent = `$${balance.toFixed(2)}`;
+    document.getElementById('currentUserDeposits').textContent = `$${totalDeposits.toFixed(2)}`;
+    document.getElementById('currentUserWithdrawals').textContent = `$${totalWithdrawals.toFixed(2)}`;
+    
+    // Show the financial management panel
+    document.getElementById('financialManagementPanel').style.display = 'block';
+    
+    // Scroll to the panel
+    document.getElementById('financialManagementPanel').scrollIntoView({ behavior: 'smooth' });
+};
+
+EnhancedAdminDashboard.prototype.addUserProfit = async function() {
+    const amountInput = document.getElementById('profitAmount');
+    const descriptionInput = document.getElementById('profitDescription');
+    
+    if (!amountInput || !descriptionInput) {
+        this.showNotification('Error: Input fields not found', 'error');
+        return;
+    }
+    
+    const amount = parseFloat(amountInput.value);
+    const description = descriptionInput.value.trim() || 'Received profit';
+    
+    if (!amount || amount <= 0) {
+        this.showNotification('Please enter a valid profit amount', 'error');
+        return;
+    }
+    
+    if (!this.selectedUserId) {
+        this.showNotification('Please select a user first', 'error');
+        return;
+    }
+    
+    try {
+        // Update user balance and profit tracking
+        const userRef = doc(this.db, 'users', this.selectedUserId);
+        await updateDoc(userRef, {
+            balance: increment(amount),
+            totalProfits: increment(amount),
+            updatedAt: serverTimestamp(),
+            balanceUpdatedAt: serverTimestamp()
+        });
+        
+        // Create transaction record
+        await addDoc(collection(this.db, 'transactions'), {
+            uid: this.selectedUserId,
+            userEmail: this.selectedUserEmail,
+            type: 'profit',
+            amount: amount,
+            status: 'completed',
+            description: description,
+            timestamp: serverTimestamp(),
+            createdAt: serverTimestamp(),
+            adminId: this.currentUser?.uid || 'admin',
+            method: 'admin_profit_addition'
+        });
+        
+        this.showNotification(`Profit of $${amount.toFixed(2)} added successfully`, 'success');
+        
+        // Clear the input fields
+        amountInput.value = '';
+        descriptionInput.value = '';
+        
+        // Refresh the user financial data
+        await this.loadUserFinancialSection();
+        
+    } catch (error) {
+        console.error('Error adding profit:', error);
+        this.showNotification('Failed to add profit', 'error');
+    }
+};
+
+EnhancedAdminDashboard.prototype.setExactBalance = async function() {
+    const amountInput = document.getElementById('exactBalanceAmount');
+    const reasonInput = document.getElementById('exactBalanceReason');
+    
+    if (!amountInput || !reasonInput) {
+        this.showNotification('Error: Input fields not found', 'error');
+        return;
+    }
+    
+    const newBalance = parseFloat(amountInput.value);
+    const reason = reasonInput.value.trim();
+    
+    if (newBalance < 0) {
+        this.showNotification('Balance cannot be negative', 'error');
+        return;
+    }
+    
+    if (!reason) {
+        this.showNotification('Please enter a reason for setting exact balance', 'error');
+        return;
+    }
+    
+    if (!this.selectedUserId) {
+        this.showNotification('Please select a user first', 'error');
+        return;
+    }
+    
+    try {
+        // Update user balance to exact amount
+        const userRef = doc(this.db, 'users', this.selectedUserId);
+        await updateDoc(userRef, {
+            balance: newBalance,
+            updatedAt: serverTimestamp(),
+            balanceUpdatedAt: serverTimestamp()
+        });
+        
+        // Create transaction record
+        await addDoc(collection(this.db, 'transactions'), {
+            uid: this.selectedUserId,
+            userEmail: this.selectedUserEmail,
+            type: 'balance_adjustment',
+            amount: newBalance,
+            status: 'completed',
+            description: `Balance set to exact amount: ${reason}`,
+            reason: reason,
+            timestamp: serverTimestamp(),
+            createdAt: serverTimestamp(),
+            adminId: this.currentUser?.uid || 'admin',
+            method: 'admin_exact_balance'
+        });
+        
+        this.showNotification(`Balance set to $${newBalance.toFixed(2)}`, 'success');
+        
+        // Clear the input fields
+        amountInput.value = '';
+        reasonInput.value = '';
+        
+        // Refresh the user financial data
+        await this.loadUserFinancialSection();
+        
+    } catch (error) {
+        console.error('Error setting exact balance:', error);
+        this.showNotification('Failed to set exact balance', 'error');
     }
 };
 

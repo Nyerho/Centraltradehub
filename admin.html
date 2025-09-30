@@ -585,10 +585,10 @@
                                             <input type="text" class="form-control" id="balanceAdjustReason" placeholder="Reason for adjustment">
                                         </div>
                                         <div class="btn-group w-100">
-                                            <button class="btn btn-success" onclick="adjustUserBalance('add')">
+                                            <button class="btn btn-success" onclick="adminDashboard.adjustUserBalance('add')">
                                                 <i class="fas fa-plus me-1"></i>Add Funds
                                             </button>
-                                            <button class="btn btn-danger" onclick="adjustUserBalance('subtract')">
+                                            <button class="btn btn-danger" onclick="adminDashboard.adjustUserBalance('subtract')">
                                                 <i class="fas fa-minus me-1"></i>Subtract Funds
                                             </button>
                                         </div>
@@ -604,7 +604,7 @@
                                         <div class="input-group mb-2">
                                             <input type="text" class="form-control" id="profitDescription" placeholder="Profit description">
                                         </div>
-                                        <button class="btn btn-info w-100" onclick="addUserProfit()">
+                                        <button class="btn btn-info w-100" onclick="adminDashboard.addUserProfit()">
                                             <i class="fas fa-chart-line me-1"></i>Add Received Profit
                                         </button>
                                     </div>
@@ -619,7 +619,7 @@
                                         <div class="input-group mb-2">
                                             <input type="text" class="form-control" id="exactBalanceReason" placeholder="Reason for setting exact balance">
                                         </div>
-                                        <button class="btn btn-warning w-100" onclick="setExactBalance()">
+                                        <button class="btn btn-warning w-100" onclick="adminDashboard.setExactBalance()">
                                             <i class="fas fa-equals me-1"></i>Set Exact Balance
                                         </button>
                                     </div>
