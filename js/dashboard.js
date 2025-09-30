@@ -347,23 +347,60 @@ class DashboardManager {
 
     async loadAccountData(user) {
         try {
+            // First, get the most up-to-date data from users collection
+            const userRef = doc(db, 'users', user.uid);
+            const userDoc = await getDoc(userRef);
+            const userData = userDoc.exists() ? userDoc.data() : {};
+            
+            // Prioritize users collection data (admin updates)
+            const userBalance = userData.accountBalance || userData.balance || 0;
+            const totalProfits = userData.totalProfits || 0;
+            const totalDeposits = userData.totalDeposits || 0;
+            
+            console.log('Loading account data - Users collection data:', {
+                balance: userBalance,
+                totalProfits: totalProfits,
+                totalDeposits: totalDeposits
+            });
+            
+            // Check accounts collection
             const accountRef = doc(db, 'accounts', user.uid);
             const accountDoc = await getDoc(accountRef);
             
             if (accountDoc.exists()) {
-                this.accountData = accountDoc.data();
+                const accountData = accountDoc.data();
+                
+                // Check if accounts collection needs updating
+                const needsSync = 
+                    accountData.balance !== userBalance ||
+                    accountData.totalProfits !== totalProfits ||
+                    accountData.totalDeposits !== totalDeposits;
+                
+                if (needsSync) {
+                    console.log('Syncing accounts collection with users data');
+                    // Update accounts collection with users data
+                    await updateDoc(accountRef, {
+                        balance: userBalance,
+                        accountBalance: userBalance,
+                        walletBalance: userBalance,
+                        totalProfits: totalProfits,
+                        totalDeposits: totalDeposits,
+                        lastSyncedAt: new Date().toISOString(),
+                        syncedFromUsers: true
+                    });
+                }
+                
+                // Use the corrected data
+                this.accountData = {
+                    ...accountData,
+                    balance: userBalance,
+                    accountBalance: userBalance,
+                    walletBalance: userBalance,
+                    totalProfits: totalProfits,
+                    totalDeposits: totalDeposits
+                };
             } else {
-                // Check if user has balance, profits, and deposits from admin updates
-                const userRef = doc(db, 'users', user.uid);
-                const userDoc = await getDoc(userRef);
-                const userData = userDoc.exists() ? userDoc.data() : {};
-                
-                // Prioritize accountBalance (admin updates), then balance as fallback
-                const userBalance = userData.accountBalance || userData.balance || 0;
-                const totalProfits = userData.totalProfits || 0;
-                const totalDeposits = userData.totalDeposits || 0;
-                
-                // Create account with admin data if available
+                // Create account with users data
                 this.accountData = {
                     balance: userBalance,
                     accountBalance: userBalance,
@@ -376,6 +413,7 @@ class DashboardManager {
                 await setDoc(accountRef, this.accountData);
             }
             
+            console.log('Final accountData:', this.accountData);
             this.updateAccountSummary();
             
         } catch (error) {
