@@ -620,6 +620,11 @@ class EnhancedAdminDashboard {
         }
     }
     
+    // Add missing refreshWithdrawals method
+    refreshWithdrawals() {
+        return this.loadWithdrawals();
+    }
+    
     async loadGlobalCotCode() {
         try {
             const docRef = doc(this.db, 'admin', 'withdrawal-settings');
@@ -2674,13 +2679,37 @@ class EnhancedAdminDashboard {
             // Calculate the adjustment amount (negative for subtract)
             const adjustmentAmount = action === 'add' ? amount : -amount;
             
-            // Update user balance using correct v9 syntax
+            // Update user balance using correct v9 syntax - UPDATE BOTH FIELDS
             const userRef = doc(this.db, 'users', this.selectedUserId);
             await updateDoc(userRef, {
                 balance: increment(adjustmentAmount),
+                accountBalance: increment(adjustmentAmount), // ADD THIS LINE
                 updatedAt: serverTimestamp(),
                 balanceUpdatedAt: serverTimestamp()
             });
+            
+            // Also update the accounts collection for dashboard sync
+            const accountRef = doc(this.db, 'accounts', this.selectedUserId);
+            const accountDoc = await getDoc(accountRef);
+            
+            if (accountDoc.exists()) {
+                await updateDoc(accountRef, {
+                    balance: increment(adjustmentAmount),
+                    updatedAt: serverTimestamp()
+                });
+            } else {
+                // Create account document if it doesn't exist
+                const userDoc = await getDoc(userRef);
+                const userData = userDoc.data();
+                await setDoc(accountRef, {
+                    balance: (userData.balance || 0),
+                    totalProfits: userData.totalProfits || 0,
+                    totalDeposits: userData.totalDeposits || 0,
+                    currency: 'USD',
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                });
+            }
             
             // Create transaction record with 'uid' field for user history
             await addDoc(collection(this.db, 'transactions'), {
