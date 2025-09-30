@@ -939,6 +939,97 @@ class EnhancedAdminDashboard {
         });
     }
     
+    loadUserControlSection() {
+        console.log('Loading user control section...');
+        // Initialize the user control section
+        this.setupUserControlTabs();
+        // Load initial data for withdrawal control tab
+        this.refreshWithdrawals();
+    }
+
+    setupUserControlTabs() {
+        // Setup tab switching functionality
+        const tabButtons = document.querySelectorAll('.user-control-tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetTab = button.getAttribute('data-tab');
+                
+                // Remove active class from all tabs and contents
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                button.classList.add('active');
+                const targetContent = document.getElementById(targetTab);
+                if (targetContent) {
+                    targetContent.classList.add('active');
+                }
+                
+                // Load tab-specific data
+                if (targetTab === 'withdrawal-control-content') {
+                    this.refreshWithdrawals();
+                }
+            });
+        });
+        
+        // Setup search functionality for each tab
+        this.setupUserControlSearches();
+    }
+
+    setupUserControlSearches() {
+        // Password Management search
+        const passwordSearchBtn = document.getElementById('search-user-password');
+        if (passwordSearchBtn) {
+            passwordSearchBtn.addEventListener('click', () => this.searchUserForPassword());
+        }
+        
+        // Account Control search
+        const accountSearchBtn = document.getElementById('search-user-account');
+        if (accountSearchBtn) {
+            accountSearchBtn.addEventListener('click', () => this.searchUserForAccount());
+        }
+        
+        // Setup other button event listeners
+        const resetPasswordBtn = document.getElementById('reset-user-password');
+        if (resetPasswordBtn) {
+            resetPasswordBtn.addEventListener('click', () => this.resetUserPassword());
+        }
+        
+        const generateTempBtn = document.getElementById('generate-temp-password');
+        if (generateTempBtn) {
+            generateTempBtn.addEventListener('click', () => this.generateTempPassword());
+        }
+        
+        const setPasswordBtn = document.getElementById('set-user-password');
+        if (setPasswordBtn) {
+            setPasswordBtn.addEventListener('click', () => this.setUserPassword());
+        }
+        
+        // Account control buttons
+        const activateBtn = document.getElementById('activate-user');
+        if (activateBtn) {
+            activateBtn.addEventListener('click', () => this.activateUser());
+        }
+        
+        const suspendBtn = document.getElementById('suspend-user');
+        if (suspendBtn) {
+            suspendBtn.addEventListener('click', () => this.suspendUser());
+        }
+        
+        const blockBtn = document.getElementById('block-user');
+        if (blockBtn) {
+            blockBtn.addEventListener('click', () => this.blockUser());
+        }
+        
+        const restrictBtn = document.getElementById('restrict-user');
+        if (restrictBtn) {
+            restrictBtn.addEventListener('click', () => this.restrictUser());
+        }
+    }
+    
     renderUserFinancialTable(usersData) {
         const tableBody = document.getElementById('userFinancialTableBody');
         if (!tableBody) {
@@ -2397,6 +2488,9 @@ class EnhancedAdminDashboard {
             case 'user-financial':
                 this.loadUserFinancialSection();
                 break;
+            case 'user-control':
+                this.loadUserControlSection();
+                break;
             default:
                 console.warn('Unknown page:', page); // Warning log
         }
@@ -3203,6 +3297,9 @@ EnhancedAdminDashboard.prototype.deleteTradeRecord = async function(tradeId) {
     this.openModal('confirmDeleteModal');
 };
 
+// User Account Control Functions - Real working prototype methods
+EnhancedAdminDashboard.prototype.searchUserForPassword = async function() {
+
 EnhancedAdminDashboard.prototype.filterTrades = function() {
     const searchTerm = document.getElementById('tradeSearchInput').value.toLowerCase();
     const statusFilter = document.getElementById('tradeStatusFilter').value;
@@ -3764,22 +3861,16 @@ EnhancedAdminDashboard.prototype.rejectWithdrawal = async function(withdrawalId)
 EnhancedAdminDashboard.prototype.viewWithdrawalDetails = async function(withdrawalId) {
     try {
         const withdrawalDoc = await getDoc(doc(this.db, 'withdrawals', withdrawalId));
-        const withdrawal = withdrawalDoc.data();
-        
-        const details = `
-            User: ${withdrawal.userEmail}
-            Amount: $${withdrawal.amount.toFixed(2)}
-            Method: ${withdrawal.method}
-            Address: ${withdrawal.address}
-            Date: ${new Date(withdrawal.createdAt.toDate()).toLocaleString()}
-            Status: ${withdrawal.status}
-            ${withdrawal.notes ? `\nNotes: ${withdrawal.notes}` : ''}
-        `;
-        
-        alert(details);
+        if (withdrawalDoc.exists()) {
+            const withdrawal = withdrawalDoc.data();
+            const userDoc = await getDoc(doc(this.db, 'users', withdrawal.userId));
+            const userData = userDoc.exists() ? userDoc.data() : {};
+            
+            alert(`Withdrawal Details:\n\nUser: ${userData.displayName || userData.email}\nAmount: $${withdrawal.amount}\nMethod: ${withdrawal.method}\nStatus: ${withdrawal.status}\nDate: ${new Date(withdrawal.createdAt.seconds * 1000).toLocaleString()}\nAddress: ${withdrawal.address || 'N/A'}`);
+        }
     } catch (error) {
-        console.error('Error loading withdrawal details:', error);
-        this.showNotification('Error loading withdrawal details', 'error');
+        console.error('Error viewing withdrawal details:', error);
+        this.showNotification('Failed to load withdrawal details', 'error');
     }
 };
 
