@@ -21,11 +21,43 @@
             margin-bottom: 2rem;
             text-align: center;
         }
+        .history-tabs {
+            display: flex;
+            background: #1a1a2e;
+            border-radius: 12px 12px 0 0;
+            overflow: hidden;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 1rem 2rem;
+            background: #2d2d44;
+            color: #888;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .tab-btn.active {
+            background: #00d4ff;
+            color: #0f0f23;
+        }
+        .tab-btn:hover {
+            background: #3d3d54;
+        }
+        .tab-btn.active:hover {
+            background: #00b8e6;
+        }
         .history-table {
             background: #1a1a2e;
-            border-radius: 12px;
+            border-radius: 0 0 12px 12px;
             overflow: hidden;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
         }
         .table {
             width: 100%;
@@ -43,6 +75,9 @@
         }
         .status-profit { color: #00ff88; }
         .status-loss { color: #ff6b6b; }
+        .status-completed { color: #00ff88; }
+        .status-pending { color: #ffa500; }
+        .status-failed { color: #ff6b6b; }
         .back-btn {
             display: inline-flex;
             align-items: center;
@@ -70,52 +105,96 @@
         </a>
         
         <div class="history-header">
-            <h1><i class="fas fa-history"></i> Trading History</h1>
-            <p>View your complete trading activity and performance</p>
+            <h1><i class="fas fa-history"></i> Account History</h1>
+            <p>View your complete trading activity and transaction history</p>
+        </div>
+        
+        <div class="history-tabs">
+            <button class="tab-btn active" onclick="switchTab('trades')">
+                <i class="fas fa-chart-line"></i> Trading History
+            </button>
+            <button class="tab-btn" onclick="switchTab('transactions')">
+                <i class="fas fa-exchange-alt"></i> Transaction History
+            </button>
         </div>
         
         <div class="history-table">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Asset</th>
-                        <th>Type</th>
-                        <th>Amount</th>
-                        <th>Entry Price</th>
-                        <th>Exit Price</th>
-                        <th>P&L</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="historyTableBody">
-                    <tr>
-                        <td colspan="8" class="loading-row">
-                            <i class="fas fa-spinner fa-spin"></i> Loading your trading history...
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <!-- Trading History Tab -->
+            <div id="trades-tab" class="tab-content active">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Asset</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Entry Price</th>
+                            <th>Exit Price</th>
+                            <th>P&L</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tradesTableBody">
+                        <tr>
+                            <td colspan="8" class="loading-row">
+                                <i class="fas fa-spinner fa-spin"></i> Loading your trading history...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Transaction History Tab -->
+            <div id="transactions-tab" class="tab-content">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Source</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsTableBody">
+                        <tr>
+                            <td colspan="6" class="loading-row">
+                                <i class="fas fa-spinner fa-spin"></i> Loading your transaction history...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
         
-        <div id="noDataMessage" class="no-data" style="display: none;">
+        <div id="noTradesMessage" class="no-data" style="display: none;">
             <i class="fas fa-chart-line"></i>
             <h3>No Trading History</h3>
             <p>You haven't made any trades yet. Start trading to see your history here.</p>
             <a href="dashboard.html" class="btn-primary">Start Trading</a>
         </div>
+        
+        <div id="noTransactionsMessage" class="no-data" style="display: none;">
+            <i class="fas fa-exchange-alt"></i>
+            <h3>No Transaction History</h3>
+            <p>You haven't made any transactions yet.</p>
+            <a href="dashboard.html" class="btn-primary">Go to Dashboard</a>
+        </div>
     </div>
 
-    <!-- Firebase and Trading History Scripts -->
+    <!-- Firebase and History Scripts -->
     <script type="module">
         import { auth, db } from './js/firebase-config.js';
         import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         import { collection, query, where, orderBy, onSnapshot, limit } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-        class TradingHistoryManager {
+        class HistoryManager {
             constructor() {
                 this.currentUser = null;
                 this.tradesListener = null;
+                this.transactionsListener = null;
+                this.activeTab = 'trades';
                 this.init();
             }
 
@@ -123,7 +202,7 @@
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         this.currentUser = user;
-                        this.setupRealtimeTradesListener();
+                        this.setupRealtimeListeners();
                     } else {
                         this.cleanup();
                         window.location.href = 'auth.html';
@@ -131,9 +210,14 @@
                 });
             }
 
-            setupRealtimeTradesListener() {
-                const tableBody = document.getElementById('historyTableBody');
-                const noDataMessage = document.getElementById('noDataMessage');
+            setupRealtimeListeners() {
+                this.setupTradesListener();
+                this.setupTransactionsListener();
+            }
+
+            setupTradesListener() {
+                const tableBody = document.getElementById('tradesTableBody');
+                const noDataMessage = document.getElementById('noTradesMessage');
                 
                 // Clean up existing listener
                 if (this.tradesListener) {
@@ -141,7 +225,6 @@
                 }
                 
                 try {
-                    // Setup real-time listener for trades
                     const tradesRef = collection(db, 'trades');
                     const q = query(
                         tradesRef,
@@ -161,15 +244,18 @@
                         });
                         
                         if (trades.length === 0) {
-                            tableBody.style.display = 'none';
-                            noDataMessage.style.display = 'block';
+                            if (this.activeTab === 'trades') {
+                                tableBody.style.display = 'none';
+                                noDataMessage.style.display = 'block';
+                            }
                             return;
                         }
                         
-                        // Display real trading data with real-time updates
                         this.displayTrades(trades);
-                        tableBody.style.display = 'table-tbody';
-                        noDataMessage.style.display = 'none';
+                        if (this.activeTab === 'trades') {
+                            tableBody.style.display = 'table-tbody';
+                            noDataMessage.style.display = 'none';
+                        }
                         
                     }, (error) => {
                         console.error('Error in trades listener:', error);
@@ -188,15 +274,78 @@
                 }
             }
 
+            setupTransactionsListener() {
+                const tableBody = document.getElementById('transactionsTableBody');
+                const noDataMessage = document.getElementById('noTransactionsMessage');
+                
+                // Clean up existing listener
+                if (this.transactionsListener) {
+                    this.transactionsListener();
+                }
+                
+                try {
+                    const transactionsRef = collection(db, 'transactions');
+                    const q = query(
+                        transactionsRef,
+                        where('uid', '==', this.currentUser.uid),
+                        orderBy('timestamp', 'desc'),
+                        limit(50)
+                    );
+                    
+                    this.transactionsListener = onSnapshot(q, (querySnapshot) => {
+                        const transactions = [];
+                        
+                        querySnapshot.forEach((doc) => {
+                            transactions.push({
+                                id: doc.id,
+                                ...doc.data()
+                            });
+                        });
+                        
+                        if (transactions.length === 0) {
+                            if (this.activeTab === 'transactions') {
+                                tableBody.style.display = 'none';
+                                noDataMessage.style.display = 'block';
+                            }
+                            return;
+                        }
+                        
+                        this.displayTransactions(transactions);
+                        if (this.activeTab === 'transactions') {
+                            tableBody.style.display = 'table-tbody';
+                            noDataMessage.style.display = 'none';
+                        }
+                        
+                    }, (error) => {
+                        console.error('Error in transactions listener:', error);
+                        tableBody.innerHTML = `
+                            <tr>
+                                <td colspan="6" class="error-row">
+                                    <i class="fas fa-exclamation-triangle"></i> 
+                                    Error loading transaction history. Please try again.
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                } catch (error) {
+                    console.error('Error setting up transactions listener:', error);
+                }
+            }
+
             cleanup() {
                 if (this.tradesListener) {
                     this.tradesListener();
                     this.tradesListener = null;
                 }
+                if (this.transactionsListener) {
+                    this.transactionsListener();
+                    this.transactionsListener = null;
+                }
             }
 
             displayTrades(trades) {
-                const tableBody = document.getElementById('historyTableBody');
+                const tableBody = document.getElementById('tradesTableBody');
                 
                 const tradesHTML = trades.map(trade => {
                     const date = trade.createdAt ? new Date(trade.createdAt.toDate()).toLocaleDateString() : 'N/A';
@@ -221,10 +370,58 @@
                 
                 tableBody.innerHTML = tradesHTML;
             }
+
+            displayTransactions(transactions) {
+                const tableBody = document.getElementById('transactionsTableBody');
+                
+                const transactionsHTML = transactions.map(transaction => {
+                    const date = transaction.timestamp ? new Date(transaction.timestamp.toDate()).toLocaleDateString() : 
+                                (transaction.createdAt ? new Date(transaction.createdAt.toDate()).toLocaleDateString() : 'N/A');
+                    const amount = transaction.amount || 0;
+                    const amountClass = transaction.type === 'withdrawal' ? 'status-loss' : 'status-profit';
+                    const amountSign = transaction.type === 'withdrawal' ? '-' : '+';
+                    const statusClass = `status-${transaction.status || 'pending'}`;
+                    const source = transaction.source === 'admin_panel' ? 'Admin' : 'User';
+                    
+                    return `
+                        <tr>
+                            <td>${date}</td>
+                            <td>${(transaction.type || 'N/A').charAt(0).toUpperCase() + (transaction.type || 'N/A').slice(1)}</td>
+                            <td>${transaction.description || 'N/A'}</td>
+                            <td class="${amountClass}">${amountSign}$${Math.abs(amount).toFixed(2)}</td>
+                            <td><span class="${statusClass}">${(transaction.status || 'pending').charAt(0).toUpperCase() + (transaction.status || 'pending').slice(1)}</span></td>
+                            <td>${source}</td>
+                        </tr>
+                    `;
+                }).join('');
+                
+                tableBody.innerHTML = transactionsHTML;
+            }
+
+            switchTab(tabName) {
+                this.activeTab = tabName;
+                
+                // Update tab buttons
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+                
+                // Update tab content
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                document.getElementById(`${tabName}-tab`).classList.add('active');
+                
+                // Hide/show appropriate no-data messages
+                document.getElementById('noTradesMessage').style.display = 'none';
+                document.getElementById('noTransactionsMessage').style.display = 'none';
+            }
         }
 
-        // Initialize the trading history manager
-        new TradingHistoryManager();
+        // Global function for tab switching
+        window.switchTab = function(tabName) {
+            window.historyManager.switchTab(tabName);
+        };
+
+        // Initialize the history manager
+        window.historyManager = new HistoryManager();
     </script>
     
     <style>
@@ -270,10 +467,6 @@
         .btn-primary:hover {
             background: #00b8e6;
             transform: translateY(-2px);
-        }
-        
-        .status-pending {
-            color: #ffa500;
         }
     </style>
 </body>
