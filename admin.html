@@ -123,6 +123,14 @@
                         </a>
                     </li>
                     
+                    <!-- User Account Control -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-section="user-control">
+                            <i class="fas fa-user-shield"></i>
+                            <span>User Account Control</span>
+                        </a>
+                    </li>
+                    
                     <!-- Financial Management -->
                     <li class="nav-item">
                         <a class="nav-link" href="#" data-section="financial">
@@ -1234,6 +1242,200 @@
                 <p class="text-muted">Manage security settings and COT codes</p>
             </div>
             <!-- Security management content will be loaded here -->
+        </section>
+
+        <!-- User Account Control Section -->
+        <section id="user-control" class="admin-section">
+            <div class="section-header mb-4">
+                <h1 class="h3 mb-1"><i class="fas fa-user-shield me-2"></i>User Account Control</h1>
+                <p class="text-muted">Manage user passwords, account status, and withdrawal approvals</p>
+            </div>
+
+            <!-- Control Tabs -->
+            <ul class="nav nav-tabs mb-4" id="controlTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="password-tab" data-bs-toggle="tab" data-bs-target="#password-management" type="button" role="tab">
+                        <i class="fas fa-key me-2"></i>Password Management
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="account-tab" data-bs-toggle="tab" data-bs-target="#account-control" type="button" role="tab">
+                        <i class="fas fa-user-lock me-2"></i>Account Control
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="withdrawal-tab" data-bs-toggle="tab" data-bs-target="#withdrawal-control" type="button" role="tab">
+                        <i class="fas fa-money-bill-wave me-2"></i>Withdrawal Control
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="controlTabContent">
+                <!-- Password Management Tab -->
+                <div class="tab-pane fade show active" id="password-management" role="tabpanel">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card bg-dark">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-search me-2"></i>Find User</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="input-group mb-3">
+                                        <input type="email" class="form-control" id="passwordUserSearch" placeholder="Enter user email">
+                                        <button class="btn btn-primary" onclick="adminDashboard.searchUserForPassword()">
+                                            <i class="fas fa-search"></i> Search
+                                        </button>
+                                    </div>
+                                    <div id="passwordUserInfo" class="d-none">
+                                        <div class="user-info-card p-3 bg-secondary rounded">
+                                            <h6 id="passwordUserName"></h6>
+                                            <p class="mb-1">Email: <span id="passwordUserEmail"></span></p>
+                                            <p class="mb-1">Status: <span id="passwordUserStatus" class="badge"></span></p>
+                                            <p class="mb-0">Last Login: <span id="passwordUserLastLogin"></span></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-dark">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-key me-2"></i>Password Actions</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="passwordActions" class="d-none">
+                                        <button class="btn btn-warning mb-2 w-100" onclick="adminDashboard.resetUserPassword()">
+                                            <i class="fas fa-redo me-2"></i>Send Password Reset Email
+                                        </button>
+                                        <button class="btn btn-info mb-2 w-100" onclick="adminDashboard.generateTempPassword()">
+                                            <i class="fas fa-random me-2"></i>Generate Temporary Password
+                                        </button>
+                                        <div class="input-group mb-2">
+                                            <input type="password" class="form-control" id="newPassword" placeholder="New password">
+                                            <button class="btn btn-success" onclick="adminDashboard.setUserPassword()">
+                                                <i class="fas fa-save"></i> Set
+                                            </button>
+                                        </div>
+                                        <small class="text-muted">Note: User will be required to change password on next login</small>
+                                    </div>
+                                    <div id="noPasswordUser" class="text-center text-muted">
+                                        <i class="fas fa-user-slash fa-2x mb-2"></i>
+                                        <p>Search for a user to manage their password</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Control Tab -->
+                <div class="tab-pane fade" id="account-control" role="tabpanel">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card bg-dark">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-search me-2"></i>Find User</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="input-group mb-3">
+                                        <input type="email" class="form-control" id="accountUserSearch" placeholder="Enter user email">
+                                        <button class="btn btn-primary" onclick="adminDashboard.searchUserForAccount()">
+                                            <i class="fas fa-search"></i> Search
+                                        </button>
+                                    </div>
+                                    <div id="accountUserInfo" class="d-none">
+                                        <div class="user-info-card p-3 bg-secondary rounded">
+                                            <h6 id="accountUserName"></h6>
+                                            <p class="mb-1">Email: <span id="accountUserEmail"></span></p>
+                                            <p class="mb-1">Current Status: <span id="accountUserStatus" class="badge"></span></p>
+                                            <p class="mb-1">Balance: $<span id="accountUserBalance">0.00</span></p>
+                                            <p class="mb-0">Member Since: <span id="accountUserJoined"></span></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-dark">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-user-cog me-2"></i>Account Actions</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="accountActions" class="d-none">
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <button class="btn btn-success w-100" onclick="adminDashboard.activateUser()">
+                                                    <i class="fas fa-user-check"></i> Activate
+                                                </button>
+                                            </div>
+                                            <div class="col-6">
+                                                <button class="btn btn-warning w-100" onclick="adminDashboard.suspendUser()">
+                                                    <i class="fas fa-user-clock"></i> Suspend
+                                                </button>
+                                            </div>
+                                            <div class="col-6">
+                                                <button class="btn btn-danger w-100" onclick="adminDashboard.blockUser()">
+                                                    <i class="fas fa-user-slash"></i> Block
+                                                </button>
+                                            </div>
+                                            <div class="col-6">
+                                                <button class="btn btn-secondary w-100" onclick="adminDashboard.restrictUser()">
+                                                    <i class="fas fa-user-lock"></i> Restrict
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <div class="input-group mb-2">
+                                            <input type="text" class="form-control" id="restrictionReason" placeholder="Reason for action (optional)">
+                                        </div>
+                                        <small class="text-muted">Actions will be logged with timestamp and admin details</small>
+                                    </div>
+                                    <div id="noAccountUser" class="text-center text-muted">
+                                        <i class="fas fa-user-slash fa-2x mb-2"></i>
+                                        <p>Search for a user to manage their account</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Withdrawal Control Tab -->
+                <div class="tab-pane fade" id="withdrawal-control" role="tabpanel">
+                    <div class="card bg-dark">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Pending Withdrawals</h5>
+                            <button class="btn btn-primary btn-sm" onclick="adminDashboard.refreshWithdrawals()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-dark table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>User</th>
+                                            <th>Amount</th>
+                                            <th>Method</th>
+                                            <th>Address</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="withdrawalControlTableBody">
+                                        <tr>
+                                            <td colspan="7" class="text-center py-4">
+                                                <i class="fas fa-spinner fa-spin me-2"></i>Loading withdrawal requests...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- Analytics & Reports Section -->
