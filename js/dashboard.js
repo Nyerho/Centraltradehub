@@ -385,42 +385,66 @@ class DashboardManager {
     }
 
     updateAccountSummary() {
+        console.log('=== DEBUG: updateAccountSummary called ===');
+        console.log('this.accountData:', this.accountData);
+        
         const balanceElement = document.getElementById('walletBalance');
         const accountBalanceElement = document.getElementById('accountBalance');
         const receivedProfitsElement = document.getElementById('receivedProfits');
         const totalDepositsElement = document.getElementById('totalDeposits');
         
+        console.log('DOM elements found:', {
+            walletBalance: !!balanceElement,
+            accountBalance: !!accountBalanceElement,
+            receivedProfits: !!receivedProfitsElement,
+            totalDeposits: !!totalDepositsElement
+        });
+        
         if (balanceElement) {
-            // Remove $ prefix since USD is already shown in HTML
-            balanceElement.textContent = `${(this.accountData.balance || 0).toLocaleString('en-US', {
+            const currentDisplayed = balanceElement.textContent;
+            const newValue = `${(this.accountData.balance || 0).toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             })}`;
+            console.log('walletBalance - Current:', currentDisplayed, 'New:', newValue);
+            balanceElement.textContent = newValue;
+            console.log('walletBalance - After update:', balanceElement.textContent);
         }
         
         if (accountBalanceElement) {
-            accountBalanceElement.textContent = `${(this.accountData.balance || 0).toLocaleString('en-US', {
+            const currentDisplayed = accountBalanceElement.textContent;
+            const newValue = `${(this.accountData.balance || 0).toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             })}`;
+            console.log('accountBalance - Current:', currentDisplayed, 'New:', newValue);
+            accountBalanceElement.textContent = newValue;
+            console.log('accountBalance - After update:', accountBalanceElement.textContent);
         }
         
         // Display received profits separately
         if (receivedProfitsElement) {
-            receivedProfitsElement.textContent = `${(this.accountData.totalProfits || 0).toLocaleString('en-US', {
+            const currentDisplayed = receivedProfitsElement.textContent;
+            const newValue = `${(this.accountData.totalProfits || 0).toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             })}`;
+            console.log('receivedProfits - Current:', currentDisplayed, 'New:', newValue);
+            receivedProfitsElement.textContent = newValue;
         }
         
         // Display total deposits
         if (totalDepositsElement) {
-            totalDepositsElement.textContent = `${(this.accountData.totalDeposits || 0).toLocaleString('en-US', {
+            const currentDisplayed = totalDepositsElement.textContent;
+            const newValue = `${(this.accountData.totalDeposits || 0).toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             })}`;
+            console.log('totalDeposits - Current:', currentDisplayed, 'New:', newValue);
+            totalDepositsElement.textContent = newValue;
         }
         
+        console.log('=== END DEBUG ===');
         this.updateChangeIndicators();
     }
 
