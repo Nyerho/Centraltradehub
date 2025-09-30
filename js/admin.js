@@ -3491,40 +3491,56 @@ EnhancedAdminDashboard.prototype.deleteTransactionRecord = async function(transa
 
 // User Account Control Functions
 EnhancedAdminDashboard.prototype.searchUserForPassword = async function() {
-    const email = document.getElementById('passwordUserSearch').value.trim();
-    if (!email) {
-        this.showNotification('Please enter a user email', 'warning');
+    const searchInput = document.getElementById('passwordSearchInput');
+    const searchTerm = searchInput.value.trim();
+    const resultsContainer = document.getElementById('passwordSearchResults');
+    
+    if (!searchTerm) {
+        resultsContainer.innerHTML = '<p class="no-results">Please enter an email address to search</p>';
         return;
     }
-
+    
     try {
-        const userQuery = query(collection(this.db, 'users'), where('email', '==', email));
-        const userSnapshot = await getDocs(userQuery);
+        resultsContainer.innerHTML = '<div class="loading">Searching...</div>';
         
-        if (userSnapshot.empty) {
-            this.showNotification('User not found', 'error');
+        const usersRef = collection(this.db, 'users');
+        const q = query(usersRef, where('email', '==', searchTerm.toLowerCase()));
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+            resultsContainer.innerHTML = '<p class="no-results">No user found with this email address</p>';
             return;
         }
-
-        const userData = userSnapshot.docs[0].data();
-        const userId = userSnapshot.docs[0].id;
         
-        this.selectedPasswordUser = { id: userId, ...userData };
+        let resultsHTML = '';
+        querySnapshot.forEach((doc) => {
+            const userData = doc.data();
+            const userId = doc.id;
+            
+            resultsHTML += `
+                <div class="user-result" data-user-id="${userId}">
+                    <div class="user-info">
+                        <strong>${userData.displayName || 'N/A'}</strong>
+                        <span class="email">${userData.email}</span>
+                        <span class="status ${userData.status || 'active'}">${userData.status || 'active'}</span>
+                    </div>
+                    <div class="user-actions">
+                        <button class="btn btn-primary" onclick="adminDashboard.resetUserPassword('${userId}', '${userData.email}')">
+                            Reset Password
+                        </button>
+                        <button class="btn btn-secondary" onclick="adminDashboard.generateTempPassword('${userId}', '${userData.email}')">
+                            Generate Temp Password
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
         
-        // Update UI
-        document.getElementById('passwordUserName').textContent = userData.fullName || 'N/A';
-        document.getElementById('passwordUserEmail').textContent = userData.email;
-        document.getElementById('passwordUserStatus').textContent = userData.status || 'active';
-        document.getElementById('passwordUserStatus').className = `badge bg-${userData.status === 'active' ? 'success' : 'warning'}`;
-        document.getElementById('passwordUserLastLogin').textContent = userData.lastLogin ? new Date(userData.lastLogin.toDate()).toLocaleString() : 'Never';
-        
-        document.getElementById('passwordUserInfo').classList.remove('d-none');
-        document.getElementById('passwordActions').classList.remove('d-none');
-        document.getElementById('noPasswordUser').classList.add('d-none');
+        resultsContainer.innerHTML = resultsHTML;
         
     } catch (error) {
         console.error('Error searching user:', error);
-        this.showNotification('Error searching for user', 'error');
+        resultsContainer.innerHTML = '<p class="error">Error searching for user. Please try again.</p>';
     }
 };
 
