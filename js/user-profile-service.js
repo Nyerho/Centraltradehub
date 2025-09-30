@@ -151,8 +151,8 @@ class UserProfileService {
             const transactionsRef = collection(db, 'transactions');
             const q = query(
                 transactionsRef,
-                where('uid', '==', uid),
-                orderBy('createdAt', 'desc'),
+                where('uid', '==', uid), // This is correct
+                orderBy('timestamp', 'desc'), // Use 'timestamp' instead of 'createdAt'
                 limit(limit)
             );
             
@@ -160,16 +160,38 @@ class UserProfileService {
             const transactions = [];
             
             querySnapshot.forEach((doc) => {
+                const data = doc.data();
                 transactions.push({
                     id: doc.id,
-                    ...doc.data()
+                    ...data,
+                    // Ensure timestamp is properly formatted
+                    timestamp: data.timestamp?.toDate?.() || data.createdAt?.toDate?.() || new Date()
                 });
             });
             
             return transactions;
         } catch (error) {
             console.error('Error fetching transaction history:', error);
-            return [];
+            // Fallback query in case of index issues
+            try {
+                const fallbackQ = query(
+                    collection(db, 'transactions'),
+                    where('uid', '==', uid),
+                    limit(limit)
+                );
+                const fallbackSnapshot = await getDocs(fallbackQ);
+                const fallbackTransactions = [];
+                fallbackSnapshot.forEach((doc) => {
+                    fallbackTransactions.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                return fallbackTransactions;
+            } catch (fallbackError) {
+                console.error('Fallback query also failed:', fallbackError);
+                return [];
+            }
         }
     }
 

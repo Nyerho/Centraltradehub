@@ -2578,21 +2578,49 @@ class EnhancedAdminDashboard {
             // Update user balance using correct v9 syntax
             const userRef = doc(this.db, 'users', this.currentViewingUserId);
             await updateDoc(userRef, {
-                balance: increment(adjustmentAmount),
-                updatedAt: serverTimestamp()
+                accountBalance: increment(adjustmentAmount),
+                updatedAt: serverTimestamp(),
+                balanceUpdatedAt: serverTimestamp()
             });
             
-            // Create transaction record
+            // Create transaction record with 'uid' field for user history
             await addDoc(collection(this.db, 'transactions'), {
-                userId: this.currentViewingUserId,
-                type: action === 'add' ? 'manual_adjustment_add' : 'manual_adjustment_subtract',
+                uid: this.currentViewingUserId, // Changed from 'userId' to 'uid'
+                type: action === 'add' ? 'deposit' : 'withdrawal', // Use standard transaction types
                 amount: amount,
                 status: 'completed',
                 description: `Manual balance adjustment: ${reason}`,
                 reason: reason,
                 timestamp: serverTimestamp(),
-                adminId: this.auth.currentUser?.uid || 'admin'
+                createdAt: serverTimestamp(),
+                adminId: this.auth.currentUser?.uid || 'admin',
+                method: 'admin_adjustment'
             });
+            
+            // Also update the accounts collection for synchronization
+            const accountRef = doc(this.db, 'accounts', this.currentViewingUserId);
+            const accountDoc = await getDoc(accountRef);
+            
+            if (accountDoc.exists()) {
+                await updateDoc(accountRef, {
+                    balance: increment(adjustmentAmount),
+                    lastSyncedAt: serverTimestamp(),
+                    adminUpdated: true
+                });
+            } else {
+                // Create account document if it doesn't exist
+                const userDoc = await getDoc(userRef);
+                const userData = userDoc.data();
+                await setDoc(accountRef, {
+                    balance: userData.accountBalance || adjustmentAmount,
+                    totalDeposits: action === 'add' ? amount : 0,
+                    totalWithdrawals: action === 'subtract' ? amount : 0,
+                    currency: 'USD',
+                    createdAt: serverTimestamp(),
+                    lastSyncedAt: serverTimestamp(),
+                    adminUpdated: true
+                });
+            }
             
             this.showNotification(`Balance ${action === 'add' ? 'increased' : 'decreased'} by $${amount.toFixed(2)}`, 'success');
             

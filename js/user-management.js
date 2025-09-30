@@ -1411,23 +1411,26 @@ window.addUserProfit = async function(userId) {
     try {
         const batch = db.batch();
         
-        // Add transaction record
+        // Add transaction record with 'uid' field
         const transactionRef = db.collection('transactions').doc();
         batch.set(transactionRef, {
-            userId: userId,
+            uid: userId, // Changed from 'userId' to 'uid'
             type: 'profit',
             amount: amount,
             status: 'completed',
             description: 'Received profit',
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             adminId: window.currentUser?.uid || 'admin'
         });
         
-        // Update user balance
+        // Update user balance and profit tracking
         const userRef = db.collection('users').doc(userId);
         batch.update(userRef, {
-            balance: firebase.firestore.FieldValue.increment(amount),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            accountBalance: firebase.firestore.FieldValue.increment(amount),
+            totalProfits: firebase.firestore.FieldValue.increment(amount),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            balanceUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
         await batch.commit();
