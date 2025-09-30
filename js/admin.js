@@ -3299,6 +3299,41 @@ EnhancedAdminDashboard.prototype.deleteTradeRecord = async function(tradeId) {
 
 // User Account Control Functions - Real working prototype methods
 EnhancedAdminDashboard.prototype.searchUserForPassword = async function() {
+    const email = document.getElementById('passwordUserSearch').value.trim();
+    if (!email) {
+        this.showNotification('Please enter a user email', 'warning');
+        return;
+    }
+
+    try {
+        const userQuery = query(collection(this.db, 'users'), where('email', '==', email));
+        const userSnapshot = await getDocs(userQuery);
+        
+        if (userSnapshot.empty) {
+            this.showNotification('User not found', 'error');
+            return;
+        }
+
+        const userData = userSnapshot.docs[0].data();
+        const userId = userSnapshot.docs[0].id;
+        
+        this.selectedPasswordUser = { id: userId, ...userData };
+        
+        // Update UI
+        document.getElementById('passwordUserName').textContent = userData.fullName || 'N/A';
+        document.getElementById('passwordUserEmail').textContent = userData.email;
+        document.getElementById('passwordUserStatus').textContent = userData.status || 'active';
+        document.getElementById('passwordUserStatus').className = `badge bg-${this.getStatusColor(userData.status)}`;
+        
+        document.getElementById('passwordUserInfo').classList.remove('d-none');
+        document.getElementById('passwordActions').classList.remove('d-none');
+        document.getElementById('noPasswordUser').classList.add('d-none');
+        
+    } catch (error) {
+        console.error('Error searching user:', error);
+        this.showNotification('Error searching for user', 'error');
+    }
+};
 
 EnhancedAdminDashboard.prototype.filterTrades = function() {
     const searchTerm = document.getElementById('tradeSearchInput').value.toLowerCase();
@@ -3489,8 +3524,62 @@ EnhancedAdminDashboard.prototype.deleteTransactionRecord = async function(transa
     }
 };
 
-// User Account Control Functions
+// User Account Control Functions - Real working prototype methods
 EnhancedAdminDashboard.prototype.searchUserForPassword = async function() {
+    const searchInput = document.getElementById('passwordSearchInput');
+    const searchTerm = searchInput.value.trim();
+    const resultsContainer = document.getElementById('passwordSearchResults');
+    
+    if (!searchTerm) {
+        resultsContainer.innerHTML = '<p class="no-results">Please enter an email address to search</p>';
+        return;
+    }
+    
+    try {
+        resultsContainer.innerHTML = '<div class="loading">Searching...</div>';
+        
+        const usersRef = collection(this.db, 'users');
+        const q = query(usersRef, where('email', '==', searchTerm.toLowerCase()));
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+            resultsContainer.innerHTML = '<p class="no-results">No user found with this email address</p>';
+            return;
+        }
+        
+        let resultsHTML = '';
+        querySnapshot.forEach((doc) => {
+            const userData = doc.data();
+            const userId = doc.id;
+            
+            resultsHTML += `
+                <div class="user-result" data-user-id="${userId}">
+                    <div class="user-info">
+                        <strong>${userData.displayName || 'N/A'}</strong>
+                        <span class="email">${userData.email}</span>
+                        <span class="status ${userData.status || 'active'}">${userData.status || 'active'}</span>
+                    </div>
+                    <div class="user-actions">
+                        <button class="btn btn-primary" onclick="adminDashboard.resetUserPassword('${userId}', '${userData.email}')">
+                            Reset Password
+                        </button>
+                        <button class="btn btn-secondary" onclick="adminDashboard.generateTempPassword('${userId}', '${userData.email}')">
+                            Generate Temp Password
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        resultsContainer.innerHTML = resultsHTML;
+        
+    } catch (error) {
+        console.error('Error searching user:', error);
+        resultsContainer.innerHTML = '<p class="error">Error searching for user. Please try again.</p>';
+    }
+};
+
+// User Account Control Functions
     const searchInput = document.getElementById('passwordSearchInput');
     const searchTerm = searchInput.value.trim();
     const resultsContainer = document.getElementById('passwordSearchResults');
@@ -3948,15 +4037,24 @@ EnhancedAdminDashboard.prototype.resetUserPassword = async function() {
     }
 };
 
-EnhancedAdminDashboard.prototype.generateTempPassword = function() {
-    return this.generateRandomPassword(12);
+EnhancedAdminDashboard.prototype.generateTempPassword = async function() {
+    if (!this.selectedPasswordUser) {
+        this.showNotification('No user selected', 'warning');
+        return;
+    }
+
+    const tempPassword = this.generateRandomPassword();
+    document.getElementById('newPassword').value = tempPassword;
+    
+    // Show the generated password to admin
+    this.showNotification(`Generated temporary password: ${tempPassword}`, 'info', 10000);
 };
 
-EnhancedAdminDashboard.prototype.generateRandomPassword = function(length = 12) {
-    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+EnhancedAdminDashboard.prototype.generateRandomPassword = function() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
     let password = '';
-    for (let i = 0; i < length; i++) {
-        password += charset.charAt(Math.floor(Math.random() * charset.length));
+    for (let i = 0; i < 12; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return password;
 };
@@ -3967,17 +4065,18 @@ EnhancedAdminDashboard.prototype.setUserPassword = async function() {
         return;
     }
 
-    const newPassword = document.getElementById('newPassword').value;
+    const newPassword = document.getElementById('newPassword').value.trim();
     if (!newPassword || newPassword.length < 6) {
-        this.showNotification('Password must be at least 6 characters', 'warning');
+        this.showNotification('Password must be at least 6 characters long', 'warning');
         return;
     }
 
     try {
-        // Update user document to mark password change required
+        // Update user document to require password change
         await updateDoc(doc(this.db, 'users', this.selectedPasswordUser.id), {
             requirePasswordChange: true,
-            passwordLastChanged: serverTimestamp()
+            passwordChangedBy: 'admin',
+            passwordChangeDate: serverTimestamp()
         });
         
         // Log the action
@@ -3989,7 +4088,7 @@ EnhancedAdminDashboard.prototype.setUserPassword = async function() {
             details: 'Password changed by admin'
         });
         
-        this.showNotification('Password updated successfully', 'success');
+        this.showNotification('Password updated successfully. User will be required to change it on next login.', 'success');
         document.getElementById('newPassword').value = '';
     } catch (error) {
         console.error('Error updating password:', error);
@@ -4022,10 +4121,10 @@ EnhancedAdminDashboard.prototype.searchUserForAccount = async function() {
         // Update UI
         document.getElementById('accountUserName').textContent = userData.fullName || 'N/A';
         document.getElementById('accountUserEmail').textContent = userData.email;
-        document.getElementById('accountUserCurrentStatus').textContent = userData.status || 'active';
-        document.getElementById('accountUserCurrentStatus').className = `badge bg-${this.getStatusColor(userData.status || 'active')}`;
-        document.getElementById('accountUserJoinDate').textContent = userData.createdAt ? new Date(userData.createdAt.toDate()).toLocaleDateString() : 'N/A';
-        document.getElementById('accountUserLastLogin').textContent = userData.lastLogin ? new Date(userData.lastLogin.toDate()).toLocaleString() : 'Never';
+        document.getElementById('accountUserStatus').textContent = userData.status || 'active';
+        document.getElementById('accountUserStatus').className = `badge bg-${this.getStatusColor(userData.status)}`;
+        document.getElementById('accountUserBalance').textContent = (userData.accountBalance || 0).toFixed(2);
+        document.getElementById('accountUserJoined').textContent = userData.createdAt ? new Date(userData.createdAt.toDate()).toLocaleDateString() : 'Unknown';
         
         document.getElementById('accountUserInfo').classList.remove('d-none');
         document.getElementById('accountActions').classList.remove('d-none');
@@ -4048,22 +4147,22 @@ EnhancedAdminDashboard.prototype.getStatusColor = function(status) {
 };
 
 EnhancedAdminDashboard.prototype.activateUser = async function() {
-    await this.changeUserStatus('active');
+    await this.changeUserStatus('active', 'User account activated');
 };
 
 EnhancedAdminDashboard.prototype.suspendUser = async function() {
-    await this.changeUserStatus('suspended');
+    await this.changeUserStatus('suspended', 'User account suspended');
 };
 
 EnhancedAdminDashboard.prototype.blockUser = async function() {
-    await this.changeUserStatus('blocked');
+    await this.changeUserStatus('blocked', 'User account blocked');
 };
 
 EnhancedAdminDashboard.prototype.restrictUser = async function() {
-    await this.changeUserStatus('restricted');
+    await this.changeUserStatus('restricted', 'User account restricted');
 };
 
-EnhancedAdminDashboard.prototype.changeUserStatus = async function(newStatus) {
+EnhancedAdminDashboard.prototype.changeUserStatus = async function(newStatus, actionDescription) {
     if (!this.selectedAccountUser) {
         this.showNotification('No user selected', 'warning');
         return;
@@ -4072,26 +4171,26 @@ EnhancedAdminDashboard.prototype.changeUserStatus = async function(newStatus) {
     try {
         await updateDoc(doc(this.db, 'users', this.selectedAccountUser.id), {
             status: newStatus,
-            statusLastChanged: serverTimestamp()
+            statusChangedBy: this.currentUser.email,
+            statusChangedAt: serverTimestamp()
         });
         
         // Log the action
         await addDoc(collection(this.db, 'adminLogs'), {
-            action: 'status_changed',
+            action: 'user_status_changed',
             targetUser: this.selectedAccountUser.email,
             adminEmail: this.currentUser.email,
             timestamp: serverTimestamp(),
-            details: `Status changed to ${newStatus}`,
-            oldStatus: this.selectedAccountUser.status || 'active',
+            details: actionDescription,
             newStatus: newStatus
         });
         
-        // Update UI
-        this.selectedAccountUser.status = newStatus;
-        document.getElementById('accountUserCurrentStatus').textContent = newStatus;
-        document.getElementById('accountUserCurrentStatus').className = `badge bg-${this.getStatusColor(newStatus)}`;
+        this.showNotification(actionDescription, 'success');
         
-        this.showNotification(`User status changed to ${newStatus}`, 'success');
+        // Update UI
+        document.getElementById('accountUserStatus').textContent = newStatus;
+        document.getElementById('accountUserStatus').className = `badge bg-${this.getStatusColor(newStatus)}`;
+        
     } catch (error) {
         console.error('Error changing user status:', error);
         this.showNotification('Error changing user status', 'error');
@@ -4148,15 +4247,11 @@ EnhancedAdminDashboard.prototype.refreshWithdrawals = async function() {
 };
 
 EnhancedAdminDashboard.prototype.approveWithdrawal = async function(withdrawalId) {
-    if (!confirm('Are you sure you want to approve this withdrawal?')) {
-        return;
-    }
-
     try {
         await updateDoc(doc(this.db, 'withdrawals', withdrawalId), {
             status: 'approved',
-            approvedAt: serverTimestamp(),
-            approvedBy: this.currentUser.email
+            approvedBy: this.currentUser.email,
+            approvedAt: serverTimestamp()
         });
         
         // Log the action
@@ -4167,7 +4262,7 @@ EnhancedAdminDashboard.prototype.approveWithdrawal = async function(withdrawalId
             timestamp: serverTimestamp()
         });
         
-        this.showNotification('Withdrawal approved successfully', 'success');
+        this.showNotification('Withdrawal approved', 'success');
         this.refreshWithdrawals();
     } catch (error) {
         console.error('Error approving withdrawal:', error);
@@ -4217,6 +4312,72 @@ EnhancedAdminDashboard.prototype.rejectWithdrawal = async function(withdrawalId)
     } catch (error) {
         console.error('Error rejecting withdrawal:', error);
         this.showNotification('Error rejecting withdrawal', 'error');
+    }
+};
+
+EnhancedAdminDashboard.prototype.adjustUserBalance = async function() {
+    if (!this.selectedAccountUser) {
+        this.showNotification('No user selected', 'warning');
+        return;
+    }
+
+    const adjustment = parseFloat(document.getElementById('balanceAdjustment').value);
+    const reason = document.getElementById('adjustmentReason').value.trim();
+    
+    if (isNaN(adjustment) || adjustment === 0) {
+        this.showNotification('Please enter a valid adjustment amount', 'warning');
+        return;
+    }
+    
+    if (!reason) {
+        this.showNotification('Please provide a reason for the adjustment', 'warning');
+        return;
+    }
+
+    try {
+        const currentBalance = this.selectedAccountUser.accountBalance || 0;
+        const newBalance = currentBalance + adjustment;
+        
+        if (newBalance < 0) {
+            this.showNotification('Adjustment would result in negative balance', 'error');
+            return;
+        }
+        
+        await updateDoc(doc(this.db, 'users', this.selectedAccountUser.id), {
+            accountBalance: newBalance,
+            lastBalanceAdjustment: {
+                amount: adjustment,
+                reason: reason,
+                adjustedBy: this.currentUser.email,
+                adjustedAt: serverTimestamp()
+            }
+        });
+        
+        // Log the action
+        await addDoc(collection(this.db, 'adminLogs'), {
+            action: 'balance_adjusted',
+            targetUser: this.selectedAccountUser.email,
+            adminEmail: this.currentUser.email,
+            timestamp: serverTimestamp(),
+            details: reason,
+            adjustment: adjustment,
+            previousBalance: currentBalance,
+            newBalance: newBalance
+        });
+        
+        this.showNotification(`Balance adjusted by $${adjustment.toFixed(2)}`, 'success');
+        
+        // Update UI
+        document.getElementById('accountUserBalance').textContent = newBalance.toFixed(2);
+        this.selectedAccountUser.accountBalance = newBalance;
+        
+        // Clear form
+        document.getElementById('balanceAdjustment').value = '';
+        document.getElementById('adjustmentReason').value = '';
+        
+    } catch (error) {
+        console.error('Error adjusting balance:', error);
+        this.showNotification('Error adjusting balance', 'error');
     }
 };
 
