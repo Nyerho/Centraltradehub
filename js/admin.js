@@ -2679,17 +2679,17 @@ class EnhancedAdminDashboard {
             // Calculate the adjustment amount (negative for subtract)
             const adjustmentAmount = action === 'add' ? amount : -amount;
             
-            // Update user balance using correct v9 syntax - UPDATE ALL BALANCE FIELDS
+            // Update ALL balance fields in users collection for complete sync
             const userRef = doc(this.db, 'users', this.selectedUserId);
             await updateDoc(userRef, {
                 balance: increment(adjustmentAmount),
                 accountBalance: increment(adjustmentAmount),
-                walletBalance: increment(adjustmentAmount), // Add this for wallet sync
+                walletBalance: increment(adjustmentAmount), // Ensure wallet balance sync
                 updatedAt: serverTimestamp(),
                 balanceUpdatedAt: serverTimestamp()
             });
             
-            // Also update the accounts collection for dashboard sync
+            // Update or create accounts collection for dashboard sync
             const accountRef = doc(this.db, 'accounts', this.selectedUserId);
             const accountDoc = await getDoc(accountRef);
             
@@ -2697,16 +2697,18 @@ class EnhancedAdminDashboard {
                 await updateDoc(accountRef, {
                     balance: increment(adjustmentAmount),
                     accountBalance: increment(adjustmentAmount),
+                    walletBalance: increment(adjustmentAmount), // Add wallet balance field
                     updatedAt: serverTimestamp()
                 });
             } else {
-                // Create account document if it doesn't exist
+                // Create account document with current user data
                 const userDoc = await getDoc(userRef);
                 const userData = userDoc.data();
                 const newBalance = (userData.balance || 0);
                 await setDoc(accountRef, {
                     balance: newBalance,
                     accountBalance: newBalance,
+                    walletBalance: newBalance, // Initialize wallet balance
                     totalProfits: userData.totalProfits || 0,
                     totalDeposits: userData.totalDeposits || 0,
                     currency: 'USD',
@@ -2715,10 +2717,10 @@ class EnhancedAdminDashboard {
                 });
             }
             
-            // Create transaction record with 'uid' field for user history
+            // Create transaction record with proper user identification
             await addDoc(collection(this.db, 'transactions'), {
-                uid: this.selectedUserId,
-                userId: this.selectedUserId, // Add both for compatibility
+                uid: this.selectedUserId, // For user transaction history
+                userId: this.selectedUserId, // For compatibility
                 userEmail: this.selectedUserEmail,
                 type: action === 'add' ? 'deposit' : 'withdrawal',
                 amount: amount,
@@ -3022,18 +3024,51 @@ EnhancedAdminDashboard.prototype.addUserProfit = async function() {
     }
     
     try {
-        // Update user balance and profit tracking
+        // Update user balance and profit tracking with complete sync
         const userRef = doc(this.db, 'users', this.selectedUserId);
         await updateDoc(userRef, {
             balance: increment(amount),
+            accountBalance: increment(amount),
+            walletBalance: increment(amount), // Sync wallet balance
             totalProfits: increment(amount),
             updatedAt: serverTimestamp(),
             balanceUpdatedAt: serverTimestamp()
         });
         
+        // Update accounts collection for dashboard sync
+        const accountRef = doc(this.db, 'accounts', this.selectedUserId);
+        const accountDoc = await getDoc(accountRef);
+        
+        if (accountDoc.exists()) {
+            await updateDoc(accountRef, {
+                balance: increment(amount),
+                accountBalance: increment(amount),
+                walletBalance: increment(amount),
+                totalProfits: increment(amount),
+                updatedAt: serverTimestamp()
+            });
+        } else {
+            // Create account document if it doesn't exist
+            const userDoc = await getDoc(userRef);
+            const userData = userDoc.data();
+            const newBalance = userData.balance || 0;
+            const newProfits = userData.totalProfits || 0;
+            await setDoc(accountRef, {
+                balance: newBalance,
+                accountBalance: newBalance,
+                walletBalance: newBalance,
+                totalProfits: newProfits,
+                totalDeposits: userData.totalDeposits || 0,
+                currency: 'USD',
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+        }
+        
         // Create transaction record
         await addDoc(collection(this.db, 'transactions'), {
             uid: this.selectedUserId,
+            userId: this.selectedUserId,
             userEmail: this.selectedUserEmail,
             type: 'profit',
             amount: amount,
@@ -3088,27 +3123,64 @@ EnhancedAdminDashboard.prototype.setExactBalance = async function() {
     }
     
     try {
-        // Update user balance to exact amount
+        // Get current balance for transaction record
         const userRef = doc(this.db, 'users', this.selectedUserId);
+        const userDoc = await getDoc(userRef);
+        const currentBalance = userDoc.exists() ? (userDoc.data().balance || 0) : 0;
+        const difference = newBalance - currentBalance;
+        
+        // Update user balance to exact amount with complete sync
         await updateDoc(userRef, {
             balance: newBalance,
+            accountBalance: newBalance,
+            walletBalance: newBalance, // Sync wallet balance
             updatedAt: serverTimestamp(),
             balanceUpdatedAt: serverTimestamp()
         });
         
+        // Update accounts collection
+        const accountRef = doc(this.db, 'accounts', this.selectedUserId);
+        const accountDoc = await getDoc(accountRef);
+        
+        if (accountDoc.exists()) {
+            const accountData = accountDoc.data();
+            await updateDoc(accountRef, {
+                balance: newBalance,
+                accountBalance: newBalance,
+                walletBalance: newBalance,
+                updatedAt: serverTimestamp()
+            });
+        } else {
+            // Create account document
+            const userData = userDoc.data();
+            await setDoc(accountRef, {
+                balance: newBalance,
+                accountBalance: newBalance,
+                walletBalance: newBalance,
+                totalProfits: userData.totalProfits || 0,
+                totalDeposits: userData.totalDeposits || 0,
+                currency: 'USD',
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+        }
+        
         // Create transaction record
         await addDoc(collection(this.db, 'transactions'), {
             uid: this.selectedUserId,
+            userId: this.selectedUserId,
             userEmail: this.selectedUserEmail,
-            type: 'balance_adjustment',
-            amount: newBalance,
+            type: difference >= 0 ? 'balance_adjustment_increase' : 'balance_adjustment_decrease',
+            amount: Math.abs(difference),
             status: 'completed',
-            description: `Balance set to exact amount: ${reason}`,
+            description: `Admin set exact balance: ${reason}`,
             reason: reason,
+            previousBalance: currentBalance,
+            newBalance: newBalance,
             timestamp: serverTimestamp(),
             createdAt: serverTimestamp(),
             adminId: this.currentUser?.uid || 'admin',
-            method: 'admin_exact_balance'
+            adminEmail: this.currentUser?.email || 'admin'
         });
         
         this.showNotification(`Balance set to $${newBalance.toFixed(2)}`, 'success');

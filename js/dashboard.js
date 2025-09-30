@@ -373,13 +373,17 @@ class DashboardManager {
                 const userRef = doc(db, 'users', user.uid);
                 const userDoc = await getDoc(userRef);
                 const userData = userDoc.exists() ? userDoc.data() : {};
-                const adminBalance = userData.accountBalance || 0;
+                
+                // Use walletBalance first, then accountBalance, then balance as fallback
+                const userBalance = userData.walletBalance || userData.accountBalance || userData.balance || 0;
                 const totalProfits = userData.totalProfits || 0;
                 const totalDeposits = userData.totalDeposits || 0;
                 
                 // Create account with admin data if available
                 this.accountData = {
-                    balance: adminBalance,
+                    balance: userBalance,
+                    accountBalance: userBalance,
+                    walletBalance: userBalance, // Ensure wallet balance is set
                     totalProfits: totalProfits,
                     totalDeposits: totalDeposits,
                     currency: 'USD',
