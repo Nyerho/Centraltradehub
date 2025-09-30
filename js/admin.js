@@ -90,6 +90,8 @@ class EnhancedAdminDashboard {
             this.auth = getAuth(this.app);
             this.db = getFirestore(this.app);
             
+            // Wait for authentication state before checking admin access
+            await this.waitForAuthState();
             await this.checkAdminAccess();
             this.setupEventListeners();
             this.setupNetworkListeners();
@@ -108,8 +110,39 @@ class EnhancedAdminDashboard {
         }
     }
 
+    // Add this new method to wait for authentication state
+    waitForAuthState() {
+        return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                reject(new Error('Authentication timeout'));
+            }, 10000);
+            
+            const unsubscribe = onAuthStateChanged(this.auth, (user) => {
+                clearTimeout(timeout);
+                this.currentUser = user;
+                console.log('Auth state changed, user:', user ? user.email : 'No user');
+                
+                if (!user) {
+                    console.log('No authenticated user found, redirecting to login');
+                    this.redirectToLogin();
+                    reject(new Error('No authenticated user'));
+                    return;
+                }
+                
+                unsubscribe();
+                resolve(user);
+            });
+        });
+    }
+
     async checkAdminAccess() {
         try {
+            if (!this.currentUser) {
+                console.log('No current user available for admin check');
+                this.redirectToLogin();
+                return false;
+            }
+            
             console.log('Checking admin access for user:', this.currentUser.uid);
             const userDoc = await getDoc(doc(this.db, 'users', this.currentUser.uid));
             
@@ -125,6 +158,7 @@ class EnhancedAdminDashboard {
                 console.log('Access denied - redirecting to login');
                 this.showNotification('Access denied. Admin privileges required.', 'error');
                 await signOut(this.auth);
+                this.redirectToLogin();
                 return false;
             }
             
