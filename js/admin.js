@@ -3474,25 +3474,19 @@ EnhancedAdminDashboard.prototype.saveTransactionRecord = async function() {
 };
 
 EnhancedAdminDashboard.prototype.deleteTransactionRecord = async function(transactionId) {
-    // Set up the confirmation modal
-    document.getElementById('deleteConfirmText').textContent = 
-        'Are you sure you want to delete this transaction record? This action cannot be undone.';
+    if (!confirm('Are you sure you want to delete this transaction?')) {
+        return;
+    }
     
-    // Set up the delete button click handler
-    const confirmBtn = document.getElementById('confirmDeleteBtn');
-    confirmBtn.onclick = async () => {
-        try {
-            await deleteDoc(doc(this.db, 'transactions', transactionId));
-            this.showNotification('Transaction deleted successfully', 'success');
-            this.closeModal('confirmDeleteModal');
-            await this.loadTransactions(); // Refresh the transactions table
-        } catch (error) {
-            console.error('Error deleting transaction:', error);
-            this.showNotification('Failed to delete transaction', 'error');
-        }
-    };
-    
-    this.openModal('confirmDeleteModal');
+    try {
+        await deleteDoc(doc(this.db, 'transactions', transactionId));
+        this.showNotification('Transaction deleted successfully', 'success');
+        this.loadTransactions();
+        this.closeModal('transactionDetailsModal');
+    } catch (error) {
+        console.error('Error deleting transaction:', error);
+        this.showNotification('Error deleting transaction', 'error');
+    }
 };
 
 // User Account Control Functions
