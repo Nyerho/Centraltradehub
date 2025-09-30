@@ -2677,19 +2677,25 @@ class EnhancedAdminDashboard {
         }
         
         try {
-            // Calculate the adjustment amount (negative for subtract)
-            const adjustmentAmount = action === 'add' ? amount : -amount;
             const timestamp = serverTimestamp();
+            
+            // Get current user data to calculate the difference for transaction record
+            const userRef = doc(this.db, 'users', this.selectedUserId);
+            const userDoc = await getDoc(userRef);
+            const currentBalance = userDoc.exists() ? (userDoc.data().accountBalance || userDoc.data().balance || 0) : 0;
+            
+            // Calculate the actual adjustment for transaction record
+            const actualAdjustment = action === 'add' ? amount : -amount;
+            const newBalance = action === 'add' ? currentBalance + amount : (currentBalance - amount);
             
             // Use batch write for atomic updates
             const batch = writeBatch(this.db);
             
-            // Update users collection
-            const userRef = doc(this.db, 'users', this.selectedUserId);
+            // Update users collection with exact values
             batch.update(userRef, {
-                balance: increment(adjustmentAmount),
-                accountBalance: increment(adjustmentAmount),
-                walletBalance: increment(adjustmentAmount),
+                balance: newBalance,
+                accountBalance: newBalance,
+                walletBalance: newBalance,
                 updatedAt: timestamp,
                 balanceUpdatedAt: timestamp,
                 lastAdminUpdate: timestamp
@@ -2701,16 +2707,14 @@ class EnhancedAdminDashboard {
             
             if (accountDoc.exists()) {
                 batch.update(accountRef, {
-                    balance: increment(adjustmentAmount),
-                    accountBalance: increment(adjustmentAmount),
-                    walletBalance: increment(adjustmentAmount),
+                    balance: newBalance,
+                    accountBalance: newBalance,
+                    walletBalance: newBalance,
                     updatedAt: timestamp,
                     lastAdminUpdate: timestamp
                 });
             } else {
-                const userDoc = await getDoc(userRef);
-                const userData = userDoc.data();
-                const newBalance = (userData.balance || 0) + adjustmentAmount;
+                const userData = userDoc.exists() ? userDoc.data() : {};
                 
                 batch.set(accountRef, {
                     balance: newBalance,
@@ -2732,9 +2736,9 @@ class EnhancedAdminDashboard {
                 userId: this.selectedUserId,
                 userEmail: this.selectedUserEmail,
                 type: action === 'add' ? 'deposit' : 'withdrawal',
-                amount: amount,
+                amount: Math.abs(actualAdjustment),
                 status: 'completed',
-                description: `Admin balance adjustment: ${reason}`,
+                description: `Admin balance ${action === 'add' ? 'increased by' : 'decreased by'}: ${reason}`,
                 reason: reason,
                 timestamp: timestamp,
                 createdAt: timestamp,
@@ -2765,6 +2769,93 @@ class EnhancedAdminDashboard {
         } catch (error) {
             console.error('Error adjusting balance:', error);
             this.showNotification('Error adjusting balance: ' + error.message, 'error');
+        }
+    }
+
+    // Add new method for setting exact balance
+    async setExactBalance(exactAmount, reason) {
+        if (!this.selectedUserId) {
+            this.showNotification('Please select a user first', 'error');
+            return;
+        }
+        
+        try {
+            const timestamp = serverTimestamp();
+            const batch = writeBatch(this.db);
+            
+            // Update users collection with exact values
+            const userRef = doc(this.db, 'users', this.selectedUserId);
+            batch.update(userRef, {
+                balance: exactAmount,
+                accountBalance: exactAmount,
+                walletBalance: exactAmount,
+                updatedAt: timestamp,
+                balanceUpdatedAt: timestamp,
+                lastAdminUpdate: timestamp
+            });
+            
+            // Update accounts collection
+            const accountRef = doc(this.db, 'accounts', this.selectedUserId);
+            const accountDoc = await getDoc(accountRef);
+            
+            if (accountDoc.exists()) {
+                batch.update(accountRef, {
+                    balance: exactAmount,
+                    accountBalance: exactAmount,
+                    walletBalance: exactAmount,
+                    updatedAt: timestamp,
+                    lastAdminUpdate: timestamp
+                });
+            } else {
+                const userDoc = await getDoc(userRef);
+                const userData = userDoc.exists() ? userDoc.data() : {};
+                
+                batch.set(accountRef, {
+                    balance: exactAmount,
+                    accountBalance: exactAmount,
+                    walletBalance: exactAmount,
+                    totalProfits: userData.totalProfits || 0,
+                    totalDeposits: userData.totalDeposits || 0,
+                    currency: 'USD',
+                    createdAt: timestamp,
+                    updatedAt: timestamp,
+                    lastAdminUpdate: timestamp
+                });
+            }
+            
+            // Create transaction record
+            const transactionRef = doc(collection(this.db, 'transactions'));
+            batch.set(transactionRef, {
+                uid: this.selectedUserId,
+                userId: this.selectedUserId,
+                userEmail: this.selectedUserEmail,
+                type: 'admin_adjustment',
+                amount: exactAmount,
+                status: 'completed',
+                description: `Admin set exact balance: ${reason}`,
+                reason: reason,
+                timestamp: timestamp,
+                createdAt: timestamp,
+                adminId: this.currentUser?.uid || 'admin',
+                adminEmail: this.currentUser?.email || 'admin'
+            });
+            
+            await batch.commit();
+            
+            this.showNotification(
+                `Balance set to exact amount: $${exactAmount.toFixed(2)}`,
+                'success'
+            );
+            
+            // Refresh displays
+            await this.loadUserFinancialSection();
+            if (this.currentViewingUserId === this.selectedUserId) {
+                await this.refreshUserDetails(this.selectedUserId);
+            }
+            
+        } catch (error) {
+            console.error('Error setting exact balance:', error);
+            this.showNotification('Error setting exact balance: ' + error.message, 'error');
         }
     }
 
@@ -3131,11 +3222,11 @@ EnhancedAdminDashboard.prototype.setExactBalance = async function() {
         return;
     }
     
-    const newBalance = parseFloat(amountInput.value);
+    const exactAmount = parseFloat(amountInput.value);
     const reason = reasonInput.value.trim();
     
-    if (newBalance < 0) {
-        this.showNotification('Balance cannot be negative', 'error');
+    if (exactAmount < 0) {
+        this.showNotification('Please enter a valid amount', 'error');
         return;
     }
     
@@ -3150,19 +3241,20 @@ EnhancedAdminDashboard.prototype.setExactBalance = async function() {
     }
     
     try {
-        // Get current balance for transaction record
-        const userRef = doc(this.db, 'users', this.selectedUserId);
-        const userDoc = await getDoc(userRef);
-        const currentBalance = userDoc.exists() ? (userDoc.data().balance || 0) : 0;
-        const difference = newBalance - currentBalance;
+        const timestamp = serverTimestamp();
         
-        // Update user balance to exact amount with complete sync
-        await updateDoc(userRef, {
-            balance: newBalance,
-            accountBalance: newBalance,
-            walletBalance: newBalance, // Sync wallet balance
-            updatedAt: serverTimestamp(),
-            balanceUpdatedAt: serverTimestamp()
+        // Use batch write for atomic updates
+        const batch = writeBatch(this.db);
+        
+        // Update users collection with exact values
+        const userRef = doc(this.db, 'users', this.selectedUserId);
+        batch.update(userRef, {
+            balance: exactAmount,
+            accountBalance: exactAmount,
+            walletBalance: exactAmount,
+            updatedAt: timestamp,
+            balanceUpdatedAt: timestamp,
+            lastAdminUpdate: timestamp
         });
         
         // Update accounts collection
@@ -3170,58 +3262,65 @@ EnhancedAdminDashboard.prototype.setExactBalance = async function() {
         const accountDoc = await getDoc(accountRef);
         
         if (accountDoc.exists()) {
-            const accountData = accountDoc.data();
-            await updateDoc(accountRef, {
-                balance: newBalance,
-                accountBalance: newBalance,
-                walletBalance: newBalance,
-                updatedAt: serverTimestamp()
+            batch.update(accountRef, {
+                balance: exactAmount,
+                accountBalance: exactAmount,
+                walletBalance: exactAmount,
+                updatedAt: timestamp,
+                lastAdminUpdate: timestamp
             });
         } else {
-            // Create account document
-            const userData = userDoc.data();
-            await setDoc(accountRef, {
-                balance: newBalance,
-                accountBalance: newBalance,
-                walletBalance: newBalance,
+            const userDoc = await getDoc(userRef);
+            const userData = userDoc.exists() ? userDoc.data() : {};
+            
+            batch.set(accountRef, {
+                balance: exactAmount,
+                accountBalance: exactAmount,
+                walletBalance: exactAmount,
                 totalProfits: userData.totalProfits || 0,
                 totalDeposits: userData.totalDeposits || 0,
                 currency: 'USD',
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
+                createdAt: timestamp,
+                updatedAt: timestamp,
+                lastAdminUpdate: timestamp
             });
         }
         
         // Create transaction record
-        await addDoc(collection(this.db, 'transactions'), {
+        const transactionRef = doc(collection(this.db, 'transactions'));
+        batch.set(transactionRef, {
             uid: this.selectedUserId,
             userId: this.selectedUserId,
             userEmail: this.selectedUserEmail,
-            type: difference >= 0 ? 'balance_adjustment_increase' : 'balance_adjustment_decrease',
-            amount: Math.abs(difference),
+            type: 'admin_balance_set',
+            amount: exactAmount,
             status: 'completed',
             description: `Admin set exact balance: ${reason}`,
             reason: reason,
-            previousBalance: currentBalance,
-            newBalance: newBalance,
-            timestamp: serverTimestamp(),
-            createdAt: serverTimestamp(),
+            timestamp: timestamp,
+            createdAt: timestamp,
             adminId: this.currentUser?.uid || 'admin',
             adminEmail: this.currentUser?.email || 'admin'
         });
         
-        this.showNotification(`Balance set to $${newBalance.toFixed(2)}`, 'success');
+        // Execute all updates atomically
+        await batch.commit();
         
-        // Clear the input fields
+        this.showNotification(
+            `Balance set to exactly $${exactAmount.toFixed(2)}`,
+            'success'
+        );
+        
+        // Clear input fields
         amountInput.value = '';
         reasonInput.value = '';
         
-        // Refresh the user financial data
-        await this.loadUserFinancialSection();
+        // Refresh user details
+        this.refreshUserDetails();
         
     } catch (error) {
         console.error('Error setting exact balance:', error);
-        this.showNotification('Failed to set exact balance', 'error');
+        this.showNotification('Error setting balance: ' + error.message, 'error');
     }
 };
 

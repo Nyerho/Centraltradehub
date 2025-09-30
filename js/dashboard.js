@@ -358,8 +358,8 @@ class DashboardManager {
                 const userDoc = await getDoc(userRef);
                 const userData = userDoc.exists() ? userDoc.data() : {};
                 
-                // Use walletBalance first, then accountBalance, then balance as fallback
-                const userBalance = userData.walletBalance || userData.accountBalance || userData.balance || 0;
+                // Prioritize accountBalance (admin updates), then balance as fallback
+                const userBalance = userData.accountBalance || userData.balance || 0;
                 const totalProfits = userData.totalProfits || 0;
                 const totalDeposits = userData.totalDeposits || 0;
                 
@@ -367,7 +367,7 @@ class DashboardManager {
                 this.accountData = {
                     balance: userBalance,
                     accountBalance: userBalance,
-                    walletBalance: userBalance, // Ensure wallet balance is set
+                    walletBalance: userBalance,
                     totalProfits: totalProfits,
                     totalDeposits: totalDeposits,
                     currency: 'USD',
