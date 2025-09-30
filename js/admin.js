@@ -2679,11 +2679,12 @@ class EnhancedAdminDashboard {
             // Calculate the adjustment amount (negative for subtract)
             const adjustmentAmount = action === 'add' ? amount : -amount;
             
-            // Update user balance using correct v9 syntax - UPDATE BOTH FIELDS
+            // Update user balance using correct v9 syntax - UPDATE ALL BALANCE FIELDS
             const userRef = doc(this.db, 'users', this.selectedUserId);
             await updateDoc(userRef, {
                 balance: increment(adjustmentAmount),
-                accountBalance: increment(adjustmentAmount), // ADD THIS LINE
+                accountBalance: increment(adjustmentAmount),
+                walletBalance: increment(adjustmentAmount), // Add this for wallet sync
                 updatedAt: serverTimestamp(),
                 balanceUpdatedAt: serverTimestamp()
             });
@@ -2695,14 +2696,17 @@ class EnhancedAdminDashboard {
             if (accountDoc.exists()) {
                 await updateDoc(accountRef, {
                     balance: increment(adjustmentAmount),
+                    accountBalance: increment(adjustmentAmount),
                     updatedAt: serverTimestamp()
                 });
             } else {
                 // Create account document if it doesn't exist
                 const userDoc = await getDoc(userRef);
                 const userData = userDoc.data();
+                const newBalance = (userData.balance || 0);
                 await setDoc(accountRef, {
-                    balance: (userData.balance || 0),
+                    balance: newBalance,
+                    accountBalance: newBalance,
                     totalProfits: userData.totalProfits || 0,
                     totalDeposits: userData.totalDeposits || 0,
                     currency: 'USD',
@@ -2714,30 +2718,39 @@ class EnhancedAdminDashboard {
             // Create transaction record with 'uid' field for user history
             await addDoc(collection(this.db, 'transactions'), {
                 uid: this.selectedUserId,
+                userId: this.selectedUserId, // Add both for compatibility
                 userEmail: this.selectedUserEmail,
                 type: action === 'add' ? 'deposit' : 'withdrawal',
                 amount: amount,
                 status: 'completed',
-                description: `Manual balance adjustment: ${reason}`,
+                description: `Admin balance adjustment: ${reason}`,
                 reason: reason,
                 timestamp: serverTimestamp(),
                 createdAt: serverTimestamp(),
                 adminId: this.currentUser?.uid || 'admin',
-                method: 'admin_adjustment'
+                adminEmail: this.currentUser?.email || 'admin'
             });
             
-            this.showNotification(`Balance ${action === 'add' ? 'increased' : 'decreased'} by $${amount.toFixed(2)}`, 'success');
+            this.showNotification(
+                `Balance ${action === 'add' ? 'increased' : 'decreased'} by $${amount.toFixed(2)}`,
+                'success'
+            );
             
             // Clear the input fields
             amountInput.value = '';
             reasonInput.value = '';
             
-            // Refresh the user financial data
+            // Refresh the user financial table to show updated balance
             await this.loadUserFinancialSection();
+            
+            // If user details modal is open, refresh it
+            if (this.currentViewingUserId === this.selectedUserId) {
+                await this.refreshUserDetails(this.selectedUserId);
+            }
             
         } catch (error) {
             console.error('Error adjusting balance:', error);
-            this.showNotification('Failed to adjust balance', 'error');
+            this.showNotification('Error adjusting balance: ' + error.message, 'error');
         }
     }
 

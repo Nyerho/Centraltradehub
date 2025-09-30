@@ -628,17 +628,21 @@ canvas#userActivityChart {
         border: 1px solid #333 !important;
         color: #ffffff !important;
         font-size: 16px !important; /* Prevents zoom on iOS */
+        -webkit-appearance: none;
+        -webkit-text-fill-color: #ffffff !important;
     }
     
     .form-control:focus {
         background-color: #0f0f23 !important;
         border-color: #00d4ff !important;
         color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
         box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2) !important;
     }
     
     .form-control::placeholder {
         color: rgba(255, 255, 255, 0.5) !important;
+        -webkit-text-fill-color: rgba(255, 255, 255, 0.5) !important;
     }
     
     /* Ensure input group styling works properly */
@@ -646,6 +650,7 @@ canvas#userActivityChart {
         flex: 1;
         background-color: #0f0f23 !important;
         color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
     }
     
     /* Fix input group text styling */
@@ -653,6 +658,19 @@ canvas#userActivityChart {
         background-color: #1e3a5f !important;
         border: 1px solid #333 !important;
         color: #ffffff !important;
+    }
+    
+    /* Specific fixes for financial management inputs */
+    #balanceAdjustAmount,
+    #balanceAdjustReason,
+    #profitAmount,
+    #profitDescription,
+    #exactBalanceAmount,
+    #exactBalanceReason {
+        background-color: #0f0f23 !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        border: 1px solid #333 !important;
     }
 }
 
