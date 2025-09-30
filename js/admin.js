@@ -29,7 +29,8 @@ import {
     setDoc,
     enableNetwork,
     disableNetwork,
-    increment
+    increment,
+    writeBatch
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 // Firebase configuration (import from existing config)
@@ -2678,60 +2679,71 @@ class EnhancedAdminDashboard {
         try {
             // Calculate the adjustment amount (negative for subtract)
             const adjustmentAmount = action === 'add' ? amount : -amount;
+            const timestamp = serverTimestamp();
             
-            // Update ALL balance fields in users collection for complete sync
+            // Use batch write for atomic updates
+            const batch = writeBatch(this.db);
+            
+            // Update users collection
             const userRef = doc(this.db, 'users', this.selectedUserId);
-            await updateDoc(userRef, {
+            batch.update(userRef, {
                 balance: increment(adjustmentAmount),
                 accountBalance: increment(adjustmentAmount),
-                walletBalance: increment(adjustmentAmount), // Ensure wallet balance sync
-                updatedAt: serverTimestamp(),
-                balanceUpdatedAt: serverTimestamp()
+                walletBalance: increment(adjustmentAmount),
+                updatedAt: timestamp,
+                balanceUpdatedAt: timestamp,
+                lastAdminUpdate: timestamp
             });
             
-            // Update or create accounts collection for dashboard sync
+            // Update accounts collection
             const accountRef = doc(this.db, 'accounts', this.selectedUserId);
             const accountDoc = await getDoc(accountRef);
             
             if (accountDoc.exists()) {
-                await updateDoc(accountRef, {
+                batch.update(accountRef, {
                     balance: increment(adjustmentAmount),
                     accountBalance: increment(adjustmentAmount),
-                    walletBalance: increment(adjustmentAmount), // Add wallet balance field
-                    updatedAt: serverTimestamp()
+                    walletBalance: increment(adjustmentAmount),
+                    updatedAt: timestamp,
+                    lastAdminUpdate: timestamp
                 });
             } else {
-                // Create account document with current user data
                 const userDoc = await getDoc(userRef);
                 const userData = userDoc.data();
-                const newBalance = (userData.balance || 0);
-                await setDoc(accountRef, {
+                const newBalance = (userData.balance || 0) + adjustmentAmount;
+                
+                batch.set(accountRef, {
                     balance: newBalance,
                     accountBalance: newBalance,
-                    walletBalance: newBalance, // Initialize wallet balance
+                    walletBalance: newBalance,
                     totalProfits: userData.totalProfits || 0,
                     totalDeposits: userData.totalDeposits || 0,
                     currency: 'USD',
-                    createdAt: serverTimestamp(),
-                    updatedAt: serverTimestamp()
+                    createdAt: timestamp,
+                    updatedAt: timestamp,
+                    lastAdminUpdate: timestamp
                 });
             }
             
-            // Create transaction record with proper user identification
-            await addDoc(collection(this.db, 'transactions'), {
-                uid: this.selectedUserId, // For user transaction history
-                userId: this.selectedUserId, // For compatibility
+            // Create transaction record
+            const transactionRef = doc(collection(this.db, 'transactions'));
+            batch.set(transactionRef, {
+                uid: this.selectedUserId,
+                userId: this.selectedUserId,
                 userEmail: this.selectedUserEmail,
                 type: action === 'add' ? 'deposit' : 'withdrawal',
                 amount: amount,
                 status: 'completed',
                 description: `Admin balance adjustment: ${reason}`,
                 reason: reason,
-                timestamp: serverTimestamp(),
-                createdAt: serverTimestamp(),
+                timestamp: timestamp,
+                createdAt: timestamp,
                 adminId: this.currentUser?.uid || 'admin',
                 adminEmail: this.currentUser?.email || 'admin'
             });
+            
+            // Execute all updates atomically
+            await batch.commit();
             
             this.showNotification(
                 `Balance ${action === 'add' ? 'increased' : 'decreased'} by $${amount.toFixed(2)}`,
@@ -3024,28 +3036,39 @@ EnhancedAdminDashboard.prototype.addUserProfit = async function() {
     }
     
     try {
-        // Update user balance and profit tracking with complete sync
+        const timestamp = serverTimestamp();
+        
+        // Use batch write for atomic updates
+        const batch = writeBatch(this.db);
+        
+        // Update users collection - add to balance AND profits
         const userRef = doc(this.db, 'users', this.selectedUserId);
-        await updateDoc(userRef, {
+        batch.update(userRef, {
             balance: increment(amount),
             accountBalance: increment(amount),
-            walletBalance: increment(amount), // Sync wallet balance
+            walletBalance: increment(amount),
             totalProfits: increment(amount),
-            updatedAt: serverTimestamp(),
-            balanceUpdatedAt: serverTimestamp()
+            updatedAt: timestamp,
+            balanceUpdatedAt: timestamp,
+            profitsUpdatedAt: timestamp,
+            lastAdminUpdate: timestamp
         });
         
         // Update accounts collection for dashboard sync
         const accountRef = doc(this.db, 'accounts', this.selectedUserId);
+        
+        // Check if account document exists
         const accountDoc = await getDoc(accountRef);
         
         if (accountDoc.exists()) {
-            await updateDoc(accountRef, {
+            batch.update(accountRef, {
                 balance: increment(amount),
                 accountBalance: increment(amount),
                 walletBalance: increment(amount),
                 totalProfits: increment(amount),
-                updatedAt: serverTimestamp()
+                updatedAt: timestamp,
+                lastAdminUpdate: timestamp,
+                adminUpdated: true
             });
         } else {
             // Create account document if it doesn't exist
@@ -3053,20 +3076,23 @@ EnhancedAdminDashboard.prototype.addUserProfit = async function() {
             const userData = userDoc.data();
             const newBalance = userData.balance || 0;
             const newProfits = userData.totalProfits || 0;
-            await setDoc(accountRef, {
+            batch.set(accountRef, {
                 balance: newBalance,
                 accountBalance: newBalance,
                 walletBalance: newBalance,
                 totalProfits: newProfits,
                 totalDeposits: userData.totalDeposits || 0,
                 currency: 'USD',
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
+                createdAt: timestamp,
+                updatedAt: timestamp,
+                lastAdminUpdate: timestamp,
+                adminUpdated: true
             });
         }
         
-        // Create transaction record
-        await addDoc(collection(this.db, 'transactions'), {
+        // Create profit transaction record
+        const transactionRef = doc(collection(this.db, 'transactions'));
+        batch.set(transactionRef, {
             uid: this.selectedUserId,
             userId: this.selectedUserId,
             userEmail: this.selectedUserEmail,
@@ -3074,19 +3100,20 @@ EnhancedAdminDashboard.prototype.addUserProfit = async function() {
             amount: amount,
             status: 'completed',
             description: description,
-            timestamp: serverTimestamp(),
-            createdAt: serverTimestamp(),
+            timestamp: timestamp,
+            createdAt: timestamp,
             adminId: this.currentUser?.uid || 'admin',
             method: 'admin_profit_addition'
         });
         
+        // Execute all updates atomically
+        await batch.commit();
+        
         this.showNotification(`Profit of $${amount.toFixed(2)} added successfully`, 'success');
         
-        // Clear the input fields
+        // Clear inputs and refresh
         amountInput.value = '';
         descriptionInput.value = '';
-        
-        // Refresh the user financial data
         await this.loadUserFinancialSection();
         
     } catch (error) {
