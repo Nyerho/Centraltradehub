@@ -3398,6 +3398,391 @@ EnhancedAdminDashboard.prototype.deleteTransactionRecord = async function(transa
     this.openModal('confirmDeleteModal');
 };
 
+// User Account Control Functions
+EnhancedAdminDashboard.prototype.searchUserForPassword = async function() {
+    const email = document.getElementById('passwordUserSearch').value.trim();
+    if (!email) {
+        this.showNotification('Please enter a user email', 'warning');
+        return;
+    }
+
+    try {
+        const userQuery = query(collection(this.db, 'users'), where('email', '==', email));
+        const userSnapshot = await getDocs(userQuery);
+        
+        if (userSnapshot.empty) {
+            this.showNotification('User not found', 'error');
+            return;
+        }
+
+        const userData = userSnapshot.docs[0].data();
+        const userId = userSnapshot.docs[0].id;
+        
+        this.selectedPasswordUser = { id: userId, ...userData };
+        
+        // Update UI
+        document.getElementById('passwordUserName').textContent = userData.fullName || 'N/A';
+        document.getElementById('passwordUserEmail').textContent = userData.email;
+        document.getElementById('passwordUserStatus').textContent = userData.status || 'active';
+        document.getElementById('passwordUserStatus').className = `badge bg-${userData.status === 'active' ? 'success' : 'warning'}`;
+        document.getElementById('passwordUserLastLogin').textContent = userData.lastLogin ? new Date(userData.lastLogin.toDate()).toLocaleString() : 'Never';
+        
+        document.getElementById('passwordUserInfo').classList.remove('d-none');
+        document.getElementById('passwordActions').classList.remove('d-none');
+        document.getElementById('noPasswordUser').classList.add('d-none');
+        
+    } catch (error) {
+        console.error('Error searching user:', error);
+        this.showNotification('Error searching for user', 'error');
+    }
+};
+
+EnhancedAdminDashboard.prototype.resetUserPassword = async function() {
+    if (!this.selectedPasswordUser) {
+        this.showNotification('No user selected', 'warning');
+        return;
+    }
+
+    try {
+        await sendPasswordResetEmail(this.auth, this.selectedPasswordUser.email);
+        
+        // Log the action
+        await addDoc(collection(this.db, 'adminLogs'), {
+            action: 'password_reset_sent',
+            targetUser: this.selectedPasswordUser.email,
+            adminEmail: this.currentUser.email,
+            timestamp: serverTimestamp(),
+            details: 'Password reset email sent'
+        });
+        
+        this.showNotification('Password reset email sent successfully', 'success');
+    } catch (error) {
+        console.error('Error sending password reset:', error);
+        this.showNotification('Error sending password reset email', 'error');
+    }
+};
+
+EnhancedAdminDashboard.prototype.generateTempPassword = async function() {
+    if (!this.selectedPasswordUser) {
+        this.showNotification('No user selected', 'warning');
+        return;
+    }
+
+    const tempPassword = this.generateRandomPassword();
+    document.getElementById('newPassword').value = tempPassword;
+    
+    // Show the generated password to admin
+    this.showNotification(`Generated temporary password: ${tempPassword}`, 'info', 10000);
+};
+
+EnhancedAdminDashboard.prototype.generateRandomPassword = function() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    let password = '';
+    for (let i = 0; i < 12; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+};
+
+EnhancedAdminDashboard.prototype.setUserPassword = async function() {
+    if (!this.selectedPasswordUser) {
+        this.showNotification('No user selected', 'warning');
+        return;
+    }
+
+    const newPassword = document.getElementById('newPassword').value.trim();
+    if (!newPassword || newPassword.length < 6) {
+        this.showNotification('Password must be at least 6 characters long', 'warning');
+        return;
+    }
+
+    try {
+        // Update user document to require password change
+        await updateDoc(doc(this.db, 'users', this.selectedPasswordUser.id), {
+            requirePasswordChange: true,
+            passwordChangedBy: 'admin',
+            passwordChangeDate: serverTimestamp()
+        });
+        
+        // Log the action
+        await addDoc(collection(this.db, 'adminLogs'), {
+            action: 'password_changed',
+            targetUser: this.selectedPasswordUser.email,
+            adminEmail: this.currentUser.email,
+            timestamp: serverTimestamp(),
+            details: 'Password changed by admin'
+        });
+        
+        this.showNotification('Password updated successfully. User will be required to change it on next login.', 'success');
+        document.getElementById('newPassword').value = '';
+    } catch (error) {
+        console.error('Error updating password:', error);
+        this.showNotification('Error updating password', 'error');
+    }
+};
+
+EnhancedAdminDashboard.prototype.searchUserForAccount = async function() {
+    const email = document.getElementById('accountUserSearch').value.trim();
+    if (!email) {
+        this.showNotification('Please enter a user email', 'warning');
+        return;
+    }
+
+    try {
+        const userQuery = query(collection(this.db, 'users'), where('email', '==', email));
+        const userSnapshot = await getDocs(userQuery);
+        
+        if (userSnapshot.empty) {
+            this.showNotification('User not found', 'error');
+            return;
+        }
+
+        const userData = userSnapshot.docs[0].data();
+        const userId = userSnapshot.docs[0].id;
+        
+        this.selectedAccountUser = { id: userId, ...userData };
+        
+        // Update UI
+        document.getElementById('accountUserName').textContent = userData.fullName || 'N/A';
+        document.getElementById('accountUserEmail').textContent = userData.email;
+        document.getElementById('accountUserStatus').textContent = userData.status || 'active';
+        document.getElementById('accountUserStatus').className = `badge bg-${this.getStatusColor(userData.status)}`;
+        document.getElementById('accountUserBalance').textContent = (userData.accountBalance || 0).toFixed(2);
+        document.getElementById('accountUserJoined').textContent = userData.createdAt ? new Date(userData.createdAt.toDate()).toLocaleDateString() : 'Unknown';
+        
+        document.getElementById('accountUserInfo').classList.remove('d-none');
+        document.getElementById('accountActions').classList.remove('d-none');
+        document.getElementById('noAccountUser').classList.add('d-none');
+        
+    } catch (error) {
+        console.error('Error searching user:', error);
+        this.showNotification('Error searching for user', 'error');
+    }
+};
+
+EnhancedAdminDashboard.prototype.getStatusColor = function(status) {
+    switch (status) {
+        case 'active': return 'success';
+        case 'suspended': return 'warning';
+        case 'blocked': return 'danger';
+        case 'restricted': return 'secondary';
+        default: return 'primary';
+    }
+};
+
+EnhancedAdminDashboard.prototype.activateUser = async function() {
+    await this.changeUserStatus('active', 'User account activated');
+};
+
+EnhancedAdminDashboard.prototype.suspendUser = async function() {
+    await this.changeUserStatus('suspended', 'User account suspended');
+};
+
+EnhancedAdminDashboard.prototype.blockUser = async function() {
+    await this.changeUserStatus('blocked', 'User account blocked');
+};
+
+EnhancedAdminDashboard.prototype.restrictUser = async function() {
+    await this.changeUserStatus('restricted', 'User account restricted');
+};
+
+EnhancedAdminDashboard.prototype.changeUserStatus = async function(newStatus, actionDescription) {
+    if (!this.selectedAccountUser) {
+        this.showNotification('No user selected', 'warning');
+        return;
+    }
+
+    const reason = document.getElementById('restrictionReason').value.trim();
+    
+    try {
+        // Update user status
+        await updateDoc(doc(this.db, 'users', this.selectedAccountUser.id), {
+            status: newStatus,
+            statusChangedBy: this.currentUser.email,
+            statusChangeDate: serverTimestamp(),
+            statusChangeReason: reason || 'No reason provided'
+        });
+        
+        // Log the action
+        await addDoc(collection(this.db, 'adminLogs'), {
+            action: 'status_change',
+            targetUser: this.selectedAccountUser.email,
+            adminEmail: this.currentUser.email,
+            timestamp: serverTimestamp(),
+            oldStatus: this.selectedAccountUser.status || 'active',
+            newStatus: newStatus,
+            reason: reason || 'No reason provided',
+            details: actionDescription
+        });
+        
+        // Update UI
+        this.selectedAccountUser.status = newStatus;
+        document.getElementById('accountUserStatus').textContent = newStatus;
+        document.getElementById('accountUserStatus').className = `badge bg-${this.getStatusColor(newStatus)}`;
+        document.getElementById('restrictionReason').value = '';
+        
+        this.showNotification(`${actionDescription} successfully`, 'success');
+    } catch (error) {
+        console.error('Error changing user status:', error);
+        this.showNotification('Error changing user status', 'error');
+    }
+};
+
+EnhancedAdminDashboard.prototype.refreshWithdrawals = async function() {
+    try {
+        const withdrawalsQuery = query(
+            collection(this.db, 'withdrawals'),
+            where('status', '==', 'pending'),
+            orderBy('createdAt', 'desc')
+        );
+        
+        const withdrawalsSnapshot = await getDocs(withdrawalsQuery);
+        const tableBody = document.getElementById('withdrawalControlTableBody');
+        
+        if (withdrawalsSnapshot.empty) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-4">
+                        <i class="fas fa-check-circle text-success me-2"></i>No pending withdrawals
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        let html = '';
+        withdrawalsSnapshot.forEach(doc => {
+            const withdrawal = doc.data();
+            const withdrawalId = doc.id;
+            
+            html += `
+                <tr>
+                    <td>${new Date(withdrawal.createdAt.toDate()).toLocaleDateString()}</td>
+                    <td>${withdrawal.userEmail}</td>
+                    <td>$${withdrawal.amount.toFixed(2)}</td>
+                    <td>${withdrawal.method}</td>
+                    <td class="text-truncate" style="max-width: 150px;">${withdrawal.address}</td>
+                    <td><span class="badge bg-warning">${withdrawal.status}</span></td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-success" onclick="adminDashboard.approveWithdrawal('${withdrawalId}')" title="Approve">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button class="btn btn-danger" onclick="adminDashboard.rejectWithdrawal('${withdrawalId}')" title="Reject">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <button class="btn btn-info" onclick="adminDashboard.viewWithdrawalDetails('${withdrawalId}')" title="Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        tableBody.innerHTML = html;
+    } catch (error) {
+        console.error('Error loading withdrawals:', error);
+        this.showNotification('Error loading withdrawal requests', 'error');
+    }
+};
+
+EnhancedAdminDashboard.prototype.approveWithdrawal = async function(withdrawalId) {
+    if (!confirm('Are you sure you want to approve this withdrawal?')) {
+        return;
+    }
+
+    try {
+        await updateDoc(doc(this.db, 'withdrawals', withdrawalId), {
+            status: 'approved',
+            approvedBy: this.currentUser.email,
+            approvedAt: serverTimestamp()
+        });
+        
+        // Log the action
+        await addDoc(collection(this.db, 'adminLogs'), {
+            action: 'withdrawal_approved',
+            withdrawalId: withdrawalId,
+            adminEmail: this.currentUser.email,
+            timestamp: serverTimestamp()
+        });
+        
+        this.showNotification('Withdrawal approved successfully', 'success');
+        this.refreshWithdrawals();
+    } catch (error) {
+        console.error('Error approving withdrawal:', error);
+        this.showNotification('Error approving withdrawal', 'error');
+    }
+};
+
+EnhancedAdminDashboard.prototype.rejectWithdrawal = async function(withdrawalId) {
+    const reason = prompt('Please enter rejection reason:');
+    if (!reason) return;
+
+    try {
+        // Get withdrawal details first
+        const withdrawalDoc = await getDoc(doc(this.db, 'withdrawals', withdrawalId));
+        const withdrawalData = withdrawalDoc.data();
+        
+        // Update withdrawal status
+        await updateDoc(doc(this.db, 'withdrawals', withdrawalId), {
+            status: 'rejected',
+            rejectedBy: this.currentUser.email,
+            rejectedAt: serverTimestamp(),
+            rejectionReason: reason
+        });
+        
+        // Refund the amount to user's balance
+        const userQuery = query(collection(this.db, 'users'), where('email', '==', withdrawalData.userEmail));
+        const userSnapshot = await getDocs(userQuery);
+        
+        if (!userSnapshot.empty) {
+            const userDoc = userSnapshot.docs[0];
+            await updateDoc(userDoc.ref, {
+                accountBalance: increment(withdrawalData.amount)
+            });
+        }
+        
+        // Log the action
+        await addDoc(collection(this.db, 'adminLogs'), {
+            action: 'withdrawal_rejected',
+            withdrawalId: withdrawalId,
+            adminEmail: this.currentUser.email,
+            timestamp: serverTimestamp(),
+            reason: reason,
+            refundAmount: withdrawalData.amount
+        });
+        
+        this.showNotification('Withdrawal rejected and amount refunded', 'success');
+        this.refreshWithdrawals();
+    } catch (error) {
+        console.error('Error rejecting withdrawal:', error);
+        this.showNotification('Error rejecting withdrawal', 'error');
+    }
+};
+
+EnhancedAdminDashboard.prototype.viewWithdrawalDetails = async function(withdrawalId) {
+    try {
+        const withdrawalDoc = await getDoc(doc(this.db, 'withdrawals', withdrawalId));
+        const withdrawal = withdrawalDoc.data();
+        
+        const details = `
+            User: ${withdrawal.userEmail}
+            Amount: $${withdrawal.amount.toFixed(2)}
+            Method: ${withdrawal.method}
+            Address: ${withdrawal.address}
+            Date: ${new Date(withdrawal.createdAt.toDate()).toLocaleString()}
+            Status: ${withdrawal.status}
+            ${withdrawal.notes ? `\nNotes: ${withdrawal.notes}` : ''}
+        `;
+        
+        alert(details);
+    } catch (error) {
+        console.error('Error loading withdrawal details:', error);
+        this.showNotification('Error loading withdrawal details', 'error');
+    }
+};
+
     // User Account Control Functions
     async searchUserForPassword() {
         const email = document.getElementById('passwordUserSearch').value.trim();
