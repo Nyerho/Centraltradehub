@@ -59,20 +59,127 @@
         .tab-content.active {
             display: block;
         }
+        
+        /* Enhanced mobile responsive table container */
+        .table-container {
+            overflow-x: auto;
+            overflow-y: visible;
+            -webkit-overflow-scrolling: touch;
+            max-width: 100%;
+            /* Force scrollbar to be visible */
+            scrollbar-width: thin;
+            scrollbar-color: #00d4ff #2d2d44;
+        }
+        
+        /* Custom scrollbar for webkit browsers */
+        .table-container::-webkit-scrollbar {
+            height: 12px;
+        }
+        
+        .table-container::-webkit-scrollbar-track {
+            background: #2d2d44;
+            border-radius: 6px;
+        }
+        
+        .table-container::-webkit-scrollbar-thumb {
+            background: #00d4ff;
+            border-radius: 6px;
+        }
+        
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #00b8e6;
+        }
+        
         .table {
             width: 100%;
             border-collapse: collapse;
+            min-width: 700px; /* Increased minimum width */
         }
         .table th, .table td {
             padding: 1rem;
             text-align: left;
             border-bottom: 1px solid #2d2d44;
+            white-space: nowrap;
         }
         .table th {
             background: #0f0f23;
             color: #00d4ff;
             font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
+        
+        /* Mobile specific styles */
+        @media (max-width: 768px) {
+            .history-container {
+                margin: 1rem auto;
+                padding: 0 0.5rem;
+            }
+            
+            .history-header {
+                padding: 1.5rem 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .history-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .tab-btn {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .table th, .table td {
+                padding: 0.75rem 0.5rem;
+                font-size: 0.85rem;
+            }
+            
+            .back-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            /* Enhanced mobile table scrolling */
+            .table-container {
+                margin: 0 -0.5rem;
+                padding: 0 0.5rem;
+                /* Ensure scrollbar is always visible on mobile */
+                overflow-x: scroll !important;
+            }
+            
+            .table {
+                min-width: 600px; /* Minimum width for mobile */
+            }
+            
+            /* Make scrollbar more prominent on mobile */
+            .table-container::-webkit-scrollbar {
+                height: 16px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .table {
+                min-width: 550px;
+            }
+            
+            .table th, .table td {
+                padding: 0.5rem 0.25rem;
+                font-size: 0.8rem;
+            }
+            
+            /* Even more prominent scrollbar on very small screens */
+            .table-container::-webkit-scrollbar {
+                height: 20px;
+            }
+            
+            .table-container {
+                /* Add padding to show scrollbar clearly */
+                padding-bottom: 10px;
+            }
+        }
+        
         .status-profit { color: #00ff88; }
         .status-loss { color: #ff6b6b; }
         .status-completed { color: #00ff88; }
@@ -121,50 +228,53 @@
         <div class="history-table">
             <!-- Trading History Tab -->
             <div id="trades-tab" class="tab-content active">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Asset</th>
-                            <th>Type</th>
-                            <th>Amount</th>
-                            <th>Entry Price</th>
-                            <th>Exit Price</th>
-                            <th>P&L</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tradesTableBody">
-                        <tr>
-                            <td colspan="8" class="loading-row">
-                                <i class="fas fa-spinner fa-spin"></i> Loading your trading history...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Asset</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Entry Price</th>
+                                <th>Exit Price</th>
+                                <th>P&L</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tradesTableBody">
+                            <tr>
+                                <td colspan="8" class="loading-row">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading your trading history...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
             
             <!-- Transaction History Tab -->
             <div id="transactions-tab" class="tab-content">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Type</th>
-                            <th>Description</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                            <th>Source</th>
-                        </tr>
-                    </thead>
-                    <tbody id="transactionsTableBody">
-                        <tr>
-                            <td colspan="6" class="loading-row">
-                                <i class="fas fa-spinner fa-spin"></i> Loading your transaction history...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionsTableBody">
+                            <tr>
+                                <td colspan="5" class="loading-row">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading your transaction history...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
         
@@ -320,7 +430,7 @@
                         console.error('Error in transactions listener:', error);
                         tableBody.innerHTML = `
                             <tr>
-                                <td colspan="6" class="error-row">
+                                <td colspan="5" class="error-row">
                                     <i class="fas fa-exclamation-triangle"></i> 
                                     Error loading transaction history. Please try again.
                                 </td>
@@ -381,7 +491,6 @@
                     const amountClass = transaction.type === 'withdrawal' ? 'status-loss' : 'status-profit';
                     const amountSign = transaction.type === 'withdrawal' ? '-' : '+';
                     const statusClass = `status-${transaction.status || 'pending'}`;
-                    const source = transaction.source === 'admin_panel' ? 'Admin' : 'User';
                     
                     return `
                         <tr>
@@ -390,7 +499,6 @@
                             <td>${transaction.description || 'N/A'}</td>
                             <td class="${amountClass}">${amountSign}$${Math.abs(amount).toFixed(2)}</td>
                             <td><span class="${statusClass}">${(transaction.status || 'pending').charAt(0).toUpperCase() + (transaction.status || 'pending').slice(1)}</span></td>
-                            <td>${source}</td>
                         </tr>
                     `;
                 }).join('');

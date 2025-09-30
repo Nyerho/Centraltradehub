@@ -2703,53 +2703,86 @@ class EnhancedAdminDashboard {
         try {
             const timestamp = serverTimestamp();
             
-            // Get current user data to calculate the difference for transaction record
+            // Get current user data
             const userRef = doc(this.db, 'users', this.selectedUserId);
             const userDoc = await getDoc(userRef);
-            const currentBalance = userDoc.exists() ? (userDoc.data().accountBalance || userDoc.data().balance || 0) : 0;
+            const userData = userDoc.exists() ? userDoc.data() : {};
             
-            // Calculate the actual adjustment for transaction record
-            const actualAdjustment = action === 'add' ? amount : -amount;
-            const newBalance = action === 'add' ? currentBalance + amount : (currentBalance - amount);
+            const currentDeposits = userData.totalDeposits || 0;
+            const currentProfits = userData.totalProfits || 0;
+            const currentBalance = userData.accountBalance || userData.balance || 0;
+            
+            // Calculate new values - UPDATE THE CALCULATION COMPONENTS
+            let newDeposits = currentDeposits;
+            let newProfits = currentProfits;
+            
+            if (action === 'add') {
+                // Add to deposits (this will increase calculated balance)
+                newDeposits = currentDeposits + amount;
+            } else {
+                // Subtract from deposits first, then profits if needed
+                if (currentDeposits >= amount) {
+                    newDeposits = currentDeposits - amount;
+                } else {
+                    // If not enough deposits, subtract remaining from profits
+                    const remaining = amount - currentDeposits;
+                    newDeposits = 0;
+                    newProfits = Math.max(0, currentProfits - remaining);
+                }
+            }
+            
+            // Calculate the new total balance using your preferred method
+            const newCalculatedBalance = newDeposits + newProfits;
             
             // Use batch write for atomic updates
             const batch = writeBatch(this.db);
             
-            // Update users collection with exact values
+            // Update users collection - UPDATE THE COMPONENTS THAT FEED YOUR CALCULATION
             batch.update(userRef, {
-                balance: newBalance,
-                accountBalance: newBalance,
-                walletBalance: newBalance,
+                totalDeposits: newDeposits,
+                totalProfits: newProfits,
+                // Also update these for consistency, but your dashboard will use the calculation
+                balance: newCalculatedBalance,
+                accountBalance: newCalculatedBalance,
+                walletBalance: newCalculatedBalance,
                 updatedAt: timestamp,
                 balanceUpdatedAt: timestamp,
-                lastAdminUpdate: timestamp
+                lastAdminUpdate: timestamp,
+                lastBalanceChange: {
+                    amount: action === 'add' ? amount : -amount,
+                    reason: reason,
+                    timestamp: timestamp,
+                    admin: this.currentUser?.email || 'admin'
+                }
             });
             
-            // Update accounts collection
+            // Update accounts collection to match
             const accountRef = doc(this.db, 'accounts', this.selectedUserId);
             const accountDoc = await getDoc(accountRef);
             
             if (accountDoc.exists()) {
                 batch.update(accountRef, {
-                    balance: newBalance,
-                    accountBalance: newBalance,
-                    walletBalance: newBalance,
+                    totalDeposits: newDeposits,
+                    totalProfits: newProfits,
+                    balance: newCalculatedBalance,
+                    accountBalance: newCalculatedBalance,
+                    walletBalance: newCalculatedBalance,
                     updatedAt: timestamp,
-                    lastAdminUpdate: timestamp
+                    lastAdminUpdate: timestamp,
+                    syncedFromUsers: true
                 });
             } else {
-                const userData = userDoc.exists() ? userDoc.data() : {};
-                
                 batch.set(accountRef, {
-                    balance: newBalance,
-                    accountBalance: newBalance,
-                    walletBalance: newBalance,
-                    totalProfits: userData.totalProfits || 0,
-                    totalDeposits: userData.totalDeposits || 0,
+                    totalDeposits: newDeposits,
+                    totalProfits: newProfits,
+                    balance: newCalculatedBalance,
+                    accountBalance: newCalculatedBalance,
+                    walletBalance: newCalculatedBalance,
                     currency: 'USD',
                     createdAt: timestamp,
                     updatedAt: timestamp,
-                    lastAdminUpdate: timestamp
+                    lastAdminUpdate: timestamp,
+                    syncedFromUsers: true
                 });
             }
             
@@ -2759,13 +2792,14 @@ class EnhancedAdminDashboard {
                 uid: this.selectedUserId,
                 userId: this.selectedUserId,
                 userEmail: this.selectedUserEmail,
-                type: action === 'add' ? 'deposit' : 'withdrawal',
-                amount: Math.abs(actualAdjustment),
+                type: action === 'add' ? 'manual_adjustment_add' : 'manual_adjustment_subtract',
+                amount: amount,
                 status: 'completed',
                 description: `Admin balance ${action === 'add' ? 'increased by' : 'decreased by'}: ${reason}`,
                 reason: reason,
                 timestamp: timestamp,
                 createdAt: timestamp,
+                source: 'admin_panel',
                 adminId: this.currentUser?.uid || 'admin',
                 adminEmail: this.currentUser?.email || 'admin'
             });
@@ -2782,10 +2816,8 @@ class EnhancedAdminDashboard {
             amountInput.value = '';
             reasonInput.value = '';
             
-            // Refresh the user financial table to show updated balance
+            // Refresh displays
             await this.loadUserFinancialSection();
-            
-            // If user details modal is open, refresh it
             if (this.currentViewingUserId === this.selectedUserId) {
                 await this.refreshUserDetails(this.selectedUserId);
             }

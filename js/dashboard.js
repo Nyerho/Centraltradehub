@@ -422,6 +422,7 @@ class DashboardManager {
         }
     }
 
+    // ... existing code ...
     updateAccountSummary() {
         console.log('=== UPDATING UI ===');
         console.log('updateAccountSummary called with accountData:', this.accountData);
@@ -438,7 +439,7 @@ class DashboardManager {
             totalDepositsElement: !!totalDepositsElement
         });
         
-        // Calculate wallet balance as deposits + profits
+        // KEEP YOUR PREFERRED CALCULATION: deposits + profits = wallet balance
         const deposits = this.accountData.totalDeposits || 0;
         const profits = this.accountData.totalProfits || 0;
         const calculatedWalletBalance = deposits + profits;
@@ -457,7 +458,7 @@ class DashboardManager {
             })}`;
             console.log('Setting walletBalance to:', formattedBalance);
             balanceElement.textContent = formattedBalance;
-            balanceElement.style.fontWeight = 'bold'; // Visual confirmation of update
+            balanceElement.style.fontWeight = 'bold';
         }
         
         if (accountBalanceElement) {
@@ -467,7 +468,7 @@ class DashboardManager {
             })}`;
             console.log('Setting accountBalance to:', formattedBalance);
             accountBalanceElement.textContent = formattedBalance;
-            accountBalanceElement.style.fontWeight = 'bold'; // Visual confirmation of update
+            accountBalanceElement.style.fontWeight = 'bold';
         }
         
         // Display received profits separately
@@ -491,10 +492,8 @@ class DashboardManager {
         }
         
         console.log('=== UI UPDATE COMPLETE ===');
-        
-        // Update change indicators with fresh data (no cached comparisons)
-        // this.updateChangeIndicators(); // Commented out to prevent cached value conflicts
     }
+// ... existing code ...
 
     updateChangeIndicators() {
         // Get previous balance from localStorage for change calculation
