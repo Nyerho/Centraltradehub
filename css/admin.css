@@ -622,7 +622,7 @@ canvas#userActivityChart {
         grid-template-columns: 1fr;
     }
     
-    /* Enhanced form-control styling for mobile dark theme */
+    /* Enhanced form-control styling for mobile with full width */
     .form-control {
         background-color: #0f0f23 !important;
         border: 1px solid #333 !important;
@@ -631,6 +631,9 @@ canvas#userActivityChart {
         min-height: 48px !important; /* Increased height for better touch targets */
         padding: 12px 16px !important; /* Increased padding for better visibility */
         line-height: 1.5 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
         -webkit-appearance: none;
         -webkit-text-fill-color: #ffffff !important;
     }
@@ -642,6 +645,7 @@ canvas#userActivityChart {
         -webkit-text-fill-color: #ffffff !important;
         box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2) !important;
         min-height: 48px !important;
+        width: 100% !important;
     }
     
     .form-control::placeholder {
@@ -650,14 +654,23 @@ canvas#userActivityChart {
         font-size: 14px !important;
     }
     
-    /* Enhanced input group styling */
+    /* Enhanced input group styling with full width */
+    .input-group {
+        width: 100% !important;
+        max-width: 100% !important;
+        display: flex !important;
+        margin-bottom: 16px !important;
+    }
+    
     .input-group .form-control {
-        flex: 1;
+        flex: 1 1 auto !important;
         background-color: #0f0f23 !important;
         color: #ffffff !important;
         -webkit-text-fill-color: #ffffff !important;
         min-height: 48px !important;
         padding: 12px 16px !important;
+        width: auto !important;
+        max-width: none !important;
     }
     
     /* Enhanced input group text styling */
@@ -670,9 +683,10 @@ canvas#userActivityChart {
         font-size: 16px !important;
         display: flex;
         align-items: center;
+        flex-shrink: 0 !important;
     }
     
-    /* Specific enhanced styling for balance adjustment inputs */
+    /* Specific enhanced styling for balance adjustment inputs with full width */
     #balanceAdjustAmount,
     #balanceAdjustReason,
     #profitAmount,
@@ -689,31 +703,57 @@ canvas#userActivityChart {
         padding: 12px 16px !important;
         font-size: 16px !important;
         line-height: 1.5 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
     }
     
-    /* Enhanced styling for input groups containing balance adjustment fields */
-    .input-group:has(#balanceAdjustAmount),
-    .input-group:has(#balanceAdjustReason),
-    .input-group:has(#profitAmount),
-    .input-group:has(#profitDescription),
-    .input-group:has(#depositAmount),
-    .input-group:has(#depositDescription),
-    .input-group:has(#exactBalanceAmount),
-    .input-group:has(#exactBalanceReason) {
-        margin-bottom: 16px !important;
+    /* Enhanced card and container styling for full width utilization */
+    .card {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
     }
     
-    /* Ensure proper spacing for balance adjustment cards */
+    .card-body {
+        padding: 1rem !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
     .card-body .mb-3 {
         margin-bottom: 1.5rem !important;
+        width: 100% !important;
     }
     
     /* Enhanced button styling for balance adjustment actions */
-    .btn-group .btn,
-    .btn.w-100 {
+    .btn-group {
+        width: 100% !important;
+        display: flex !important;
+    }
+    
+    .btn-group .btn {
+        flex: 1 !important;
         min-height: 44px !important;
         padding: 12px 16px !important;
         font-size: 14px !important;
+    }
+    
+    .btn.w-100 {
+        width: 100% !important;
+        min-height: 44px !important;
+        padding: 12px 16px !important;
+        font-size: 14px !important;
+    }
+    
+    /* Ensure form labels and containers use full width */
+    .form-label {
+        width: 100% !important;
+        margin-bottom: 8px !important;
+    }
+    
+    .mb-3 {
+        width: 100% !important;
     }
 }
 
@@ -896,6 +936,80 @@ canvas#userActivityChart {
     
     .input-group {
         flex-direction: column;
+    }
+    
+    /* Enhanced COT input group styling for mobile */
+    .cot-form .input-group {
+        width: 100% !important;
+        max-width: 100% !important;
+        display: flex !important;
+        flex-direction: row !important;
+        margin-bottom: 16px !important;
+    }
+    
+    .cot-form .input-group .form-control {
+        flex: 1 1 auto !important;
+        background-color: #0f0f23 !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        min-height: 48px !important;
+        padding: 12px 16px !important;
+        width: auto !important;
+        max-width: none !important;
+        margin-right: 8px !important;
+    }
+    
+    /* Enhanced COT form container for mobile */
+    .cot-form {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 20px 16px !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+    }
+    
+    .cot-management-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+    }
+    
+    /* Enhanced COT form group styling */
+    .cot-form .form-group {
+        width: 100% !important;
+        margin-bottom: 20px !important;
+    }
+    
+    .cot-form .form-group label {
+        width: 100% !important;
+        margin-bottom: 8px !important;
+        font-size: 14px !important;
+        color: #ffffff !important;
+    }
+    
+    /* Enhanced COT button styling for mobile */
+    .cot-form .button-group {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+    
+    .cot-form .button-group .btn-primary,
+    .cot-form .button-group .btn-secondary,
+    #copy-cot-btn {
+        width: 100% !important;
+        min-height: 48px !important;
+        padding: 12px 16px !important;
+        font-size: 16px !important;
+        flex-shrink: 0 !important;
+    }
+    
+    /* Ensure monospace font is readable on mobile */
+    .monospace {
+        font-family: 'Courier New', monospace !important;
+        font-size: 14px !important;
+        letter-spacing: 0.5px !important;
     }
 }
 
