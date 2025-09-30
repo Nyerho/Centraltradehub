@@ -621,6 +621,39 @@ canvas#userActivityChart {
     .dashboard-charts {
         grid-template-columns: 1fr;
     }
+    
+    /* Fix Bootstrap form-control styling for mobile dark theme */
+    .form-control {
+        background-color: #0f0f23 !important;
+        border: 1px solid #333 !important;
+        color: #ffffff !important;
+        font-size: 16px !important; /* Prevents zoom on iOS */
+    }
+    
+    .form-control:focus {
+        background-color: #0f0f23 !important;
+        border-color: #00d4ff !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2) !important;
+    }
+    
+    .form-control::placeholder {
+        color: rgba(255, 255, 255, 0.5) !important;
+    }
+    
+    /* Ensure input group styling works properly */
+    .input-group .form-control {
+        flex: 1;
+        background-color: #0f0f23 !important;
+        color: #ffffff !important;
+    }
+    
+    /* Fix input group text styling */
+    .input-group-text {
+        background-color: #1e3a5f !important;
+        border: 1px solid #333 !important;
+        color: #ffffff !important;
+    }
 }
 
 @media screen and (max-width: 480px) {
