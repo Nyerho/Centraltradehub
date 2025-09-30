@@ -559,7 +559,7 @@ class EnhancedAdminDashboard {
         try {
             const transactionsQuery = query(
                 collection(this.db, 'transactions'),
-                orderBy('timestamp', 'desc'),
+                orderBy('createdAt', 'desc'),
                 limit(100)
             );
             
@@ -573,7 +573,25 @@ class EnhancedAdminDashboard {
             
         } catch (error) {
             console.error('Transactions loading error:', error);
-            this.showNotification('Failed to load transactions', 'error');
+            // Fallback to timestamp if createdAt fails
+            try {
+                const fallbackQuery = query(
+                    collection(this.db, 'transactions'),
+                    orderBy('timestamp', 'desc'),
+                    limit(100)
+                );
+                
+                const fallbackSnapshot = await getDocs(fallbackQuery);
+                this.transactions = fallbackSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                this.renderTransactionsTable();
+            } catch (fallbackError) {
+                console.error('Fallback transactions loading error:', fallbackError);
+                this.showNotification('Failed to load transactions', 'error');
+            }
         }
     }
 
