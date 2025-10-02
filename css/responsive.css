@@ -720,8 +720,8 @@
     }
     
     body {
-        background: white;
-        color: black;
+        background: var(--bg-primary, #0f172a);
+        color: var(--text-primary, #ffffff);
         font-size: 12pt;
         line-height: 1.4;
     }
