@@ -218,8 +218,8 @@ class EnhancedAdminDashboard {
     }
 
     setupEventListeners() {
-        // Navigation
-        document.querySelectorAll('.nav-link').forEach(item => {
+        // Navigation - Only target nav-links with data-section attributes
+        document.querySelectorAll('.nav-link[data-section]').forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
                 const page = item.dataset.section; // Changed from dataset.page
