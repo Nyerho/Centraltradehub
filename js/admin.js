@@ -978,28 +978,22 @@ class EnhancedAdminDashboard {
     }
 
     setupUserControlTabs() {
-        // Setup tab switching functionality
-        const tabButtons = document.querySelectorAll('.user-control-tab');
-        const tabContents = document.querySelectorAll('.tab-content');
+        // Use Bootstrap's native tab system instead of custom implementation
+        const tabButtons = document.querySelectorAll('#controlTabs button[data-bs-toggle="tab"]');
         
         tabButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                e.preventDefault();
-                const targetTab = button.getAttribute('data-tab');
+            button.addEventListener('shown.bs.tab', (e) => {
+                const targetTab = e.target.getAttribute('data-bs-target');
                 
-                // Remove active class from all tabs and contents
-                tabButtons.forEach(btn => btn.classList.remove('active'));
-                tabContents.forEach(content => content.classList.remove('active'));
-                
-                // Add active class to clicked tab and corresponding content
-                button.classList.add('active');
-                const targetContent = document.getElementById(targetTab);
-                if (targetContent) {
-                    targetContent.classList.add('active');
-                }
-                
-                // Load tab-specific data
-                if (targetTab === 'withdrawal-control-content') {
+                // Load tab-specific data based on the target
+                if (targetTab === '#password-management') {
+                    console.log('Password management tab activated');
+                    // Initialize password management functionality
+                } else if (targetTab === '#account-control') {
+                    console.log('Account control tab activated');
+                    // Initialize account control functionality
+                } else if (targetTab === '#withdrawal-control') {
+                    console.log('Withdrawal control tab activated');
                     this.refreshWithdrawals();
                 }
             });
