@@ -38,71 +38,88 @@
     <!-- Market Notifications CSS -->
     <link rel="stylesheet" href="css/market-notifications.css">
     <!-- <link rel="stylesheet" href="css/ai-support-chat.css"> -->
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- Navigation Header -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="nav-logo">
-                <a href="index.html">
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container-fluid nav-container">
+            <div class="nav-logo navbar-brand">
+                <a href="index.html" class="d-flex align-items-center text-decoration-none">
                     <i class="fas fa-chart-line" style="font-size: 2rem; color: #00d4ff;"></i>
-                    <span class="logo-text">Central Trade Hub</span>
+                    <span class="logo-text ms-2">Central Trade Hub</span>
                 </a>
             </div>
-            <ul class="nav-menu">
-                <li><a href="#home" class="nav-link active">Home</a></li>
-                <li><a href="#markets" class="nav-link">Markets</a></li>
-                <li><a href="#about" class="nav-link">About</a></li>
-                <li><a href="#contact" class="nav-link">Contact</a></li>
-            </ul>
-            <div class="nav-buttons">
-                <!-- Fund Account button removed from homepage -->
-                <a href="auth.html" class="btn-secondary" id="loginBtn">Login</a>
-                <a href="auth.html" class="btn-primary" id="getStartedBtn">Get Started</a>
-                <a href="dashboard.html" class="btn-primary" id="dashboardBtn" style="display: none;">Go to Dashboard</a>
-                <div class="user-menu" style="display: none;">
-                    <span class="user-welcome">Welcome, <span class="user-name"></span></span>
-                    <button class="btn-logout">Logout</button>
+            
+            <!-- Bootstrap Navbar Toggler -->
+            <button class="navbar-toggler hamburger" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav nav-menu me-auto">
+                    <li class="nav-item"><a href="#home" class="nav-link active">Home</a></li>
+                    <li class="nav-item"><a href="#markets" class="nav-link">Markets</a></li>
+                    <li class="nav-item"><a href="#about" class="nav-link">About</a></li>
+                    <li class="nav-item"><a href="#contact" class="nav-link">Contact</a></li>
+                </ul>
+                <div class="nav-buttons d-flex gap-2">
+                    <a href="auth.html" class="btn btn-outline-light btn-secondary" id="loginBtn">Login</a>
+                    <a href="auth.html" class="btn btn-primary" id="getStartedBtn">Get Started</a>
+                    <a href="dashboard.html" class="btn btn-primary" id="dashboardBtn" style="display: none;">Go to Dashboard</a>
+                    <div class="user-menu" style="display: none;">
+                        <span class="user-welcome">Welcome, <span class="user-name"></span></span>
+                        <button class="btn btn-outline-light btn-logout">Logout</button>
+                    </div>
                 </div>
-            </div>
-            <div class="hamburger">
-                <span class="bar"></span>
-                <span class="bar"></span>
-                <span class="bar"></span>
             </div>
         </div>
     </nav>
 
     <!-- Hero Section -->
     <section id="home" class="hero">
-        <div class="hero-container">
-            <div class="hero-content">
-                <h1 class="hero-title">Professional Trading Platform for Global Markets</h1>
-                <p class="hero-subtitle">Execute trades with institutional-grade technology. Access forex, cryptocurrencies, commodities, and indices with ultra-low latency execution, advanced risk management, and comprehensive market analysis tools trusted by over 150,000 active traders worldwide.</p>
-                <div class="hero-buttons">
-                    <a href="auth.html#register" class="btn-primary">Start Trading</a>
-                    <a href="auth.html" class="btn-secondary">Login to your Account</a>
-                    <a href="#contact" class="btn-tertiary">Contact Us</a>
+        <div class="container-fluid hero-container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10 col-xl-8">
+                    <div class="hero-content text-center">
+                        <h1 class="hero-title display-4 fw-bold mb-4">Professional Trading Platform for Global Markets</h1>
+                        <p class="hero-subtitle lead mb-5">Execute trades with institutional-grade technology. Access forex, cryptocurrencies, commodities, and indices with ultra-low latency execution, advanced risk management, and comprehensive market analysis tools trusted by over 150,000 active traders worldwide.</p>
+                        <div class="hero-buttons d-flex flex-column flex-md-row gap-3 justify-content-center mb-5">
+                            <a href="auth.html#register" class="btn btn-primary btn-lg">Start Trading</a>
+                            <a href="auth.html" class="btn btn-outline-light btn-lg">Login to your Account</a>
+                            <a href="#contact" class="btn btn-outline-info btn-lg">Contact Us</a>
+                        </div>
+                        <div class="hero-stats">
+                            <div class="row g-4">
+                                <div class="col-md-4">
+                                    <div class="stat text-center">
+                                        <span class="stat-number display-6 fw-bold text-primary">$4.2B+</span>
+                                        <span class="stat-label d-block text-muted">Daily Trading Volume</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="stat text-center">
+                                        <span class="stat-number display-6 fw-bold text-primary">180K+</span>
+                                        <span class="stat-label d-block text-muted">Active Traders</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="stat text-center">
+                                        <span class="stat-number display-6 fw-bold text-primary">0.008s</span>
+                                        <span class="stat-label d-block text-muted">Average Execution</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="hero-stats">
-                    <div class="stat">
-                        <span class="stat-number">$4.2B+</span>
-                        <span class="stat-label">Daily Trading Volume</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-number">180K+</span>
-                        <span class="stat-label">Active Traders</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-number">0.008s</span>
-                        <span class="stat-label">Average Execution</span>
-                    </div>
-                </div>
-            </div>
-            <div class="hero-visual">
-                <img src="assets/images/begin.jpg" alt="Begin Your Trading Journey" class="hero-main-image">
             </div>
         </div>
     </section>
@@ -1334,6 +1351,9 @@
 </div>
 
 <!-- <script src="js/ai-support-chat.js"></script> -->
+    <!-- Bootstrap JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
     <!-- Smartsupp Live Chat script -->
     <script type="text/javascript">
     var _smartsupp = _smartsupp || {};
