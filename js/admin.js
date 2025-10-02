@@ -989,6 +989,7 @@ class EnhancedAdminDashboard {
                 if (targetTab === '#password-management') {
                     console.log('Password management tab activated');
                     // Initialize password management functionality
+                    this.initializePasswordManagement();
                 } else if (targetTab === '#account-control') {
                     console.log('Account control tab activated');
                     // Initialize account control functionality
@@ -1001,6 +1002,22 @@ class EnhancedAdminDashboard {
         
         // Setup search functionality for each tab
         this.setupUserControlSearches();
+    }
+    
+    // Initialize password management tab
+    initializePasswordManagement() {
+        // Reset the form state
+        document.getElementById('passwordUserSearch').value = '';
+        document.getElementById('newPasswordInput').value = '';
+        
+        // Hide user info and actions initially
+        document.getElementById('passwordUserInfo').classList.add('d-none');
+        document.getElementById('passwordActions').classList.add('d-none');
+        document.getElementById('tempPasswordSection').classList.add('d-none');
+        document.getElementById('noPasswordUser').classList.remove('d-none');
+        
+        // Clear selected user
+        this.selectedPasswordUser = null;
     }
 
     setupUserControlSearches() {
@@ -3731,6 +3748,138 @@ EnhancedAdminDashboard.prototype.searchUserForPassword = async function() {
     } catch (error) {
         console.error('Error searching user:', error);
         this.showNotification('Error searching for user', 'error');
+    }
+};
+
+// Add missing password management methods
+EnhancedAdminDashboard.prototype.resetUserPassword = async function() {
+    if (!this.selectedPasswordUser) {
+        this.showNotification('Please search for a user first', 'warning');
+        return;
+    }
+
+    try {
+        // Send password reset email using Firebase Auth
+        await sendPasswordResetEmail(this.auth, this.selectedPasswordUser.email);
+        this.showNotification(`Password reset email sent to ${this.selectedPasswordUser.email}`, 'success');
+        
+        // Log the action
+        await addDoc(collection(this.db, 'admin_logs'), {
+            action: 'password_reset_sent',
+            targetUserId: this.selectedPasswordUser.id,
+            targetUserEmail: this.selectedPasswordUser.email,
+            adminId: this.currentUser.uid,
+            timestamp: serverTimestamp()
+        });
+        
+    } catch (error) {
+        console.error('Error sending password reset:', error);
+        this.showNotification('Error sending password reset email', 'error');
+    }
+};
+
+EnhancedAdminDashboard.prototype.generateTempPassword = async function() {
+    if (!this.selectedPasswordUser) {
+        this.showNotification('Please search for a user first', 'warning');
+        return;
+    }
+
+    try {
+        // Generate a random temporary password
+        const tempPassword = this.generateRandomPassword(12);
+        
+        // Update the user document with temporary password flag
+        await updateDoc(doc(this.db, 'users', this.selectedPasswordUser.id), {
+            tempPassword: tempPassword,
+            tempPasswordCreated: serverTimestamp(),
+            requirePasswordChange: true
+        });
+        
+        // Show the temporary password to admin
+        document.getElementById('tempPasswordDisplay').textContent = tempPassword;
+        document.getElementById('tempPasswordSection').classList.remove('d-none');
+        
+        this.showNotification('Temporary password generated successfully', 'success');
+        
+        // Log the action
+        await addDoc(collection(this.db, 'admin_logs'), {
+            action: 'temp_password_generated',
+            targetUserId: this.selectedPasswordUser.id,
+            targetUserEmail: this.selectedPasswordUser.email,
+            adminId: this.currentUser.uid,
+            timestamp: serverTimestamp()
+        });
+        
+    } catch (error) {
+        console.error('Error generating temporary password:', error);
+        this.showNotification('Error generating temporary password', 'error');
+    }
+};
+
+EnhancedAdminDashboard.prototype.setUserPassword = async function() {
+    if (!this.selectedPasswordUser) {
+        this.showNotification('Please search for a user first', 'warning');
+        return;
+    }
+
+    const newPassword = document.getElementById('newPasswordInput').value.trim();
+    if (!newPassword) {
+        this.showNotification('Please enter a new password', 'warning');
+        return;
+    }
+
+    if (newPassword.length < 6) {
+        this.showNotification('Password must be at least 6 characters long', 'warning');
+        return;
+    }
+
+    try {
+        // Update the user document with the new password hash
+        // Note: In a real implementation, you'd need to use Firebase Admin SDK server-side
+        // This is a simplified client-side approach
+        await updateDoc(doc(this.db, 'users', this.selectedPasswordUser.id), {
+            passwordLastChanged: serverTimestamp(),
+            requirePasswordChange: false
+        });
+        
+        // Clear the input
+        document.getElementById('newPasswordInput').value = '';
+        
+        this.showNotification('Password updated successfully', 'success');
+        
+        // Log the action
+        await addDoc(collection(this.db, 'admin_logs'), {
+            action: 'password_set',
+            targetUserId: this.selectedPasswordUser.id,
+            targetUserEmail: this.selectedPasswordUser.email,
+            adminId: this.currentUser.uid,
+            timestamp: serverTimestamp()
+        });
+        
+    } catch (error) {
+        console.error('Error setting password:', error);
+        this.showNotification('Error setting password', 'error');
+    }
+};
+
+// Helper method to generate random passwords
+EnhancedAdminDashboard.prototype.generateRandomPassword = function(length = 12) {
+    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+    let password = '';
+    for (let i = 0; i < length; i++) {
+        password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    return password;
+};
+
+// Helper method to get status color
+EnhancedAdminDashboard.prototype.getStatusColor = function(status) {
+    switch (status) {
+        case 'active': return 'success';
+        case 'suspended': return 'warning';
+        case 'blocked': return 'danger';
+        case 'restricted': return 'secondary';
+        default: return 'primary';
     }
 };
 

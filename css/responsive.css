@@ -755,6 +755,10 @@ body {
     margin: 0;
     padding: 0;
     overflow-x: hidden;
+    background: #0f1419 !important;
+    color: #ffffff;
+    font-size: 12pt;
+    line-height: 1.4;
 }
 
 .container {
