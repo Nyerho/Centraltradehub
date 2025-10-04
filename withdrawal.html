@@ -291,7 +291,7 @@
                                 
                                 <!-- Submit Button -->
                                 <div class="d-grid">
-                                    <button type="button" id="submitWithdrawal" class="btn btn-primary btn-lg" onclick="submitWithdrawal()" disabled>
+                                    <button type="button" id="submitWithdrawal" class="btn btn-primary btn-lg" disabled>
                                         <i class="fas fa-paper-plane me-2"></i>Submit Withdrawal Request
                                     </button>
                                 </div>
@@ -589,6 +589,19 @@ const firebaseConfig = {
         
         // Add event listener to test the button manually
         document.addEventListener('DOMContentLoaded', function() {
+            // Attach the submit event listener
+            const submitBtn = document.getElementById('submitWithdrawal');
+            if (submitBtn) {
+                submitBtn.addEventListener('click', function(e) {
+                    console.log('Submit button clicked!');
+                    if (typeof window.submitWithdrawal === 'function') {
+                        window.submitWithdrawal();
+                    } else {
+                        console.error('submitWithdrawal function not found!');
+                    }
+                });
+            }
+            
             // Add a test button for debugging
             setTimeout(() => {
                 const testBtn = document.createElement('button');
@@ -596,18 +609,6 @@ const firebaseConfig = {
                 testBtn.className = 'btn btn-warning btn-sm';
                 testBtn.onclick = debugFormState;
                 document.querySelector('.card-body').appendChild(testBtn);
-                
-                // Force enable submit button for testing
-                const submitBtn = document.getElementById('submitWithdrawal');
-                if (submitBtn) {
-                    submitBtn.addEventListener('click', function(e) {
-                        console.log('Submit button clicked!');
-                        if (submitBtn.disabled) {
-                            console.log('Button is disabled, enabling for test...');
-                            submitBtn.disabled = false;
-                        }
-                    });
-                }
             }, 2000);
         });
         
