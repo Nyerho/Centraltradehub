@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Withdraw Funds - CentralStack</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         body {
             background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
@@ -14,72 +14,30 @@
             min-height: 100vh;
         }
         
-        .withdrawal-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
         .card {
             background: #2d2d2d;
-            border-radius: 16px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             border: 1px solid #404040;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         }
         
-        .btn-primary {
-            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
-        }
-        
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        
-        .form-input {
-            width: 100%;
-            padding: 12px 16px;
+        .form-control {
             background: #1a1a1a;
             border: 1px solid #404040;
-            border-radius: 8px;
             color: #ffffff;
-            font-size: 16px;
-            transition: border-color 0.3s ease;
         }
         
-        .form-input:focus {
-            outline: none;
+        .form-control:focus {
+            background: #1a1a1a;
             border-color: #007bff;
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+            color: #ffffff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
         }
         
         .method-card {
             background: #1a1a1a;
             border: 2px solid #404040;
-            border-radius: 12px;
-            padding: 20px;
             cursor: pointer;
             transition: all 0.3s ease;
-            text-align: center;
         }
         
         .method-card:hover {
@@ -88,279 +46,235 @@
         }
         
         .method-card.selected {
-            border: 2px solid #3b82f6;
-            background: rgba(59, 130, 246, 0.1);
+            border-color: #007bff;
+            background: rgba(0, 123, 255, 0.1);
         }
         
-        .method-card {
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            border: none;
         }
         
-        .method-card:hover {
-            border-color: #6b7280;
-        }
-        border-color: #007bff;
-        background: rgba(0, 123, 255, 0.1);
-        }
-        
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(5px);
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
         }
         
         .modal-content {
             background: #2d2d2d;
-            margin: 10% auto;
-            padding: 30px;
-            border-radius: 16px;
-            width: 90%;
-            max-width: 500px;
             border: 1px solid #404040;
-            position: relative;
-        }
-        
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            position: absolute;
-            right: 20px;
-            top: 15px;
-        }
-        
-        .close:hover {
-            color: #fff;
         }
         
         .alert {
-            padding: 12px 16px;
             border-radius: 8px;
-            margin-bottom: 20px;
         }
         
-        .alert-error {
-            background: rgba(220, 53, 69, 0.1);
-            border: 1px solid #dc3545;
-            color: #dc3545;
-        }
-        
-        .alert-success {
-            background: rgba(40, 167, 69, 0.1);
-            border: 1px solid #28a745;
-            color: #28a745;
-        }
-        
-        .hidden {
+        .processing-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
             display: none;
+            z-index: 9999;
         }
         
-        @media (max-width: 768px) {
-            .withdrawal-container {
-                padding: 15px;
-            }
-            
-            .card {
-                padding: 20px;
-            }
-            
-            .modal-content {
-                margin: 5% auto;
-                padding: 20px;
-            }
+        .spinner-border {
+            color: #007bff;
         }
     </style>
 </head>
 <body>
-    <!-- COT Code Authentication Modal -->
-    <div id="cotModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeCotModal()">&times;</span>
-            <div class="text-center mb-6">
-                <i class="fas fa-shield-alt text-4xl text-blue-500 mb-4"></i>
-                <h2 class="text-2xl font-bold mb-2">Withdrawal Authorization Required</h2>
-                <p class="text-gray-400">Enter the Withdrawal Code (COT) provided by your account manager</p>
+    <!-- Processing Overlay -->
+    <div id="processingOverlay" class="processing-overlay d-flex align-items-center justify-content-center">
+        <div class="text-center">
+            <div class="spinner-border mb-3" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
             </div>
-            
-            <div id="cotAlert" class="hidden"></div>
-            
-            <div class="mb-6">
-                <label for="cotCode" class="block text-sm font-medium mb-2">Withdrawal Code (COT)</label>
-                <input type="text" id="cotCode" class="form-input" placeholder="Enter COT code" maxlength="20">
-            </div>
-            
-            <div class="flex gap-3">
-                <button onclick="verifyCotCode()" class="btn-primary flex-1">
-                    <i class="fas fa-check mr-2"></i>Verify Code
-                </button>
-                <button onclick="closeCotModal()" class="btn-secondary">
-                    Cancel
-                </button>
-            </div>
-            
-            <div class="mt-4 p-4 bg-gray-800 rounded-lg">
-                <p class="text-sm text-gray-400">
-                    <i class="fas fa-info-circle mr-2"></i>
-                    Don't have a withdrawal code? Contact your account manager to obtain the current COT code.
-                </p>
+            <h4 class="text-white">Processing Withdrawal Request...</h4>
+            <p class="text-muted">Please wait while we submit your request for admin approval.</p>
+        </div>
+    </div>
+
+    <!-- COT Code Modal -->
+    <div class="modal fade" id="cotModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title text-white">
+                        <i class="fas fa-shield-alt text-primary me-2"></i>
+                        Withdrawal Authorization Required
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-lock text-primary" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-3">Enter the Withdrawal Code (COT) provided by your account manager</p>
+                    </div>
+                    
+                    <div id="cotAlert"></div>
+                    
+                    <div class="mb-3">
+                        <label for="cotCode" class="form-label text-white">Withdrawal Code (COT)</label>
+                        <input type="text" class="form-control" id="cotCode" placeholder="Enter COT code" maxlength="20">
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Don't have a withdrawal code? Contact your account manager to obtain the current COT code.
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-primary" onclick="verifyCotCode()">
+                        <i class="fas fa-check me-2"></i>Verify Code
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Main Withdrawal Page -->
-    <div id="withdrawalPage" class="withdrawal-container hidden">
-        <div class="mb-6">
-            <button onclick="goBack()" class="btn-secondary">
-                <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
-            </button>
-        </div>
-        
-        <div class="card">
-            <div class="text-center mb-8">
-                <i class="fas fa-money-bill-wave text-4xl text-green-500 mb-4"></i>
-                <h1 class="text-3xl font-bold mb-2">Withdraw Funds</h1>
-                <p class="text-gray-400">Request a withdrawal from your trading account</p>
-            </div>
-            
-            <!-- Account Balance -->
-            <div class="bg-gray-800 rounded-lg p-4 mb-6">
-                <div class="flex justify-between items-center">
-                    <span class="text-gray-400">Available Balance:</span>
-                    <span class="text-2xl font-bold text-green-500" id="accountBalance">$0.00</span>
+    <div id="withdrawalPage" class="container-fluid py-4" style="display: none;">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-8 col-xl-6">
+                <!-- Header -->
+                <div class="mb-4">
+                    <button onclick="goBack()" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </button>
                 </div>
-            </div>
-            
-            <!-- Withdrawal Amount -->
-            <div class="mb-6">
-                <label for="withdrawalAmount" class="block text-sm font-medium mb-2">Withdrawal Amount (USD)</label>
-                <input type="number" id="withdrawalAmount" class="form-input" placeholder="Enter amount" min="50" step="0.01">
-                <p class="text-sm text-gray-400 mt-1">Minimum withdrawal: $50.00</p>
-            </div>
-            
-            <!-- Withdrawal Methods -->
-            <div class="mb-6">
-                <h3 class="text-lg font-semibold mb-4">Select Withdrawal Method</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="method-card" data-method="bank" onclick="selectMethod('bank')">
-                        <i class="fas fa-university text-3xl text-blue-500 mb-3"></i>
-                        <h4 class="font-semibold mb-2">Bank Transfer</h4>
-                        <p class="text-sm text-gray-400 mb-2">Withdraw to your bank account</p>
-                        <p class="text-xs text-gray-500">Processing: 1-3 business days</p>
-                        <p class="text-xs text-gray-500">Fee: $25.00</p>
-                    </div>
-                    
-                    <div class="method-card" data-method="crypto" onclick="selectMethod('crypto')">
-                        <i class="fab fa-bitcoin text-3xl text-orange-500 mb-3"></i>
-                        <h4 class="font-semibold mb-2">Cryptocurrency</h4>
-                        <p class="text-sm text-gray-400 mb-2">Withdraw to your crypto wallet</p>
-                        <p class="text-xs text-gray-500">Processing: 30-60 minutes</p>
-                        <p class="text-xs text-gray-500">Fee: Network fees apply</p>
+                
+                <!-- Main Card -->
+                <div class="card">
+                    <div class="card-body p-4">
+                        <!-- Title -->
+                        <div class="text-center mb-4">
+                            <i class="fas fa-money-bill-wave text-success" style="font-size: 3rem;"></i>
+                            <h2 class="text-white mt-3 mb-2">Withdraw Funds</h2>
+                            <p class="text-muted">Request a withdrawal from your trading account</p>
+                        </div>
+                        
+                        <!-- Account Balance -->
+                        <div class="alert alert-dark border-success mb-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Available Balance:</span>
+                                <span class="h4 text-success mb-0" id="accountBalance">$0.00</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Withdrawal Form -->
+                        <form id="withdrawalForm">
+                            <!-- Amount -->
+                            <div class="mb-4">
+                                <label for="withdrawalAmount" class="form-label text-white">Withdrawal Amount (USD)</label>
+                                <input type="number" class="form-control" id="withdrawalAmount" placeholder="Enter amount" min="50" step="0.01">
+                                <div class="form-text text-muted">Minimum withdrawal: $50.00</div>
+                            </div>
+                            
+                            <!-- Withdrawal Methods -->
+                            <div class="mb-4">
+                                <label class="form-label text-white">Select Withdrawal Method</label>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="method-card card p-3 text-center" data-method="bank" onclick="selectMethod('bank')">
+                                            <i class="fas fa-university text-primary mb-2" style="font-size: 2rem;"></i>
+                                            <h6 class="text-white">Bank Transfer</h6>
+                                            <small class="text-muted">1-3 business days</small><br>
+                                            <small class="text-warning">Fee: $25.00</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="method-card card p-3 text-center" data-method="crypto" onclick="selectMethod('crypto')">
+                                            <i class="fab fa-bitcoin text-warning mb-2" style="font-size: 2rem;"></i>
+                                            <h6 class="text-white">Cryptocurrency</h6>
+                                            <small class="text-muted">30-60 minutes</small><br>
+                                            <small class="text-warning">Network fees apply</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Bank Details -->
+                            <div id="bankForm" class="mb-4" style="display: none;">
+                                <h6 class="text-white mb-3">Bank Account Details</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label text-white">Bank Name</label>
+                                        <input type="text" class="form-control" id="bankName" placeholder="Enter bank name">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-white">Account Holder Name</label>
+                                        <input type="text" class="form-control" id="accountName" placeholder="Enter account holder name">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-white">Account Number</label>
+                                        <input type="text" class="form-control" id="accountNumber" placeholder="Enter account number">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-white">Routing Number</label>
+                                        <input type="text" class="form-control" id="routingNumber" placeholder="Enter routing number">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label text-white">SWIFT Code (Optional)</label>
+                                        <input type="text" class="form-control" id="swiftCode" placeholder="Enter SWIFT code">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Crypto Details -->
+                            <div id="cryptoForm" class="mb-4" style="display: none;">
+                                <h6 class="text-white mb-3">Cryptocurrency Details</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label text-white">Cryptocurrency</label>
+                                        <select class="form-select form-control" id="cryptoCurrency">
+                                            <option value="">Select cryptocurrency</option>
+                                            <option value="BTC">Bitcoin (BTC)</option>
+                                            <option value="ETH">Ethereum (ETH)</option>
+                                            <option value="LTC">Litecoin (LTC)</option>
+                                            <option value="USDT">Tether (USDT)</option>
+                                            <option value="USDC">USD Coin (USDC)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-white">Network</label>
+                                        <select class="form-select form-control" id="cryptoNetwork">
+                                            <option value="">Select network</option>
+                                            <option value="mainnet">Mainnet</option>
+                                            <option value="erc20">ERC-20 (Ethereum)</option>
+                                            <option value="bep20">BEP-20 (BSC)</option>
+                                            <option value="trc20">TRC-20 (Tron)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label text-white">Wallet Address</label>
+                                        <input type="text" class="form-control" id="cryptoAddress" placeholder="Enter your wallet address">
+                                        <div class="form-text text-warning">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            Double-check your wallet address. Incorrect addresses may result in permanent loss of funds.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Submit Button -->
+                            <div class="d-grid">
+                                <button type="button" id="submitWithdrawal" class="btn btn-primary btn-lg" onclick="submitWithdrawal()" disabled>
+                                    <i class="fas fa-paper-plane me-2"></i>Submit Withdrawal Request
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Bank Details Form -->
-            <div id="bankForm" class="hidden mb-6">
-                <h3 class="text-lg font-semibold mb-4">Bank Account Details</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="bankName" class="block text-sm font-medium mb-2">Bank Name</label>
-                        <input type="text" id="bankName" class="form-input" placeholder="Enter bank name">
-                    </div>
-                    <div>
-                        <label for="accountName" class="block text-sm font-medium mb-2">Account Holder Name</label>
-                        <input type="text" id="accountName" class="form-input" placeholder="Enter account holder name">
-                    </div>
-                    <div>
-                        <label for="accountNumber" class="block text-sm font-medium mb-2">Account Number</label>
-                        <input type="text" id="accountNumber" class="form-input" placeholder="Enter account number">
-                    </div>
-                    <div>
-                        <label for="routingNumber" class="block text-sm font-medium mb-2">Routing Number</label>
-                        <input type="text" id="routingNumber" class="form-input" placeholder="Enter routing number">
-                    </div>
-                    <div class="md:col-span-2">
-                        <label for="swiftCode" class="block text-sm font-medium mb-2">SWIFT Code (International)</label>
-                        <input type="text" id="swiftCode" class="form-input" placeholder="Enter SWIFT code (optional)">
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Crypto Details Form -->
-            <div id="cryptoForm" class="hidden mb-6">
-                <h3 class="text-lg font-semibold mb-4">Cryptocurrency Details</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="cryptoCurrency" class="block text-sm font-medium mb-2">Cryptocurrency</label>
-                        <select id="cryptoCurrency" class="form-input">
-                            <option value="">Select cryptocurrency</option>
-                            <option value="BTC">Bitcoin (BTC)</option>
-                            <option value="ETH">Ethereum (ETH)</option>
-                            <option value="LTC">Litecoin (LTC)</option>
-                            <option value="XRP">XRP (XRP)</option>
-                            <option value="SOL">Solana (SOL)</option>
-                            <option value="USDC">USD Coin (USDC)</option>
-                            <option value="USDT">Tether (USDT)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="cryptoNetwork" class="block text-sm font-medium mb-2">Network</label>
-                        <select id="cryptoNetwork" class="form-input">
-                            <option value="">Select network</option>
-                            <option value="mainnet">Mainnet</option>
-                            <option value="erc20">ERC-20 (Ethereum)</option>
-                            <option value="bep20">BEP-20 (BSC)</option>
-                            <option value="trc20">TRC-20 (Tron)</option>
-                        </select>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label for="cryptoAddress" class="block text-sm font-medium mb-2">Wallet Address</label>
-                        <input type="text" id="cryptoAddress" class="form-input" placeholder="Enter your wallet address">
-                        <p class="text-sm text-gray-400 mt-1">⚠️ Double-check your wallet address. Incorrect addresses may result in permanent loss of funds.</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Withdrawal Summary -->
-            <div id="withdrawalSummary" class="hidden mb-6">
-                <h3 class="text-lg font-semibold mb-4">Withdrawal Summary</h3>
-                <div class="bg-gray-800 rounded-lg p-4">
-                    <div class="flex justify-between mb-2">
-                        <span>Withdrawal Amount:</span>
-                        <span id="summaryAmount">$0.00</span>
-                    </div>
-                    <div class="flex justify-between mb-2">
-                        <span>Processing Fee:</span>
-                        <span id="summaryFee">$0.00</span>
-                    </div>
-                    <hr class="border-gray-600 my-2">
-                    <div class="flex justify-between font-semibold">
-                        <span>You will receive:</span>
-                        <span id="summaryNet" class="text-green-500">$0.00</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Submit Button -->
-            <div class="text-center">
-                <button id="submitWithdrawal" onclick="submitWithdrawal()" class="btn-primary px-8 py-3 text-lg" disabled>
-                    <i class="fas fa-paper-plane mr-2"></i>Submit Withdrawal Request
-                </button>
             </div>
         </div>
     </div>
 
-  
-    // Firebase v8 CDN Scripts - Add before closing body tag 
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Firebase v8 CDN -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -383,137 +297,37 @@
         
         let currentUser = null;
         let authManager = null;
-    
-        // Add the missing selectMethod function - make it globally accessible
-        window.selectMethod = function(method) {
-            // Remove selected class from all method cards
-            document.querySelectorAll('.method-card').forEach(card => {
-                card.classList.remove('selected');
-            });
-            
-            // Add selected class to clicked method
-            const selectedCard = document.querySelector(`[data-method="${method}"]`);
-            if (selectedCard) {
-                selectedCard.classList.add('selected');
-            }
-            
-            // Hide all detail forms
-            document.getElementById('bankForm').style.display = 'none';
-            document.getElementById('cryptoForm').style.display = 'none';
-            
-            // Show relevant detail form
-            if (method === 'bank') {
-                document.getElementById('bankForm').style.display = 'block';
-            } else if (method === 'crypto') {
-                document.getElementById('cryptoForm').style.display = 'block';
-            }
-        };
-    
-        // Add the missing goBack function
-        window.goBack = function() {
-            window.location.href = 'dashboard.html';
-        };
-    
-        // Initialize auth manager
+        let cotModal = null;
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            cotModal = new bootstrap.Modal(document.getElementById('cotModal'));
+            cotModal.show();
+            initializeAuth();
+        });
+        
+        // Initialize authentication
         async function initializeAuth() {
             try {
-                // Import auth integration
-                const authModule = await import('./js/auth-integration.js');
-                authManager = authModule.default || authModule.AuthManager;
-                
-                if (authManager) {
-                    await authManager.initialize();
-                    currentUser = authManager.getCurrentUser();
-                    return true;
-                }
+                firebase.auth().onAuthStateChanged((user) => {
+                    currentUser = user;
+                    console.log('Auth state changed:', user?.email);
+                });
             } catch (error) {
                 console.error('Auth initialization error:', error);
             }
-            return false;
         }
-    
-        async function loadUserBalance() {
-            try {
-                // First check if we have a current user from auth manager
-                let user = currentUser;
-                
-                // If no current user, try to get from Firebase auth directly
-                if (!user && firebase?.auth) {
-                    user = firebase.auth().currentUser;
-                }
-                
-                // If still no user, try auth manager
-                if (!user && authManager) {
-                    user = authManager.getCurrentUser();
-                }
-                
-                if (!user) {
-                    console.log('No authenticated user found');
-                    document.getElementById('accountBalance').textContent = '$0.00';
-                    return;
-                }
-                
-                if (!firebase?.firestore) {
-                    console.error('Firestore not available');
-                    return;
-                }
-                
-                const db = firebase.firestore();
-                console.log('Loading balance for user:', user.uid);
-                
-                // Try to get user data from users collection first (matches dashboard logic)
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                if (userDoc.exists) {
-                    const userData = userDoc.data();
-                    console.log('User data loaded:', userData);
-                    
-                    // Check multiple possible balance fields (matching dashboard.js logic)
-                    let balance = userData.accountBalance || userData.balance || 0;
-                    
-                    // If no balance in users collection, check accounts collection
-                    if (balance === 0) {
-                        const accountDoc = await db.collection('accounts').doc(user.uid).get();
-                        if (accountDoc.exists) {
-                            const accountData = accountDoc.data();
-                            balance = accountData.balance || 0;
-                            console.log('Account data loaded:', accountData);
-                        }
-                    }
-                    
-                    console.log('Final balance:', balance);
-                    document.getElementById('accountBalance').textContent = `$${balance.toFixed(2)}`;
-                } else {
-                    console.log('User document does not exist');
-                    document.getElementById('accountBalance').textContent = '$0.00';
-                }
-            } catch (error) {
-                console.error('Error loading balance:', error);
-                document.getElementById('accountBalance').textContent = '$0.00';
-            }
-        }
-    
+        
+        // Verify COT code
         async function verifyCotCode() {
             const cotCode = document.getElementById('cotCode').value.trim();
             
             if (!cotCode) {
-                showAlert('Please enter the COT code', 'error');
+                showAlert('Please enter the COT code', 'danger', 'cotAlert');
                 return;
             }
             
             try {
-                // Add proper Firebase initialization check
-                if (typeof firebase === 'undefined') {
-                    console.error('Firebase SDK not loaded');
-                    showAlert('System error: Please refresh the page', 'error');
-                    return;
-                }
-                
-                if (!firebase.apps.length) {
-                    console.error('Firebase not initialized');
-                    showAlert('System error: Please refresh the page', 'error');
-                    return;
-                }
-                
                 const db = firebase.firestore();
                 const cotDocRef = db.collection('admin').doc('withdrawal-settings');
                 const cotDoc = await cotDocRef.get();
@@ -526,277 +340,266 @@
                 const validCode = settings.cotCode;
                 
                 if (cotCode === validCode) {
-                    // COT code is valid - proceed without any redirects
                     console.log('COT code verified successfully');
+                    cotModal.hide();
+                    document.getElementById('withdrawalPage').style.display = 'block';
                     
-                    // Hide COT modal and show withdrawal page immediately
-                    document.getElementById('cotModal').style.display = 'none';
-                    document.getElementById('withdrawalPage').classList.remove('hidden');
+                    // Load user balance
+                    await loadUserBalance();
+                    setupFormValidation();
                     
-                    // Store verification in session (no expiration for this session)
-                    sessionStorage.setItem('cotVerified', 'true');
-                    sessionStorage.setItem('cotTimestamp', Date.now().toString());
-                    
-                    // Ensure authentication is initialized before loading balance
-                    if (!authManager) {
-                        await initializeAuth();
-                    }
-                    
-                    // Load user balance if user is authenticated
-                    const currentUser = authManager ? authManager.getCurrentUser() : firebase.auth().currentUser;
-                    if (currentUser) {
-                        await loadUserBalance();
-                        showAlert('COT code verified! You can now proceed with your withdrawal.', 'success');
-                    } else {
-                        // If not authenticated, show login prompt but don't redirect
-                        showAlert('COT code verified! Please log in to continue with your withdrawal.', 'info');
-                        // Show login form inline instead of redirecting
-                        showInlineLogin();
-                    }
-                    
+                    showAlert('COT code verified! You can now proceed with your withdrawal.', 'success');
                 } else {
-                    showAlert('Invalid COT code. Please contact your account manager.', 'error');
+                    showAlert('Invalid COT code. Please contact your account manager.', 'danger', 'cotAlert');
                 }
-                
             } catch (error) {
                 console.error('COT verification error:', error);
-                showAlert('Error verifying code. Please try again.', 'error');
-            }
-        }
-    
-        function showInlineLogin() {
-            const loginContainer = document.createElement('div');
-            loginContainer.id = 'inlineLogin';
-            loginContainer.innerHTML = `
-                <div class="inline-login-form">
-                    <h3>Login to Continue</h3>
-                    <form id="quickLoginForm">
-                        <div class="form-group">
-                            <label>Email:</label>
-                            <input type="email" id="loginEmail" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Password:</label>
-                            <input type="password" id="loginPassword" required>
-                        </div>
-                        <div class="form-actions">
-                            <button type="submit" class="btn-primary">Login</button>
-                            <button type="button" onclick="hideInlineLogin()" class="btn-secondary">Cancel</button>
-                        </div>
-                    </form>
-                </div>
-            `;
-            
-            document.getElementById('withdrawalPage').appendChild(loginContainer);
-            
-            // Handle login form submission
-            document.getElementById('quickLoginForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const email = document.getElementById('loginEmail').value;
-                const password = document.getElementById('loginPassword').value;
-                
-                try {
-                    if (authManager) {
-                        await authManager.signIn(email, password);
-                        hideInlineLogin();
-                        await loadUserBalance();
-                        showAlert('Login successful! You can now proceed with your withdrawal.', 'success');
-                    }
-                } catch (error) {
-                    showAlert('Login failed: ' + error.message, 'error');
-                }
-            });
-        }
-    
-        function hideInlineLogin() {
-            const loginContainer = document.getElementById('inlineLogin');
-            if (loginContainer) {
-                loginContainer.remove();
+                showAlert('Error verifying code. Please try again.', 'danger', 'cotAlert');
             }
         }
         
-        // Add the missing submitWithdrawal function
+        // Load user balance
+        async function loadUserBalance() {
+            try {
+                if (!currentUser) {
+                    console.log('No authenticated user');
+                    return;
+                }
+                
+                const db = firebase.firestore();
+                const userDocRef = db.collection('users').doc(currentUser.uid);
+                const userDoc = await userDocRef.get();
+                
+                let balance = 0;
+                
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    balance = userData.accountBalance || userData.balance || 0;
+                    
+                    // Fallback to accounts collection
+                    if (balance === 0) {
+                        const accountDocRef = db.collection('accounts').doc(currentUser.uid);
+                        const accountDoc = await accountDocRef.get();
+                        
+                        if (accountDoc.exists) {
+                            const accountData = accountDoc.data();
+                            balance = accountData.balance || accountData.accountBalance || 0;
+                        }
+                    }
+                }
+                
+                document.getElementById('accountBalance').textContent = `$${balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                console.log('Balance loaded:', balance);
+            } catch (error) {
+                console.error('Error loading balance:', error);
+                document.getElementById('accountBalance').textContent = '$0.00';
+            }
+        }
+        
+        // Select withdrawal method
+        function selectMethod(method) {
+            // Remove selected class from all cards
+            document.querySelectorAll('.method-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Add selected class to clicked card
+            const selectedCard = document.querySelector(`[data-method="${method}"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+            }
+            
+            // Hide all forms
+            document.getElementById('bankForm').style.display = 'none';
+            document.getElementById('cryptoForm').style.display = 'none';
+            
+            // Show relevant form
+            if (method === 'bank') {
+                document.getElementById('bankForm').style.display = 'block';
+            } else if (method === 'crypto') {
+                document.getElementById('cryptoForm').style.display = 'block';
+            }
+            
+            checkFormValidity();
+        }
+        
+        // Check form validity
+        function checkFormValidity() {
+            const submitBtn = document.getElementById('submitWithdrawal');
+            const amountInput = document.getElementById('withdrawalAmount');
+            const selectedMethod = document.querySelector('.method-card.selected');
+            
+            if (!submitBtn || !amountInput) return;
+            
+            const amount = parseFloat(amountInput.value);
+            const isAuthenticated = currentUser !== null;
+            
+            let isValid = false;
+            
+            if (isAuthenticated && amount >= 50 && selectedMethod) {
+                const method = selectedMethod.dataset.method;
+                
+                if (method === 'bank') {
+                    const bankName = document.getElementById('bankName')?.value?.trim();
+                    const accountName = document.getElementById('accountName')?.value?.trim();
+                    const accountNumber = document.getElementById('accountNumber')?.value?.trim();
+                    const routingNumber = document.getElementById('routingNumber')?.value?.trim();
+                    
+                    isValid = bankName && accountName && accountNumber && routingNumber;
+                } else if (method === 'crypto') {
+                    const cryptoCurrency = document.getElementById('cryptoCurrency')?.value?.trim();
+                    const cryptoAddress = document.getElementById('cryptoAddress')?.value?.trim();
+                    
+                    isValid = cryptoCurrency && cryptoAddress;
+                }
+            }
+            
+            submitBtn.disabled = !isValid;
+        }
+        
+        // Setup form validation
+        function setupFormValidation() {
+            const formFields = [
+                'withdrawalAmount', 'bankName', 'accountName', 'accountNumber', 
+                'routingNumber', 'swiftCode', 'cryptoCurrency', 'cryptoNetwork', 'cryptoAddress'
+            ];
+            
+            formFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.addEventListener('input', checkFormValidity);
+                    field.addEventListener('change', checkFormValidity);
+                }
+            });
+            
+            checkFormValidity();
+        }
+        
+        // Submit withdrawal
         async function submitWithdrawal() {
             try {
-                // Get form values
+                // Show processing overlay
+                document.getElementById('processingOverlay').style.display = 'flex';
+                
                 const amount = parseFloat(document.getElementById('withdrawalAmount').value);
                 const selectedMethodCard = document.querySelector('.method-card.selected');
-                
-                // Validation
-                if (!amount || amount < 50) {
-                    showAlert('Minimum withdrawal amount is $50', 'error');
-                    return;
-                }
-                
-                if (!selectedMethodCard) {
-                    showAlert('Please select a withdrawal method', 'error');
-                    return;
-                }
-                
-                // Check authentication
-                if (!currentUser) {
-                    showAlert('Please log in to process withdrawal', 'error');
-                    return;
-                }
-                
                 const method = selectedMethodCard.dataset.method;
-                let withdrawalDetails = {};
+                
+                // Validate amount against balance
+                const balanceText = document.getElementById('accountBalance').textContent;
+                const currentBalance = parseFloat(balanceText.replace(/[$,]/g, ''));
+                
+                if (amount > currentBalance) {
+                    throw new Error('Insufficient balance for this withdrawal');
+                }
+                
+                let withdrawalDetails = { method };
                 
                 // Get method-specific details
                 if (method === 'bank') {
-                    const bankName = document.getElementById('bankName')?.value;
-                    const accountNumber = document.getElementById('accountNumber')?.value;
-                    const routingNumber = document.getElementById('routingNumber')?.value;
-                    const accountHolder = document.getElementById('accountHolder')?.value;
-                    
-                    if (!bankName || !accountNumber || !routingNumber || !accountHolder) {
-                        showAlert('Please fill in all bank details', 'error');
-                        return;
-                    }
-                    
                     withdrawalDetails = {
-                        bankName,
-                        accountNumber,
-                        routingNumber,
-                        accountHolder
+                        ...withdrawalDetails,
+                        bankName: document.getElementById('bankName').value,
+                        accountName: document.getElementById('accountName').value,
+                        accountNumber: document.getElementById('accountNumber').value,
+                        routingNumber: document.getElementById('routingNumber').value,
+                        swiftCode: document.getElementById('swiftCode').value || ''
                     };
                 } else if (method === 'crypto') {
-                    const cryptoType = document.getElementById('cryptoType')?.value;
-                    const walletAddress = document.getElementById('walletAddress')?.value;
-                    
-                    if (!cryptoType || !walletAddress) {
-                        showAlert('Please fill in all crypto details', 'error');
-                        return;
-                    }
-                    
                     withdrawalDetails = {
-                        cryptoType,
-                        walletAddress
+                        ...withdrawalDetails,
+                        cryptoCurrency: document.getElementById('cryptoCurrency').value,
+                        cryptoNetwork: document.getElementById('cryptoNetwork').value,
+                        cryptoAddress: document.getElementById('cryptoAddress').value
                     };
                 }
-                
-                // Show loading state
-                const submitBtn = document.getElementById('submitWithdrawal');
-                const originalText = submitBtn.textContent;
-                submitBtn.textContent = 'Processing...';
-                submitBtn.disabled = true;
                 
                 // Create withdrawal request
                 const withdrawalRequest = {
                     userId: currentUser.uid,
                     userEmail: currentUser.email,
                     amount: amount,
-                    method: method,
                     details: withdrawalDetails,
                     status: 'pending',
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    id: 'WD-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9)
+                    requestDate: firebase.firestore.FieldValue.serverTimestamp(),
+                    requestId: generateRequestId()
                 };
                 
-                // Save withdrawal request to Firestore
                 const db = firebase.firestore();
-                await db.collection('withdrawals').add(withdrawalRequest);
                 
-                // Update user balance (subtract withdrawal amount)
-                const userRef = db.collection('users').doc(currentUser.uid);
-                const userDoc = await userRef.get();
+                // Save to withdrawal requests collection
+                await db.collection('withdrawal-requests').add(withdrawalRequest);
                 
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    const currentBalance = userData.accountBalance || userData.balance || 0;
-                    
-                    if (currentBalance >= amount) {
-                        // Update balance
-                        await userRef.update({
-                            accountBalance: currentBalance - amount,
-                            balance: currentBalance - amount
-                        });
-                        
-                        // Also update accounts collection if it exists
-                        const accountRef = db.collection('accounts').doc(currentUser.uid);
-                        const accountDoc = await accountRef.get();
-                        if (accountDoc.exists()) {
-                            await accountRef.update({
-                                balance: currentBalance - amount
-                            });
-                        }
-                        
-                        // Show success message
-                        showAlert(`Withdrawal request of $${amount.toFixed(2)} submitted successfully! Processing time: ${method === 'bank' ? '1-3 business days' : '30-60 minutes'}`, 'success');
-                        
-                        // Reset form
-                        document.getElementById('withdrawalAmount').value = '';
-                        document.querySelectorAll('.method-card').forEach(card => card.classList.remove('selected'));
-                        document.getElementById('bankDetails').style.display = 'none';
-                        document.getElementById('cryptoDetails').style.display = 'none';
-                        
-                        // Reload balance
-                        await loadUserBalance();
-                        
-                    } else {
-                        showAlert('Insufficient balance for this withdrawal', 'error');
-                    }
-                } else {
-                    showAlert('User account not found', 'error');
-                }
+                // Add to user's transaction history
+                await db.collection('users').doc(currentUser.uid).collection('transactions').add({
+                    type: 'withdrawal_request',
+                    amount: amount,
+                    status: 'pending',
+                    method: method,
+                    details: withdrawalDetails,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    requestId: withdrawalRequest.requestId
+                });
+                
+                // Hide processing overlay
+                document.getElementById('processingOverlay').style.display = 'none';
+                
+                // Show success message
+                showAlert('Withdrawal request submitted successfully! Your request is now pending admin approval.', 'success');
+                
+                // Reset form
+                document.getElementById('withdrawalForm').reset();
+                document.querySelectorAll('.method-card').forEach(card => card.classList.remove('selected'));
+                document.getElementById('bankForm').style.display = 'none';
+                document.getElementById('cryptoForm').style.display = 'none';
+                document.getElementById('submitWithdrawal').disabled = true;
                 
             } catch (error) {
-                console.error('Withdrawal processing error:', error);
-                showAlert('Error processing withdrawal: ' + error.message, 'error');
-            } finally {
-                // Reset button state
-                const submitBtn = document.getElementById('submitWithdrawal');
-                if (submitBtn) {
-                    submitBtn.textContent = 'Submit Withdrawal Request';
-                    submitBtn.disabled = false;
-                }
+                console.error('Withdrawal submission error:', error);
+                document.getElementById('processingOverlay').style.display = 'none';
+                showAlert('Error submitting withdrawal request: ' + error.message, 'danger');
             }
         }
         
-        function showAlert(message, type) {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type}`;
-            alertDiv.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 15px 20px;
-                border-radius: 5px;
-                color: white;
-                font-weight: 500;
-                z-index: 10000;
-                max-width: 300px;
-                ${type === 'error' ? 'background: #dc3545;' : 'background: #28a745;'}
+        // Generate unique request ID
+        function generateRequestId() {
+            return 'WD' + Date.now() + Math.random().toString(36).substr(2, 5).toUpperCase();
+        }
+        
+        // Show alert
+        function showAlert(message, type, containerId = 'alertContainer') {
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
             `;
-            alertDiv.textContent = message;
             
-            document.body.appendChild(alertDiv);
-            
-            setTimeout(() => {
-                alertDiv.remove();
-            }, 5000);
-        }
-    
-        function showCotModal() {
-            document.getElementById('cotModal').style.display = 'flex';
-            document.getElementById('withdrawalPage').classList.add('hidden');
-        }
-    
-        // Initialize on page load
-        window.addEventListener('load', async () => {
-            // Always show COT modal first - remove the bypass logic
-            // Clear any previous verification to force fresh COT entry
-            sessionStorage.removeItem('cotVerified');
-            sessionStorage.removeItem('cotTimestamp');
-            
-            // Initialize authentication first
-            const authInitialized = await initializeAuth();
-            if (authInitialized) {
-                console.log('Auth initialized successfully');
+            let container = document.getElementById(containerId);
+            if (!container) {
+                container = document.createElement('div');
+                container.id = containerId;
+                document.querySelector('.card-body').insertBefore(container, document.querySelector('.card-body').firstChild);
             }
             
-            showCotModal();
-        });
+            container.innerHTML = alertHtml;
+            
+            // Auto-hide success alerts
+            if (type === 'success') {
+                setTimeout(() => {
+                    const alert = container.querySelector('.alert');
+                    if (alert) {
+                        const bsAlert = new bootstrap.Alert(alert);
+                        bsAlert.close();
+                    }
+                }, 5000);
+            }
+        }
+        
+        // Go back to dashboard
+        function goBack() {
+            window.location.href = 'dashboard.html';
+        }
     </script>
-    </body>
-    </html>
+</body>
+</html>

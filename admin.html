@@ -2021,6 +2021,316 @@
                 });
             });
         });
+
+        // Withdrawal Management
+        let currentWithdrawalRequest = null;
+        let withdrawalDetailsModal = null;
+
+        // Initialize withdrawal management
+        function initializeWithdrawalManagement() {
+            withdrawalDetailsModal = new bootstrap.Modal(document.getElementById('withdrawalDetailsModal'));
+            loadPendingWithdrawals();
+            loadRecentWithdrawals();
+            
+            // Set up real-time listener for pending withdrawals
+            const db = firebase.firestore();
+            db.collection('withdrawal-requests')
+                .where('status', '==', 'pending')
+                .onSnapshot((snapshot) => {
+                    loadPendingWithdrawals();
+                    updatePendingCount(snapshot.size);
+                });
+        }
+
+        // Show withdrawal management section
+        function showWithdrawalManagement() {
+            // Hide all other sections
+            document.querySelectorAll('.admin-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Show withdrawal management
+            document.getElementById('withdrawalManagementSection').style.display = 'block';
+            
+            // Initialize if not already done
+            if (!withdrawalDetailsModal) {
+                initializeWithdrawalManagement();
+            }
+        }
+
+        // Load pending withdrawals
+        async function loadPendingWithdrawals() {
+            try {
+                const db = firebase.firestore();
+                const snapshot = await db.collection('withdrawal-requests')
+                    .where('status', '==', 'pending')
+                    .orderBy('requestDate', 'desc')
+                    .get();
+                
+                const tbody = document.getElementById('pendingWithdrawalsBody');
+                
+                if (snapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No pending withdrawals</td></tr>';
+                    return;
+                }
+                
+                let html = '';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const date = data.requestDate ? data.requestDate.toDate().toLocaleDateString() : 'N/A';
+                    
+                    html += `
+                        <tr>
+                            <td><code>${data.requestId}</code></td>
+                            <td>${data.userEmail}</td>
+                            <td><strong>$${data.amount.toLocaleString()}</strong></td>
+                            <td><span class="badge bg-info">${data.details.method}</span></td>
+                            <td>${date}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="viewWithdrawalDetails('${doc.id}')">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                tbody.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading pending withdrawals:', error);
+            }
+        }
+
+        // Load recent withdrawals
+        async function loadRecentWithdrawals() {
+            try {
+                const db = firebase.firestore();
+                const snapshot = await db.collection('withdrawal-requests')
+                    .where('status', 'in', ['approved', 'rejected'])
+                    .orderBy('requestDate', 'desc')
+                    .limit(10)
+                    .get();
+                
+                const tbody = document.getElementById('recentWithdrawalsBody');
+                
+                if (snapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No recent withdrawals</td></tr>';
+                    return;
+                }
+                
+                let html = '';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const date = data.requestDate ? data.requestDate.toDate().toLocaleDateString() : 'N/A';
+                    const statusClass = data.status === 'approved' ? 'success' : 'danger';
+                    
+                    html += `
+                        <tr>
+                            <td><code>${data.requestId}</code></td>
+                            <td>${data.userEmail}</td>
+                            <td><strong>$${data.amount.toLocaleString()}</strong></td>
+                            <td><span class="badge bg-info">${data.details.method}</span></td>
+                            <td><span class="badge bg-${statusClass}">${data.status}</span></td>
+                            <td>${date}</td>
+                        </tr>
+                    `;
+                });
+                
+                tbody.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading recent withdrawals:', error);
+            }
+        }
+
+        // View withdrawal details
+        async function viewWithdrawalDetails(docId) {
+            try {
+                const db = firebase.firestore();
+                const doc = await db.collection('withdrawal-requests').doc(docId).get();
+                
+                if (!doc.exists) {
+                    alert('Withdrawal request not found');
+                    return;
+                }
+                
+                const data = doc.data();
+                currentWithdrawalRequest = { id: docId, ...data };
+                
+                const date = data.requestDate ? data.requestDate.toDate().toLocaleString() : 'N/A';
+                
+                let detailsHtml = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Request Information</h6>
+                            <p><strong>Request ID:</strong> <code>${data.requestId}</code></p>
+                            <p><strong>User Email:</strong> ${data.userEmail}</p>
+                            <p><strong>Amount:</strong> <span class="text-success">$${data.amount.toLocaleString()}</span></p>
+                            <p><strong>Method:</strong> <span class="badge bg-info">${data.details.method}</span></p>
+                            <p><strong>Status:</strong> <span class="badge bg-warning">${data.status}</span></p>
+                            <p><strong>Request Date:</strong> ${date}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Payment Details</h6>
+                `;
+                
+                if (data.details.method === 'bank') {
+                    detailsHtml += `
+                        <p><strong>Bank Name:</strong> ${data.details.bankName}</p>
+                        <p><strong>Account Holder:</strong> ${data.details.accountName}</p>
+                        <p><strong>Account Number:</strong> ${data.details.accountNumber}</p>
+                        <p><strong>Routing Number:</strong> ${data.details.routingNumber}</p>
+                        ${data.details.swiftCode ? `<p><strong>SWIFT Code:</strong> ${data.details.swiftCode}</p>` : ''}
+                    `;
+                } else if (data.details.method === 'crypto') {
+                    detailsHtml += `
+                        <p><strong>Cryptocurrency:</strong> ${data.details.cryptoCurrency}</p>
+                        <p><strong>Network:</strong> ${data.details.cryptoNetwork || 'N/A'}</p>
+                        <p><strong>Wallet Address:</strong> <code>${data.details.cryptoAddress}</code></p>
+                    `;
+                }
+                
+                detailsHtml += `
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('withdrawalDetailsBody').innerHTML = detailsHtml;
+                
+                // Show/hide action buttons based on status
+                const approveBtn = document.getElementById('approveBtn');
+                const rejectBtn = document.getElementById('rejectBtn');
+                
+                if (data.status === 'pending') {
+                    approveBtn.style.display = 'inline-block';
+                    rejectBtn.style.display = 'inline-block';
+                } else {
+                    approveBtn.style.display = 'none';
+                    rejectBtn.style.display = 'none';
+                }
+                
+                withdrawalDetailsModal.show();
+            } catch (error) {
+                console.error('Error loading withdrawal details:', error);
+                alert('Error loading withdrawal details');
+            }
+        }
+
+        // Approve withdrawal
+        async function approveWithdrawal() {
+            if (!currentWithdrawalRequest) return;
+            
+            try {
+                const db = firebase.firestore();
+                
+                // Update withdrawal request status
+                await db.collection('withdrawal-requests').doc(currentWithdrawalRequest.id).update({
+                    status: 'approved',
+                    approvedDate: firebase.firestore.FieldValue.serverTimestamp(),
+                    approvedBy: firebase.auth().currentUser.email
+                });
+                
+                // Deduct balance from user account
+                const userRef = db.collection('users').doc(currentWithdrawalRequest.userId);
+                const userDoc = await userRef.get();
+                
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    const currentBalance = userData.accountBalance || userData.balance || 0;
+                    const newBalance = currentBalance - currentWithdrawalRequest.amount;
+                    
+                    await userRef.update({
+                        accountBalance: newBalance
+                    });
+                    
+                    // Also update accounts collection if it exists
+                    const accountRef = db.collection('accounts').doc(currentWithdrawalRequest.userId);
+                    const accountDoc = await accountRef.get();
+                    
+                    if (accountDoc.exists) {
+                        await accountRef.update({
+                            balance: newBalance
+                        });
+                    }
+                }
+                
+                // Add approved transaction to user history
+                await db.collection('users').doc(currentWithdrawalRequest.userId).collection('transactions').add({
+                    type: 'withdrawal_approved',
+                    amount: currentWithdrawalRequest.amount,
+                    status: 'completed',
+                    method: currentWithdrawalRequest.details.method,
+                    details: currentWithdrawalRequest.details,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    requestId: currentWithdrawalRequest.requestId,
+                    approvedBy: firebase.auth().currentUser.email
+                });
+                
+                withdrawalDetailsModal.hide();
+                loadPendingWithdrawals();
+                loadRecentWithdrawals();
+                
+                alert('Withdrawal approved successfully! Balance has been deducted from user account.');
+            } catch (error) {
+                console.error('Error approving withdrawal:', error);
+                alert('Error approving withdrawal: ' + error.message);
+            }
+        }
+
+        // Reject withdrawal
+        async function rejectWithdrawal() {
+            if (!currentWithdrawalRequest) return;
+            
+            const reason = prompt('Enter rejection reason (optional):');
+            
+            try {
+                const db = firebase.firestore();
+                
+                // Update withdrawal request status
+                await db.collection('withdrawal-requests').doc(currentWithdrawalRequest.id).update({
+                    status: 'rejected',
+                    rejectedDate: firebase.firestore.FieldValue.serverTimestamp(),
+                    rejectedBy: firebase.auth().currentUser.email,
+                    rejectionReason: reason || 'No reason provided'
+                });
+                
+                // Add rejected transaction to user history
+                await db.collection('users').doc(currentWithdrawalRequest.userId).collection('transactions').add({
+                    type: 'withdrawal_rejected',
+                    amount: currentWithdrawalRequest.amount,
+                    status: 'rejected',
+                    method: currentWithdrawalRequest.details.method,
+                    details: currentWithdrawalRequest.details,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    requestId: currentWithdrawalRequest.requestId,
+                    rejectedBy: firebase.auth().currentUser.email,
+                    rejectionReason: reason || 'No reason provided'
+                });
+                
+                withdrawalDetailsModal.hide();
+                loadPendingWithdrawals();
+                loadRecentWithdrawals();
+                
+                alert('Withdrawal rejected successfully!');
+            } catch (error) {
+                console.error('Error rejecting withdrawal:', error);
+                alert('Error rejecting withdrawal: ' + error.message);
+            }
+        }
+
+        // Update pending count
+        function updatePendingCount(count) {
+            const badge = document.getElementById('pendingWithdrawalsCount');
+            if (badge) {
+                badge.textContent = count;
+                badge.style.display = count > 0 ? 'inline-block' : 'none';
+            }
+        }
+
+        // Refresh withdrawals
+        function refreshWithdrawals() {
+            loadPendingWithdrawals();
+            loadRecentWithdrawals();
+        }
     </script>
 </body>
 </html>
