@@ -3,70 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Withdraw Funds - CentralStack</title>
+    <title>Withdrawal - Central Trade Hub</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body {
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-            color: #ffffff;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .withdrawal-container {
+            padding: 2rem 0;
         }
         
         .card {
-            background: #2d2d2d;
-            border: 1px solid #404040;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-        
-        .form-control {
-            background: #1a1a1a;
-            border: 1px solid #404040;
-            color: #ffffff;
-        }
-        
-        .form-control:focus {
-            background: #1a1a1a;
-            border-color: #007bff;
-            color: #ffffff;
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
         
         .method-card {
-            background: #1a1a1a;
-            border: 2px solid #404040;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #dee2e6;
+            border-radius: 15px;
+            padding: 1.5rem;
             cursor: pointer;
             transition: all 0.3s ease;
+            margin-bottom: 1rem;
         }
         
         .method-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
             border-color: #007bff;
-            transform: translateY(-2px);
         }
         
         .method-card.selected {
-            border-color: #007bff;
-            background: rgba(0, 123, 255, 0.1);
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            border-color: #0056b3;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 123, 255, 0.3);
         }
         
         .btn-primary {
             background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
             border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
         }
         
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
+            box-shadow: 0 8px 20px rgba(0, 123, 255, 0.3);
         }
         
-        .modal-content {
-            background: #2d2d2d;
-            border: 1px solid #404040;
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
         }
         
-        .alert {
-            border-radius: 8px;
+        .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
         }
         
         .processing-overlay {
@@ -77,55 +83,74 @@
             height: 100%;
             background: rgba(0, 0, 0, 0.8);
             display: none;
+            justify-content: center;
+            align-items: center;
             z-index: 9999;
         }
         
+        .processing-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 300px;
+        }
+        
         .spinner-border {
-            color: #007bff;
+            width: 3rem;
+            height: 3rem;
+        }
+        
+        .balance-display {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            border-radius: 20px 20px 0 0;
+        }
+        
+        @media (max-width: 768px) {
+            .withdrawal-container {
+                padding: 1rem;
+            }
+            
+            .method-card {
+                padding: 1rem;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Processing Overlay -->
-    <div id="processingOverlay" class="processing-overlay d-flex align-items-center justify-content-center">
-        <div class="text-center">
-            <div class="spinner-border mb-3" role="status" style="width: 3rem; height: 3rem;">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <h4 class="text-white">Processing Withdrawal Request...</h4>
-            <p class="text-muted">Please wait while we submit your request for admin approval.</p>
-        </div>
-    </div>
-
     <!-- COT Code Modal -->
     <div class="modal fade" id="cotModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title text-white">
-                        <i class="fas fa-shield-alt text-primary me-2"></i>
-                        Withdrawal Authorization Required
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-shield-alt me-2"></i>Security Verification
                     </h5>
                 </div>
                 <div class="modal-body">
-                    <div class="text-center mb-4">
-                        <i class="fas fa-lock text-primary" style="font-size: 3rem;"></i>
-                        <p class="text-muted mt-3">Enter the Withdrawal Code (COT) provided by your account manager</p>
-                    </div>
-                    
                     <div id="cotAlert"></div>
-                    
+                    <p class="text-muted mb-3">Please enter your COT (Certificate of Transfer) code to proceed with withdrawal.</p>
                     <div class="mb-3">
-                        <label for="cotCode" class="form-label text-white">Withdrawal Code (COT)</label>
-                        <input type="text" class="form-control" id="cotCode" placeholder="Enter COT code" maxlength="20">
-                    </div>
-                    
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Don't have a withdrawal code? Contact your account manager to obtain the current COT code.
+                        <label for="cotCode" class="form-label">COT Code</label>
+                        <input type="text" class="form-control" id="cotCode" placeholder="Enter COT code">
                     </div>
                 </div>
-                <div class="modal-footer border-0">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-primary" onclick="verifyCotCode()">
                         <i class="fas fa-check me-2"></i>Verify Code
                     </button>
@@ -134,137 +159,144 @@
         </div>
     </div>
 
+    <!-- Processing Overlay -->
+    <div id="processingOverlay" class="processing-overlay">
+        <div class="processing-content">
+            <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <h5>Processing Withdrawal Request...</h5>
+            <p class="text-muted mb-0">Please wait while we process your request.</p>
+        </div>
+    </div>
+
     <!-- Main Withdrawal Page -->
-    <div id="withdrawalPage" class="container-fluid py-4" style="display: none;">
-        <div class="row justify-content-center">
-            <div class="col-12 col-lg-8 col-xl-6">
-                <!-- Header -->
-                <div class="mb-4">
-                    <button onclick="goBack()" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-                    </button>
-                </div>
-                
-                <!-- Main Card -->
-                <div class="card">
-                    <div class="card-body p-4">
-                        <!-- Title -->
-                        <div class="text-center mb-4">
-                            <i class="fas fa-money-bill-wave text-success" style="font-size: 3rem;"></i>
-                            <h2 class="text-white mt-3 mb-2">Withdraw Funds</h2>
-                            <p class="text-muted">Request a withdrawal from your trading account</p>
+    <div id="withdrawalPage" class="withdrawal-container" style="display: none;">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 col-md-10">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white text-center py-3">
+                            <h3 class="mb-0">
+                                <i class="fas fa-money-bill-wave me-2"></i>Withdrawal Request
+                            </h3>
                         </div>
-                        
-                        <!-- Account Balance -->
-                        <div class="alert alert-dark border-success mb-4">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-muted">Available Balance:</span>
-                                <span class="h4 text-success mb-0" id="accountBalance">$0.00</span>
+                        <div class="card-body p-4">
+                            <div id="alertContainer"></div>
+                            
+                            <!-- Account Balance -->
+                            <div class="balance-display">
+                                <h5 class="mb-1">Available Balance</h5>
+                                <h2 class="mb-0" id="accountBalance">$0.00</h2>
                             </div>
+                            
+                            <form id="withdrawalForm">
+                                <!-- Withdrawal Amount -->
+                                <div class="mb-4">
+                                    <label for="withdrawalAmount" class="form-label">Withdrawal Amount</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="withdrawalAmount" 
+                                               placeholder="Enter amount" min="50" step="0.01">
+                                    </div>
+                                    <div class="form-text">Minimum withdrawal amount: $50.00</div>
+                                </div>
+                                
+                                <!-- Withdrawal Method Selection -->
+                                <div class="mb-4">
+                                    <label class="form-label">Select Withdrawal Method</label>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="method-card" data-method="bank" onclick="selectMethod('bank')">
+                                                <div class="text-center">
+                                                    <i class="fas fa-university fa-2x mb-2"></i>
+                                                    <h5>Bank Transfer</h5>
+                                                    <p class="mb-0 small">Direct transfer to your bank account</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="method-card" data-method="crypto" onclick="selectMethod('crypto')">
+                                                <div class="text-center">
+                                                    <i class="fab fa-bitcoin fa-2x mb-2"></i>
+                                                    <h5>Cryptocurrency</h5>
+                                                    <p class="mb-0 small">Transfer to your crypto wallet</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Bank Transfer Form -->
+                                <div id="bankForm" style="display: none;">
+                                    <h5 class="mb-3"><i class="fas fa-university me-2"></i>Bank Details</h5>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Bank Name</label>
+                                            <input type="text" class="form-control" id="bankName" placeholder="Enter bank name">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Account Holder Name</label>
+                                            <input type="text" class="form-control" id="accountName" placeholder="Enter account holder name">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Account Number</label>
+                                            <input type="text" class="form-control" id="accountNumber" placeholder="Enter account number">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Routing Number</label>
+                                            <input type="text" class="form-control" id="routingNumber" placeholder="Enter routing number">
+                                        </div>
+                                        <div class="col-12 mb-3">
+                                            <label class="form-label">SWIFT Code (Optional)</label>
+                                            <input type="text" class="form-control" id="swiftCode" placeholder="Enter SWIFT code (for international transfers)">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Cryptocurrency Form -->
+                                <div id="cryptoForm" style="display: none;">
+                                    <h5 class="mb-3"><i class="fab fa-bitcoin me-2"></i>Cryptocurrency Details</h5>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Cryptocurrency</label>
+                                            <select class="form-control" id="cryptoCurrency">
+                                                <option value="">Select cryptocurrency</option>
+                                                <option value="BTC">Bitcoin (BTC)</option>
+                                                <option value="ETH">Ethereum (ETH)</option>
+                                                <option value="USDT">Tether (USDT)</option>
+                                                <option value="USDC">USD Coin (USDC)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Network</label>
+                                            <select class="form-control" id="cryptoNetwork">
+                                                <option value="">Select network</option>
+                                                <option value="BTC">Bitcoin Network</option>
+                                                <option value="ETH">Ethereum (ERC-20)</option>
+                                                <option value="TRC20">Tron (TRC-20)</option>
+                                                <option value="BSC">Binance Smart Chain (BEP-20)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-12 mb-3">
+                                            <label class="form-label">Wallet Address</label>
+                                            <input type="text" class="form-control" id="cryptoAddress" placeholder="Enter your wallet address">
+                                            <div class="form-text text-warning">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                                Double-check your wallet address. Incorrect addresses may result in permanent loss of funds.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Submit Button -->
+                                <div class="d-grid">
+                                    <button type="button" id="submitWithdrawal" class="btn btn-primary btn-lg" onclick="submitWithdrawal()" disabled>
+                                        <i class="fas fa-paper-plane me-2"></i>Submit Withdrawal Request
+                                    </button>
+                                </div>
+                            </form>
                         </div>
-                        
-                        <!-- Withdrawal Form -->
-                        <form id="withdrawalForm">
-                            <!-- Amount -->
-                            <div class="mb-4">
-                                <label for="withdrawalAmount" class="form-label text-white">Withdrawal Amount (USD)</label>
-                                <input type="number" class="form-control" id="withdrawalAmount" placeholder="Enter amount" min="50" step="0.01">
-                                <div class="form-text text-muted">Minimum withdrawal: $50.00</div>
-                            </div>
-                            
-                            <!-- Withdrawal Methods -->
-                            <div class="mb-4">
-                                <label class="form-label text-white">Select Withdrawal Method</label>
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <div class="method-card card p-3 text-center" data-method="bank" onclick="selectMethod('bank')">
-                                            <i class="fas fa-university text-primary mb-2" style="font-size: 2rem;"></i>
-                                            <h6 class="text-white">Bank Transfer</h6>
-                                            <small class="text-muted">1-3 business days</small><br>
-                                            <small class="text-warning">Fee: $25.00</small>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="method-card card p-3 text-center" data-method="crypto" onclick="selectMethod('crypto')">
-                                            <i class="fab fa-bitcoin text-warning mb-2" style="font-size: 2rem;"></i>
-                                            <h6 class="text-white">Cryptocurrency</h6>
-                                            <small class="text-muted">30-60 minutes</small><br>
-                                            <small class="text-warning">Network fees apply</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Bank Details -->
-                            <div id="bankForm" class="mb-4" style="display: none;">
-                                <h6 class="text-white mb-3">Bank Account Details</h6>
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label text-white">Bank Name</label>
-                                        <input type="text" class="form-control" id="bankName" placeholder="Enter bank name">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label text-white">Account Holder Name</label>
-                                        <input type="text" class="form-control" id="accountName" placeholder="Enter account holder name">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label text-white">Account Number</label>
-                                        <input type="text" class="form-control" id="accountNumber" placeholder="Enter account number">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label text-white">Routing Number</label>
-                                        <input type="text" class="form-control" id="routingNumber" placeholder="Enter routing number">
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label text-white">SWIFT Code (Optional)</label>
-                                        <input type="text" class="form-control" id="swiftCode" placeholder="Enter SWIFT code">
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Crypto Details -->
-                            <div id="cryptoForm" class="mb-4" style="display: none;">
-                                <h6 class="text-white mb-3">Cryptocurrency Details</h6>
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label text-white">Cryptocurrency</label>
-                                        <select class="form-select form-control" id="cryptoCurrency">
-                                            <option value="">Select cryptocurrency</option>
-                                            <option value="BTC">Bitcoin (BTC)</option>
-                                            <option value="ETH">Ethereum (ETH)</option>
-                                            <option value="LTC">Litecoin (LTC)</option>
-                                            <option value="USDT">Tether (USDT)</option>
-                                            <option value="USDC">USD Coin (USDC)</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label text-white">Network</label>
-                                        <select class="form-select form-control" id="cryptoNetwork">
-                                            <option value="">Select network</option>
-                                            <option value="mainnet">Mainnet</option>
-                                            <option value="erc20">ERC-20 (Ethereum)</option>
-                                            <option value="bep20">BEP-20 (BSC)</option>
-                                            <option value="trc20">TRC-20 (Tron)</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label text-white">Wallet Address</label>
-                                        <input type="text" class="form-control" id="cryptoAddress" placeholder="Enter your wallet address">
-                                        <div class="form-text text-warning">
-                                            <i class="fas fa-exclamation-triangle me-1"></i>
-                                            Double-check your wallet address. Incorrect addresses may result in permanent loss of funds.
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Submit Button -->
-                            <div class="d-grid">
-                                <button type="button" id="submitWithdrawal" class="btn btn-primary btn-lg" onclick="submitWithdrawal()" disabled>
-                                    <i class="fas fa-paper-plane me-2"></i>Submit Withdrawal Request
-                                </button>
-                            </div>
-                        </form>
                     </div>
                 </div>
             </div>
@@ -280,15 +312,16 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     
     <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBQf8T7_9_9_9_9_9_9_9_9_9_9_9_9",
-            authDomain: "centraltradehub-30f00.firebaseapp.com",
-            projectId: "centraltradehub-30f00",
-            storageBucket: "centraltradehub-30f00.firebasestorage.app",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:abcdef123456789"
-        };
+       // Firebase configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyAwnWoLfrEc1EtXWCD0by5L0VtCmYf8Unw",
+    authDomain: "centraltradehub-30f00.firebaseapp.com",
+    projectId: "centraltradehub-30f00",
+    storageBucket: "centraltradehub-30f00.firebasestorage.app",
+    messagingSenderId: "745751687877",
+    appId: "1:745751687877:web:4576449aa2e8360931b6ac",
+    measurementId: "G-YHCS5CH450"
+};
         
         // Initialize Firebase
         if (!firebase.apps.length) {
@@ -296,7 +329,6 @@
         }
         
         let currentUser = null;
-        let authManager = null;
         let cotModal = null;
         
         // Initialize on page load
@@ -311,10 +343,18 @@
             try {
                 firebase.auth().onAuthStateChanged((user) => {
                     currentUser = user;
-                    console.log('Auth state changed:', user?.email);
+                    console.log('Auth state changed:', user ? user.email : 'No user');
+                    
+                    if (!user) {
+                        // If no user is authenticated, redirect to login or show login form
+                        console.log('No authenticated user found');
+                        // You can redirect to login page or show inline login
+                        // window.location.href = 'login.html';
+                    }
                 });
             } catch (error) {
                 console.error('Auth initialization error:', error);
+                showAlert('Authentication error. Please refresh the page.', 'danger', 'cotAlert');
             }
         }
         
@@ -327,7 +367,18 @@
                 return;
             }
             
+            // Show loading state
+            const verifyBtn = document.querySelector('#cotModal .btn-primary');
+            const originalText = verifyBtn.innerHTML;
+            verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Verifying...';
+            verifyBtn.disabled = true;
+            
             try {
+                // Check if user is authenticated first
+                if (!currentUser) {
+                    throw new Error('Please log in to continue');
+                }
+                
                 const db = firebase.firestore();
                 const cotDocRef = db.collection('admin').doc('withdrawal-settings');
                 const cotDoc = await cotDocRef.get();
@@ -354,7 +405,11 @@
                 }
             } catch (error) {
                 console.error('COT verification error:', error);
-                showAlert('Error verifying code. Please try again.', 'danger', 'cotAlert');
+                showAlert('Error verifying code: ' + error.message, 'danger', 'cotAlert');
+            } finally {
+                // Restore button state
+                verifyBtn.innerHTML = originalText;
+                verifyBtn.disabled = false;
             }
         }
         
@@ -363,6 +418,7 @@
             try {
                 if (!currentUser) {
                     console.log('No authenticated user');
+                    document.getElementById('accountBalance').textContent = '$0.00';
                     return;
                 }
                 
@@ -477,6 +533,11 @@
         
         // Submit withdrawal
         async function submitWithdrawal() {
+            if (!currentUser) {
+                showAlert('Please log in to submit a withdrawal request.', 'danger');
+                return;
+            }
+            
             try {
                 // Show processing overlay
                 document.getElementById('processingOverlay').style.display = 'flex';
