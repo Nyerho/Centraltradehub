@@ -525,13 +525,13 @@ const firebaseConfig = {
                     const accountNumber = document.getElementById('accountNumber')?.value?.trim();
                     const routingNumber = document.getElementById('routingNumber')?.value?.trim();
                     
-                    isValid = bankName && accountName && accountNumber && routingNumber;
+                    isValid = !!(bankName && accountName && accountNumber && routingNumber);
                     console.log('Bank validation:', { bankName, accountName, accountNumber, routingNumber, isValid });
                 } else if (method === 'crypto') {
                     const cryptoCurrency = document.getElementById('cryptoCurrency')?.value?.trim();
                     const cryptoAddress = document.getElementById('cryptoAddress')?.value?.trim();
                     
-                    isValid = cryptoCurrency && cryptoAddress;
+                    isValid = !!(cryptoCurrency && cryptoAddress);
                     console.log('Crypto validation:', { cryptoCurrency, cryptoAddress, isValid });
                 }
             }
@@ -629,8 +629,10 @@ const firebaseConfig = {
             checkFormValidity();
         }
         
-        // Submit withdrawal
-        async function submitWithdrawal() {
+        // Submit withdrawal - MAKE SURE THIS IS AT GLOBAL SCOPE
+        window.submitWithdrawal = async function() {
+            console.log('submitWithdrawal function called!');
+            
             if (!currentUser) {
                 showAlert('Please log in to submit a withdrawal request.', 'danger');
                 return;
@@ -642,6 +644,11 @@ const firebaseConfig = {
                 
                 const amount = parseFloat(document.getElementById('withdrawalAmount').value);
                 const selectedMethodCard = document.querySelector('.method-card.selected');
+                
+                if (!selectedMethodCard) {
+                    throw new Error('Please select a withdrawal method');
+                }
+                
                 const method = selectedMethodCard.dataset.method;
                 
                 // Validate amount against balance
@@ -686,6 +693,8 @@ const firebaseConfig = {
                 
                 const db = firebase.firestore();
                 
+                console.log('Submitting withdrawal request:', withdrawalRequest);
+                
                 // Save to withdrawal requests collection
                 await db.collection('withdrawal-requests').add(withdrawalRequest);
                 
@@ -718,6 +727,53 @@ const firebaseConfig = {
                 document.getElementById('processingOverlay').style.display = 'none';
                 showAlert('Error submitting withdrawal request: ' + error.message, 'danger');
             }
+        };
+        
+        // Also fix the validation logic - the issue is with boolean evaluation
+        function checkFormValidity() {
+            const submitBtn = document.getElementById('submitWithdrawal');
+            const amountInput = document.getElementById('withdrawalAmount');
+            const selectedMethod = document.querySelector('.method-card.selected');
+            
+            if (!submitBtn || !amountInput) {
+                console.log('Missing elements:', { submitBtn: !!submitBtn, amountInput: !!amountInput });
+                return;
+            }
+            
+            const amount = parseFloat(amountInput.value);
+            const isAuthenticated = currentUser !== null;
+            
+            console.log('Form validation check:', {
+                amount,
+                isAuthenticated,
+                selectedMethod: selectedMethod?.dataset?.method,
+                minAmount: amount >= 50
+            });
+            
+            let isValid = false;
+            
+            if (isAuthenticated && amount >= 50 && selectedMethod) {
+                const method = selectedMethod.dataset.method;
+                
+                if (method === 'bank') {
+                    const bankName = document.getElementById('bankName')?.value?.trim();
+                    const accountName = document.getElementById('accountName')?.value?.trim();
+                    const accountNumber = document.getElementById('accountNumber')?.value?.trim();
+                    const routingNumber = document.getElementById('routingNumber')?.value?.trim();
+                    
+                    isValid = !!(bankName && accountName && accountNumber && routingNumber);
+                    console.log('Bank validation:', { bankName, accountName, accountNumber, routingNumber, isValid });
+                } else if (method === 'crypto') {
+                    const cryptoCurrency = document.getElementById('cryptoCurrency')?.value?.trim();
+                    const cryptoAddress = document.getElementById('cryptoAddress')?.value?.trim();
+                    
+                    isValid = !!(cryptoCurrency && cryptoAddress);
+                    console.log('Crypto validation:', { cryptoCurrency, cryptoAddress, isValid });
+                }
+            }
+            
+            console.log('Final validation result:', isValid);
+            submitBtn.disabled = !isValid;
         }
         
         // Generate unique request ID
