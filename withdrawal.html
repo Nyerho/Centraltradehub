@@ -480,15 +480,39 @@ const firebaseConfig = {
         }
         
         // Check form validity
+        // Add this debug function to check what's happening
+        function debugFormState() {
+            const submitBtn = document.getElementById('submitWithdrawal');
+            const amountInput = document.getElementById('withdrawalAmount');
+            const selectedMethod = document.querySelector('.method-card.selected');
+            
+            console.log('Submit button:', submitBtn);
+            console.log('Amount input:', amountInput?.value);
+            console.log('Selected method:', selectedMethod?.dataset?.method);
+            console.log('Current user:', currentUser);
+            console.log('Button disabled:', submitBtn?.disabled);
+        }
+        
+        // Modified checkFormValidity function with better debugging
         function checkFormValidity() {
             const submitBtn = document.getElementById('submitWithdrawal');
             const amountInput = document.getElementById('withdrawalAmount');
             const selectedMethod = document.querySelector('.method-card.selected');
             
-            if (!submitBtn || !amountInput) return;
+            if (!submitBtn || !amountInput) {
+                console.log('Missing elements:', { submitBtn: !!submitBtn, amountInput: !!amountInput });
+                return;
+            }
             
             const amount = parseFloat(amountInput.value);
             const isAuthenticated = currentUser !== null;
+            
+            console.log('Form validation check:', {
+                amount,
+                isAuthenticated,
+                selectedMethod: selectedMethod?.dataset?.method,
+                minAmount: amount >= 50
+            });
             
             let isValid = false;
             
@@ -502,16 +526,90 @@ const firebaseConfig = {
                     const routingNumber = document.getElementById('routingNumber')?.value?.trim();
                     
                     isValid = bankName && accountName && accountNumber && routingNumber;
+                    console.log('Bank validation:', { bankName, accountName, accountNumber, routingNumber, isValid });
                 } else if (method === 'crypto') {
                     const cryptoCurrency = document.getElementById('cryptoCurrency')?.value?.trim();
                     const cryptoAddress = document.getElementById('cryptoAddress')?.value?.trim();
                     
                     isValid = cryptoCurrency && cryptoAddress;
+                    console.log('Crypto validation:', { cryptoCurrency, cryptoAddress, isValid });
                 }
             }
             
+            console.log('Final validation result:', isValid);
             submitBtn.disabled = !isValid;
+            
+            // Force enable button for testing (remove this line after debugging)
+            // submitBtn.disabled = false;
         }
+        
+        // Modified initializeAuth to ensure proper user loading
+        async function initializeAuth() {
+            try {
+                // Wait for Firebase to be ready
+                await new Promise(resolve => {
+                    if (firebase.apps.length > 0) {
+                        resolve();
+                    } else {
+                        setTimeout(resolve, 1000);
+                    }
+                });
+                
+                firebase.auth().onAuthStateChanged((user) => {
+                    currentUser = user;
+                    console.log('Auth state changed:', user ? user.email : 'No user');
+                    
+                    if (user) {
+                        console.log('User authenticated:', user.uid);
+                        // Re-check form validity when user is authenticated
+                        setTimeout(() => {
+                            checkFormValidity();
+                        }, 500);
+                    } else {
+                        console.log('No authenticated user found');
+                        // For testing, you can temporarily auto-login or create a test user
+                        // createTestUser(); // Uncomment this for testing
+                    }
+                });
+            } catch (error) {
+                console.error('Auth initialization error:', error);
+                showAlert('Authentication error. Please refresh the page.', 'danger', 'cotAlert');
+            }
+        }
+        
+        // Temporary test user function (for debugging only)
+        function createTestUser() {
+            currentUser = {
+                uid: 'test-user-123',
+                email: 'test@example.com'
+            };
+            console.log('Test user created:', currentUser);
+            checkFormValidity();
+        }
+        
+        // Add event listener to test the button manually
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add a test button for debugging
+            setTimeout(() => {
+                const testBtn = document.createElement('button');
+                testBtn.textContent = 'Debug Form State';
+                testBtn.className = 'btn btn-warning btn-sm';
+                testBtn.onclick = debugFormState;
+                document.querySelector('.card-body').appendChild(testBtn);
+                
+                // Force enable submit button for testing
+                const submitBtn = document.getElementById('submitWithdrawal');
+                if (submitBtn) {
+                    submitBtn.addEventListener('click', function(e) {
+                        console.log('Submit button clicked!');
+                        if (submitBtn.disabled) {
+                            console.log('Button is disabled, enabling for test...');
+                            submitBtn.disabled = false;
+                        }
+                    });
+                }
+            }, 2000);
+        });
         
         // Setup form validation
         function setupFormValidation() {
