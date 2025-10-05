@@ -2044,17 +2044,107 @@
 
         // Show withdrawal management section
         function showWithdrawalManagement() {
+            console.log('Loading withdrawal requests...');
+            
             // Hide all other sections
             document.querySelectorAll('.admin-section').forEach(section => {
                 section.style.display = 'none';
             });
             
-            // Show withdrawal management
-            document.getElementById('withdrawalManagementSection').style.display = 'block';
+            // Show withdrawal section
+            const withdrawalSection = document.getElementById('withdrawals');
+            if (withdrawalSection) {
+                withdrawalSection.style.display = 'block';
+                loadWithdrawalRequests();
+            } else {
+                // Temporary display in main content area
+                document.querySelector('.admin-main').innerHTML = `
+                    <div class="card bg-dark">
+                        <div class="card-header">
+                            <h5>Withdrawal Requests</h5>
+                        </div>
+                        <div class="card-body" id="withdrawalRequestsContainer">
+                            <p>Loading withdrawal requests...</p>
+                        </div>
+                    </div>
+                `;
+                loadWithdrawalRequests();
+            }
+        }
+
+        function loadWithdrawalRequests() {
+            const container = document.getElementById('withdrawalRequestsContainer') || document.querySelector('.card-body');
             
-            // Initialize if not already done
-            if (!withdrawalDetailsModal) {
-                initializeWithdrawalManagement();
+            firebase.firestore().collection('withdrawal-requests')
+                .orderBy('timestamp', 'desc')
+                .get()
+                .then((querySnapshot) => {
+                    if (querySnapshot.empty) {
+                        container.innerHTML = '<p class="text-muted">No withdrawal requests found.</p>';
+                        return;
+                    }
+                    
+                    let html = '<div class="table-responsive"><table class="table table-dark table-striped"><thead><tr><th>Date</th><th>User</th><th>Amount</th><th>Method</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+                    
+                    querySnapshot.forEach((doc) => {
+                        const request = doc.data();
+                        const date = request.timestamp ? new Date(request.timestamp.seconds * 1000).toLocaleDateString() : 'N/A';
+                        
+                        html += `
+                            <tr>
+                                <td>${date}</td>
+                                <td>${request.userEmail}</td>
+                                <td>$${request.amount.toLocaleString()}</td>
+                                <td>${request.details.method.toUpperCase()}</td>
+                                <td><span class="badge bg-warning">${request.status}</span></td>
+                                <td>
+                                    <button class="btn btn-success btn-sm me-1" onclick="approveWithdrawal('${doc.id}')">
+                                        <i class="fas fa-check"></i> Approve
+                                    </button>
+                                    <button class="btn btn-danger btn-sm" onclick="rejectWithdrawal('${doc.id}')">
+                                        <i class="fas fa-times"></i> Reject
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += '</tbody></table></div>';
+                    container.innerHTML = html;
+                })
+                .catch((error) => {
+                    console.error('Error loading withdrawal requests:', error);
+                    container.innerHTML = '<p class="text-danger">Error loading withdrawal requests.</p>';
+                });
+        }
+
+        function approveWithdrawal(requestId) {
+            if (confirm('Are you sure you want to approve this withdrawal?')) {
+                firebase.firestore().collection('withdrawal-requests').doc(requestId)
+                    .update({ status: 'approved' })
+                    .then(() => {
+                        alert('Withdrawal approved successfully!');
+                        loadWithdrawalRequests();
+                    })
+                    .catch((error) => {
+                        console.error('Error approving withdrawal:', error);
+                        alert('Error approving withdrawal.');
+                    });
+            }
+        }
+
+        function rejectWithdrawal(requestId) {
+            if (confirm('Are you sure you want to reject this withdrawal?')) {
+                firebase.firestore().collection('withdrawal-requests').doc(requestId)
+                    .update({ status: 'rejected' })
+                    .then(() => {
+                        alert('Withdrawal rejected.');
+                        loadWithdrawalRequests();
+                    })
+                    .catch((error) => {
+                        console.error('Error rejecting withdrawal:', error);
+                        alert('Error rejecting withdrawal.');
+                    });
             }
         }
 
@@ -2212,108 +2302,6 @@
             } catch (error) {
                 console.error('Error loading withdrawal details:', error);
                 alert('Error loading withdrawal details');
-            }
-        }
-
-        // Approve withdrawal
-        async function approveWithdrawal() {
-            if (!currentWithdrawalRequest) return;
-            
-            try {
-                const db = firebase.firestore();
-                
-                // Update withdrawal request status
-                await db.collection('withdrawal-requests').doc(currentWithdrawalRequest.id).update({
-                    status: 'approved',
-                    approvedDate: firebase.firestore.FieldValue.serverTimestamp(),
-                    approvedBy: firebase.auth().currentUser.email
-                });
-                
-                // Deduct balance from user account
-                const userRef = db.collection('users').doc(currentWithdrawalRequest.userId);
-                const userDoc = await userRef.get();
-                
-                if (userDoc.exists) {
-                    const userData = userDoc.data();
-                    const currentBalance = userData.accountBalance || userData.balance || 0;
-                    const newBalance = currentBalance - currentWithdrawalRequest.amount;
-                    
-                    await userRef.update({
-                        accountBalance: newBalance
-                    });
-                    
-                    // Also update accounts collection if it exists
-                    const accountRef = db.collection('accounts').doc(currentWithdrawalRequest.userId);
-                    const accountDoc = await accountRef.get();
-                    
-                    if (accountDoc.exists) {
-                        await accountRef.update({
-                            balance: newBalance
-                        });
-                    }
-                }
-                
-                // Add approved transaction to user history
-                await db.collection('users').doc(currentWithdrawalRequest.userId).collection('transactions').add({
-                    type: 'withdrawal_approved',
-                    amount: currentWithdrawalRequest.amount,
-                    status: 'completed',
-                    method: currentWithdrawalRequest.details.method,
-                    details: currentWithdrawalRequest.details,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    requestId: currentWithdrawalRequest.requestId,
-                    approvedBy: firebase.auth().currentUser.email
-                });
-                
-                withdrawalDetailsModal.hide();
-                loadPendingWithdrawals();
-                loadRecentWithdrawals();
-                
-                alert('Withdrawal approved successfully! Balance has been deducted from user account.');
-            } catch (error) {
-                console.error('Error approving withdrawal:', error);
-                alert('Error approving withdrawal: ' + error.message);
-            }
-        }
-
-        // Reject withdrawal
-        async function rejectWithdrawal() {
-            if (!currentWithdrawalRequest) return;
-            
-            const reason = prompt('Enter rejection reason (optional):');
-            
-            try {
-                const db = firebase.firestore();
-                
-                // Update withdrawal request status
-                await db.collection('withdrawal-requests').doc(currentWithdrawalRequest.id).update({
-                    status: 'rejected',
-                    rejectedDate: firebase.firestore.FieldValue.serverTimestamp(),
-                    rejectedBy: firebase.auth().currentUser.email,
-                    rejectionReason: reason || 'No reason provided'
-                });
-                
-                // Add rejected transaction to user history
-                await db.collection('users').doc(currentWithdrawalRequest.userId).collection('transactions').add({
-                    type: 'withdrawal_rejected',
-                    amount: currentWithdrawalRequest.amount,
-                    status: 'rejected',
-                    method: currentWithdrawalRequest.details.method,
-                    details: currentWithdrawalRequest.details,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    requestId: currentWithdrawalRequest.requestId,
-                    rejectedBy: firebase.auth().currentUser.email,
-                    rejectionReason: reason || 'No reason provided'
-                });
-                
-                withdrawalDetailsModal.hide();
-                loadPendingWithdrawals();
-                loadRecentWithdrawals();
-                
-                alert('Withdrawal rejected successfully!');
-            } catch (error) {
-                console.error('Error rejecting withdrawal:', error);
-                alert('Error rejecting withdrawal: ' + error.message);
             }
         }
 
