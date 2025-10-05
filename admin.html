@@ -2317,32 +2317,37 @@
                 section.style.display = 'none';
             });
             
-            // Show withdrawal control section (assuming it exists)
-            const withdrawalSection = document.getElementById('withdrawal-control');
-            if (withdrawalSection) {
-                withdrawalSection.style.display = 'block';
-            } else {
-                // If the section doesn't exist, create it dynamically
-                createWithdrawalControlSection();
+            // Show user control section (the existing section)
+            const userControlSection = document.getElementById('user-control');
+            if (userControlSection) {
+                userControlSection.style.display = 'block';
+                
+                // Check if withdrawal control content exists within user-control
+                let withdrawalContent = userControlSection.querySelector('#withdrawal-control-content');
+                if (!withdrawalContent) {
+                    // Create withdrawal control content within the existing user-control section
+                    createWithdrawalControlContent(userControlSection);
+                }
             }
             
             // Update active navigation
             document.querySelectorAll('.nav-link').forEach(link => {
                 link.classList.remove('active');
             });
-            document.querySelector('#withdrawal-tab').classList.add('active');
+            const withdrawalTab = document.querySelector('#withdrawal-tab');
+            if (withdrawalTab) {
+                withdrawalTab.classList.add('active');
+            }
             
             // Load withdrawal requests
             loadWithdrawalControlRequests();
         }
         
-        // Create withdrawal control section if it doesn't exist
-        function createWithdrawalControlSection() {
-            const mainContent = document.querySelector('.main-content');
-            const withdrawalSection = document.createElement('section');
-            withdrawalSection.id = 'withdrawal-control';
-            withdrawalSection.className = 'admin-section';
-            withdrawalSection.innerHTML = `
+        // Create withdrawal control content within existing user-control section
+        function createWithdrawalControlContent(parentSection) {
+            const withdrawalContent = document.createElement('div');
+            withdrawalContent.id = 'withdrawal-control-content';
+            withdrawalContent.innerHTML = `
                 <div class="section-header mb-4">
                     <h1 class="h3 mb-1"><i class="fas fa-money-bill-wave me-2"></i>Withdrawal Control</h1>
                     <p class="text-muted">Manage user withdrawal requests</p>
@@ -2360,7 +2365,7 @@
                                     </div>
                                     <p class="mt-2">Loading withdrawal requests...</p>
                                 </div>
-                                <div id="withdrawal-control-content" style="display: none;">
+                                <div id="withdrawal-control-table" style="display: none;">
                                     <div class="table-responsive">
                                         <table class="table table-hover">
                                             <thead>
@@ -2385,7 +2390,10 @@
                     </div>
                 </div>
             `;
-            mainContent.appendChild(withdrawalSection);
+            
+            // Clear existing content and add withdrawal control content
+            parentSection.innerHTML = '';
+            parentSection.appendChild(withdrawalContent);
         }
         
         // Load withdrawal control requests
@@ -2393,13 +2401,16 @@
             try {
                 const tbody = document.getElementById('withdrawal-control-tbody');
                 const loading = document.getElementById('withdrawal-control-loading');
-                const content = document.getElementById('withdrawal-control-content');
+                const table = document.getElementById('withdrawal-control-table');
                 
-                if (!tbody) return;
+                if (!tbody) {
+                    console.error('Withdrawal control tbody not found');
+                    return;
+                }
                 
                 // Show loading
                 if (loading) loading.style.display = 'block';
-                if (content) content.style.display = 'none';
+                if (table) table.style.display = 'none';
                 
                 const snapshot = await db.collection('withdrawal-requests')
                     .where('status', '==', 'pending')
@@ -2445,9 +2456,9 @@
                 
                 tbody.innerHTML = html;
                 
-                // Hide loading, show content
+                // Hide loading, show table
                 if (loading) loading.style.display = 'none';
-                if (content) content.style.display = 'block';
+                if (table) table.style.display = 'block';
                 
             } catch (error) {
                 console.error('Error loading withdrawal control requests:', error);
@@ -2457,11 +2468,17 @@
                         <tr>
                             <td colspan="7" class="text-center py-4 text-danger">
                                 <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
-                                <p class="mb-0">Error loading withdrawal requests</p>
+                                <p class="mb-0">Error loading withdrawal requests: ${error.message}</p>
                             </td>
                         </tr>
                     `;
                 }
+                
+                // Hide loading, show table even on error
+                const loading = document.getElementById('withdrawal-control-loading');
+                const table = document.getElementById('withdrawal-control-table');
+                if (loading) loading.style.display = 'none';
+                if (table) table.style.display = 'block';
             }
         }
         
@@ -2482,7 +2499,7 @@
                 
             } catch (error) {
                 console.error('Error approving withdrawal:', error);
-                alert('Error approving withdrawal request');
+                alert('Error approving withdrawal request: ' + error.message);
             }
         }
         
@@ -2502,7 +2519,7 @@
                 
             } catch (error) {
                 console.error('Error rejecting withdrawal:', error);
-                alert('Error rejecting withdrawal request');
+                alert('Error rejecting withdrawal request: ' + error.message);
             }
         }
     </script>
