@@ -2307,6 +2307,204 @@
             loadPendingWithdrawals();
             loadRecentWithdrawals();
         }
+
+        // Show withdrawal control section
+        function showWithdrawalControl() {
+            console.log('Showing withdrawal control section');
+            
+            // Hide all other sections
+            document.querySelectorAll('.admin-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Show withdrawal control section (assuming it exists)
+            const withdrawalSection = document.getElementById('withdrawal-control');
+            if (withdrawalSection) {
+                withdrawalSection.style.display = 'block';
+            } else {
+                // If the section doesn't exist, create it dynamically
+                createWithdrawalControlSection();
+            }
+            
+            // Update active navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector('#withdrawal-tab').classList.add('active');
+            
+            // Load withdrawal requests
+            loadWithdrawalControlRequests();
+        }
+        
+        // Create withdrawal control section if it doesn't exist
+        function createWithdrawalControlSection() {
+            const mainContent = document.querySelector('.main-content');
+            const withdrawalSection = document.createElement('section');
+            withdrawalSection.id = 'withdrawal-control';
+            withdrawalSection.className = 'admin-section';
+            withdrawalSection.innerHTML = `
+                <div class="section-header mb-4">
+                    <h1 class="h3 mb-1"><i class="fas fa-money-bill-wave me-2"></i>Withdrawal Control</h1>
+                    <p class="text-muted">Manage user withdrawal requests</p>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Pending Withdrawal Requests</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="withdrawal-control-loading" class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="mt-2">Loading withdrawal requests...</p>
+                                </div>
+                                <div id="withdrawal-control-content" style="display: none;">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Request ID</th>
+                                                    <th>User Email</th>
+                                                    <th>Amount</th>
+                                                    <th>Method</th>
+                                                    <th>Status</th>
+                                                    <th>Date</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="withdrawal-control-tbody">
+                                                <!-- Withdrawal requests will be loaded here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            mainContent.appendChild(withdrawalSection);
+        }
+        
+        // Load withdrawal control requests
+        async function loadWithdrawalControlRequests() {
+            try {
+                const tbody = document.getElementById('withdrawal-control-tbody');
+                const loading = document.getElementById('withdrawal-control-loading');
+                const content = document.getElementById('withdrawal-control-content');
+                
+                if (!tbody) return;
+                
+                // Show loading
+                if (loading) loading.style.display = 'block';
+                if (content) content.style.display = 'none';
+                
+                const snapshot = await db.collection('withdrawal-requests')
+                    .where('status', '==', 'pending')
+                    .orderBy('requestDate', 'desc')
+                    .get();
+                
+                let html = '';
+                
+                if (snapshot.empty) {
+                    html = `
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+                                <p class="text-muted mb-0">No pending withdrawal requests</p>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const date = data.requestDate ? data.requestDate.toDate().toLocaleDateString() : 'N/A';
+                        
+                        html += `
+                            <tr>
+                                <td><code>${data.requestId}</code></td>
+                                <td>${data.userEmail}</td>
+                                <td><strong>$${data.amount.toLocaleString()}</strong></td>
+                                <td><span class="badge bg-info">${data.details.method}</span></td>
+                                <td><span class="badge bg-warning">${data.status}</span></td>
+                                <td>${date}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-success me-1" onclick="approveWithdrawalControl('${doc.id}')">
+                                        <i class="fas fa-check"></i> Approve
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="rejectWithdrawalControl('${doc.id}')">
+                                        <i class="fas fa-times"></i> Reject
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+                
+                tbody.innerHTML = html;
+                
+                // Hide loading, show content
+                if (loading) loading.style.display = 'none';
+                if (content) content.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error loading withdrawal control requests:', error);
+                const tbody = document.getElementById('withdrawal-control-tbody');
+                if (tbody) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-danger">
+                                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                                <p class="mb-0">Error loading withdrawal requests</p>
+                            </td>
+                        </tr>
+                    `;
+                }
+            }
+        }
+        
+        // Approve withdrawal from control panel
+        async function approveWithdrawalControl(docId) {
+            if (!confirm('Are you sure you want to approve this withdrawal request?')) {
+                return;
+            }
+            
+            try {
+                await db.collection('withdrawal-requests').doc(docId).update({
+                    status: 'approved',
+                    approvedDate: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                alert('Withdrawal request approved successfully!');
+                loadWithdrawalControlRequests(); // Refresh the list
+                
+            } catch (error) {
+                console.error('Error approving withdrawal:', error);
+                alert('Error approving withdrawal request');
+            }
+        }
+        
+        // Reject withdrawal from control panel
+        async function rejectWithdrawalControl(docId) {
+            const reason = prompt('Please enter rejection reason (optional):');
+            
+            try {
+                await db.collection('withdrawal-requests').doc(docId).update({
+                    status: 'rejected',
+                    rejectedDate: firebase.firestore.FieldValue.serverTimestamp(),
+                    rejectionReason: reason || 'No reason provided'
+                });
+                
+                alert('Withdrawal request rejected successfully!');
+                loadWithdrawalControlRequests(); // Refresh the list
+                
+            } catch (error) {
+                console.error('Error rejecting withdrawal:', error);
+                alert('Error rejecting withdrawal request');
+            }
+        }
     </script>
 </body>
 </html>
