@@ -2412,7 +2412,9 @@
                 if (loading) loading.style.display = 'block';
                 if (table) table.style.display = 'none';
                 
-                const snapshot = await db.collection('withdrawal-requests')
+                // Use firebase.firestore() instead of db
+                const firestore = firebase.firestore();
+                const snapshot = await firestore.collection('withdrawal-requests')
                     .where('status', '==', 'pending')
                     .orderBy('requestDate', 'desc')
                     .get();
