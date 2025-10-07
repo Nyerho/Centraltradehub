@@ -2514,7 +2514,18 @@
                 }
                 
                 const withdrawalData = withdrawalDoc.data();
-                const { userEmail, amount, method, accountDetails } = withdrawalData;
+                const userEmail = withdrawalData.userEmail || withdrawalData.email;
+                const amount = parseFloat(withdrawalData.amount) || 0;
+                const method = withdrawalData.method || withdrawalData.withdrawalMethod || (withdrawalData.details && withdrawalData.details.method) || 'Unknown';
+                const accountDetails = withdrawalData.accountDetails || withdrawalData.details || {};
+                
+                if (!userEmail) {
+                    throw new Error('User email not found in withdrawal request');
+                }
+                
+                if (amount <= 0) {
+                    throw new Error('Invalid withdrawal amount');
+                }
                 
                 // Get user document
                 const userQuery = await firebase.firestore().collection('users').where('email', '==', userEmail).get();
@@ -2528,11 +2539,11 @@
                 const userId = userDoc.id;
                 
                 // Check if user has sufficient balance
-                const currentBalance = userData.accountBalance || 0;
-                const currentWalletBalance = userData.walletBalance || 0;
+                const currentBalance = parseFloat(userData.accountBalance) || 0;
+                const currentWalletBalance = parseFloat(userData.walletBalance) || 0;
                 
                 if (currentBalance < amount) {
-                    throw new Error('Insufficient account balance');
+                    throw new Error(`Insufficient account balance. Current: $${currentBalance.toFixed(2)}, Required: $${amount.toFixed(2)}`);
                 }
                 
                 // Calculate new balances
@@ -2568,20 +2579,21 @@
                     method: method,
                     accountDetails: accountDetails,
                     status: 'completed',
-                    description: `Withdrawal via ${method}`,
+                    description: `Withdrawal via ${method} - Approved by Admin`,
                     balanceBefore: currentBalance,
                     balanceAfter: newAccountBalance,
                     walletBalanceBefore: currentWalletBalance,
                     walletBalanceAfter: newWalletBalance,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                     approvedBy: 'admin',
-                    withdrawalRequestId: docId
+                    withdrawalRequestId: docId,
+                    transactionId: transactionRef.id
                 });
                 
                 // Commit all operations atomically
                 await batch.commit();
                 
-                alert(`Withdrawal request approved successfully!\n\nAmount: $${amount}\nUser: ${userEmail}\nNew Balance: $${newAccountBalance.toFixed(2)}`);
+                alert(`Withdrawal request approved successfully!\n\nAmount: $${amount.toFixed(2)}\nUser: ${userEmail}\nMethod: ${method}\nNew Balance: $${newAccountBalance.toFixed(2)}`);
                 loadWithdrawalControlRequests(); // Refresh the list
                 
             } catch (error) {
@@ -2595,13 +2607,77 @@
             const reason = prompt('Please enter rejection reason (optional):');
             
             try {
-                await firebase.firestore().collection('withdrawal-requests').doc(docId).update({
+                // First, get the withdrawal request details
+                const withdrawalDoc = await firebase.firestore().collection('withdrawal-requests').doc(docId).get();
+                
+                if (!withdrawalDoc.exists) {
+                    throw new Error('Withdrawal request not found');
+                }
+                
+                const withdrawalData = withdrawalDoc.data();
+                const userEmail = withdrawalData.userEmail || withdrawalData.email;
+                const amount = parseFloat(withdrawalData.amount) || 0;
+                const method = withdrawalData.method || withdrawalData.withdrawalMethod || 'Unknown';
+                const accountDetails = withdrawalData.accountDetails || withdrawalData.details || {};
+                
+                if (!userEmail) {
+                    throw new Error('User email not found in withdrawal request');
+                }
+                
+                // Get user document for transaction history
+                const userQuery = await firebase.firestore().collection('users').where('email', '==', userEmail).get();
+                
+                let userId = null;
+                let currentBalance = 0;
+                let currentWalletBalance = 0;
+                
+                if (!userQuery.empty) {
+                    const userDoc = userQuery.docs[0];
+                    const userData = userDoc.data();
+                    userId = userDoc.id;
+                    currentBalance = parseFloat(userData.accountBalance) || 0;
+                    currentWalletBalance = parseFloat(userData.walletBalance) || 0;
+                }
+                
+                // Use batch write for atomic operations
+                const batch = firebase.firestore().batch();
+                
+                // Update withdrawal request status
+                const withdrawalRef = firebase.firestore().collection('withdrawal-requests').doc(docId);
+                batch.update(withdrawalRef, {
                     status: 'rejected',
                     rejectedDate: firebase.firestore.FieldValue.serverTimestamp(),
                     rejectionReason: reason || 'No reason provided'
                 });
                 
-                alert('Withdrawal request rejected successfully!');
+                // Add transaction to user's history (if user found)
+                if (userId) {
+                    const transactionRef = firebase.firestore().collection('transactions').doc();
+                    batch.set(transactionRef, {
+                        userId: userId,
+                        userEmail: userEmail,
+                        type: 'withdrawal',
+                        amount: amount,
+                        method: method,
+                        accountDetails: accountDetails,
+                        status: 'rejected',
+                        description: `Withdrawal via ${method} - Rejected by Admin`,
+                        rejectionReason: reason || 'No reason provided',
+                        balanceBefore: currentBalance,
+                        balanceAfter: currentBalance, // No change for rejected withdrawals
+                        walletBalanceBefore: currentWalletBalance,
+                        walletBalanceAfter: currentWalletBalance, // No change for rejected withdrawals
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        rejectedBy: 'admin',
+                        withdrawalRequestId: docId,
+                        transactionId: transactionRef.id
+                    });
+                }
+                
+                // Commit all operations atomically
+                await batch.commit();
+                
+                alert(`Withdrawal request rejected successfully!\n\nAmount: $${amount.toFixed(2)}\nUser: ${userEmail}\nReason: ${reason || 'No reason provided'}`);
                 loadWithdrawalControlRequests(); // Refresh the list
                 
             } catch (error) {
