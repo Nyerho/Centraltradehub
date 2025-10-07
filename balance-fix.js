@@ -196,3 +196,188 @@ if (document.readyState === 'loading') {
 
 // Export for manual use
 window.fixBalance = () => window.balanceFixer.fixBalance();
+
+// Enhanced Balance Fix Script with correct user ID detection
+function fixDashboardBalance() {
+    console.log('Balance Fix: Starting...');
+    
+    // Enhanced user ID detection - now we know it uses Firebase Auth
+    function findUserId() {
+        // Check Firebase Auth first (this is what your app uses)
+        if (window.firebase && firebase.auth && firebase.auth().currentUser) {
+            const uid = firebase.auth().currentUser.uid;
+            console.log('Found userId from Firebase Auth:', uid);
+            return uid;
+        }
+        
+        // Fallback to storage methods
+        const possibleKeys = [
+            'userId', 'currentUserId', 'user_id', 'userID', 'uid',
+            'loggedInUser', 'currentUser', 'authUser', 'firebaseUser'
+        ];
+        
+        // Check localStorage
+        for (let key of possibleKeys) {
+            const value = localStorage.getItem(key);
+            if (value && value !== 'null' && value !== 'undefined') {
+                console.log(`Found userId in localStorage.${key}:`, value);
+                return value;
+            }
+        }
+        
+        // Check sessionStorage
+        for (let key of possibleKeys) {
+            const value = sessionStorage.getItem(key);
+            if (value && value !== 'null' && value !== 'undefined') {
+                console.log(`Found userId in sessionStorage.${key}:`, value);
+                return value;
+            }
+        }
+        
+        return null;
+    }
+    
+    const userId = findUserId();
+    
+    if (!userId) {
+        console.error('Balance Fix: No user ID found');
+        return;
+    }
+    
+    if (!firebase || !firebase.firestore) {
+        console.error('Balance Fix: Firebase not available');
+        return;
+    }
+    
+    console.log('Balance Fix: Using user ID:', userId);
+    
+    // Fetch actual balance from database
+    firebase.firestore().collection('users').doc(userId).get()
+        .then(doc => {
+            if (doc.exists) {
+                const userData = doc.data();
+                const actualBalance = userData.walletBalance || userData.accountBalance || userData.balance || 0;
+                
+                console.log('Balance Fix: Database balance:', actualBalance);
+                console.log('Balance Fix: Full user data:', userData);
+                
+                // Override the dashboard's balance calculation
+                if (window.updateAccountSummary) {
+                    console.log('Balance Fix: Overriding updateAccountSummary with correct balance');
+                    
+                    // Create corrected account data
+                    const correctedData = {
+                        ...userData,
+                        calculatedWalletBalance: actualBalance,
+                        balance: actualBalance,
+                        walletBalance: actualBalance,
+                        accountBalance: actualBalance
+                    };
+                    
+                    // Force update the UI
+                    window.updateAccountSummary(correctedData);
+                }
+                
+                // Also update DOM elements directly
+                const selectors = [
+                    '.wallet-balance', '.balance-display', '#walletBalance', 
+                    '#balance', '[data-balance]', '.user-balance',
+                    '.account-balance', '.current-balance', '.dashboard-balance',
+                    '.balance-amount', '.wallet-amount', '.account-amount'
+                ];
+                
+                let updated = 0;
+                selectors.forEach(selector => {
+                    document.querySelectorAll(selector).forEach(element => {
+                        const formattedBalance = `$${parseFloat(actualBalance).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                        
+                        // Update text content
+                        if (element.textContent.includes('$') || element.textContent.match(/\d/)) {
+                            element.textContent = formattedBalance;
+                        }
+                        
+                        // Update innerHTML
+                        if (element.innerHTML.includes('$') || element.innerHTML.match(/\d/)) {
+                            element.innerHTML = formattedBalance;
+                        }
+                        
+                        // Update input values
+                        if (element.tagName === 'INPUT') {
+                            element.value = actualBalance;
+                        }
+                        
+                        updated++;
+                    });
+                });
+                
+                console.log(`Balance Fix: Updated ${updated} elements with $${actualBalance.toLocaleString()}`);
+                
+            } else {
+                console.error('Balance Fix: User document not found for ID:', userId);
+            }
+        })
+        .catch(error => console.error('Balance Fix Error:', error));
+}
+
+// Override the updateAccountSummary function to use actual database balance
+function overrideUpdateAccountSummary() {
+    if (typeof window.updateAccountSummary === 'function') {
+        const originalUpdateAccountSummary = window.updateAccountSummary;
+        
+        window.updateAccountSummary = function(accountData) {
+            console.log('Balance Fix: Intercepting updateAccountSummary');
+            console.log('Original account data:', accountData);
+            
+            // Use actual database balance instead of calculated balance
+            const actualBalance = accountData.walletBalance || accountData.accountBalance || accountData.balance || 0;
+            
+            // Create modified account data with correct balance
+            const correctedAccountData = {
+                ...accountData,
+                calculatedWalletBalance: actualBalance,  // Override calculated balance
+                balance: actualBalance,
+                walletBalance: actualBalance,
+                accountBalance: actualBalance
+            };
+            
+            console.log('Balance Fix: Using corrected balance:', actualBalance);
+            console.log('Balance Fix: Corrected account data:', correctedAccountData);
+            
+            // Call original function with corrected data
+            return originalUpdateAccountSummary.call(this, correctedAccountData);
+        };
+        
+        console.log('Balance Fix: Successfully overrode updateAccountSummary');
+    } else {
+        console.log('Balance Fix: updateAccountSummary not found, retrying...');
+        setTimeout(overrideUpdateAccountSummary, 1000);
+    }
+}
+
+// Initialize overrides
+overrideUpdateAccountSummary();
+
+// Auto-run when page loads
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(fixDashboardBalance, 3000);
+    });
+} else {
+    setTimeout(fixDashboardBalance, 3000);
+}
+
+// Run when page becomes visible
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) setTimeout(fixDashboardBalance, 1000);
+});
+
+// Manual trigger functions
+window.fixBalance = fixDashboardBalance;
+window.debugBalance = function() {
+    console.log('=== Balance Debug Info ===');
+    console.log('Firebase Auth User:', firebase.auth().currentUser);
+    console.log('User ID:', firebase.auth().currentUser ? firebase.auth().currentUser.uid : 'Not found');
+    fixDashboardBalance();
+};
+
+console.log('Balance Fix: Script loaded successfully');
