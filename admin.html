@@ -2339,95 +2339,78 @@
                 section.style.display = 'none';
             });
             
-            // Hide any existing withdrawal control content from other sections
-            document.querySelectorAll('#withdrawal-control-content').forEach(content => {
-                content.remove();
-            });
-            
-            // Create or show dedicated withdrawal control section
-            let withdrawalSection = document.getElementById('withdrawal-control');
-            if (!withdrawalSection) {
-                // Create a dedicated withdrawal control section
-                withdrawalSection = document.createElement('section');
-                withdrawalSection.id = 'withdrawal-control';
-                withdrawalSection.className = 'admin-section';
-                withdrawalSection.style.display = 'block';
+            // Show the user-control section and add withdrawal content to it
+            const userControlSection = document.getElementById('user-control');
+            if (userControlSection) {
+                userControlSection.style.display = 'block';
                 
-                // Add it to the main admin content area
-                const mainContent = document.querySelector('.admin-main') || document.querySelector('.main-content');
-                if (mainContent) {
-                    mainContent.appendChild(withdrawalSection);
-                }
-            } else {
-                withdrawalSection.style.display = 'block';
-            }
-            
-            // Create withdrawal control content
-            createWithdrawalControlContent(withdrawalSection);
-            
-            // Update active navigation
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
-            });
-            const withdrawalTab = document.querySelector('#withdrawal-tab');
-            if (withdrawalTab) {
-                withdrawalTab.classList.add('active');
-            }
-            
-            // Load withdrawal requests
-            loadWithdrawalControlRequests();
-        }
-        
-        // Create withdrawal control content within the specified section
-        function createWithdrawalControlContent(parentSection) {
-            // Clear existing content
-            parentSection.innerHTML = '';
-            
-            const withdrawalContent = document.createElement('div');
-            withdrawalContent.id = 'withdrawal-control-content';
-            withdrawalContent.innerHTML = `
-                <div class="section-header mb-4">
-                    <h1 class="h3 mb-1"><i class="fas fa-money-bill-wave me-2"></i>Withdrawal Control</h1>
-                    <p class="text-muted">Manage user withdrawal requests</p>
-                </div>
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">Pending Withdrawal Requests</h5>
-                            </div>
-                            <div class="card-body">
-                                <div id="withdrawal-control-loading" class="text-center py-4">
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </div>
-                                    <p class="mt-2 text-muted">Loading withdrawal requests...</p>
+                // Clear existing content
+                userControlSection.innerHTML = '';
+                
+                // Create withdrawal control content directly in user-control section
+                const withdrawalContent = document.createElement('div');
+                withdrawalContent.id = 'withdrawal-control-content';
+                withdrawalContent.innerHTML = `
+                    <div class="section-header mb-4">
+                        <h1 class="h3 mb-1"><i class="fas fa-money-bill-wave me-2"></i>Withdrawal Control</h1>
+                        <p class="text-muted">Manage user withdrawal requests</p>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Pending Withdrawal Requests</h5>
                                 </div>
-                                <div id="withdrawal-control-table" class="table-responsive" style="display: none;">
-                                    <table class="table table-striped">
-                                        <thead>
-                                            <tr>
-                                                <th>Request ID</th>
-                                                <th>User Email</th>
-                                                <th>Amount</th>
-                                                <th>Method</th>
-                                                <th>Status</th>
-                                                <th>Date</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="withdrawal-control-tbody">
-                                        </tbody>
-                                    </table>
+                                <div class="card-body">
+                                    <div id="withdrawal-control-loading" class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mt-2 text-muted">Loading withdrawal requests...</p>
+                                    </div>
+                                    <div id="withdrawal-control-table" class="table-responsive" style="display: none;">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Request ID</th>
+                                                    <th>User Email</th>
+                                                    <th>Amount</th>
+                                                    <th>Method</th>
+                                                    <th>Status</th>
+                                                    <th>Date</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="withdrawal-control-tbody">
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            `;
-            
-            parentSection.appendChild(withdrawalContent);
+                `;
+                
+                userControlSection.appendChild(withdrawalContent);
+                
+                // Update active navigation
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.classList.remove('active');
+                });
+                const withdrawalTab = document.querySelector('#withdrawal-tab');
+                if (withdrawalTab) {
+                    withdrawalTab.classList.add('active');
+                }
+                
+                // Load withdrawal requests
+                loadWithdrawalControlRequests();
+            } else {
+                console.error('User control section not found!');
+                alert('Error: Could not find user control section');
+            }
         }
+        
+        // Function removed as it's no longer needed
         
         // Load withdrawal control requests
         async function loadWithdrawalControlRequests() {
