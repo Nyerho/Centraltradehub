@@ -2412,8 +2412,8 @@
                 if (loading) loading.style.display = 'block';
                 if (table) table.style.display = 'none';
                 
-                // Use db instead of firebase.firestore()
-                const snapshot = await db.collection('withdrawal-requests')
+                // Use firebase.firestore() directly instead of db
+                const snapshot = await firebase.firestore().collection('withdrawal-requests')
                     .where('status', '==', 'pending')
                     .orderBy('requestDate', 'desc')
                     .get();
@@ -2490,7 +2490,7 @@
             }
             
             try {
-                await db.collection('withdrawal-requests').doc(docId).update({
+                await firebase.firestore().collection('withdrawal-requests').doc(docId).update({
                     status: 'approved',
                     approvedDate: firebase.firestore.FieldValue.serverTimestamp()
                 });
@@ -2509,7 +2509,7 @@
             const reason = prompt('Please enter rejection reason (optional):');
             
             try {
-                await db.collection('withdrawal-requests').doc(docId).update({
+                await firebase.firestore().collection('withdrawal-requests').doc(docId).update({
                     status: 'rejected',
                     rejectedDate: firebase.firestore.FieldValue.serverTimestamp(),
                     rejectionReason: reason || 'No reason provided'
