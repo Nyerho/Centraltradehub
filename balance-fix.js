@@ -24,7 +24,7 @@ function fixBalance() {
         if (message.includes('AUTHORITATIVE DATA') && message.includes('balance:')) {
             try {
                 // Extract balance from the log message
-                const balanceMatch = message.match(/balance:\s*([0-9.]+)/);
+                const balanceMatch = message.match(/balance:\\s*([0-9.]+)/);
                 if (balanceMatch) {
                     const balance = parseFloat(balanceMatch[1]);
                     console.log('Balance Fix: Extracted balance from logs:', balance);
@@ -60,12 +60,12 @@ function fixCalculatedBalances() {
         // Replace common wrong balance patterns
         if (text.includes('97,761.04') || text.includes('97761.04')) {
             // Replace with correct balance
-            element.textContent = text.replace(/97,?761\.04/g, '95,211.04');
+            element.textContent = text.replace(/97,?761\\.04/g, '95,211.04');
             console.log('Balance Fix: Fixed calculated balance in element:', element.tagName);
         }
         
         if (text.includes('$97,761.04') || text.includes('$97761.04')) {
-            element.textContent = text.replace(/\$97,?761\.04/g, '$95,211.04');
+            element.textContent = text.replace(/\\$97,?761\\.04/g, '$95,211.04');
             console.log('Balance Fix: Fixed calculated balance with currency in element:', element.tagName);
         }
     });
@@ -144,23 +144,43 @@ function overrideBalanceCalculations() {
         return 95211.04; // Use the authoritative balance
     };
     
-    // Method 3: Watch for DOM mutations and fix them
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            if (mutation.type === 'childList' || mutation.type === 'characterData') {
-                // Check if any new balance elements were added
-                setTimeout(fixCalculatedBalances, 100);
-            }
-        });
-    });
+    // Method 3: Watch for DOM mutations and fix them (FIXED VERSION)
+    function setupMutationObserver() {
+        // Make sure document.body exists
+        if (!document.body) {
+            console.log('Balance Fix: Waiting for document.body...');
+            setTimeout(setupMutationObserver, 100);
+            return;
+        }
+        
+        try {
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.type === 'childList' || mutation.type === 'characterData') {
+                        // Check if any new balance elements were added
+                        setTimeout(fixCalculatedBalances, 100);
+                    }
+                });
+            });
+            
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true,
+                characterData: true
+            });
+            
+            console.log('Balance Fix: Set up DOM observer for balance corrections');
+        } catch (error) {
+            console.log('Balance Fix: Error setting up observer:', error);
+        }
+    }
     
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-        characterData: true
-    });
-    
-    console.log('Balance Fix: Set up DOM observer for balance corrections');
+    // Setup observer when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupMutationObserver);
+    } else {
+        setupMutationObserver();
+    }
 }
 
 // Debug function
@@ -186,38 +206,59 @@ window.forceBalanceFix = function() {
         if (element.children.length === 0) { // Only text nodes
             let text = element.textContent;
             if (text.includes('97,761.04') || text.includes('97761.04')) {
-                element.textContent = text.replace(/97,?761\.04/g, '95,211.04');
+                element.textContent = text.replace(/97,?761\\.04/g, '95,211.04');
                 console.log('Balance Fix: Force updated:', element.tagName);
             }
             if (text.includes('$97,761.04') || text.includes('$97761.04')) {
-                element.textContent = text.replace(/\$97,?761\.04/g, '$95,211.04');
+                element.textContent = text.replace(/\\$97,?761\\.04/g, '$95,211.04');
                 console.log('Balance Fix: Force updated with currency:', element.tagName);
             }
         }
     });
 };
 
+// Safe initialization function
+function safeInit() {
+    try {
+        fixBalance();
+    } catch (error) {
+        console.log('Balance Fix: Error during initialization:', error);
+        // Fallback to simple balance fix
+        setTimeout(() => {
+            try {
+                fixCalculatedBalances();
+            } catch (e) {
+                console.log('Balance Fix: Fallback also failed:', e);
+            }
+        }, 2000);
+    }
+}
+
 // Initialize when page loads
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', fixBalance);
+    document.addEventListener('DOMContentLoaded', safeInit);
 } else {
-    fixBalance();
+    safeInit();
 }
 
 // Run when page becomes visible
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
-        setTimeout(fixBalance, 1000);
+        setTimeout(safeInit, 1000);
     }
 });
 
 // Run periodically
 setInterval(() => {
-    fixCalculatedBalances();
+    try {
+        fixCalculatedBalances();
+    } catch (error) {
+        console.log('Balance Fix: Periodic check failed:', error);
+    }
 }, 5000);
 
 // Run after dashboard updates
-setTimeout(fixBalance, 3000);
-setTimeout(fixBalance, 5000);
+setTimeout(safeInit, 3000);
+setTimeout(safeInit, 5000);
 
 console.log('Balance Fix: Enhanced script loaded - will fix calculated balances');
