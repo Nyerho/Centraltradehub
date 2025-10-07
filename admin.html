@@ -2339,18 +2339,31 @@
                 section.style.display = 'none';
             });
             
-            // Show user control section (the existing section)
-            const userControlSection = document.getElementById('user-control');
-            if (userControlSection) {
-                userControlSection.style.display = 'block';
+            // Hide any existing withdrawal control content from other sections
+            document.querySelectorAll('#withdrawal-control-content').forEach(content => {
+                content.remove();
+            });
+            
+            // Create or show dedicated withdrawal control section
+            let withdrawalSection = document.getElementById('withdrawal-control');
+            if (!withdrawalSection) {
+                // Create a dedicated withdrawal control section
+                withdrawalSection = document.createElement('section');
+                withdrawalSection.id = 'withdrawal-control';
+                withdrawalSection.className = 'admin-section';
+                withdrawalSection.style.display = 'block';
                 
-                // Check if withdrawal control content exists within user-control
-                let withdrawalContent = userControlSection.querySelector('#withdrawal-control-content');
-                if (!withdrawalContent) {
-                    // Create withdrawal control content within the existing user-control section
-                    createWithdrawalControlContent(userControlSection);
+                // Add it to the main admin content area
+                const mainContent = document.querySelector('.admin-main') || document.querySelector('.main-content');
+                if (mainContent) {
+                    mainContent.appendChild(withdrawalSection);
                 }
+            } else {
+                withdrawalSection.style.display = 'block';
             }
+            
+            // Create withdrawal control content
+            createWithdrawalControlContent(withdrawalSection);
             
             // Update active navigation
             document.querySelectorAll('.nav-link').forEach(link => {
@@ -2365,8 +2378,11 @@
             loadWithdrawalControlRequests();
         }
         
-        // Create withdrawal control content within existing user-control section
+        // Create withdrawal control content within the specified section
         function createWithdrawalControlContent(parentSection) {
+            // Clear existing content
+            parentSection.innerHTML = '';
+            
             const withdrawalContent = document.createElement('div');
             withdrawalContent.id = 'withdrawal-control-content';
             withdrawalContent.innerHTML = `
@@ -2385,27 +2401,24 @@
                                     <div class="spinner-border text-primary" role="status">
                                         <span class="visually-hidden">Loading...</span>
                                     </div>
-                                    <p class="mt-2">Loading withdrawal requests...</p>
+                                    <p class="mt-2 text-muted">Loading withdrawal requests...</p>
                                 </div>
-                                <div id="withdrawal-control-table" style="display: none;">
-                                    <div class="table-responsive">
-                                        <table class="table table-hover">
-                                            <thead>
-                                                <tr>
-                                                    <th>Request ID</th>
-                                                    <th>User Email</th>
-                                                    <th>Amount</th>
-                                                    <th>Method</th>
-                                                    <th>Status</th>
-                                                    <th>Date</th>
-                                                    <th>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="withdrawal-control-tbody">
-                                                <!-- Withdrawal requests will be loaded here -->
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                <div id="withdrawal-control-table" class="table-responsive" style="display: none;">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Request ID</th>
+                                                <th>User Email</th>
+                                                <th>Amount</th>
+                                                <th>Method</th>
+                                                <th>Status</th>
+                                                <th>Date</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="withdrawal-control-tbody">
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -2413,8 +2426,6 @@
                 </div>
             `;
             
-            // Clear existing content and add withdrawal control content
-            parentSection.innerHTML = '';
             parentSection.appendChild(withdrawalContent);
         }
         
@@ -2512,12 +2523,82 @@
             }
             
             try {
-                await firebase.firestore().collection('withdrawal-requests').doc(docId).update({
+                // First, get the withdrawal request details
+                const withdrawalDoc = await firebase.firestore().collection('withdrawal-requests').doc(docId).get();
+                
+                if (!withdrawalDoc.exists) {
+                    throw new Error('Withdrawal request not found');
+                }
+                
+                const withdrawalData = withdrawalDoc.data();
+                const { userEmail, amount, method, accountDetails } = withdrawalData;
+                
+                // Get user document
+                const userQuery = await firebase.firestore().collection('users').where('email', '==', userEmail).get();
+                
+                if (userQuery.empty) {
+                    throw new Error('User not found');
+                }
+                
+                const userDoc = userQuery.docs[0];
+                const userData = userDoc.data();
+                const userId = userDoc.id;
+                
+                // Check if user has sufficient balance
+                const currentBalance = userData.accountBalance || 0;
+                const currentWalletBalance = userData.walletBalance || 0;
+                
+                if (currentBalance < amount) {
+                    throw new Error('Insufficient account balance');
+                }
+                
+                // Calculate new balances
+                const newAccountBalance = currentBalance - amount;
+                const newWalletBalance = Math.max(0, currentWalletBalance - amount);
+                
+                // Use batch write for atomic operations
+                const batch = firebase.firestore().batch();
+                
+                // Update withdrawal request status
+                const withdrawalRef = firebase.firestore().collection('withdrawal-requests').doc(docId);
+                batch.update(withdrawalRef, {
                     status: 'approved',
-                    approvedDate: firebase.firestore.FieldValue.serverTimestamp()
+                    approvedDate: firebase.firestore.FieldValue.serverTimestamp(),
+                    processedAmount: amount
                 });
                 
-                alert('Withdrawal request approved successfully!');
+                // Update user balances
+                const userRef = firebase.firestore().collection('users').doc(userId);
+                batch.update(userRef, {
+                    accountBalance: newAccountBalance,
+                    walletBalance: newWalletBalance,
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Add transaction to user's history
+                const transactionRef = firebase.firestore().collection('transactions').doc();
+                batch.set(transactionRef, {
+                    userId: userId,
+                    userEmail: userEmail,
+                    type: 'withdrawal',
+                    amount: amount,
+                    method: method,
+                    accountDetails: accountDetails,
+                    status: 'completed',
+                    description: `Withdrawal via ${method}`,
+                    balanceBefore: currentBalance,
+                    balanceAfter: newAccountBalance,
+                    walletBalanceBefore: currentWalletBalance,
+                    walletBalanceAfter: newWalletBalance,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    approvedBy: 'admin',
+                    withdrawalRequestId: docId
+                });
+                
+                // Commit all operations atomically
+                await batch.commit();
+                
+                alert(`Withdrawal request approved successfully!\n\nAmount: $${amount}\nUser: ${userEmail}\nNew Balance: $${newAccountBalance.toFixed(2)}`);
                 loadWithdrawalControlRequests(); // Refresh the list
                 
             } catch (error) {
