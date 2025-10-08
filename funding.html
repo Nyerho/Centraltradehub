@@ -793,7 +793,8 @@
                     
                     if (userDoc.exists()) {
                         const userData = userDoc.data();
-                        const balance = userData.balance || userData.walletBalance || 0;
+                        // Check multiple possible balance field locations
+                        const balance = userData.balance || userData.walletBalance || userData.trading?.balance || 0;
                         document.getElementById('current-balance').textContent = 
                             `$${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                     } else {

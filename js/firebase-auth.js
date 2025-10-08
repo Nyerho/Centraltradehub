@@ -240,6 +240,8 @@ class FirebaseAuthService {
       email: user.email,
       displayName: user.displayName,
       emailVerified: user.emailVerified,
+      balance: 10000, // Add top-level balance for compatibility
+      totalDeposits: 0,
       createdAt: new Date(),
       lastLogin: new Date(),
       profile: {

@@ -3627,10 +3627,11 @@ EnhancedAdminDashboard.prototype.renderPendingDepositsTable = function(pendingDe
 // Add deposit approval functionality
 EnhancedAdminDashboard.prototype.approveDeposit = async function(depositId, userId, amount, currency) {
     try {
-        // Update user balance and deposits
+        // Update user balance and deposits - fix balance field path
         const userRef = doc(this.db, 'users', userId);
         await updateDoc(userRef, {
-            balance: increment(amount),
+            'trading.balance': increment(amount),
+            balance: increment(amount), // Also update top-level for compatibility
             totalDeposits: increment(amount),
             lastUpdated: serverTimestamp()
         });
