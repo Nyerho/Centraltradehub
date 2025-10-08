@@ -306,7 +306,7 @@ class DashboardManager {
                             await updateDoc(accountRef, {
                                 balance: userData.accountBalance || userData.balance || 0,
                                 accountBalance: userData.accountBalance || userData.balance || 0,
-                                walletBalance: userData.walletBalance || userData.accountBalance || userData.balance || 0,
+                                walletBalance: userData.balance || userData.walletBalance || userData.accountBalance || 0,
                                 totalProfits: userData.totalProfits || 0,
                                 totalDeposits: userData.totalDeposits || 0,
                                 lastSyncedAt: new Date().toISOString(),

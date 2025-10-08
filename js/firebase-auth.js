@@ -240,7 +240,7 @@ class FirebaseAuthService {
       email: user.email,
       displayName: user.displayName,
       emailVerified: user.emailVerified,
-      balance: 10000, // Add top-level balance for compatibility
+      balance: 0, // Start with 0 balance for synchronicity
       totalDeposits: 0,
       createdAt: new Date(),
       lastLogin: new Date(),
@@ -254,7 +254,7 @@ class FirebaseAuthService {
       },
       trading: {
         accountType: 'demo',
-        balance: 10000, // Demo balance
+        balance: 0, // Start with 0 balance for synchronicity
         currency: 'USD',
         leverage: '1:100',
         accountStatus: 'active'
