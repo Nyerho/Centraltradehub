@@ -3626,9 +3626,30 @@ EnhancedAdminDashboard.prototype.renderPendingDepositsTable = function(pendingDe
 
 // Add deposit approval functionality
 EnhancedAdminDashboard.prototype.approveDeposit = async function(depositId, userId, amount, currency) {
+    console.log('🔄 Starting deposit approval process...');
+    console.log('📋 Parameters:', { depositId, userId, amount, currency });
+    
     try {
-        // Update user balance and deposits - ensure all balance fields are updated
+        // Verify user document exists first
         const userRef = doc(this.db, 'users', userId);
+        console.log('📍 User document path:', userRef.path);
+        
+        // Check if user document exists
+        const userDoc = await getDoc(userRef);
+        if (!userDoc.exists()) {
+            throw new Error(`User document not found: ${userId}`);
+        }
+        
+        console.log('👤 Current user data:', userDoc.data());
+        console.log('💰 Current balances before update:', {
+            balance: userDoc.data().balance || 0,
+            accountBalance: userDoc.data().accountBalance || 0,
+            walletBalance: userDoc.data().walletBalance || 0,
+            totalDeposits: userDoc.data().totalDeposits || 0
+        });
+        
+        // Update user balance and deposits - ensure all balance fields are updated
+        console.log('🔄 Updating user document with amount:', amount);
         await updateDoc(userRef, {
             balance: increment(amount), // Top-level balance
             accountBalance: increment(amount), // Account balance  
@@ -3637,9 +3658,20 @@ EnhancedAdminDashboard.prototype.approveDeposit = async function(depositId, user
             totalDeposits: increment(amount),
             lastUpdated: serverTimestamp()
         });
+        console.log('✅ User document updated successfully');
+        
+        // Verify the update worked
+        const updatedUserDoc = await getDoc(userRef);
+        console.log('💰 Updated balances after update:', {
+            balance: updatedUserDoc.data().balance || 0,
+            accountBalance: updatedUserDoc.data().accountBalance || 0,
+            walletBalance: updatedUserDoc.data().walletBalance || 0,
+            totalDeposits: updatedUserDoc.data().totalDeposits || 0
+        });
 
         // Create transaction record
-        await addDoc(collection(this.db, 'transactions'), {
+        console.log('📝 Creating transaction record...');
+        const transactionRef = await addDoc(collection(this.db, 'transactions'), {
             uid: userId,
             type: 'deposit',
             method: 'crypto',
@@ -3651,17 +3683,36 @@ EnhancedAdminDashboard.prototype.approveDeposit = async function(depositId, user
             createdAt: serverTimestamp(),
             processedBy: this.currentUser.email
         });
+        console.log('✅ Transaction record created:', transactionRef.id);
 
         // Remove from pending deposits
+        console.log('🗑️ Removing from pending deposits...');
         const pendingRef = doc(this.db, 'pending_deposits', depositId);
         await deleteDoc(pendingRef);
+        console.log('✅ Pending deposit removed');
 
+        console.log('🎉 Deposit approval completed successfully!');
         this.showNotification(`Deposit of $${amount} approved successfully`, 'success');
         this.loadFundingData(); // Refresh the data
         
     } catch (error) {
-        console.error('Error approving deposit:', error);
-        this.showNotification('Failed to approve deposit', 'error');
+        console.error('❌ Error approving deposit:', error);
+        console.error('📋 Error details:', {
+            code: error.code,
+            message: error.message,
+            stack: error.stack
+        });
+        
+        // Check for specific Firebase errors
+        if (error.code === 'permission-denied') {
+            console.error('🚫 Permission denied - check Firebase security rules');
+            this.showNotification('Permission denied. Check admin privileges.', 'error');
+        } else if (error.code === 'not-found') {
+            console.error('🔍 Document not found - check user ID and document path');
+            this.showNotification('User document not found.', 'error');
+        } else {
+            this.showNotification('Failed to approve deposit: ' + error.message, 'error');
+        }
     }
 };
 
