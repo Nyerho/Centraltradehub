@@ -3631,7 +3631,7 @@ EnhancedAdminDashboard.prototype.approveDeposit = async function(depositId, user
         const userRef = doc(this.db, 'users', userId);
         await updateDoc(userRef, {
             balance: increment(amount), // Top-level balance
-            accountBalance: increment(amount), // Account balance
+            accountBalance: increment(amount), // Account balance  
             walletBalance: increment(amount), // Wallet balance
             'trading.balance': increment(amount), // Trading balance
             totalDeposits: increment(amount),
