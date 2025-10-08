@@ -441,291 +441,7 @@
                 </select>
             </div>
             
-            <!-- Generate Payment Address Button -->
-            <button id="crypto-generate" class="btn-fund">Generate Payment Address</button>
-            
-            <!-- Payment Instructions (Hidden initially) -->
-            <div id="crypto-instructions" class="crypto-instructions" style="display: none;">
-                <h4>Payment Instructions</h4>
-                <div class="instruction-row">
-                    <span>Send Amount:</span>
-                    <span id="crypto-amount"></span>
-                </div>
-                <div class="instruction-row">
-                    <span>To Address:</span>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span id="crypto-address"></span>
-                        <button id="copy-address-btn" class="copy-btn" onclick="copyToClipboard('crypto-address')" title="Copy address">
-                            <i class="fas fa-copy"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="instruction-row">
-                    <span>Network Fee:</span>
-                    <span id="crypto-fee"></span>
-                </div>
-                <div class="instruction-row">
-                    <span>QR Code:</span>
-                    <img id="crypto-qr" src="" alt="Payment QR Code" style="max-width: 200px; height: auto; border: 1px solid #ddd; border-radius: 8px;">
-                </div>
-                <div class="instruction-note">
-                    <p><strong>Important:</strong> Send the exact amount to the address above. Include network fees in your transaction.</p>
-                    <p>Funds will be credited after network confirmations (typically 10-60 minutes).</p>
-                </div>
-                
-                <!-- I have made the payment button -->
-                <button id="crypto-show-confirmation" class="btn-fund" style="display: none;">I have made the payment</button>
-            </div>
-            
-            <!-- Payment Confirmation Section (Hidden initially) -->
-            <div id="crypto-confirmation" class="payment-confirmation" style="display: none;">
-                <h4>Payment Confirmation</h4>
-                <p>Have you sent the cryptocurrency to the address above?</p>
-                <button id="crypto-confirm-payment" class="btn-fund">Yes, I have sent the payment</button>
-            </div>
-        </div>
-        
-        <!-- Wire Transfer Form -->
-        <div id="wire-form" class="payment-form">
-            <h3><i class="fas fa-university"></i> Bank Wire Transfer</h3>
-            <div id="wire-instructions" class="wire-instructions" style="display: none;">
-                <h4>Wire Transfer Instructions</h4>
-                <div class="instruction-row">
-                    <span>Bank Name:</span>
-                    <span id="wire-bank"></span>
-                </div>
-                <div class="instruction-row">
-                    <span>Account Name:</span>
-                    <span id="wire-account-name"></span>
-                </div>
-                <div class="instruction-row">
-                    <span>Account Number:</span>
-                    <span id="wire-account-number"></span>
-                </div>
-                <div class="instruction-row">
-                    <span>Routing Number:</span>
-                    <span id="wire-routing"></span>
-                </div>
-                <div class="instruction-row">
-                    <span>SWIFT Code:</span>
-                    <span id="wire-swift"></span>
-                </div>
-                <div class="instruction-row">
-                    <span>Reference:</span>
-                    <span id="wire-reference"></span>
-                </div>
-                <div class="instruction-row">
-                    <span>Amount:</span>
-                    <span id="wire-amount"></span>
-                </div>
-                <p><strong>Important:</strong> Include the reference number in your wire transfer. Processing fee: $25</p>
-            </div>
-            <button id="wire-generate" class="btn-fund">Generate Wire Instructions</button>
-        </div>
-        
-        <!-- Transaction History -->
-        <div class="transaction-history">
-            <h3><i class="fas fa-history"></i> Recent Transactions</h3>
-            <div id="transaction-list">
-                <p>No transactions yet. Make your first deposit above!</p>
-            </div>
-        </div>
-
-        <!-- Withdrawal section removed - users now go to withdrawal.html -->
-    </div>
-    
-
-    <script type="module" src="js/firebase-config.js"></script>
-    <script type="module" src="js/auth-integration.js"></script>
-    <script type="module" src="js/funding-manager.js"></script>
-    <script src="js/ai-support-chat.js"></script>
-    
-    <script>
-        let selectedMethod = null;
-        let selectedAmount = 0;
-        let selectedCurrency = 'USD';
-        let interfaceInitialized = false; // Prevent multiple initializations
-        
-        window.addEventListener('load', async () => {
-            console.log('Page loaded, starting initialization...');
-            
-            let attempts = 0;
-            while (!window.authManager && attempts < 30) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                attempts++;
-            }
-            
-            // Wait for funding manager to be available
-            let fundingAttempts = 0;
-            const maxAttempts = 50; // Wait up to 5 seconds (50 * 100ms)
-            const checkFundingManager = () => {
-                if (window.fundingManager && typeof window.fundingManager.processCryptoPayment === 'function') {
-                    console.log('Funding manager is ready');
-                    // Check authentication and initialize once
-                    checkAuthAndInitialize();
-                } else {
-                    fundingAttempts++;
-                    if (fundingAttempts < maxAttempts) {
-                        setTimeout(checkFundingManager, 100);
-                    } else {
-                        console.error('Funding manager failed to load after 5 seconds');
-                        alert('Payment system is still loading. Please try again in a moment.');
-                    }
-                }
-            };
-            checkFundingManager();
-        });
-        
-        async function checkAuthAndInitialize() {
-            if (interfaceInitialized) {
-                console.log('Interface already initialized, skipping...');
-                return;
-            }
-            
-            // Check actual Firebase authentication state
-            const currentUser = window.authManager?.getCurrentUser();
-            if (!currentUser) {
-                console.log('No current user, waiting for auth state...');
-                // Wait for Firebase auth state to be restored
-                const { auth } = await import('./js/firebase-config.js');
-                const { onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
-                
-                onAuthStateChanged(auth, (user) => {
-                    if (!user) {
-                        alert('Please log in to access funding.');
-                        window.location.href = 'auth.html';
-                        return;
-                    } else {
-                        // User is authenticated, initialize funding interface
-                        if (!interfaceInitialized) {
-                            initializeFundingInterface();
-                        }
-                    }
-                });
-            } else {
-                // User is already authenticated
-                console.log('User already authenticated, initializing interface...');
-                initializeFundingInterface();
-            }
-        }
-        
-        function initializeFundingInterface() {
-            if (interfaceInitialized) {
-                console.log('Interface already initialized');
-                return;
-            }
-            
-            console.log('Initializing funding interface...');
-            interfaceInitialized = true;
-            
-            // Method selection
-            const methodCards = document.querySelectorAll('.method-card');
-            console.log('Found method cards:', methodCards.length);
-            
-            methodCards.forEach((card, index) => {
-                console.log(`Setting up card ${index}:`, card.dataset.method);
-                card.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    console.log('Method card clicked:', card.dataset.method);
-                    
-                    // Remove selected class from all cards
-                    document.querySelectorAll('.method-card').forEach(c => c.classList.remove('selected'));
-                    
-                    // Add selected class to clicked card
-                    card.classList.add('selected');
-                    selectedMethod = card.dataset.method;
-                    console.log('Selected method:', selectedMethod);
-                    
-                    // Only handle deposit method selection now
-                    showPaymentForm(selectedMethod);
-                });
-            });
-            
-            // Quick amount selection
-            const quickAmountBtns = document.querySelectorAll('.quick-amount');
-            console.log('Found quick amount buttons:', quickAmountBtns.length);
-            
-            quickAmountBtns.forEach((btn, index) => {
-                console.log(`Setting up amount button ${index}:`, btn.dataset.amount);
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const amount = btn.dataset.amount;
-                    console.log('Quick amount clicked:', amount);
-                    
-                    // Remove selected class from all amount buttons
-                    document.querySelectorAll('.quick-amount').forEach(b => b.classList.remove('selected'));
-                    
-                    // Add selected class to clicked button
-                    btn.classList.add('selected');
-                    
-                    // Update amount input and variable
-                    const amountInput = document.getElementById('funding-amount');
-                    if (amountInput) {
-                        amountInput.value = amount;
-                        selectedAmount = parseFloat(amount);
-                        console.log('Selected amount:', selectedAmount);
-                    }
-                });
-            });
-            
-            // Amount input
-            const amountInput = document.getElementById('funding-amount');
-            if (amountInput) {
-                amountInput.addEventListener('input', (e) => {
-                    selectedAmount = parseFloat(e.target.value) || 0;
-                    console.log('Amount input changed:', selectedAmount);
-                    
-                    // Remove selected class from quick amount buttons when typing
-                    document.querySelectorAll('.quick-amount').forEach(b => b.classList.remove('selected'));
-                });
-            }
-            
-            // Currency selection
-            const currencySelect = document.getElementById('currency');
-            if (currencySelect) {
-                currencySelect.addEventListener('change', (e) => {
-                    selectedCurrency = e.target.value;
-                    console.log('Currency changed:', selectedCurrency);
-                });
-            }
-            
-            // Payment form handlers
-            setupPaymentHandlers();
-            
-            // Load transaction history
-            loadTransactionHistory();
-            
-            console.log('Funding interface initialization complete');
-        }
-        
-        function showPaymentForm(method) {
-            document.querySelectorAll('.payment-form').forEach(form => {
-                form.classList.remove('active');
-            });
-            
-            const form = document.getElementById(`${method}-form`);
-            if (form) {
-                form.classList.add('active');
-            }
-        }
-        
-        function setupPaymentHandlers() {
-            // Stripe handler
-            document.getElementById('stripe-submit')?.addEventListener('click', async () => {
-                if (!selectedAmount || selectedAmount < 10) {
-                    alert('Minimum amount for card payment is $10');
-                    return;
-                }
-                
-                try {
-                    const transaction = await window.fundingManager.initializePayment('stripe', selectedAmount, selectedCurrency);
-                    alert('Payment successful! Funds will be added to your account.');
-                    loadTransactionHistory();
-                } catch (error) {
-                    alert('Payment failed: ' + error.message);
-                }
-            });
-            
+            // ... existing code ...
             // Crypto handler
             document.getElementById('crypto-generate')?.addEventListener('click', async () => {
                 if (!selectedAmount || selectedAmount < 25) {
@@ -758,9 +474,70 @@
                     document.getElementById('crypto-qr').src = instructions.qr_code;
                     document.getElementById('crypto-instructions').style.display = 'block';
                     
+                    // Show the "I have made the payment" button
+                    document.getElementById('crypto-show-confirmation').style.display = 'block';
+                    
+                    // Store transaction data for confirmation
+                    window.currentCryptoTransaction = {
+                        amount: selectedAmount,
+                        currency: cryptoCurrency,
+                        address: instructions.address
+                    };
+                    
                 } catch (error) {
                     console.error('Crypto payment error:', error);
                     alert('Error generating crypto payment: ' + error.message);
+                }
+            });
+            
+            // Add missing event listener for "I have made the payment" button
+            document.getElementById('crypto-show-confirmation')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.getElementById('crypto-confirmation').style.display = 'block';
+                document.getElementById('crypto-show-confirmation').style.display = 'none';
+            });
+            
+            // Add missing event listener for "Yes, I have sent the payment" button
+            document.getElementById('crypto-confirm-payment')?.addEventListener('click', async (e) => {
+                e.preventDefault();
+                
+                if (!window.currentCryptoTransaction) {
+                    alert('No transaction data found');
+                    return;
+                }
+                
+                try {
+                    const confirmBtn = document.getElementById('crypto-confirm-payment');
+                    confirmBtn.disabled = true;
+                    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+                    
+                    const result = await window.fundingManager.confirmCryptoPayment(window.currentCryptoTransaction);
+                    
+                    if (result.success) {
+                        alert('Payment confirmation received! Your deposit is now pending admin approval. You will be notified once it\'s processed.');
+                        
+                        // Reset the form
+                        document.getElementById('crypto-instructions').style.display = 'none';
+                        document.getElementById('crypto-confirmation').style.display = 'none';
+                        document.getElementById('crypto-show-confirmation').style.display = 'none';
+                        
+                        // Clear form data
+                        document.getElementById('funding-amount').value = '';
+                        selectedAmount = 0;
+                        window.currentCryptoTransaction = null;
+                        
+                        // Reload transaction history
+                        loadTransactionHistory();
+                    } else {
+                        alert('Failed to confirm payment: ' + (result.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    console.error('Confirmation error:', error);
+                    alert('Failed to confirm payment: ' + error.message);
+                } finally {
+                    const confirmBtn = document.getElementById('crypto-confirm-payment');
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = 'Yes, I have sent the payment';
                 }
             });
             
