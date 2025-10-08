@@ -1487,15 +1487,17 @@ class EnhancedAdminDashboard {
                     const userData = userDoc.data();
                     const currentTotalWithdrawals = userData.totalWithdrawals || 0;
                     const newTotalWithdrawals = currentTotalWithdrawals + parseFloat(amount);
+                    const newBalance = (userData.totalDeposits || 0) + (userData.totalProfits || 0) - newTotalWithdrawals;
                     
-                    // Update user's totalWithdrawals
+                    // Update user's totalWithdrawals and balance
                     await updateDoc(userRef, {
                         totalWithdrawals: newTotalWithdrawals,
+                        balance: Math.max(0, newBalance),
                         balanceUpdatedAt: serverTimestamp(),
                         updatedAt: serverTimestamp()
                     });
                     
-                    console.log(`Updated user ${userId} totalWithdrawals: ${currentTotalWithdrawals} -> ${newTotalWithdrawals}`);
+                    console.log(`Updated user ${userId}: totalWithdrawals: ${currentTotalWithdrawals} -> ${newTotalWithdrawals}, balance: ${newBalance}`);
                 }
             }
             

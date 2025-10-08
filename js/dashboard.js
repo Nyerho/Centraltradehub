@@ -439,20 +439,25 @@ class DashboardManager {
             totalDepositsElement: !!totalDepositsElement
         });
         
-        // KEEP YOUR PREFERRED CALCULATION: deposits + profits = wallet balance
+        // CORRECTED CALCULATION: deposits + profits - withdrawals = wallet balance
         const deposits = this.accountData.totalDeposits || 0;
         const profits = this.accountData.totalProfits || 0;
-        const calculatedWalletBalance = deposits + profits;
+        const withdrawals = this.accountData.totalWithdrawals || 0;
+        const calculatedWalletBalance = deposits + profits - withdrawals;
         
         console.log('Balance calculation:', {
             deposits,
             profits,
+            withdrawals,
             calculatedWalletBalance,
             storedBalance: this.accountData.balance
         });
         
+        // Use the stored balance from Firebase (which is authoritative)
+        const displayBalance = this.accountData.balance || calculatedWalletBalance;
+        
         if (balanceElement) {
-            const formattedBalance = `${calculatedWalletBalance.toLocaleString('en-US', {
+            const formattedBalance = `${displayBalance.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             })}`;
@@ -462,7 +467,7 @@ class DashboardManager {
         }
         
         if (accountBalanceElement) {
-            const formattedBalance = `${calculatedWalletBalance.toLocaleString('en-US', {
+            const formattedBalance = `${displayBalance.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             })}`;
