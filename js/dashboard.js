@@ -282,66 +282,79 @@ class DashboardManager {
         // Setup users collection listener (for admin updates detection)
         const userRef = doc(db, 'users', user.uid);
         this.userDataListener = onSnapshot(userRef, async (doc) => {
-            if (doc.exists()) {
-                const userData = doc.data();
-                console.log('Real-time user data update:', userData);
-                this.updateUserInterface(userData, user);
-                
-                // Check if admin made updates
-                if (userData.lastAdminUpdate) {
-                    // Force refresh account data from users collection
-                    const accountRef = doc(db, 'accounts', user.uid);
-                    const accountDoc = await getDoc(accountRef);
+            try {
+                if (doc.exists()) {
+                    const userData = doc.data();
+                    console.log('Real-time user data update:', userData);
+                    this.updateUserInterface(userData, user);
                     
-                    if (accountDoc.exists()) {
-                        const currentAccountData = accountDoc.data();
+                    // Check if admin made updates
+                    if (userData.lastAdminUpdate) {
+                        // Force refresh account data from users collection
+                        const accountRef = doc(db, 'accounts', user.uid);
+                        const accountDoc = await getDoc(accountRef);
                         
-                        // Check if sync is needed
-                        const needsSync = 
-                            currentAccountData.balance !== userData.accountBalance ||
-                            currentAccountData.totalProfits !== userData.totalProfits;
-                        
-                        if (needsSync) {
-                            // Update accounts collection with latest user data
-                            await updateDoc(accountRef, {
-                                balance: userData.accountBalance || userData.balance || 0,
-                                accountBalance: userData.accountBalance || userData.balance || 0,
-                                walletBalance: userData.balance || userData.walletBalance || userData.accountBalance || 0,
-                                totalProfits: userData.totalProfits || 0,
-                                totalDeposits: userData.totalDeposits || 0,
-                                lastSyncedAt: new Date().toISOString(),
-                                adminUpdated: true
-                            });
+                        if (accountDoc.exists()) {
+                            const currentAccountData = accountDoc.data();
                             
-                            // Update local data
-                            this.accountData = {
-                                ...this.accountData,
-                                balance: userData.accountBalance || userData.balance || 0,
-                                accountBalance: userData.accountBalance || userData.balance || 0,
-                                walletBalance: userData.walletBalance || userData.accountBalance || userData.balance || 0,
-                                totalProfits: userData.totalProfits || 0,
-                                totalDeposits: userData.totalDeposits || 0
-                            };
+                            // Check if sync is needed
+                            const needsSync = 
+                                currentAccountData.balance !== userData.accountBalance ||
+                                currentAccountData.totalProfits !== userData.totalProfits;
                             
-                            // Update UI
-                            this.updateAccountSummary();
-                            console.log('Synced admin changes to dashboard');
+                            if (needsSync) {
+                                // Update accounts collection with latest user data
+                                await updateDoc(accountRef, {
+                                    balance: userData.accountBalance || userData.balance || 0,
+                                    accountBalance: userData.accountBalance || userData.balance || 0,
+                                    walletBalance: userData.balance || userData.walletBalance || userData.accountBalance || 0,
+                                    totalProfits: userData.totalProfits || 0,
+                                    totalDeposits: userData.totalDeposits || 0,
+                                    lastSyncedAt: new Date().toISOString(),
+                                    adminUpdated: true
+                                });
+                                
+                                // Update local data
+                                this.accountData = {
+                                    ...this.accountData,
+                                    balance: userData.accountBalance || userData.balance || 0,
+                                    accountBalance: userData.accountBalance || userData.balance || 0,
+                                    walletBalance: userData.walletBalance || userData.accountBalance || userData.balance || 0,
+                                    totalProfits: userData.totalProfits || 0,
+                                    totalDeposits: userData.totalDeposits || 0
+                                };
+                                
+                                // Update UI
+                                this.updateAccountSummary();
+                                console.log('Synced admin changes to dashboard');
+                            }
+                        }
+                    }
+                    
+                    // Show notification for admin changes (optional)
+                    if (userData.lastAdminUpdate) {
+                        const updateTime = new Date(userData.lastAdminUpdate);
+                        const now = new Date();
+                        // If updated within last 5 seconds, show notification
+                        if (now - updateTime < 5000) {
+                            this.showNotification('Account updated by administrator', 'info');
                         }
                     }
                 }
-                
-                // Show notification for admin changes (optional)
-                if (userData.lastAdminUpdate) {
-                    const updateTime = new Date(userData.lastAdminUpdate);
-                    const now = new Date();
-                    // If updated within last 5 seconds, show notification
-                    if (now - updateTime < 5000) {
-                        this.showNotification('Account updated by administrator', 'info');
-                    }
-                }
+            } catch (error) {
+                console.error('Error processing user data update:', error);
+                this.showNotification('Error updating account data', 'error');
             }
         }, (error) => {
-            console.error('User listener error:', error);
+            console.error('❌ Firebase listener error:', error);
+            console.error('Error code:', error.code);
+            console.error('Error message:', error.message);
+            
+            // Attempt to reconnect after a delay
+            setTimeout(() => {
+                console.log('🔄 Attempting to reconnect Firebase listener...');
+                this.setupRealTimeListeners(user);
+            }, 5000);
         });
     }
 
