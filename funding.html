@@ -441,134 +441,72 @@
                 </select>
             </div>
             
-            // ... existing code ...
-            // Crypto handler
-            document.getElementById('crypto-generate')?.addEventListener('click', async () => {
-                if (!selectedAmount || selectedAmount < 25) {
-                    alert('Minimum amount for crypto payment is $25');
-                    return;
-                }
-                
-                try {
-                    const cryptoCurrency = document.getElementById('crypto-currency').value;
-                    
-                    // Validate the currency is supported
-                    if (!window.fundingManager.supportedMethods.crypto.currencies.includes(cryptoCurrency)) {
-                        alert(`${cryptoCurrency} is not supported`);
-                        return;
-                    }
-                    
-                    // Create transaction object
-                    const transaction = {
-                        amount: selectedAmount,
-                        currency: cryptoCurrency,
-                        method: 'crypto'
-                    };
-                    
-                    const instructions = await window.fundingManager.processCryptoPayment(transaction);
-                    
-                    // Show instructions
-                    document.getElementById('crypto-amount').textContent = `${selectedAmount} USD = ${instructions.amount} ${cryptoCurrency}`;
-                    document.getElementById('crypto-address').textContent = instructions.address;
-                    document.getElementById('crypto-fee').textContent = instructions.network_fee;
-                    document.getElementById('crypto-qr').src = instructions.qr_code;
-                    document.getElementById('crypto-instructions').style.display = 'block';
-                    
-                    // Show the "I have made the payment" button
-                    document.getElementById('crypto-show-confirmation').style.display = 'block';
-                    
-                    // Store transaction data for confirmation
-                    window.currentCryptoTransaction = {
-                        amount: selectedAmount,
-                        currency: cryptoCurrency,
-                        address: instructions.address
-                    };
-                    
-                } catch (error) {
-                    console.error('Crypto payment error:', error);
-                    alert('Error generating crypto payment: ' + error.message);
-                }
-            });
+            <button id="crypto-generate" class="btn-fund">Generate Payment Address</button>
             
-            // Add missing event listener for "I have made the payment" button
-            document.getElementById('crypto-show-confirmation')?.addEventListener('click', (e) => {
-                e.preventDefault();
-                document.getElementById('crypto-confirmation').style.display = 'block';
-                document.getElementById('crypto-show-confirmation').style.display = 'none';
-            });
+            <div id="crypto-instructions" class="crypto-instructions" style="display: none;">
+                <h4>Send Payment To:</h4>
+                <div class="instruction-row">
+                    <span>Amount:</span>
+                    <span id="crypto-amount"></span>
+                </div>
+                <div class="instruction-row">
+                    <span>Address:</span>
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <span id="crypto-address"></span>
+                        <button class="copy-btn" onclick="copyToClipboard('crypto-address')">Copy</button>
+                    </div>
+                </div>
+                <div class="instruction-row">
+                    <span>Network Fee:</span>
+                    <span id="crypto-fee"></span>
+                </div>
+                <div class="qr-code">
+                    <img id="crypto-qr" alt="QR Code" style="max-width: 200px;">
+                </div>
+                
+                <button id="crypto-show-confirmation" class="btn-fund" style="display: none; margin-top: 20px;">I have made the payment</button>
+            </div>
             
-            // Add missing event listener for "Yes, I have sent the payment" button
-            document.getElementById('crypto-confirm-payment')?.addEventListener('click', async (e) => {
-                e.preventDefault();
-                
-                if (!window.currentCryptoTransaction) {
-                    alert('No transaction data found');
-                    return;
-                }
-                
-                try {
-                    const confirmBtn = document.getElementById('crypto-confirm-payment');
-                    confirmBtn.disabled = true;
-                    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-                    
-                    const result = await window.fundingManager.confirmCryptoPayment(window.currentCryptoTransaction);
-                    
-                    if (result.success) {
-                        alert('Payment confirmation received! Your deposit is now pending admin approval. You will be notified once it\'s processed.');
-                        
-                        // Reset the form
-                        document.getElementById('crypto-instructions').style.display = 'none';
-                        document.getElementById('crypto-confirmation').style.display = 'none';
-                        document.getElementById('crypto-show-confirmation').style.display = 'none';
-                        
-                        // Clear form data
-                        document.getElementById('funding-amount').value = '';
-                        selectedAmount = 0;
-                        window.currentCryptoTransaction = null;
-                        
-                        // Reload transaction history
-                        loadTransactionHistory();
-                    } else {
-                        alert('Failed to confirm payment: ' + (result.error || 'Unknown error'));
-                    }
-                } catch (error) {
-                    console.error('Confirmation error:', error);
-                    alert('Failed to confirm payment: ' + error.message);
-                } finally {
-                    const confirmBtn = document.getElementById('crypto-confirm-payment');
-                    confirmBtn.disabled = false;
-                    confirmBtn.innerHTML = 'Yes, I have sent the payment';
-                }
-            });
+            <div id="crypto-confirmation" class="crypto-instructions" style="display: none;">
+                <h4>Payment Confirmation</h4>
+                <p>Please confirm that you have sent the exact amount to the provided address.</p>
+                <button id="crypto-confirm-payment" class="btn-fund">Yes, I have sent the payment</button>
+            </div>
+        </div>
+        
+        <!-- Wire Transfer Form -->
+        <div id="wire-form" class="payment-form">
+            <h3><i class="fas fa-university"></i> Bank Wire Transfer</h3>
+            <button id="wire-generate" class="btn-fund">Get Wire Instructions</button>
             
-            // Wire transfer handler
-            document.getElementById('wire-generate')?.addEventListener('click', async () => {
-                if (!selectedAmount || selectedAmount < 1000) {
-                    alert('Minimum amount for wire transfer is $1,000');
-                    return;
-                }
-                
-                try {
-                    const instructions = await window.fundingManager.processWireTransfer({
-                        amount: selectedAmount,
-                        currency: selectedCurrency
-                    });
-                    
-                    // Show instructions
-                    document.getElementById('wire-bank').textContent = instructions.bank_name;
-                    document.getElementById('wire-account-name').textContent = instructions.account_name;
-                    document.getElementById('wire-account-number').textContent = instructions.account_number;
-                    document.getElementById('wire-routing').textContent = instructions.routing_number;
-                    document.getElementById('wire-swift').textContent = instructions.swift_code;
-                    document.getElementById('wire-reference').textContent = instructions.reference;
-                    document.getElementById('wire-amount').textContent = `${selectedAmount} ${selectedCurrency}`;
-                    document.getElementById('wire-instructions').style.display = 'block';
-                    
-                } catch (error) {
-                    alert('Error generating wire instructions: ' + error.message);
-                }
-            });
-        }
+            <div id="wire-instructions" class="wire-instructions" style="display: none;">
+                <h4>Wire Transfer Instructions:</h4>
+                <div class="instruction-row">
+                    <span>Bank Name:</span>
+                    <span>Central Trade Bank</span>
+                </div>
+                <div class="instruction-row">
+                    <span>Account Name:</span>
+                    <span>Central Trade Hub LLC</span>
+                </div>
+                <div class="instruction-row">
+                    <span>Account Number:</span>
+                    <span>1234567890</span>
+                </div>
+                <div class="instruction-row">
+                    <span>Routing Number:</span>
+                    <span>021000021</span>
+                </div>
+                <div class="instruction-row">
+                    <span>SWIFT Code:</span>
+                    <span>CTBKUS33</span>
+                </div>
+                <div class="instruction-row">
+                    <span>Reference:</span>
+                    <span id="wire-reference"></span>
+                </div>
+            </div>
+        </div>
         
         function loadTransactionHistory() {
             if (!window.fundingManager) return;
