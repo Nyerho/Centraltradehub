@@ -1462,11 +1462,42 @@ class EnhancedAdminDashboard {
     // Withdrawal Management Methods
     async handleWithdrawalApproval(withdrawalId, status) {
         try {
+            // Get withdrawal document first
+            const withdrawalDoc = await getDoc(doc(this.db, 'withdrawals', withdrawalId));
+            if (!withdrawalDoc.exists()) {
+                throw new Error('Withdrawal not found');
+            }
+            
+            const withdrawalData = withdrawalDoc.data();
+            const { userId, amount } = withdrawalData;
+            
+            // Update withdrawal status
             await updateDoc(doc(this.db, 'withdrawals', withdrawalId), {
                 status: status,
                 processedAt: serverTimestamp(),
                 processedBy: this.currentUser.uid
             });
+            
+            // If approved, deduct from user balance
+            if (status === 'approved') {
+                const userRef = doc(this.db, 'users', userId);
+                const userDoc = await getDoc(userRef);
+                
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    const currentTotalWithdrawals = userData.totalWithdrawals || 0;
+                    const newTotalWithdrawals = currentTotalWithdrawals + parseFloat(amount);
+                    
+                    // Update user's totalWithdrawals
+                    await updateDoc(userRef, {
+                        totalWithdrawals: newTotalWithdrawals,
+                        balanceUpdatedAt: serverTimestamp(),
+                        updatedAt: serverTimestamp()
+                    });
+                    
+                    console.log(`Updated user ${userId} totalWithdrawals: ${currentTotalWithdrawals} -> ${newTotalWithdrawals}`);
+                }
+            }
             
             this.showNotification(`Withdrawal ${status} successfully`, 'success');
             
