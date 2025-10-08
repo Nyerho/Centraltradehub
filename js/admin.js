@@ -1497,7 +1497,21 @@ class EnhancedAdminDashboard {
                         updatedAt: serverTimestamp()
                     });
                     
+                    // Create transaction record for the approved withdrawal
+                    await addDoc(collection(this.db, 'transactions'), {
+                        uid: userId,
+                        type: 'withdrawal',
+                        amount: parseFloat(amount),
+                        status: 'completed',
+                        description: `Withdrawal approved by admin`,
+                        timestamp: serverTimestamp(),
+                        createdAt: serverTimestamp(),
+                        withdrawalId: withdrawalId,
+                        processedBy: this.currentUser.uid
+                    });
+                    
                     console.log(`Updated user ${userId}: totalWithdrawals: ${currentTotalWithdrawals} -> ${newTotalWithdrawals}, balance: ${newBalance}`);
+                    console.log(`Created transaction record for withdrawal ${withdrawalId}`);
                 }
             }
             
