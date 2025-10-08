@@ -2613,7 +2613,37 @@ class EnhancedAdminDashboard {
     
     // Add showSection method for backward compatibility
     showSection(sectionId) {
-        this.navigateToPage(sectionId);
+        console.log('Navigating to page:', sectionId); // Debug log
+        
+        // Hide all sections
+        document.querySelectorAll('.admin-section').forEach(section => {
+            section.classList.remove('active');
+            section.style.display = 'none'; // Explicitly set inline style
+        });
+        
+        // Hide all Bootstrap tab panes
+        document.querySelectorAll('.tab-pane').forEach(pane => {
+            pane.classList.remove('active', 'show');
+        });
+        
+        // Show selected section
+        const targetSection = document.getElementById(sectionId);
+        console.log('Target section found:', targetSection); // Debug log
+        
+        if (targetSection) {
+            targetSection.classList.add('active');
+            targetSection.style.display = 'block'; // Explicitly show the section
+            // If it's a Bootstrap tab pane, also add 'show' class
+            if (targetSection.classList.contains('tab-pane')) {
+                targetSection.classList.add('show');
+            }
+            console.log('Added active class to section:', sectionId); // Debug log
+        } else {
+            console.error('Section not found:', sectionId); // Error log
+        }
+        
+        // Load page-specific data
+        this.loadPageData(sectionId);
     }
 
     async loadPageData(page) {
