@@ -2527,23 +2527,33 @@ class EnhancedAdminDashboard {
             section.classList.remove('active');
         });
         
+        // Hide all Bootstrap tab panes
+        document.querySelectorAll('.tab-pane').forEach(pane => {
+            pane.classList.remove('active', 'show');
+        });
+        
         // Show selected section
         const targetSection = document.getElementById(page);
         console.log('Target section found:', targetSection); // Debug log
         
         if (targetSection) {
             targetSection.classList.add('active');
+            // If it's a Bootstrap tab pane, also add 'show' class
+            if (targetSection.classList.contains('tab-pane')) {
+                targetSection.classList.add('show');
+            }
             console.log('Added active class to section:', page); // Debug log
         } else {
             console.error('Section not found:', page); // Error log
         }
         
-        // Update navigation
+        // Update navigation - handle both custom nav and Bootstrap tabs
         document.querySelectorAll('.nav-link').forEach(item => {
             item.classList.remove('active');
         });
         
-        const activeNavItem = document.querySelector(`[data-section="${page}"]`);
+        const activeNavItem = document.querySelector(`[data-section="${page}"]`) || 
+                             document.querySelector(`[data-bs-target="#${page}"]`);
         if (activeNavItem) {
             activeNavItem.classList.add('active');
         }
