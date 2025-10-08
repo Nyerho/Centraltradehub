@@ -2,6 +2,8 @@
 import userProfileService from './user-profile-service.js';
 import { auth } from './firebase-config.js';
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { db } from './firebase-config.js';
+import { collection, query, where, orderBy, limit, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 class ProfileManager {
     constructor() {
