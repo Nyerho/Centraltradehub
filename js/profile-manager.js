@@ -129,9 +129,13 @@ class ProfileManager {
                 const transactions = [];
                 
                 querySnapshot.forEach((doc) => {
+                    const data = doc.data();
                     transactions.push({
                         id: doc.id,
-                        ...doc.data()
+                        ...data,
+                        // Ensure timestamp fields are properly handled
+                        createdAt: data.createdAt || data.timestamp,
+                        timestamp: data.timestamp || data.createdAt
                     });
                 });
                 
@@ -179,7 +183,7 @@ class ProfileManager {
                             ${transaction.type === 'withdrawal' ? '-' : '+'}$${transaction.amount.toFixed(2)}
                         </div>
                         <div class="transaction-date">
-                            ${new Date(transaction.createdAt.toDate()).toLocaleDateString()}
+                            ${new Date((transaction.createdAt?.toDate ? transaction.createdAt.toDate() : transaction.createdAt) || (transaction.timestamp?.toDate ? transaction.timestamp.toDate() : transaction.timestamp) || Date.now()).toLocaleDateString()}
                         </div>
                     </div>
                 </div>
