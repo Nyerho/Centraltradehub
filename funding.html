@@ -467,8 +467,101 @@
                     <p><strong>Important:</strong> Send the exact amount to the address above. Include network fees in your transaction.</p>
                     <p>Funds will be credited after network confirmations (typically 10-60 minutes).</p>
                 </div>
-            </div>
-            <button id="crypto-generate" class="btn-fund">Generate Payment Address</button>
+                
+                // Crypto payment handling
+                const cryptoGenerateBtn = document.getElementById('crypto-generate');
+                const cryptoShowConfirmBtn = document.getElementById('crypto-show-confirmation');
+                const cryptoConfirmBtn = document.getElementById('crypto-confirm-payment');
+                
+                if (cryptoGenerateBtn) {
+                    cryptoGenerateBtn.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        console.log('Generate crypto payment clicked');
+                        
+                        if (!selectedAmount || selectedAmount <= 0) {
+                            alert('Please enter a valid amount first');
+                            return;
+                        }
+                        
+                        try {
+                            const currency = document.getElementById('crypto-currency').value;
+                            const result = await window.fundingManager.processCryptoPayment({
+                                amount: selectedAmount,
+                                currency: currency
+                            });
+                            
+                            // Display payment instructions
+                            document.getElementById('crypto-amount').textContent = `${selectedAmount} USD (≈ ${result.amount} ${currency})`;
+                            document.getElementById('crypto-address').textContent = result.address;
+                            document.getElementById('crypto-fee').textContent = result.network_fee;
+                            document.getElementById('crypto-qr').src = result.qr_code;
+                            
+                            document.getElementById('crypto-instructions').style.display = 'block';
+                            cryptoGenerateBtn.style.display = 'none';
+                            cryptoShowConfirmBtn.style.display = 'block';
+                            
+                            // Store transaction data for confirmation
+                            window.currentCryptoTransaction = {
+                                amount: selectedAmount,
+                                currency: currency,
+                                address: result.address
+                            };
+                            
+                        } catch (error) {
+                            console.error('Crypto payment error:', error);
+                            alert('Failed to generate payment address: ' + error.message);
+                        }
+                    });
+                }
+                
+                if (cryptoShowConfirmBtn) {
+                    cryptoShowConfirmBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        document.getElementById('crypto-confirmation').style.display = 'block';
+                        cryptoShowConfirmBtn.style.display = 'none';
+                    });
+                }
+                
+                if (cryptoConfirmBtn) {
+                    cryptoConfirmBtn.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        
+                        if (!window.currentCryptoTransaction) {
+                            alert('No transaction data found');
+                            return;
+                        }
+                        
+                        try {
+                            cryptoConfirmBtn.disabled = true;
+                            cryptoConfirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+                            
+                            const result = await window.fundingManager.confirmCryptoPayment(window.currentCryptoTransaction);
+                            
+                            if (result.success) {
+                                alert('Payment confirmation received! Your deposit is now pending admin approval. You will be notified once it\'s processed.');
+                                
+                                // Reset the form
+                                document.getElementById('crypto-form').style.display = 'none';
+                                document.getElementById('crypto-instructions').style.display = 'none';
+                                document.getElementById('crypto-confirmation').style.display = 'none';
+                                cryptoGenerateBtn.style.display = 'block';
+                                cryptoShowConfirmBtn.style.display = 'none';
+                                
+                                // Clear form data
+                                document.getElementById('funding-amount').value = '';
+                                selectedAmount = 0;
+                                window.currentCryptoTransaction = null;
+                            }
+                            
+                        } catch (error) {
+                            console.error('Confirmation error:', error);
+                            alert('Failed to confirm payment: ' + error.message);
+                        } finally {
+                            cryptoConfirmBtn.disabled = false;
+                            cryptoConfirmBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Yes, I have sent the payment';
+                        }
+                    });
+                }
         </div>
         
         <!-- Wire Transfer Form -->

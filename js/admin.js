@@ -851,49 +851,61 @@ class EnhancedAdminDashboard {
         });
     }
     
-    loadFundingData() {
-        // Prevent duplicate loading
+    async loadFundingData() {
         if (this.isLoadingFunding) {
             return;
         }
         this.isLoadingFunding = true;
         console.log('Loading funding data...');
         
-        this.executeWithRetry(async () => {
-            if (!this.isOnline) {
-                throw new Error('No network connection');
-            }
+        try {
+            await this.executeWithRetry(async () => {
+                if (!this.isOnline) {
+                    throw new Error('No network connection');
+                }
 
-            // Load funding transactions
-            const fundingQuery = query(
-                collection(this.db, 'funding'),
-                orderBy('timestamp', 'desc'),
-                limit(50)
-            );
-            
-            const fundingSnapshot = await getDocs(fundingQuery);
-            const fundingData = [];
-            
-            fundingSnapshot.forEach(doc => {
-                fundingData.push({ id: doc.id, ...doc.data() });
-            });
-            
-            // Update funding dashboard
-            this.updateFundingStats(fundingData);
-            this.renderFundingTable(fundingData);
-            
-            console.log('Funding data loaded successfully');
-        }, 'Funding data loading')
-        .catch(error => {
+                // Load funding transactions
+                const fundingQuery = query(
+                    collection(this.db, 'funding'),
+                    orderBy('timestamp', 'desc'),
+                    limit(100)
+                );
+                const fundingSnapshot = await getDocs(fundingQuery);
+                const fundingData = [];
+                
+                fundingSnapshot.forEach(doc => {
+                    fundingData.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Load pending deposits
+                const pendingQuery = query(
+                    collection(this.db, 'pending_deposits'),
+                    orderBy('timestamp', 'desc'),
+                    limit(50)
+                );
+                const pendingSnapshot = await getDocs(pendingQuery);
+                const pendingDeposits = [];
+                
+                pendingSnapshot.forEach(doc => {
+                    pendingDeposits.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Update funding dashboard
+                this.updateFundingStats(fundingData, pendingDeposits);
+                this.renderFundingTable(fundingData);
+                this.renderPendingDepositsTable(pendingDeposits);
+                
+                console.log('Funding data loaded successfully');
+            }, 'Funding data loading')
+        } catch (error) {
             console.error('Failed to load funding data:', error);
             this.showNotification('Failed to load funding data. Please check your connection.', 'error');
             
-            // Show offline message or cached data
+            // Show offline data
             this.showOfflineFundingData();
-        })
-        .finally(() => {
+        } finally {
             this.isLoadingFunding = false;
-        });
+        }
     }
     
     loadUserFinancialSection() {
@@ -1131,7 +1143,7 @@ class EnhancedAdminDashboard {
         if (withdrawalsElement) withdrawalsElement.textContent = `$${totalWithdrawals.toLocaleString()}`;
     }
 
-    updateFundingStats(fundingData) {
+    updateFundingStats(fundingData, pendingDeposits = []) {
         // Calculate funding statistics
         const totalFunding = fundingData
             .filter(f => f.status === 'completed')
@@ -1140,13 +1152,18 @@ class EnhancedAdminDashboard {
         const pendingFunding = fundingData
             .filter(f => f.status === 'pending')
             .reduce((sum, f) => sum + (f.amount || 0), 0);
+            
+        const pendingDepositsTotal = pendingDeposits
+            .reduce((sum, f) => sum + (f.amount || 0), 0);
         
         // Update UI elements
         const totalFundingElement = document.getElementById('total-funding');
         const pendingFundingElement = document.getElementById('pending-funding');
+        const pendingDepositsElement = document.getElementById('pending-deposits');
         
         if (totalFundingElement) totalFundingElement.textContent = `$${totalFunding.toLocaleString()}`;
         if (pendingFundingElement) pendingFundingElement.textContent = `$${pendingFunding.toLocaleString()}`;
+        if (pendingDepositsElement) pendingDepositsElement.textContent = `$${pendingDepositsTotal.toLocaleString()}`;
     }
 
     renderFinancialTable(transactions) {
@@ -3575,6 +3592,89 @@ EnhancedAdminDashboard.prototype.clearTradeFilters = function() {
     
     // Re-render the table with all trades
     this.renderTradesTable();
+};
+
+// Add new method to render pending deposits table
+EnhancedAdminDashboard.prototype.renderPendingDepositsTable = function(pendingDeposits) {
+    const tableBody = document.getElementById('pendingDepositsTableBody');
+    if (!tableBody) return;
+    
+    if (pendingDeposits.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No pending deposits</td></tr>';
+        return;
+    }
+    
+    tableBody.innerHTML = pendingDeposits.map(deposit => `
+        <tr>
+            <td>${deposit.id}</td>
+            <td>${deposit.userEmail}</td>
+            <td>${deposit.currency}</td>
+            <td>$${deposit.amount?.toLocaleString() || '0'}</td>
+            <td><span class="status-${deposit.status}">${deposit.status}</span></td>
+            <td>${deposit.timestamp ? new Date(deposit.timestamp.toDate()).toLocaleDateString() : 'N/A'}</td>
+            <td>
+                <button class="btn btn-success btn-sm" onclick="adminDashboard.approveDeposit('${deposit.id}', '${deposit.userId}', ${deposit.amount}, '${deposit.currency}')">
+                    <i class="fas fa-check"></i> Approve
+                </button>
+                <button class="btn btn-danger btn-sm ml-1" onclick="adminDashboard.rejectDeposit('${deposit.id}')">
+                    <i class="fas fa-times"></i> Reject
+                </button>
+            </td>
+        </tr>
+    `).join('');
+};
+
+// Add deposit approval functionality
+EnhancedAdminDashboard.prototype.approveDeposit = async function(depositId, userId, amount, currency) {
+    try {
+        // Update user balance and deposits
+        const userRef = doc(this.db, 'users', userId);
+        await updateDoc(userRef, {
+            balance: increment(amount),
+            totalDeposits: increment(amount),
+            lastUpdated: serverTimestamp()
+        });
+
+        // Create transaction record
+        await addDoc(collection(this.db, 'transactions'), {
+            uid: userId,
+            type: 'deposit',
+            method: 'crypto',
+            currency: currency,
+            amount: amount,
+            status: 'completed',
+            description: `Crypto deposit approved - ${currency}`,
+            timestamp: serverTimestamp(),
+            createdAt: serverTimestamp(),
+            processedBy: this.currentUser.email
+        });
+
+        // Remove from pending deposits
+        const pendingRef = doc(this.db, 'pending_deposits', depositId);
+        await deleteDoc(pendingRef);
+
+        this.showNotification(`Deposit of $${amount} approved successfully`, 'success');
+        this.loadFundingData(); // Refresh the data
+        
+    } catch (error) {
+        console.error('Error approving deposit:', error);
+        this.showNotification('Failed to approve deposit', 'error');
+    }
+};
+
+// Add deposit rejection functionality
+EnhancedAdminDashboard.prototype.rejectDeposit = async function(depositId) {
+    try {
+        const pendingRef = doc(this.db, 'pending_deposits', depositId);
+        await deleteDoc(pendingRef);
+
+        this.showNotification('Deposit rejected', 'info');
+        this.loadFundingData(); // Refresh the data
+        
+    } catch (error) {
+        console.error('Error rejecting deposit:', error);
+        this.showNotification('Failed to reject deposit', 'error');
+    }
 };
 
 // Add method to clear trade filters

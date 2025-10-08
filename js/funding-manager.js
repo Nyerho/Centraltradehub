@@ -273,6 +273,50 @@ class FundingManager {
         return instructions;
     }
 
+    // Add new method for handling user payment confirmation
+    async confirmCryptoPayment(transactionData) {
+        try {
+            const user = window.authManager?.getCurrentUser();
+            if (!user) {
+                throw new Error('User not authenticated');
+            }
+
+            // Import Firebase functions
+            const { db } = await import('./firebase-config.js');
+            const { collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+            // Create pending deposit record
+            const pendingDeposit = {
+                userId: user.uid,
+                userEmail: user.email,
+                type: 'crypto_deposit',
+                method: 'crypto',
+                currency: transactionData.currency,
+                amount: transactionData.amount,
+                address: transactionData.address,
+                status: 'pending_confirmation',
+                timestamp: serverTimestamp(),
+                createdAt: serverTimestamp(),
+                description: `Crypto deposit - ${transactionData.currency} - User confirmed payment sent`,
+                transactionId: this.generateTransactionId()
+            };
+
+            // Add to pending_deposits collection
+            const docRef = await addDoc(collection(db, 'pending_deposits'), pendingDeposit);
+            
+            console.log('Pending deposit created:', docRef.id);
+            return {
+                success: true,
+                depositId: docRef.id,
+                message: 'Payment confirmation received. Your deposit is now pending admin approval.'
+            };
+
+        } catch (error) {
+            console.error('Error confirming crypto payment:', error);
+            throw new Error('Failed to confirm payment: ' + error.message);
+        }
+    }
+
     async processWireTransfer(transaction) {
         const { amount, currency } = transaction;
         
