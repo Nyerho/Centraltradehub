@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fund Your Account - Central Trade Hub</title>
+    <link rel="icon" type="image/x-icon" href="assets/images/favicon.ico">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/ai-support-chat.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -687,5 +688,33 @@
         }
     </script>
     <script src="js/ai-support-chat.js"></script>
+    
+    <!-- Load JavaScript modules with proper type="module" -->
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/firebase-database.js"></script>
+    <script type="module" src="js/funding-manager.js"></script>
+    <script type="module" src="js/ai-support-chat.js"></script>
+    
+    <script type="module">
+        // Initialize the funding page after modules are loaded
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Wait for modules to initialize
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // Load transaction history
+                if (typeof loadTransactionHistory === 'function') {
+                    loadTransactionHistory();
+                }
+                
+                // Initialize funding manager if available
+                if (window.fundingManager) {
+                    console.log('Funding manager initialized successfully');
+                }
+            } catch (error) {
+                console.error('Error initializing funding page:', error);
+            }
+        });
+    </script>
 </body>
 </html>
