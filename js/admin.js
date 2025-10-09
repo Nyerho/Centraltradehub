@@ -35,6 +35,8 @@ import {
 
 // Firebase configuration (import from existing config)
 import { firebaseConfig } from './firebase-config.js';
+// Add this import for the admin API configuration
+import { adminApiConfig } from './api-config.js';
 
 class EnhancedAdminDashboard {
     constructor() {
