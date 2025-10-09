@@ -312,6 +312,17 @@ function handleRegister(e) {
         mirrorTradeCode: formData.get('mirrorTradeCode') || ''
     };
     
+    // Validate MTC code if provided (optional but must be correct if entered)
+    const validMTCCode = '8247';
+    if (userData.mirrorTradeCode && userData.mirrorTradeCode !== validMTCCode) {
+        showNotification('Invalid Mirror Trade Code. Please check the code or leave it blank.', 'error');
+        return;
+    }
+    
+    // Add MTC status to user data for admin reference
+    userData.mtcStatus = userData.mirrorTradeCode === validMTCCode ? 'valid' : 'none';
+    userData.mtcCode = userData.mirrorTradeCode; // Store the actual code entered
+    
     // Validate required fields
     if (!userData.firstName || !userData.lastName || !userData.email || !userData.password) {
         showNotification('Please fill in all required fields', 'error');
