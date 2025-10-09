@@ -186,7 +186,9 @@ if (typeof module !== 'undefined' && module.exports) {
 
 // Admin API Configuration
 export const adminApiConfig = {
-    baseUrl: window.location.hostname === 'localhost' 
+    baseUrl: (window.location.hostname === 'localhost' || 
+              window.location.hostname === '127.0.0.1' || 
+              window.location.hostname.includes('localhost')) 
         ? 'http://localhost:3001' 
         : 'https://www.centraltradekeplr.com',
     endpoints: {
