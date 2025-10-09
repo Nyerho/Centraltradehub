@@ -277,6 +277,16 @@ class FirebaseAuthService {
   // Sync user profile
   async syncUserProfile(user) {
     try {
+      // Check if user is in deleted users collection
+      const deletedUserRef = doc(db, 'deletedUsers', user.uid);
+      const deletedUserDoc = await getDoc(deletedUserRef);
+      
+      if (deletedUserDoc.exists()) {
+        // User was deleted by admin, sign them out
+        await signOut(auth);
+        throw new Error('Account has been deactivated by administrator');
+      }
+      
       const userRef = doc(db, 'users', user.uid);
       const userDoc = await getDoc(userRef);
       
@@ -285,6 +295,7 @@ class FirebaseAuthService {
       }
     } catch (error) {
       console.error('Error syncing user profile:', error);
+      throw error;
     }
   }
 
