@@ -183,3 +183,15 @@ if (typeof module !== 'undefined' && module.exports) {
     window.APIConfig = APIConfig;
     window.API_CONFIG = API_CONFIG;
 }
+
+// Admin API Configuration
+export const adminApiConfig = {
+    baseUrl: window.location.hostname === 'localhost' 
+        ? 'http://localhost:3001' 
+        : 'https://www.centraltradekeplr.com',
+    endpoints: {
+        deleteUser: '/api/users',
+        getUsers: '/api/users',
+        updateUser: '/api/users'
+    }
+};

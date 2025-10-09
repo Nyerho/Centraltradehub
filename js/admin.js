@@ -1370,8 +1370,8 @@ class EnhancedAdminDashboard {
         }
         
         try {
-            // Call backend API to delete from Firebase Auth and Firestore
-            const response = await fetch(`/api/users/${userId}`, {
+            // Use configured API base URL
+            const response = await fetch(`${adminApiConfig.baseUrl}${adminApiConfig.endpoints.deleteUser}/${userId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${await this.currentUser.getIdToken()}`,
