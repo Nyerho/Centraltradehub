@@ -188,7 +188,8 @@ if (typeof module !== 'undefined' && module.exports) {
 export const adminApiConfig = {
     baseUrl: (window.location.hostname === 'localhost' || 
               window.location.hostname === '127.0.0.1' || 
-              window.location.hostname.includes('localhost')) 
+              window.location.port === '5500' || // Live Server port
+              window.location.protocol === 'file:') // Local file
         ? 'http://localhost:3001' 
         : 'https://www.centraltradekeplr.com',
     endpoints: {
