@@ -151,11 +151,11 @@ class EnhancedAdminDashboard {
             if (userDoc.exists()) {
                 const userData = userDoc.data();
                 console.log('User data:', userData);
-                console.log('User role:', userData.role);
-                console.log('Role check result:', userData.role === 'admin');
+                console.log('User role:', userData.profile?.role);
+                console.log('Role check result:', userData.profile?.role === 'admin');
             }
             
-            if (!userDoc.exists() || userDoc.data().role !== 'admin') {
+            if (!userDoc.exists() || userDoc.data().profile?.role !== 'admin') {
                 console.log('Access denied - redirecting to login');
                 this.showNotification('Access denied. Admin privileges required.', 'error');
                 await signOut(this.auth);
