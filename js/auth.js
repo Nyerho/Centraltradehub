@@ -86,10 +86,10 @@ function validateField(field) {
     
     // Mirror Trade Code validation (optional field)
     else if (fieldName === 'mirrorTradeCode' && value) {
-        const codeRegex = /^[A-Z0-9]{6,12}$/;
+        const codeRegex = /^[A-Z0-9]{4,12}$/;
         if (!codeRegex.test(value.toUpperCase())) {
             isValid = false;
-            errorMessage = 'Mirror Trade code must be 6-12 characters (letters and numbers only)';
+            errorMessage = 'Mirror Trade code must be 4-12 characters (letters and numbers only)';
         }
     }
     
