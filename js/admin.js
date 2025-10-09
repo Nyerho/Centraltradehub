@@ -1370,8 +1370,27 @@ class EnhancedAdminDashboard {
         }
         
         try {
-            await deleteDoc(doc(this.db, 'users', userId));
+            // Call backend API to delete from Firebase Auth and Firestore
+            const response = await fetch(`/api/users/${userId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${await this.currentUser.getIdToken()}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to delete user from authentication');
+            }
+            
+            // Add to deletedUsers collection to prevent recreation
+            await setDoc(doc(this.db, 'deletedUsers', userId), {
+                deletedAt: new Date(),
+                deletedBy: this.currentUser.uid
+            });
+            
             this.showNotification('User deleted successfully', 'success');
+            this.loadUsers(); // Refresh the user list
             
         } catch (error) {
             console.error('Delete user error:', error);

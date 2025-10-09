@@ -144,10 +144,13 @@ app.delete('/api/users/:userId', verifyAdminToken, async (req, res) => {
   try {
     const { userId } = req.params;
 
-    // Delete from Firebase Auth
+    // 1. Revoke refresh tokens (force logout on all devices)
+    await auth.revokeRefreshTokens(userId);
+    
+    // 2. Delete from Firebase Auth
     await auth.deleteUser(userId);
     
-    // Delete from Firestore
+    // 3. Delete from Firestore
     await db.collection('users').doc(userId).delete();
 
     res.json({ success: true, message: 'User deleted successfully' });
