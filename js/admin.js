@@ -1372,8 +1372,14 @@ class EnhancedAdminDashboard {
         }
         
         try {
+            console.log('Attempting to delete user:', userId);
+            console.log('Using API config:', adminApiConfig);
+            
+            const deleteUrl = `${adminApiConfig.baseUrl}${adminApiConfig.endpoints.deleteUser}/${userId}`;
+            console.log('DELETE URL:', deleteUrl);
+            
             // Use configured API base URL
-            const response = await fetch(`${adminApiConfig.baseUrl}${adminApiConfig.endpoints.deleteUser}/${userId}`, {
+            const response = await fetch(deleteUrl, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${await this.currentUser.getIdToken()}`,
@@ -1381,14 +1387,19 @@ class EnhancedAdminDashboard {
                 }
             });
             
+            console.log('Delete response status:', response.status);
+            
             if (!response.ok) {
-                throw new Error('Failed to delete user from authentication');
+                const errorText = await response.text();
+                console.error('Delete API error:', errorText);
+                throw new Error(`Failed to delete user from authentication: ${response.status} ${errorText}`);
             }
             
             // Add to deletedUsers collection to prevent recreation
             await setDoc(doc(this.db, 'deletedUsers', userId), {
                 deletedAt: new Date(),
-                deletedBy: this.currentUser.uid
+                deletedBy: this.currentUser.uid,
+                reason: 'Admin deletion'
             });
             
             this.showNotification('User deleted successfully', 'success');
@@ -1396,7 +1407,7 @@ class EnhancedAdminDashboard {
             
         } catch (error) {
             console.error('Delete user error:', error);
-            this.showNotification(error.message, 'error');
+            this.showNotification(`Delete failed: ${error.message}`, 'error');
         }
     }
 

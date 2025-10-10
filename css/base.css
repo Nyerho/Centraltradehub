@@ -215,26 +215,7 @@
     margin: 0; /* Remove default paragraph margin */
 }
 
-.transaction-cards {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--spacing-lg); /* Increased from 16px */
-    margin: var(--spacing-xl) 0; /* Increased margin */
-}
-
-.transaction-card {
-    background: var(--trading-card);
-    border-radius: 12px;
-    padding: 16px;
-    text-align: center;
-}
-
-.transaction-card h4 {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.7);
-    margin-bottom: 8px;
-    font-weight: 500;
-}
+/* Removed transaction-cards CSS styles */
 
 .transaction-amount {
     font-size: 18px;

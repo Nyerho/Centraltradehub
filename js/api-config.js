@@ -186,12 +186,24 @@ if (typeof module !== 'undefined' && module.exports) {
 
 // Admin API Configuration
 export const adminApiConfig = {
-    baseUrl: (window.location.hostname === 'localhost' || 
-              window.location.hostname === '127.0.0.1' || 
-              window.location.port === '5500' || // Live Server port
-              window.location.protocol === 'file:') // Local file
-        ? 'http://localhost:3001' 
-        : 'https://www.centraltradekeplr.com',
+    baseUrl: (() => {
+        // Force localhost for development - more reliable detection
+        const isLocal = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1' || 
+                       window.location.port === '5500' || // Live Server
+                       window.location.port === '3000' || // React dev server
+                       window.location.protocol === 'file:' || // Local file
+                       window.location.href.includes('localhost');
+        
+        console.log('Environment detection:', {
+            hostname: window.location.hostname,
+            port: window.location.port,
+            protocol: window.location.protocol,
+            isLocal: isLocal
+        });
+        
+        return isLocal ? 'http://localhost:3001' : 'https://www.centraltradekeplr.com';
+    })(),
     endpoints: {
         deleteUser: '/api/users',
         getUsers: '/api/users',
