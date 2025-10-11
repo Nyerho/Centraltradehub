@@ -11,6 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 // Initialize Firebase Admin SDK
+// Top-level initialization block
 try {
   let serviceAccount;
   
@@ -27,14 +28,24 @@ try {
     };
   } else {
     // Fallback to local file for development
-    serviceAccount = require('../serviceAcoountkey.json');
+    try {
+      // FIX: corrected filename and added safe try/catch
+      serviceAccount = require('../serviceAccountKey.json');
+    } catch (e) {
+      console.warn('Service account JSON not found. Falling back to application default credentials.');
+    }
   }
 
   if (!admin.apps.length) {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
+    const options = {
       databaseURL: `https://centraltradehub-30f00-default-rtdb.firebaseio.com`
-    });
+    };
+    // Use cert if available; otherwise application default credentials
+    options.credential = serviceAccount
+      ? admin.credential.cert(serviceAccount)
+      : admin.credential.applicationDefault();
+
+    admin.initializeApp(options);
   }
   
   console.log('✅ Firebase Admin initialized successfully');
