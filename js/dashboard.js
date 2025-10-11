@@ -343,7 +343,7 @@ class DashboardManager {
                 }
             } catch (error) {
                 console.error('Error processing user data update:', error);
-                this.showNotification('Error updating account data', 'error');
+                // Removed: this.showNotification('Error updating account data', 'error');
             }
         }, (error) => {
             console.error('❌ Firebase listener error:', error);
