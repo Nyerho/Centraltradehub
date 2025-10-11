@@ -1449,24 +1449,46 @@ class EnhancedAdminDashboard {
             console.log('Attempting to delete user:', userId);
             console.log('Using API config:', adminApiConfig);
             
-            const deleteUrl = `${adminApiConfig.baseUrl}${adminApiConfig.endpoints.deleteUser}/${userId}`;
-            console.log('DELETE URL:', deleteUrl);
-            
-            // Use configured API base URL
-            const response = await fetch(deleteUrl, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${await this.currentUser.getIdToken()}`,
-                    'Content-Type': 'application/json'
+            const token = this.currentUser && this.currentUser.getIdToken ? await this.currentUser.getIdToken() : '';
+            const headers = {
+                'Authorization': token ? `Bearer ${token}` : '',
+                'Content-Type': 'application/json'
+            };
+
+            const tryDelete = async (baseUrl) => {
+                const deleteUrl = `${baseUrl}${adminApiConfig.endpoints.deleteUser}/${userId}`;
+                console.log('DELETE URL:', deleteUrl);
+
+                const response = await fetch(deleteUrl, {
+                    method: 'DELETE',
+                    headers
+                });
+
+                console.log('Delete response status:', response.status);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Delete API error:', errorText);
+                    const err = new Error(`Failed to delete user from authentication: ${response.status} ${errorText}`);
+                    err.status = response.status;
+                    throw err;
                 }
-            });
-            
-            console.log('Delete response status:', response.status);
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Delete API error:', errorText);
-                throw new Error(`Failed to delete user from authentication: ${response.status} ${errorText}`);
+
+                return true;
+            };
+
+            // First attempt: current configured baseUrl
+            try {
+                await tryDelete(adminApiConfig.baseUrl);
+            } catch (err) {
+                // Fallback to local admin server when the primary returns 404/NOT_FOUND
+                if ((err.status === 404 || (err.message && err.message.includes('NOT_FOUND'))) &&
+                    adminApiConfig.baseUrl !== 'http://localhost:3001') {
+                    console.warn('Primary delete endpoint not found. Retrying against local admin server...');
+                    await tryDelete('http://localhost:3001');
+                } else {
+                    throw err;
+                }
             }
             
             // Add to deletedUsers collection to prevent recreation
