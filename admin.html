@@ -213,6 +213,15 @@
                         </a>
                     </li>
                     
+                    <!-- KYC Requests -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="#kyc" data-section="kyc">
+                            <i class="fas fa-id-card"></i>
+                            <span>KYC Requests</span>
+                            <span class="badge bg-danger ms-auto" id="pendingKYC">0</span>
+                        </a>
+                    </li>
+                    
                     <!-- System Logs -->
                     <li class="nav-item">
                         <a class="nav-link" href="#logs" data-section="logs">
@@ -1552,6 +1561,82 @@
                         <div class="card-body">
                             <h5 class="card-title">Platform Configuration</h5>
                             <p class="text-muted">Settings management functionality will be implemented here.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- KYC Requests Section -->
+        <section id="kyc" class="admin-section">
+            <div class="section-header mb-4">
+                <h1 class="h3 mb-1"><i class="fas fa-id-card me-2"></i>KYC Requests</h1>
+                <p class="text-muted">Review and manage user identity verification requests</p>
+            </div>
+            <div class="container-fluid">
+                <div class="card bg-dark text-white border-secondary mt-3">
+                    <div class="card-header border-secondary">
+                        <h5 class="mb-0">Pending KYC Requests</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Status</th>
+                                        <th>Submitted At</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="kycRequestsBody">
+                                    <!-- Filled by admin.js -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <button class="btn btn-sm btn-primary" onclick="adminDashboard.loadKYCRequests()">Refresh</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KYC Review Modal -->
+            <div id="kycReviewModal" class="modal" style="display:none;">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content bg-dark text-white border-secondary">
+                        <div class="modal-header border-secondary">
+                            <h5 class="modal-title">KYC Review</h5>
+                            <button type="button" class="btn-close btn-close-white" onclick="document.getElementById('kycReviewModal').style.display='none'"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <strong>User:</strong> <span id="kycUserName"></span> (<span id="kycUserEmail"></span>)
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <h6>Government ID</h6>
+                                    <div id="kycDocId" class="border p-2 rounded">
+                                        <!-- filled dynamically -->
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <h6>Proof of Address</h6>
+                                    <div id="kycDocAddress" class="border p-2 rounded">
+                                        <!-- filled dynamically -->
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <h6>Selfie with ID</h6>
+                                    <div id="kycDocSelfie" class="border p-2 rounded">
+                                        <!-- filled dynamically -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-secondary">
+                            <button id="kycApproveBtn" class="btn btn-success">Approve</button>
+                            <button id="kycRejectBtn" class="btn btn-danger">Reject</button>
+                            <button class="btn btn-secondary" onclick="document.getElementById('kycReviewModal').style.display='none'">Close</button>
                         </div>
                     </div>
                 </div>

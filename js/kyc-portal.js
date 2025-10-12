@@ -310,13 +310,27 @@ class KYCPortal {
             const idFile = document.getElementById('idFileInput').files[0];
             const billFile = document.getElementById('billFileInput').files[0];
             const selfieFile = document.getElementById('selfieFileInput').files[0];
-            
-            // In production, upload files to Firebase Storage or your preferred storage
-            // For now, we'll simulate the upload process
-            
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Update user status to pending
+
+            // Upload documents to Firebase Storage and get URLs
+            // Import at top of file:
+            // import { storage } from './firebase-config.js';
+            // import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+
+            const userId = this.currentUser.uid;
+            const timestamp = Date.now();
+            const basePath = `kyc/${userId}/`;
+
+            const uploadAndGetUrl = async (file, path) => {
+                const storageRef = ref(storage, path);
+                await uploadBytes(storageRef, file);
+                return await getDownloadURL(storageRef);
+            };
+
+            const idUrl = await uploadAndGetUrl(idFile, `${basePath}${timestamp}_id_${idFile.name}`);
+            const addressUrl = await uploadAndGetUrl(billFile, `${basePath}${timestamp}_address_${billFile.name}`);
+            const selfieUrl = await uploadAndGetUrl(selfieFile, `${basePath}${timestamp}_selfie_${selfieFile.name}`);
+
+            // Update user status to pending and store document URLs
             await updateDoc(doc(db, 'users', this.currentUser.uid), {
                 kycStatus: 'pending',
                 kycSubmittedAt: new Date().toISOString(),
@@ -324,9 +338,14 @@ class KYCPortal {
                     id: idFile.name,
                     proofOfAddress: billFile.name,
                     selfie: selfieFile.name
+                },
+                kycDocuments: {
+                    idUrl,
+                    addressUrl,
+                    selfieUrl
                 }
             });
-            
+
             // Send notification email
             const userDoc = await getDoc(doc(db, 'users', this.currentUser.uid));
             if (userDoc.exists()) {

@@ -4464,4 +4464,169 @@ EnhancedAdminDashboard.prototype.deleteTransactionRecord = async function(transa
     }
 };
 
+// KYC Admin: Load and render pending requests
+EnhancedAdminDashboard.prototype.loadKYCRequests = async function() {
+    try {
+        const q = query(collection(this.db, 'users'), where('kycStatus', '==', 'pending'));
+        const snapshot = await getDocs(q);
+
+        this.kycRequests = [];
+        snapshot.forEach(docSnap => {
+            const data = docSnap.data();
+            this.kycRequests.push({
+                id: docSnap.id,
+                email: data.email || '',
+                displayName: data.displayName || '',
+                kycStatus: data.kycStatus || 'pending',
+                kycSubmittedAt: data.kycSubmittedAt || null,
+                kycDocuments: data.kycDocuments || null,
+                documentsUploaded: data.documentsUploaded || null
+            });
+        });
+
+        this.renderKYCRequestsTable();
+        this.showNotification(`Loaded ${this.kycRequests.length} pending KYC requests`, 'success');
+    } catch (err) {
+        console.error('Failed to load KYC requests:', err);
+        this.showNotification('Failed to load KYC requests', 'error');
+    }
+};
+
+EnhancedAdminDashboard.prototype.renderKYCRequestsTable = function() {
+    const tbody = document.getElementById('kycRequestsBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = this.kycRequests.map(req => {
+        const submitted = req.kycSubmittedAt ? new Date(req.kycSubmittedAt).toLocaleString() : '—';
+        return `
+            <tr>
+                <td>${req.displayName || '—'}</td>
+                <td>${req.email || '—'}</td>
+                <td><span class="badge bg-warning text-dark">${req.kycStatus}</span></td>
+                <td>${submitted}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" onclick="adminDashboard.openKYCReview('${req.id}')">View</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+};
+
+EnhancedAdminDashboard.prototype.openKYCReview = function(userId) {
+    const req = (this.kycRequests || []).find(r => r.id === userId);
+    if (!req) {
+        this.showNotification('KYC request not found', 'error');
+        return;
+    }
+
+    // Fill user info
+    const nameEl = document.getElementById('kycUserName');
+    const emailEl = document.getElementById('kycUserEmail');
+    if (nameEl) nameEl.textContent = req.displayName || '—';
+    if (emailEl) emailEl.textContent = req.email || '—';
+
+    // Helper to render doc block (view + download)
+    const renderDoc = (containerId, url, fallbackName) => {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        if (url) {
+            const isImage = url.includes('image') || /\.(png|jpg|jpeg)$/i.test(url);
+            const content = isImage
+                ? `<img src="${url}" alt="Preview" class="img-fluid rounded mb-2" style="max-height:200px;" />`
+                : `<a href="${url}" target="_blank" class="btn btn-sm btn-outline-info mb-2">Open Document</a>`;
+
+            container.innerHTML = `
+                ${content}
+                <div>
+                    <a href="${url}" target="_blank" class="btn btn-sm btn-outline-secondary me-2">View</a>
+                    <button class="btn btn-sm btn-success" onclick="adminDashboard.downloadKYCFile('${url}', '${fallbackName || 'document'}')">Download</button>
+                </div>
+            `;
+        } else {
+            // Fallback if old submissions only saved names
+            container.innerHTML = `
+                <div class="text-warning">
+                    No file URL saved. ${fallbackName ? 'Filename: ' + fallbackName : ''}
+                </div>
+            `;
+        }
+    };
+
+    const docs = req.kycDocuments || {};
+    const names = req.documentsUploaded || {};
+
+    renderDoc('kycDocId', docs.idUrl || null, names.id || 'id');
+    renderDoc('kycDocAddress', docs.addressUrl || null, names.proofOfAddress || 'address');
+    renderDoc('kycDocSelfie', docs.selfieUrl || null, names.selfie || 'selfie');
+
+    // Wire approve/reject
+    const modal = document.getElementById('kycReviewModal');
+    const approveBtn = document.getElementById('kycApproveBtn');
+    const rejectBtn = document.getElementById('kycRejectBtn');
+
+    if (approveBtn) {
+        approveBtn.onclick = () => this.approveKYCRequest(userId);
+    }
+    if (rejectBtn) {
+        rejectBtn.onclick = () => this.rejectKYCRequest(userId);
+    }
+
+    if (modal) {
+        modal.style.display = 'block';
+    }
+};
+
+EnhancedAdminDashboard.prototype.approveKYCRequest = async function(userId) {
+    try {
+        await updateDoc(doc(this.db, 'users', userId), {
+            kycStatus: 'verified',
+            kycApprovedAt: serverTimestamp(),
+            kycReviewedBy: this.currentUser ? this.currentUser.uid : 'admin'
+        });
+
+        this.showNotification('KYC approved successfully', 'success');
+        document.getElementById('kycReviewModal').style.display = 'none';
+        await this.loadKYCRequests();
+    } catch (err) {
+        console.error('Approve KYC error:', err);
+        this.showNotification('Failed to approve KYC', 'error');
+    }
+};
+
+EnhancedAdminDashboard.prototype.rejectKYCRequest = async function(userId) {
+    try {
+        await updateDoc(doc(this.db, 'users', userId), {
+            kycStatus: 'rejected',
+            kycRejectedAt: serverTimestamp(),
+            kycReviewedBy: this.currentUser ? this.currentUser.uid : 'admin'
+        });
+
+        this.showNotification('KYC rejected', 'warning');
+        document.getElementById('kycReviewModal').style.display = 'none';
+        await this.loadKYCRequests();
+    } catch (err) {
+        console.error('Reject KYC error:', err);
+        this.showNotification('Failed to reject KYC', 'error');
+    }
+};
+
+EnhancedAdminDashboard.prototype.downloadKYCFile = async function(url, filename) {
+    try {
+        const res = await fetch(url);
+        const blob = await res.blob();
+        const a = document.createElement('a');
+        const objectUrl = URL.createObjectURL(blob);
+        a.href = objectUrl;
+        a.download = filename || 'document';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+        console.error('Download error:', err);
+        this.showNotification('Failed to download file', 'error');
+    }
+};
+
 export default EnhancedAdminDashboard;
