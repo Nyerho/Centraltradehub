@@ -1,6 +1,7 @@
-import { auth, db } from './firebase-config.js';
+import { auth, db, storage } from './firebase-config.js';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
+import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 import EmailService from './email-service.js';
 
 class KYCPortal {
@@ -312,10 +313,6 @@ class KYCPortal {
             const selfieFile = document.getElementById('selfieFileInput').files[0];
 
             // Upload documents to Firebase Storage and get URLs
-            // Import at top of file:
-            // import { storage } from './firebase-config.js';
-            // import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
-
             const userId = this.currentUser.uid;
             const timestamp = Date.now();
             const basePath = `kyc/${userId}/`;
