@@ -1449,13 +1449,33 @@ class EnhancedAdminDashboard {
             console.log('Attempting to delete user:', userId);
             console.log('Using API config:', adminApiConfig);
             
-            const token = this.currentUser && this.currentUser.getIdToken ? await this.currentUser.getIdToken() : '';
-            const headers = {
-                'Authorization': token ? `Bearer ${token}` : '',
-                'Content-Type': 'application/json'
+            // Helper: get admin auth token (Firebase ID token if logged in)
+            const getAdminAuthToken = async () => {
+                try {
+                    if (this.currentUser && this.currentUser.getIdToken) {
+                        // Forces refresh to avoid expired tokens
+                        return await this.currentUser.getIdToken(true);
+                    }
+                } catch (e) {
+                    console.warn('Failed to get Firebase ID token', e);
+                }
+                // Fallback to stored token if your app saves it
+                return localStorage.getItem('adminToken') || localStorage.getItem('idToken') || null;
             };
 
             const tryDelete = async (baseUrl) => {
+                const token = await getAdminAuthToken();
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                } else {
+                    // If not logged in as admin, fail fast with a helpful message
+                    throw new Error('You must be logged in as an admin to perform deletions. Please sign in and try again.');
+                }
+                
                 const deleteUrl = `${baseUrl}${adminApiConfig.endpoints.deleteUser}/${userId}`;
                 console.log('DELETE URL:', deleteUrl);
 

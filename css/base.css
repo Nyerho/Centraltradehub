@@ -806,6 +806,15 @@ body {
         grid-template-columns: 1fr;
         gap: var(--spacing-lg);
         padding: var(--spacing-md);
+        min-height: auto; /* remove tall empty area on mobile */
+    }
+    
+    /* Tighten the mobile toggle row spacing and remove the bottom border line */
+    .dashboard-container .d-md-none {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        margin-bottom: 0 !important;
+        border-bottom: none !important;
     }
     
     .header-container {
