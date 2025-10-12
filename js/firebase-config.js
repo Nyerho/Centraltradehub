@@ -16,7 +16,7 @@ const firebaseConfig = {
     apiKey: "AIzaSyAwnWoLfrEc1EtXWCD0by5L0VtCmYf8Unw",
     authDomain: "centraltradehub-30f00.firebaseapp.com",
     projectId: "centraltradehub-30f00",
-    storageBucket: "centraltradehub-30f00.firebasestorage.app",
+    storageBucket: "centraltradehub-30f00.appspot.com",
     messagingSenderId: "745751687877",
     appId: "1:745751687877:web:4576449aa2e8360931b6ac",
     measurementId: "G-YHCS5CH450"
