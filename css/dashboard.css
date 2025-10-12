@@ -1139,6 +1139,11 @@ body {
         display: none;
     }
     
+    /* Hide header username on mobile, keep visible on larger screens */
+    .centraltradehub-header .user-name {
+        display: none !important;
+    }
+    
     .sidebar {
         position: fixed;
         left: -250px;
