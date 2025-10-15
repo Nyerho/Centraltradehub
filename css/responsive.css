@@ -85,7 +85,7 @@
 
 /* Mobile Breakpoint */
 @media (max-width: 768px) {
-    /* Navigation */
+    /* Mobile navigation: off-canvas via transform, no nested .nav-menu */
     .nav-menu {
         position: fixed;
         top: 70px;
@@ -100,33 +100,110 @@
         padding: 2rem 0;
         z-index: 1000;
         transition: transform 0.3s ease;
-        transform: translateX(-100%); /* off-canvas without nesting */
+        transform: translateX(-100%); /* off-canvas */
     }
-
     .nav-menu.active {
-        transform: translateX(0);     /* slide-in cleanly */
+        transform: translateX(0);
     }
-
     .hamburger {
-        display: flex !important;     /* ensure toggle visible */
+        display: flex !important;  /* ensure visible on mobile */
         cursor: pointer;
         z-index: 1001;
     }
-    
-    .nav-menu li {
-        margin: 1.5rem 0;
+
+    /* Global mobile overflow prevention */
+    html, body {
+        max-width: 100%;
+        overflow-x: hidden;
     }
-    
-    .nav-menu a {
-        font-size: 1.1rem;
-        padding: 1rem 2rem;
-        border-radius: 10px;
-        transition: all 0.3s ease;
+    *, *::before, *::after {
+        box-sizing: border-box;
     }
-    
-    .nav-menu a:hover {
-        background: rgba(255, 255, 255, 0.1);
-        transform: translateY(-2px);
+    img, svg, video, canvas {
+        max-width: 100%;
+        height: auto;
+        display: block;
+    }
+    .container {
+        width: 100%;
+        max-width: 100%;
+        padding-left: 12px;
+        padding-right: 12px;
+        margin: 0 auto;
+    }
+
+    /* Stack all multi-column sections to a single column */
+    .features-grid,
+    .choose-us-features,
+    .bonus-section,
+    .tools-content,
+    .education-categories,
+    .about-content,
+    .about-stats,
+    .next-options,
+    .providers-logos {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 16px;
+        justify-items: stretch;
+        align-items: stretch;
+    }
+
+    /* Make each card/span full width and remove side gaps */
+    .features-grid .feature-card,
+    .choose-us-features .feature-stat,
+    .bonus-section .bonus-card,
+    .bonus-section .bonus-info,
+    .tools-content .tools-text,
+    .tools-content .tools-visual,
+    .education-categories .education-card,
+    .about-content .about-text,
+    .about-stats .stat-card,
+    .next-options .next-card,
+    .providers-logos .provider-logo {
+        display: block;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        float: none !important;
+        clear: both;
+        align-self: stretch;
+        min-width: 0; /* prevent content overflow */
+        box-sizing: border-box;
+    }
+
+    /* Flags: stack vertically to avoid wrap offsets */
+    .market-flags {
+        position: static;
+        display: flex;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        gap: 8px;
+        margin-top: 12px;
+    }
+    .market-flags .flag-item {
+        width: 100%;
+        margin: 0;
+    }
+
+    /* Prevent image overflow inside cards */
+    .feature-card img,
+    .education-card img,
+    .tools-visual img,
+    .security-visual img,
+    .next-card .card-image {
+        width: 100%;
+        height: auto;
+        display: block;
+        max-width: 100%;
+    }
+
+    /* Mobile safe area and anchor fixes */
+    body.mobile-chat-safe-area {
+        padding-bottom: calc(100px + env(safe-area-inset-bottom));
+    }
+    section, footer {
+        scroll-margin-bottom: 120px;
     }
 
     .hamburger {
