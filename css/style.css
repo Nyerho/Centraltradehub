@@ -1572,7 +1572,6 @@ body {
     .choose-next,
     .providers,
     .education-section,
-    .about-section,
     .indices {
         margin: 0 -1rem !important; /* Negative margin to counteract container padding */
         width: 100vw !important;
@@ -1592,10 +1591,26 @@ body {
     .choose-next .container,
     .providers .container,
     .education-section .container,
-    .about-section .container,
     .indices .container {
         padding: 0 1rem !important; /* Restore padding inside sections */
         max-width: none !important;
+        width: 100% !important;
+    }
+    
+    /* OVERRIDE: Fix About section mobile misalignment */
+    .about-section {
+        margin: 0 !important;
+        width: 100% !important;
+        position: static !important;
+        left: auto !important;
+        right: auto !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+    
+    .about-section .container {
+        padding: 0 1rem !important;
+        max-width: 100% !important;
         width: 100% !important;
     }
 }
@@ -1610,7 +1625,6 @@ body {
     .choose-next,
     .providers,
     .education-section,
-    .about-section,
     .indices {
         margin: 0 -0.75rem !important;
     }
@@ -1624,9 +1638,25 @@ body {
     .choose-next .container,
     .providers .container,
     .education-section .container,
-    .about-section .container,
     .indices .container {
         padding: 0 0.75rem !important;
+    }
+    
+    /* OVERRIDE: Fix About section mobile misalignment */
+    .about-section {
+        margin: 0 !important;
+        width: 100% !important;
+        position: static !important;
+        left: auto !important;
+        right: auto !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+    
+    .about-section .container {
+        padding: 0 0.75rem !important;
+        max-width: 100% !important;
+        width: 100% !important;
     }
 }
 
