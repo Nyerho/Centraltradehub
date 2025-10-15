@@ -111,6 +111,48 @@
         z-index: 1001;
     }
     
+    /* What's New mobile fix: prevent right-side cutoff */
+    .news-achievements,
+    .news-achievements .container {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding-left: 12px;
+        padding-right: 12px;
+        box-sizing: border-box;
+    }
+
+    .news-achievements .news-achievements-content {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px;
+        margin: 0 !important;
+        /* In case the desktop uses grid, collapse to 1 column */
+        grid-template-columns: 1fr !important;
+    }
+
+    .news-achievements .news-section,
+    .news-achievements .achievements-section {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important; /* critical to allow flex items to shrink */
+        margin: 0 !important;
+        padding: 16px !important;
+        box-sizing: border-box;
+        transform: none !important; /* neutralize any desktop transforms pushing content */
+    }
+
+    /* Defensive: avoid any content forcing overflow */
+    .news-achievements * {
+        max-width: 100% !important;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    /* Final guard: if a parent still causes overflow, hide horizontal scroll on mobile */
+    html, body {
+        overflow-x: hidden;
+    }
+    
     /* Liquidity Providers — mobile fix: restore flex and item sizing */
     .providers-logos { display: flex !important; flex-direction: column !important; width: 100% !important; gap: 12px !important; overflow: hidden !important; }
     .providers-logos .providers-row-1,
