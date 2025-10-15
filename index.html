@@ -803,45 +803,42 @@
                 <h2>Liquidity Providers</h2>
                 <p>Central Trade Hub Group currently has a variety of liquidity providers, including but not limited to:</p>
             </div>
-            <div class="providers-marquee">
+            <!-- Added 'providers-logos' class so existing CSS overrides apply; inline style stacks rows to prevent overlap -->
+            <div class="providers-marquee providers-logos" style="display: flex; flex-direction: column; gap: 12px;">
                 <!-- Row 1 -->
                 <div class="providers-row row-1">
                     <div class="track">
-                        <!-- Your logos (first copy) -->
-                        <img class="provider-logo" src="assets/images/providers/binance.svg" alt="Binance">
-                        <img class="provider-logo" src="assets/images/providers/kraken.svg" alt="Kraken">
-                        <img class="provider-logo" src="assets/images/providers/coinbase.svg" alt="Coinbase">
-                        <img class="provider-logo" src="assets/images/providers/gemini.svg" alt="Gemini">
-                        <img class="provider-logo" src="assets/images/providers/bitstamp.svg" alt="Bitstamp">
-                        <!-- Add as many as you need -->
+                        <!-- Added onerror fallback so broken logos don't show white blocks -->
+                        <img class="provider-logo" src="assets/images/providers/binance.svg" alt="Binance" onerror="this.src='assets/images/logo-white.png';">
+                        <img class="provider-logo" src="assets/images/providers/kraken.svg" alt="Kraken" onerror="this.src='assets/images/logo-white.png';">
+                        <img class="provider-logo" src="assets/images/providers/coinbase.svg" alt="Coinbase" onerror="this.src='assets/images/logo-white.png';">
+                        <img class="provider-logo" src="assets/images/providers/gemini.svg" alt="Gemini" onerror="this.src='assets/images/logo-white.png';">
+                        <img class="provider-logo" src="assets/images/providers/bitstamp.svg" alt="Bitstamp" onerror="this.src='assets/images/logo-white.png';">
                     </div>
                     <div class="track track-dup">
-                        <!-- Same logos (second copy for seamless loop) -->
-                        <img class="provider-logo" src="assets/images/providers/binance.svg" alt="Binance">
-                        <img class="provider-logo" src="assets/images/providers/kraken.svg" alt="Kraken">
-                        <img class="provider-logo" src="assets/images/providers/coinbase.svg" alt="Coinbase">
-                        <img class="provider-logo" src="assets/images/providers/gemini.svg" alt="Gemini">
-                        <img class="provider-logo" src="assets/images/providers/bitstamp.svg" alt="Bitstamp">
+                        <img class="provider-logo" src="assets/images/providers/binance.svg" alt="Binance" onerror="this.src='assets/images/logo-white.png';">
+                        <img class="provider-logo" src="assets/images/providers/kraken.svg" alt="Kraken" onerror="this.src='assets/images/logo-white.png';">
+                        <img class="provider-logo" src="assets/images/providers/coinbase.svg" alt="Coinbase" onerror="this.src='assets/images/logo-white.png';">
+                        <img class="provider-logo" src="assets/images/providers/gemini.svg" alt="Gemini" onerror="this.src='assets/images/logo-white.png';">
+                        <img class="provider-logo" src="assets/images/providers/bitstamp.svg" alt="Bitstamp" onerror="this.src='assets/images/logo-white.png';">
                     </div>
                 </div>
 
                 <!-- Row 2 -->
                 <div class="providers-row row-2">
                     <div class="track">
-                        <!-- Your logos (first copy) -->
-                        <img class="provider-logo" src="assets/images/providers/binance.svg" alt="Binance">
-                        <img class="provider-logo" src="assets/images/providers/kraken.svg" alt="Kraken">
-                        <img class="provider-logo" src="assets/images/providers/coinbase.svg" alt="Coinbase">
-                        <img class="provider-logo" src="assets/images/providers/gemini.svg" alt="Gemini">
-                        <img class="provider-logo" src="assets/images/providers/bitstamp.svg" alt="Bitstamp">
+                        <img class="provider-logo" src="assets/images/providers/binance.svg" alt="Binance" onerror="this.src='assets/images/logo-white.png';">
+                        <img class="provider-logo" src="assets/images/providers/kraken.svg" alt="Kraken" onerror="this.src='assets/images/logo-white.png';">
+                        <img class="provider-logo" src="assets/images/providers/coinbase.svg" alt="Coinbase" onerror="this.src='assets/images/logo-white.png';">
+                        <img class="provider-logo" src="assets/images/providers/gemini.svg" alt="Gemini" onerror="this.src='assets/images/logo-white.png';">
+                        <img class="provider-logo" src="assets/images/providers/bitstamp.svg" alt="Bitstamp" onerror="this.src='assets/images/logo-white.png';">
                     </div>
                     <div class="track track-dup">
-                        <!-- Same logos (second copy for seamless loop) -->
-                        <img class="provider-logo" src="assets/images/providers/binance.svg" alt="Binance">
-                        <img class="provider-logo" src="assets/images/providers/kraken.svg" alt="Kraken">
-                        <img class="provider-logo" src="assets/images/providers/coinbase.svg" alt="Coinbase">
-                        <img class="provider-logo" src="assets/images/providers/gemini.svg" alt="Gemini">
-                        <img class="provider-logo" src="assets/images/providers/bitstamp.svg" alt="Bitstamp">
+                        <img class="provider-logo" src="assets/images/providers/binance.svg" alt="Binance" onerror="this.src='assets/images/logo-white.png';">
+                        <img class="provider-logo" src="assets/images/providers/kraken.svg" alt="Kraken" onerror="this.src='assets/images/logo-white.png';">
+                        <img class="provider-logo" src="assets/images/providers/coinbase.svg" alt="Coinbase" onerror="this.src='assets/images/logo-white.png';">
+                        <img class="provider-logo" src="assets/images/providers/gemini.svg" alt="Gemini" onerror="this.src='assets/images/logo-white.png';">
+                        <img class="provider-logo" src="assets/images/providers/bitstamp.svg" alt="Bitstamp" onerror="this.src='assets/images/logo-white.png';">
                     </div>
                 </div>
             </div>
