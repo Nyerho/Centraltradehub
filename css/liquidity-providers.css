@@ -230,3 +230,22 @@
         transform: none !important;
     }
 }
+
+/* Add missing keyframes for leftward motion */
+@keyframes slideLeft {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+/* Ensure logos inside provider cards render visibly */
+.liquidity-providers .provider-logo img,
+.liquidity-providers .provider-logo svg {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    opacity: 1;
+    filter: none;
+    mix-blend-mode: normal;
+}
