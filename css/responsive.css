@@ -89,18 +89,18 @@
     .nav-menu {
         position: fixed;
         top: 70px;
+        left: 0;
+        width: 100%;
         flex-direction: column;
+        text-align: center;
         background-color: rgba(26, 26, 46, 0.98);
         backdrop-filter: blur(10px);
-        width: 100%;
-        text-align: center;
-        transition: transform 0.3s ease;
         box-shadow: 0 10px 27px rgba(0, 0, 0, 0.15);
+        border-radius: 0 0 20px 20px;
         padding: 2rem 0;
         z-index: 1000;
-        border-radius: 0 0 20px 20px;
-        left: 0;
-        transform: translateX(-100%); /* FIX: correct off-canvas without nesting */
+        transition: transform 0.3s ease;
+        transform: translateX(-100%); /* off-canvas without nesting */
     }
 
     .nav-menu.active {
@@ -108,7 +108,7 @@
     }
 
     .hamburger {
-        display: flex !important;     /* FIX: ensure toggle is visible on mobile */
+        display: flex !important;     /* ensure toggle visible */
         cursor: pointer;
         z-index: 1001;
     }
