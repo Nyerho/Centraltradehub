@@ -100,79 +100,19 @@
         z-index: 1000;
         border-radius: 0 0 20px 20px;
         left: 0;
-        /* Off-canvas nav fix */
-        .nav-menu {
-            position: fixed;
-            top: 70px;
-            left: 0;
-            width: 100%;
-            background-color: rgba(26, 26, 46, 0.98);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 10px 27px rgba(0, 0, 0, 0.15);
-            text-align: center;
-            padding: 2rem 0;
-            z-index: 1000;
-            border-radius: 0 0 20px 20px;
-            transition: transform 0.3s ease;
-            transform: translateX(-100%);
-        }
-        .nav-menu.active {
-            transform: translateX(0);
-        }
-    
-    /* Reserve space for bottom-right chat bubble on mobile */
-    body.mobile-chat-safe-area {
-        padding-bottom: calc(100px + env(safe-area-inset-bottom));
-    }
-    section, footer {
-        scroll-margin-bottom: 120px;
-    }
-
-    /* Exact mobile stacking overrides to prevent staggered cards */
-    .features-grid,
-    .choose-us-features,
-    .bonus-section,
-    .tools-content,
-    .education-categories,
-    .about-content,
-    .about-stats {
-        display: grid !important;
-        grid-template-columns: 1fr !important;
-        gap: 20px;
-        align-items: stretch;
-    }
-
-    /* Ensure cards span full width and don’t overflow */
-    .feature-card,
-    .feature-stat,
-    .bonus-card,
-    .bonus-info,
-    .tools-text,
-    .tools-visual,
-    .education-card,
-    .about-text,
-    .about-stats .stat-card {
-        width: 100% !important;
-        max-width: 100% !important;
-        margin: 0 !important;
-        float: none;
-    }
-
-    /* Prevent image overflow inside cards */
-    .feature-card img,
-    .education-card img,
-    .tools-visual img,
-    .security-visual img {
-        width: 100%;
-        height: auto;
-        display: block;
-        max-width: 100%;
+        transform: translateX(-100%); /* FIX: correct off-canvas without nesting */
     }
 
     .nav-menu.active {
         transform: translateX(0);     /* slide-in cleanly */
     }
 
+    .hamburger {
+        display: flex !important;     /* FIX: ensure toggle is visible on mobile */
+        cursor: pointer;
+        z-index: 1001;
+    }
+    
     .nav-menu li {
         margin: 1.5rem 0;
     }
