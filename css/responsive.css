@@ -1026,6 +1026,154 @@ body {
         z-index: 1001;
     }
 
+    /* Global container prevention for horizontal overflow */
+    html, body {
+        overflow-x: hidden !important;
+    }
+    section, .section, .container, .row {
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+
+    /* About Central Trade Hub */
+    #about, .about-section, .about-content {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+        align-items: start !important;
+        overflow: visible !important;
+    }
+    .about-stats, .about-features, .about-cards {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+        overflow: visible !important;
+    }
+    .about-content > *, .about-stats > *, .about-features > *, .about-cards > * {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        float: none !important;
+        height: auto !important;
+        min-height: 0 !important;
+    }
+    #about { scroll-margin-top: 80px !important; }
+
+    /* Why Choose Central */
+    #choose, .choose-section, .choose-us, .choose-us-features, .choose-cards {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+        overflow: visible !important;
+    }
+    .choose-us-features > *, .choose-cards > * {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        float: none !important;
+        height: auto !important;
+        min-height: 0 !important;
+    }
+    #choose { scroll-margin-top: 80px !important; }
+
+    /* Professional Trading Tools */
+    #tools, .tools-section, .tools-content, .tools-grid, .tools-cards {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+        overflow: visible !important;
+    }
+    .tools-content > *, .tools-grid > *, .tools-cards > * {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        float: none !important;
+        height: auto !important;
+        min-height: 0 !important;
+    }
+    #tools { scroll-margin-top: 80px !important; }
+
+    /* Liquidity Providers */
+    #providers, .providers-section, .providers-content, .providers-logos {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+        overflow: visible !important;
+    }
+    .providers-logos > * {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        float: none !important;
+        height: auto !important;
+        min-height: 0 !important;
+    }
+    .providers-logos img, .providers-logos svg {
+        max-width: 100% !important;
+        height: auto !important;
+        display: block !important;
+    }
+    /* Neutralize marquee/ticker overflow if present */
+    .providers-logos, .providers-marquee, .marquee-track {
+        overflow-x: hidden !important;
+        white-space: normal !important;
+        transform: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    /* Liquidity Providers: allow marquee on mobile */
+    .liquidity-providers .providers-marquee,
+    .liquidity-providers .providers-row,
+    .liquidity-providers .track {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        transform: translateZ(0); /* keep GPU-accelerated */
+    }
+
+    /* Ensure images don't cause page-wide overflow */
+    .liquidity-providers .provider-logo {
+        max-width: none !important;
+        height: var(--providers-height) !important;
+    }
+    #providers { scroll-margin-top: 80px !important; }
+
+    /* Choose Where To Go Next */
+    #next, .next-section, .next-options {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+        overflow: visible !important;
+    }
+    .next-options > * {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        float: none !important;
+        height: auto !important;
+        min-height: 0 !important;
+    }
+    .next-options .option-card {
+        min-width: 0 !important;
+    }
+    #next { scroll-margin-top: 80px !important; }
+
+    /* Media should always be responsive on mobile */
+    img, svg, video, canvas {
+        max-width: 100% !important;
+        height: auto !important;
+        display: block !important;
+    }
+
+    /* Buttons wrap nicely on small screens */
+    .btn, .btn-primary, .btn-outline-light, .btn-outline-info {
+        max-width: 100% !important;
+        white-space: normal !important;
+        overflow: visible !important;
+    }
+
     /* Catch-all for any element whose id/class includes "education" */
     #education,
     [id*="education"],
@@ -1108,14 +1256,18 @@ body {
 /* Extra-small screens: aggressively neutralize width/margin hacks */
 @media (max-width: 414px) {
     #education,
-    [id*="education"] {
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-        left: auto !important;
-        right: auto !important;
-        transform: none !important;
+    [id*="education"],
+    #about, .about-section, .about-content,
+    #choose, .choose-section, .choose-us, .choose-us-features,
+    #tools, .tools-section, .tools-content, .tools-grid, .tools-cards,
+    #providers, .providers-section, .providers-content, .providers-logos, .providers-marquee, .marquee-track,
+    #next, .next-section, .next-options {
         width: 100% !important;
         max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        transform: none !important;
+        overflow-x: hidden !important;
     }
 }
 

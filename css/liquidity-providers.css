@@ -130,3 +130,103 @@
         gap: 1rem;
     }
 }
+
+/* Liquidity Providers: Two-line marquee scrolling left-to-right */
+/* Variables for spacing and speed */
+:root {
+    --providers-gap: 24px;
+    --providers-height: 56px;
+    --providers-row-gap: 10px;
+    --providers-duration: 22s;  /* adjust for speed */
+    --providers-duration-2: 26s; /* second row slightly different for a nice effect */
+}
+
+/* Section container */
+.liquidity-providers {
+    padding: 40px 0;
+}
+
+/* Marquee container (no page-wide overflow) */
+.providers-marquee {
+    width: 100%;
+    overflow: hidden;           /* contain scroll within section */
+}
+
+/* Stack two rows */
+.providers-rows,
+.providers-marquee {
+    display: flex;
+    flex-direction: column;
+    gap: var(--providers-row-gap);
+}
+
+/* Each row holds two identical tracks (duplicated content) for seamless loop */
+.providers-row {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    height: calc(var(--providers-height) + 8px);
+}
+
+/* Track wrapper: two identical children with same logos */
+.providers-row .track {
+    display: inline-flex;
+    gap: var(--providers-gap);
+    align-items: center;
+    height: var(--providers-height);
+    /* Continuous rightward movement */
+    animation: marquee-right var(--providers-duration) linear infinite;
+    will-change: transform;
+}
+
+/* Second track in the same row starts halfway (to avoid gaps) */
+.providers-row .track.track-dup {
+    animation-delay: calc(var(--providers-duration) / -2);
+}
+
+/* Second row slightly different duration to desynchronize */
+.providers-row.row-2 .track {
+    animation-duration: var(--providers-duration-2);
+}
+.providers-row.row-2 .track.track-dup {
+    animation-delay: calc(var(--providers-duration-2) / -2);
+}
+
+/* Logos */
+.provider-logo {
+    display: inline-block;
+    height: var(--providers-height);
+    max-height: var(--providers-height);
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.25));
+}
+
+/* Keyframes for rightward marquee:
+   Move from -100% to 0% so content travels left -> right continuously */
+@keyframes marquee-right {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(0%); }
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    :root {
+        --providers-gap: 18px;
+        --providers-height: 44px;
+        --providers-row-gap: 8px;
+        --providers-duration: 18s;
+        --providers-duration-2: 21s;
+    }
+    .providers-row {
+        height: calc(var(--providers-height) + 6px);
+    }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .providers-row .track {
+        animation: none !important;
+        transform: none !important;
+    }
+}
