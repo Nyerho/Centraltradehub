@@ -171,6 +171,55 @@
         min-width: 0; /* prevent content overflow */
         box-sizing: border-box;
     }
+    
+    /* Trading Education Center: mobile full-width single-column and no clipping */
+    .education-section,
+    .education-categories {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        overflow-x: hidden !important;
+        justify-items: stretch !important;
+        align-items: stretch !important;
+    }
+
+    .education-section > *,
+    .education-categories > * {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        float: none !important;
+        min-width: 0 !important;         /* allow text/media to wrap properly */
+        box-sizing: border-box !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    /* Cards and media inside the education section */
+    .education-card {
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        padding-left: 12px !important;    /* consistent inner padding on mobile */
+        padding-right: 12px !important;
+    }
+
+    .education-card img,
+    .education-card svg,
+    .education-card video,
+    .education-card canvas {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        display: block !important;
+    }
 
     /* Flags: stack vertically to avoid wrap offsets */
     .market-flags {
