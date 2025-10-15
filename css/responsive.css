@@ -1010,4 +1010,113 @@ body {
     }
 }
 
+@media (max-width: 768px) {
+    /* Final Mobile Overrides — Education + Providers + Nav collapse safety */
+
+    /* Ensure Bootstrap collapse nav doesn't overlay or clip content */
+    .navbar-collapse .nav-menu {
+        position: static !important;
+        transform: none !important;
+        width: 100% !important;
+        left: auto !important;
+        right: auto !important;
+    }
+    .navbar-toggler.hamburger {
+        display: inline-flex !important;
+        z-index: 1001;
+    }
+
+    /* Catch-all for any element whose id/class includes "education" */
+    #education,
+    [id*="education"],
+    .education-section,
+    .education-content,
+    .education-categories {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        box-sizing: border-box !important;
+
+        /* Prevent clipping/overlap under fixed navbar */
+        scroll-margin-top: 80px !important;
+
+        /* Neutralize position hacks on mobile */
+        position: relative !important;
+        left: auto !important;
+        right: auto !important;
+        transform: none !important;
+
+        /* Prevent horizontal overflow/clipping */
+        overflow-x: hidden !important;
+        overflow-y: visible !important;
+        height: auto !important;
+        max-height: none !important;
+    }
+
+    /* Children inside education: full-width, no floats/margins, no clipping */
+    [id*="education"] > *,
+    .education-section > *,
+    .education-content > *,
+    .education-categories > * {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        float: none !important;
+        min-width: 0 !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        box-sizing: border-box !important;
+        word-break: break-word !important;
+        overflow-wrap: anywhere !important;
+    }
+
+    /* Media inside education must be responsive and constrained */
+    [id*="education"] img,
+    [class*="education"] img,
+    [id*="education"] svg,
+    [id*="education"] video,
+    [id*="education"] canvas {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        display: block !important;
+    }
+
+    /* Liquidity Providers overflow fix on mobile (marquee width inflation) */
+    .providers-logos {
+        width: 100% !important;
+        overflow: hidden !important;
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+        justify-items: stretch !important;
+        align-items: stretch !important;
+    }
+    .providers-logos .provider-logo {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        flex-shrink: 1 !important;
+    }
+}
+
+/* Extra-small screens: aggressively neutralize width/margin hacks */
+@media (max-width: 414px) {
+    #education,
+    [id*="education"] {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        left: auto !important;
+        right: auto !important;
+        transform: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+}
+
 /* Responsive Designs */
