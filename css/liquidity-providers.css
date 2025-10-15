@@ -238,14 +238,17 @@
 }
 
 /* Ensure logos inside provider cards render visibly */
+/* Liquidity Providers — stack the two animated rows to avoid overlap and ensure logos are visible */
+.providers-logos {
+    /* stack row-1 and row-2 vertically */
+    flex-direction: column;
+    width: 100%;
+    gap: var(--providers-row-gap, 10px);
+}
+
 .liquidity-providers .provider-logo img,
 .liquidity-providers .provider-logo svg {
-    display: block;
-    width: auto;
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    opacity: 1;
-    filter: none;
-    mix-blend-mode: normal;
+    filter: none !important;
+    mix-blend-mode: normal !important;
+    opacity: 1 !important;
 }

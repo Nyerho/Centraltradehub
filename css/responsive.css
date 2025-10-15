@@ -1628,12 +1628,20 @@ body {
         display: block !important;
     }
 
-    /* Liquidity Providers overflow fix on mobile (marquee width inflation) */
+    /* Liquidity Providers — restore flex + animation on mobile (override grid) */
     .providers-logos {
         display: flex !important;
-        flex-direction: row !important;
-        overflow-x: auto !important;
+        flex-direction: column !important;
+        width: 100% !important;
         gap: 12px !important;
+        overflow: hidden !important;
+    }
+    .providers-logos .providers-row-1,
+    .providers-logos .providers-row-2 {
+        display: flex !important;
+        gap: 12px !important;
+        will-change: transform !important;
+        animation-play-state: running !important;
     }
     .providers-logos > * {
         flex: 0 0 auto !important;
