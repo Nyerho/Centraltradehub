@@ -11,6 +11,12 @@
     <link rel="icon" type="image/x-icon" href="assets/images/favicon.ico">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/kyc-styles.css">
+    <!-- Expose KYC storage helpers to window for use in kyc-portal.js -->
+    <script type="module">
+      import { uploadKyc, getUserKycList } from "./js/kyc-storage.js";
+      window.uploadKyc = uploadKyc;
+      window.getUserKycList = getUserKycList;
+    </script>
 </head>
 <body>
     <!-- Navigation Header -->

@@ -2130,6 +2130,11 @@
     <script type="module" src="js/auth-integration.js"></script>
     <script type="module" src="js/admin.js"></script>
     
+    <script type="module">
+      import { listAllKyc } from "./js/kyc-storage.js";
+      window.listAllKyc = listAllKyc;
+    </script>
+    
     <script>
         // Firebase configuration for v8 compatibility
         const firebaseConfig = {
