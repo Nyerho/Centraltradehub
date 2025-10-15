@@ -1008,6 +1008,22 @@ body {
         padding-left: 0 !important;
         padding-right: 0 !important;
     }
+    
+    /* Very small screens: neutralize remaining width hacks and ensure full width */
+    #about, [id="about"], [id^="about"], [id*="about"],
+    #choose, [id="choose"], [id^="choose"], [id*="choose"],
+    #tools, [id="tools"], [id^="tools"], [id*="tools"],
+    #providers, [id="providers"], [id^="providers"], [id*="providers"],
+    #next, [id="next"], [id^="next"], [id*="next"],
+    .about-section, .choose-section, .tools-section, .providers-section, .next-section,
+    [class*="about"], [class*="choose"], [class*="tools"], [class*="providers"], [class*="next"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        transform: none !important;
+        overflow-x: hidden !important;
+    }
 }
 
 @media (max-width: 768px) {
@@ -1036,6 +1052,97 @@ body {
         margin: 0 !important;
         padding-left: 12px !important;
         padding-right: 12px !important;
+    }
+
+    /* FINAL mobile overrides for About, Choose, Tools, Providers, Next */
+    /* Ensure section wrappers are full-width and align below fixed navbar */
+    #about, [id="about"], [id^="about"], [id*="about"],
+    #choose, [id="choose"], [id^="choose"], [id*="choose"],
+    #tools, [id="tools"], [id^="tools"], [id*="tools"],
+    #providers, [id="providers"], [id^="providers"], [id*="providers"],
+    #next, [id="next"], [id^="next"], [id*="next"],
+    .about-section, .choose-section, .tools-section, .providers-section, .next-section,
+    [class*="about"], [class*="choose"], [class*="tools"], [class*="providers"], [class*="next"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+        scroll-margin-top: 88px !important; /* avoid overlap with fixed navbar */
+        transform: none !important;          /* neutralize 100vw/translate hacks */
+    }
+
+    /* Force single-column stacking for common inner wrappers */
+    .about-content,
+    .about-stats,
+    .choose-us-features,
+    .choose-cards,
+    .tools-content,
+    .tools-grid,
+    .tools-cards,
+    .providers-content,
+    .providers-logos,
+    .next-options {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+        align-items: stretch !important;
+        justify-items: stretch !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Children fill width, no floats, no fixed heights */
+    .about-content > *,
+    .about-stats > *,
+    .choose-us-features > *,
+    .choose-cards > *,
+    .tools-content > *,
+    .tools-grid > *,
+    .tools-cards > *,
+    .providers-content > *,
+    .providers-logos > *,
+    .next-options > * {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        float: none !important;
+        clear: both !important;
+        min-width: 0 !important;
+        height: auto !important;
+        max-height: none !important;
+        box-sizing: border-box !important;
+        overflow: visible !important;
+        overflow-wrap: anywhere !important;
+        word-break: break-word !important;
+    }
+
+    /* Media inside those sections must not overflow horizontally */
+    #about img, #about svg, #about video, #about canvas,
+    #choose img, #choose svg, #choose video, #choose canvas,
+    #tools img, #tools svg, #tools video, #tools canvas,
+    #providers img, #providers svg, #providers video, #providers canvas,
+    #next img, #next svg, #next video, #next canvas,
+    .about-content img, .choose-us-features img, .tools-content img, .providers-logos img, .next-options img {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        display: block !important;
+    }
+
+    /* Providers: allow marquee but keep within section (no page-wide overflow) */
+    .providers-logos,
+    .providers-marquee,
+    .providers-row,
+    .providers-track,
+    .track {
+        overflow-x: hidden !important;
+        white-space: nowrap !important;
+        transform: translateZ(0) !important; /* keep GPU-accelerated animations */
     }
 
     /* About Central Trade Hub */
