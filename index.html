@@ -863,6 +863,38 @@
         </div>
     </section>
 
+    <style>
+    /* Mobile-only fix: stack the What's New section, remove widths/margins that cause right-side cutoff */
+    @media (max-width: 768px) {
+      .news-achievements .news-achievements-content {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch;
+        gap: 12px;
+      }
+
+      .news-achievements .news-section,
+      .news-achievements .achievements-section {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 16px;
+        box-sizing: border-box;
+      }
+
+      /* Ensure the container doesn't push content offscreen */
+      .news-achievements .container {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      /* Defensive: prevent any hidden overflows or fixed widths from cutting the right side */
+      .news-achievements * {
+        max-width: 100%;
+      }
+    }
+    </style>
+
     <!-- Choose Where To Go Next Section -->
     <section class="choose-next">
         <div class="container">
