@@ -223,6 +223,65 @@
         height: auto !important;
         display: block !important;
     }
+    
+    /* Trading Education Center: fix container, content, and grid to full-width single-column */
+    #education,
+    .education-section,
+    .education-content,
+    .education-categories {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+        scroll-margin-top: 80px !important; /* align under fixed nav */
+    }
+
+    /* .education-content may carry multi-column/flex — normalize to block on mobile */
+    .education-content {
+        display: block !important;
+    }
+
+    /* Cards container: enforce single-column grid */
+    .education-categories {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+        justify-items: stretch !important;
+        align-items: stretch !important;
+    }
+
+    /* Cards: fill width, remove floats/margins, and prevent clipping */
+    .education-categories > *,
+    .education-card {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        float: none !important;
+        min-width: 0 !important;            /* allow content to shrink/wrap within container */
+        box-sizing: border-box !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        overflow-wrap: anywhere !important;  /* avoid long text pushing width */
+        word-break: break-word !important;
+        padding-left: 12px !important;       /* consistent inner spacing */
+        padding-right: 12px !important;
+    }
+
+    /* Media inside cards must not overflow horizontally */
+    .education-card img,
+    .education-card svg,
+    .education-card video,
+    .education-card canvas {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        display: block !important;
+    }
 
     /* Flags: stack vertically to avoid wrap offsets */
     .market-flags {
