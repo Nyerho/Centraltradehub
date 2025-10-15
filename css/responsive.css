@@ -88,22 +88,23 @@
     /* Navigation */
     .nav-menu {
         position: fixed;
-        left: -100%;
         top: 70px;
         flex-direction: column;
         background-color: rgba(26, 26, 46, 0.98);
         backdrop-filter: blur(10px);
         width: 100%;
         text-align: center;
-        transition: all 0.3s ease;
+        transition: transform 0.3s ease;
         box-shadow: 0 10px 27px rgba(0, 0, 0, 0.15);
         padding: 2rem 0;
         z-index: 1000;
         border-radius: 0 0 20px 20px;
+        left: 0;
+        transform: translateX(-100%); /* hide off-screen without affecting layout */
     }
 
     .nav-menu.active {
-        left: 0;
+        transform: translateX(0);     /* slide-in cleanly */
     }
 
     .nav-menu li {
@@ -814,3 +815,5 @@ body {
         padding-right: 0 !important;
     }
 }
+
+/* Responsive Design */

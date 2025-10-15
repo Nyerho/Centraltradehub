@@ -1126,6 +1126,21 @@
     <script src="js/performance-optimizer.js"></script>
     <script src="js/market-notifications.js"></script>
 
+    <!-- Add mobile safe area toggler so chat bubble doesn't overlap content on phones -->
+    <script>
+    (function() {
+        function applyMobileSafeArea() {
+            if (window.innerWidth <= 768) {
+                document.body.classList.add('mobile-chat-safe-area');
+            } else {
+                document.body.classList.remove('mobile-chat-safe-area');
+            }
+        }
+        document.addEventListener('DOMContentLoaded', applyMobileSafeArea);
+        window.addEventListener('resize', applyMobileSafeArea);
+    })();
+    </script>
+
     <!-- SIMPLIFIED: Let main.js handle all auth UI updates -->
     <script>
         // Handle Platform navigation click
