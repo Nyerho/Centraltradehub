@@ -287,10 +287,11 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
-    display: grid;
+    /* display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 4rem;
-    align-items: center;
+    gap: 4rem; */
+  
+    /* align-items: center; */
 }
 
 .hero-title {
@@ -357,17 +358,20 @@ body {
 
 .btn-secondary:hover {
     background: #ffffff;
-    color: #0f1419;
+    color: #202d3a;
     transform: translateY(-3px);
 }
 
 .hero-stats {
     display: flex;
     gap: 3rem;
+   justify-content: center;
+ 
 }
 
 .stat {
     text-align: center;
+   
 }
 
 .stat-number {
@@ -379,8 +383,9 @@ body {
 }
 
 .stat-label {
-    font-size: 0.9rem;
-    opacity: 0.8;
+    /* font-size: 0.9rem; */
+    /* opacity: 0.8; */
+     /* color:white; */
 }
 
 .hero-visual {
