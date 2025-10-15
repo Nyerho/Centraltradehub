@@ -1648,6 +1648,28 @@ body {
 
 /* Extra-small screens: aggressively neutralize width/margin hacks */
 @media (max-width: 414px) {
+    /* Professional Trading Tools — XS safety */
+    #tools,
+    #tools .container,
+    .tools-preview,
+    .tools-preview .container,
+    .tools,
+    .tools .container {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        position: static !important;
+        transform: none !important;
+        overflow-x: hidden !important;
+    }
+    .tools-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+    
     #education,
     [id*="education"],
     #about, .about-section, .about-content,
