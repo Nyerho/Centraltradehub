@@ -1537,7 +1537,8 @@ body {
     #choose, .choose-section, .choose-us, .choose-us-features,
     #tools, .tools-section, .tools-content, .tools-grid, .tools-cards,
     #providers, .providers-section, .providers-content, .providers-logos, .providers-marquee, .marquee-track,
-    #next, .next-section, .next-options {
+    #next, .next-section, .next-options,
+    .why-choose-us, .why-choose-us .container {
         width: 100% !important;
         max-width: 100% !important;
         margin-left: 0 !important;
