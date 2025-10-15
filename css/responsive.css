@@ -172,7 +172,7 @@
         box-sizing: border-box;
     }
     
-    /* Trading Education Center: mobile full-width single-column and no clipping */
+    /* Trading Education Center: full-width, single-column, no clipping, no overlap */
     .education-section,
     .education-categories {
         display: grid !important;
@@ -180,11 +180,14 @@
         gap: 16px !important;
         width: 100% !important;
         max-width: 100% !important;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
+        margin: 0 !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        box-sizing: border-box !important;
         overflow-x: hidden !important;
         justify-items: stretch !important;
         align-items: stretch !important;
+        scroll-margin-top: 80px !important; /* prevent fixed nav overlap */
     }
 
     .education-section > *,
@@ -194,21 +197,21 @@
         max-width: 100% !important;
         margin: 0 !important;
         float: none !important;
-        min-width: 0 !important;         /* allow text/media to wrap properly */
+        min-width: 0 !important;           /* allow text/media to wrap properly */
         box-sizing: border-box !important;
         height: auto !important;
         max-height: none !important;
         overflow: visible !important;
     }
 
-    /* Cards and media inside the education section */
     .education-card {
         height: auto !important;
         max-height: none !important;
         overflow: visible !important;
         margin: 0 !important;
-        padding-left: 12px !important;    /* consistent inner padding on mobile */
+        padding-left: 12px !important;
         padding-right: 12px !important;
+        box-sizing: border-box !important;
     }
 
     .education-card img,
