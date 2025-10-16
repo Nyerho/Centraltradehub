@@ -52,12 +52,19 @@ async function renderKycRequests() {
 }
 
 async function setKycStatus(uid, status) {
-    await updateDoc(doc(db, 'kycRequests', uid), {
-        status,
-        reviewedAt: serverTimestamp(),
-        reviewerUid: auth.currentUser?.uid || null
-    }).catch(() => {});
-    await renderKycRequests();
+    try {
+        await updateDoc(doc(db, 'kycRequests', uid), {
+            status,
+            reviewedAt: serverTimestamp(),
+            reviewerUid: auth.currentUser?.uid || null
+        });
+        // Optional: reflect on users collection as well
+        await updateDoc(doc(db, 'users', uid), { kycStatus: status }).catch(() => {});
+        await renderKycRequests();
+    } catch (e) {
+        console.error('Failed to update KYC status', e);
+        alert('Failed to update status. Check your Firestore rules/admin privileges.');
+    }
 }
 
 window.approveKyc = (uid) => setKycStatus(uid, 'approved');
