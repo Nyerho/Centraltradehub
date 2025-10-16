@@ -460,3 +460,48 @@ document.addEventListener('DOMContentLoaded', () => {
 // Keep only the class definition and export
 
 export default KYCPortal;
+
+// uploadAndGetUrl and submitVerification
+
+import { auth, storage } from "./firebase-config.js";
+import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+async function uploadAndGetUrl(file, filename) {
+    const user = auth.currentUser;
+    if (!user) {
+        throw new Error("Not signed in. Please log in before uploading KYC.");
+    }
+
+    // Refresh token to ensure latest claims and avoid stale auth
+    await getIdTokenResult(user, true);
+
+    const path = `kyc/${user.uid}/${filename}`;
+    const fileRef = ref(storage, path);
+
+    const metadata = {
+        contentType: file?.type || "application/octet-stream",
+        cacheControl: "private, max-age=0"
+    };
+
+    try {
+        const snap = await uploadBytes(fileRef, file, metadata);
+        const url = await getDownloadURL(snap.ref);
+        return { path, url };
+    } catch (error) {
+        // Log Firebase Storage error code for clarity (e.g., storage/unauthorized)
+        console.error("KYC upload failed:", error.code, error.message);
+        throw error;
+    }
+}
+
+// Ensure submitVerification waits for a signed-in user before calling uploadAndGetUrl
+async function submitVerification() {
+    const user = auth.currentUser;
+    if (!user) {
+        alert("Please sign in to submit your KYC verification.");
+        return;
+    }
+    // Example usage:
+    // const { path, url } = await uploadAndGetUrl(selectedFile, `${Date.now()}_id_upload.png`);
+    // ... existing code ...
