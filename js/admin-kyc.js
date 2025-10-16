@@ -1,74 +1,68 @@
-// Render admin KYC list and actions
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { collection, doc, getDocs, query, where, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Render pending KYC requests
 async function renderKycRequests() {
     const container = document.getElementById('kyc-admin-list');
     if (!container) return;
-    container.innerHTML = '<p>Loading KYC requests...</p>';
+    container.innerHTML = '<p class="text-muted">Loading KYC requests...</p>';
 
     try {
         const q = query(collection(db, 'kycRequests'), where('status', '==', 'pending'));
         const snap = await getDocs(q);
 
         if (snap.empty) {
-            container.innerHTML = '<p>No pending KYC requests.</p>';
+            container.innerHTML = '<p class="text-muted">No pending KYC requests.</p>';
             return;
         }
 
-        const items = [];
+        const cards = [];
         snap.forEach(docSnap => {
             const data = docSnap.data();
-            items.push(`
-                <div class="kyc-card" style="border:1px solid #ddd; padding:12px; margin-bottom:12px;">
-                    <div><strong>UID:</strong> ${data.uid || docSnap.id}</div>
-                    <div><strong>Email:</strong> ${data.email || ''}</div>
-                    <div style="display:flex; gap:12px; margin-top:8px;">
-                        <div>
-                            <div>Front</div>
-                            <img src="${data.files?.idFrontUrl || ''}" alt="Front" style="max-width:180px;" />
-                        </div>
-                        <div>
-                            <div>Back</div>
-                            <img src="${data.files?.idBackUrl || ''}" alt="Back" style="max-width:180px;" />
-                        </div>
+            cards.push(`
+                <div class="card bg-dark text-white border-secondary mt-3">
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-md-8">
+                        <div><strong>UID:</strong> ${data.uid || docSnap.id}</div>
+                        <div><strong>Email:</strong> ${data.email || ''}</div>
+                        <div class="mt-2"><strong>Status:</strong> ${data.status}</div>
+                      </div>
+                      <div class="col-md-4 text-center">
+                        <div>Front</div>
+                        <img src="${data.files?.idFrontUrl || ''}" alt="Front" class="img-fluid mb-2 border" />
+                        <div>Back</div>
+                        <img src="${data.files?.idBackUrl || ''}" alt="Back" class="img-fluid border" />
+                      </div>
                     </div>
-                    <div style="margin-top:12px;">
-                        <button onclick="approveKyc('${docSnap.id}')">Approve</button>
-                        <button onclick="rejectKyc('${docSnap.id}')" style="margin-left:8px;">Reject</button>
+                    <div class="mt-3 d-flex justify-content-end">
+                      <button class="btn btn-success me-2" onclick="approveKyc('${docSnap.id}')">Approve</button>
+                      <button class="btn btn-danger" onclick="rejectKyc('${docSnap.id}')">Reject</button>
                     </div>
+                  </div>
                 </div>
             `);
         });
 
-        container.innerHTML = items.join('');
+        container.innerHTML = cards.join('');
     } catch (e) {
         console.error('Failed to load KYC requests', e);
-        container.innerHTML = '<p>Error loading KYC requests.</p>';
+        container.innerHTML = '<p class="text-danger">Error loading KYC requests.</p>';
     }
 }
 
-// Approve/Reject handlers
 async function setKycStatus(uid, status) {
     await updateDoc(doc(db, 'kycRequests', uid), {
         status,
         reviewedAt: serverTimestamp(),
         reviewerUid: auth.currentUser?.uid || null
-    });
-    // Optional: reflect on users collection
-    await updateDoc(doc(db, 'users', uid), {
-        kycStatus: status
     }).catch(() => {});
     await renderKycRequests();
 }
 
-// Expose to window for inline onclick
 window.approveKyc = (uid) => setKycStatus(uid, 'approved');
 window.rejectKyc  = (uid) => setKycStatus(uid, 'rejected');
 
-// Initialize after auth
 document.addEventListener('DOMContentLoaded', () => {
     onAuthStateChanged(auth, () => renderKycRequests());
 });

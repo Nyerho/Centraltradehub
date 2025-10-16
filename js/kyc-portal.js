@@ -303,21 +303,16 @@ class KYCPortal {
     }
 
     async submitVerification() {
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        if (loadingOverlay) loadingOverlay.style.display = 'block';
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) overlay.style.display = 'block';
 
         try {
-            if (!this.currentUser) {
-                throw new Error("Not signed in. Please log in before submitting KYC.");
-            }
+            if (!this.currentUser) throw new Error("Please sign in before submitting KYC.");
 
             const frontFile = document.getElementById('idFrontFileInput')?.files?.[0];
             const backFile  = document.getElementById('idBackFileInput')?.files?.[0];
-            if (!frontFile || !backFile) {
-                throw new Error("Both front and back ID images are required.");
-            }
+            if (!frontFile || !backFile) throw new Error("Both front and back ID images are required.");
 
-            // Upload to Storage
             const uid = this.currentUser.uid;
             const ts = Date.now();
             const basePath = `kyc/${uid}/`;
@@ -331,7 +326,7 @@ class KYCPortal {
             const idFrontUrl = await uploadAndGetUrl(frontFile, `${basePath}${ts}_id_front_${frontFile.name}`);
             const idBackUrl  = await uploadAndGetUrl(backFile,  `${basePath}${ts}_id_back_${backFile.name}`);
 
-            // Save Firestore KYC request (for admin review)
+            // Write Firestore KYC request document for admin review
             await setDoc(doc(db, 'kycRequests', uid), {
                 uid,
                 email: this.currentUser.email || null,
@@ -344,35 +339,27 @@ class KYCPortal {
                 }
             }, { merge: true });
 
-            // Optional: also reflect status on user's profile
+            // Optional: reflect status on users collection
             await updateDoc(doc(db, 'users', uid), {
                 kycStatus: 'pending',
                 kycSubmittedAt: serverTimestamp()
-            }).catch(() => { /* ignore if users doc doesn’t exist */ });
+            }).catch(() => {});
 
-            // Close modal/UI and notify
-            if (typeof this.closeVerificationModal === 'function') {
-                this.closeVerificationModal();
-            }
-            if (typeof this.loadKYCStatus === 'function') {
-                await this.loadKYCStatus();
-            }
             alert('KYC submitted. We will review your verification within 24–48 hours.');
-
-        } catch (error) {
-            console.error('Error submitting verification:', error);
-            alert(error.message || 'Failed to submit documents. Please try again.');
+        } catch (err) {
+            console.error('KYC submission error:', err);
+            alert(err.message || 'Failed to submit KYC.');
         } finally {
-            if (loadingOverlay) loadingOverlay.style.display = 'none';
+            if (overlay) overlay.style.display = 'none';
         }
     }
 
-    // Optional: simple preview hookup
     bindUploadPreviews() {
         const showPreview = (inputId, imgId) => {
             const input = document.getElementById(inputId);
             const img = document.getElementById(imgId);
             if (!input || !img) return;
+
             input.addEventListener('change', () => {
                 const file = input.files?.[0];
                 if (file) {
