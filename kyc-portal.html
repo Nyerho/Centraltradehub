@@ -131,11 +131,23 @@
                             <h4>Government-issued ID (Front & Back)</h4>
                             <p>Passport, Driver's License, or National ID Card</p>
                             <!-- Front/Back file inputs -->
-                            <div class="kyc-upload-inputs">
-                                <label class="form-label">ID Front</label>
-                                <input type="file" id="kycIdFront" accept="image/*" class="form-control" />
-                                <label class="form-label mt-3">ID Back</label>
-                                <input type="file" id="kycIdBack" accept="image/*" class="form-control" />
+                            <!-- KYC Upload Section -->
+                            <div id="kyc-upload" class="kyc-upload-section">
+                              <div class="upload-row">
+                                <label for="idFrontFileInput">Government ID - Front</label>
+                                <input type="file" id="idFrontFileInput" accept="image/*" />
+                                <img id="idFrontPreview" alt="Front Preview" style="display:none; max-width: 100%; margin-top: 8px;" />
+                              </div>
+                            
+                              <div class="upload-row" style="margin-top:16px;">
+                                <label for="idBackFileInput">Government ID - Back</label>
+                                <input type="file" id="idBackFileInput" accept="image/*" />
+                                <img id="idBackPreview" alt="Back Preview" style="display:none; max-width: 100%; margin-top: 8px;" />
+                              </div>
+                            
+                              <div class="actions" style="margin-top:16px;">
+                                <button id="submitVerificationBtn" type="button" disabled onclick="submitVerification()">Submit for Verification</button>
+                              </div>
                             </div>
                         </div>
                         <div class="requirement-status" id="docStatus1">
@@ -195,7 +207,7 @@
     </div>
 
   
-    <!-- Use the ES module for KYC logic -->
+    <!-- Ensure KYC portal uses ES modules -->
     <script type="module" src="js/kyc-portal.js"></script>
     <script type="module" src="js/kyc-portal.js"></script>
 </body>

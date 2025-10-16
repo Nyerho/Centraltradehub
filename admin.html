@@ -1575,8 +1575,11 @@
             </div>
             <div class="container-fluid">
                 <div class="card bg-dark text-white border-secondary mt-3">
-                    <div class="card-header border-secondary">
+                    <div class="card-header border-secondary d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Pending KYC Requests</h5>
+                        <button class="btn btn-sm btn-primary" onclick="adminDashboard.loadKYCRequests()">
+                            <i class="fas fa-refresh me-1"></i>Refresh
+                        </button>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
@@ -1595,7 +1598,6 @@
                                 </tbody>
                             </table>
                         </div>
-                        <button class="btn btn-sm btn-primary" onclick="adminDashboard.loadKYCRequests()">Refresh</button>
                     </div>
                 </div>
             </div>
@@ -1638,6 +1640,18 @@
                             <button id="kycRejectBtn" class="btn btn-danger">Reject</button>
                             <button class="btn btn-secondary" onclick="document.getElementById('kycReviewModal').style.display='none'">Close</button>
                         </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- KYC Admin Section -->
+            <div id="kyc-admin" class="mt-4">
+                <div class="card bg-dark text-white border-secondary">
+                    <div class="card-header border-secondary">
+                        <h5 class="mb-0">KYC Management Dashboard</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="kyc-admin-list"></div>
                     </div>
                 </div>
             </div>

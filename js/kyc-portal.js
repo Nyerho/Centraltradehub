@@ -289,12 +289,11 @@ class KYCPortal {
     }
 
     checkSubmitButton() {
-        const idFile = document.getElementById('idFileInput').files[0];
-        const billFile = document.getElementById('billFileInput').files[0];
-        const selfieFile = document.getElementById('selfieFileInput').files[0];
+        const frontFile = document.getElementById('idFrontFileInput')?.files?.[0];
+        const backFile  = document.getElementById('idBackFileInput')?.files?.[0];
         const submitBtn = document.getElementById('submitVerificationBtn');
-        
-        if (idFile && billFile && selfieFile && submitBtn) {
+
+        if (frontFile && backFile && submitBtn) {
             submitBtn.disabled = false;
             submitBtn.classList.add('btn-ready');
         } else if (submitBtn) {
@@ -303,71 +302,92 @@ class KYCPortal {
         }
     }
 
-    // Convert exported function into a class method, and remove illegal imports from inside the class
     async submitVerification() {
         const loadingOverlay = document.getElementById('loadingOverlay');
-        loadingOverlay.style.display = 'block';
-        
-        try {
-            // Get uploaded files
-            const idFile = document.getElementById('idFileInput').files[0];
-            const billFile = document.getElementById('billFileInput').files[0];
-            const selfieFile = document.getElementById('selfieFileInput').files[0];
+        if (loadingOverlay) loadingOverlay.style.display = 'block';
 
-            // Upload documents to Firebase Storage and get URLs
-            const userId = this.currentUser.uid;
-            const timestamp = Date.now();
-            const basePath = `kyc/${userId}/`;
+        try {
+            if (!this.currentUser) {
+                throw new Error("Not signed in. Please log in before submitting KYC.");
+            }
+
+            const frontFile = document.getElementById('idFrontFileInput')?.files?.[0];
+            const backFile  = document.getElementById('idBackFileInput')?.files?.[0];
+            if (!frontFile || !backFile) {
+                throw new Error("Both front and back ID images are required.");
+            }
+
+            // Upload to Storage
+            const uid = this.currentUser.uid;
+            const ts = Date.now();
+            const basePath = `kyc/${uid}/`;
 
             const uploadAndGetUrl = async (file, path) => {
-                const storageRef = ref(storage, path);
-                await uploadBytes(storageRef, file);
-                return await getDownloadURL(storageRef);
+                const r = ref(storage, path);
+                await uploadBytes(r, file, { contentType: file.type || "image/jpeg" });
+                return await getDownloadURL(r);
             };
 
-            const idUrl = await uploadAndGetUrl(idFile, `${basePath}${timestamp}_id_${idFile.name}`);
-            const addressUrl = await uploadAndGetUrl(billFile, `${basePath}${timestamp}_address_${billFile.name}`);
-            const selfieUrl = await uploadAndGetUrl(selfieFile, `${basePath}${timestamp}_selfie_${selfieFile.name}`);
+            const idFrontUrl = await uploadAndGetUrl(frontFile, `${basePath}${ts}_id_front_${frontFile.name}`);
+            const idBackUrl  = await uploadAndGetUrl(backFile,  `${basePath}${ts}_id_back_${backFile.name}`);
 
-            // Update user status to pending and store document URLs
-            await updateDoc(doc(db, 'users', this.currentUser.uid), {
-                kycStatus: 'pending',
-                kycSubmittedAt: new Date().toISOString(),
-                documentsUploaded: {
-                    id: idFile.name,
-                    proofOfAddress: billFile.name,
-                    selfie: selfieFile.name
-                },
-                kycDocuments: {
-                    idUrl,
-                    addressUrl,
-                    selfieUrl
+            // Save Firestore KYC request (for admin review)
+            await setDoc(doc(db, 'kycRequests', uid), {
+                uid,
+                email: this.currentUser.email || null,
+                displayName: this.currentUser.displayName || null,
+                status: 'pending',
+                submittedAt: serverTimestamp(),
+                files: {
+                    idFrontUrl,
+                    idBackUrl
                 }
-            });
+            }, { merge: true });
 
-            // Send notification email
-            const userDoc = await getDoc(doc(db, 'users', this.currentUser.uid));
-            if (userDoc.exists()) {
-                const userData = userDoc.data();
-                await this.emailService.sendKYCNotification(
-                    this.currentUser.email,
-                    userData.displayName || 'User',
-                    'submitted'
-                );
+            // Optional: also reflect status on user's profile
+            await updateDoc(doc(db, 'users', uid), {
+                kycStatus: 'pending',
+                kycSubmittedAt: serverTimestamp()
+            }).catch(() => { /* ignore if users doc doesn’t exist */ });
+
+            // Close modal/UI and notify
+            if (typeof this.closeVerificationModal === 'function') {
+                this.closeVerificationModal();
             }
-            
-            // Close modal and update status
-            this.closeVerificationModal();
-            this.loadKYCStatus();
-            
-            alert('Documents submitted successfully! We will review your verification within 24-48 hours.');
-            
+            if (typeof this.loadKYCStatus === 'function') {
+                await this.loadKYCStatus();
+            }
+            alert('KYC submitted. We will review your verification within 24–48 hours.');
+
         } catch (error) {
             console.error('Error submitting verification:', error);
-            alert('Failed to submit documents. Please try again.');
+            alert(error.message || 'Failed to submit documents. Please try again.');
         } finally {
-            loadingOverlay.style.display = 'none';
+            if (loadingOverlay) loadingOverlay.style.display = 'none';
         }
+    }
+
+    // Optional: simple preview hookup
+    bindUploadPreviews() {
+        const showPreview = (inputId, imgId) => {
+            const input = document.getElementById(inputId);
+            const img = document.getElementById(imgId);
+            if (!input || !img) return;
+            input.addEventListener('change', () => {
+                const file = input.files?.[0];
+                if (file) {
+                    img.src = URL.createObjectURL(file);
+                    img.style.display = 'block';
+                } else {
+                    img.src = '';
+                    img.style.display = 'none';
+                }
+                this.checkSubmitButton();
+            });
+        };
+
+        showPreview('idFrontFileInput', 'idFrontPreview');
+        showPreview('idBackFileInput', 'idBackPreview');
     }
 
     closeVerificationModal() {
@@ -414,6 +434,12 @@ window.startKYCVerification = () => {
     }
 };
 
+window.submitVerification = () => {
+    if (window.kycPortal) {
+        window.kycPortal.submitVerification();
+    }
+};
+
 window.continueKYCVerification = () => {
     if (window.kycPortal) {
         window.kycPortal.checkVerificationStatus();
@@ -447,14 +473,14 @@ window.removeFile = (inputId, previewId, areaId) => {
     }
 };
 
-window.submitVerification = () => {
-    if (window.kycPortal) {
-        window.kycPortal.submitVerification();
-    }
-};
-
 document.addEventListener('DOMContentLoaded', () => {
     window.kycPortal = new KYCPortal();
+
+    // If you removed inline onclick in HTML, keep this binding:
+    const btn = document.getElementById('start-kyc-btn');
+    if (btn) {
+        btn.addEventListener('click', window.startKYCVerification);
+    }
 });
 
 // Bind after DOM is ready (and since we use type="module", this runs after parsing)
