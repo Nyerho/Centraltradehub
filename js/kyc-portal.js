@@ -1,6 +1,6 @@
 // User KYC: Government ID Front/Back only
 // Imports must be at top-level (ES module)
-import { auth, db, storage } from "./firebase-config.js";
+import { auth, storage, db } from "./firebase-config.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { doc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";

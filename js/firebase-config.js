@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Your web app's Firebase configuration
 // IMPORTANT: storageBucket must be the appspot.com bucket, not firebasestorage.app
@@ -16,6 +17,9 @@ const firebaseConfig = {
 
 // Initialize Firebase singletons and export for reuse
 const app = initializeApp(firebaseConfig);
+
+// Export shared singletons used across the app
 export const auth = getAuth(app);
 export const storage = getStorage(app);
+export const db = getFirestore(app);
 export default app;
