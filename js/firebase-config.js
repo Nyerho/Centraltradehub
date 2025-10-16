@@ -3,9 +3,8 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Your web app's Firebase configuration
-// IMPORTANT: storageBucket must be the appspot.com bucket, not firebasestorage.app
-const firebaseConfig = {
+// Export the config object so modules can import { firebaseConfig }
+export const firebaseConfig = {
   apiKey: "AIzaSyAwnWoLfrEc1EtXWCD0by5L0VtCmYf8Unw",
   authDomain: "centraltradehub-30f00.firebaseapp.com",
   projectId: "centraltradehub-30f00",
@@ -15,11 +14,11 @@ const firebaseConfig = {
   measurementId: "G-YHCS5CH450"
 };
 
-// Initialize Firebase singletons and export for reuse
 const app = initializeApp(firebaseConfig);
 
-// Export shared singletons used across the app
+// Shared singletons
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const db = getFirestore(app);
+
 export default app;

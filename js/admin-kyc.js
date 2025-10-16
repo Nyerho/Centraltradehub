@@ -1,6 +1,15 @@
+// top-level imports in admin-kyc.js
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { collection, doc, getDocs, query, where, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  collection,
+  getDocs,
+  updateDoc,
+  doc,
+  query,
+  where,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 async function renderKycRequests() {
     const container = document.getElementById('kyc-admin-list');
@@ -73,3 +82,68 @@ window.rejectKyc  = (uid) => setKycStatus(uid, 'rejected');
 document.addEventListener('DOMContentLoaded', () => {
     onAuthStateChanged(auth, () => renderKycRequests());
 });
+
+
+// Export the function your admin.html expects
+export async function renderAdminKyc(containerId = "kycAdminContainer") {
+  const container = document.getElementById(containerId);
+  if (!container) {
+    console.warn(`Admin KYC container #${containerId} not found`);
+    return;
+  }
+  container.innerHTML = `<div class="text-muted">Loading KYC requests...</div>`;
+
+  try {
+    const snap = await getDocs(collection(db, "kycRequests"));
+    if (snap.empty) {
+      container.innerHTML = `<div class="alert alert-info">No KYC requests found.</div>`;
+      return;
+    }
+
+    const fragments = [];
+    snap.forEach(d => {
+      const data = d.data() || {};
+      const uid = data.uid || d.id;
+      const status = data.status || "pending";
+      const frontUrl = data.idFrontUrl || "";
+      const backUrl = data.idBackUrl || "";
+      fragments.push(`
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="card-title">User: ${uid}</h5>
+            <p class="card-text">Status: <strong>${status}</strong></p>
+            <div class="d-flex gap-3 flex-wrap">
+              ${frontUrl ? `<img src="${frontUrl}" alt="ID Front" class="img-thumbnail" style="max-width:200px;">` : ""}
+              ${backUrl ? `<img src="${backUrl}" alt="ID Back" class="img-thumbnail" style="max-width:200px;">` : ""}
+            </div>
+            <div class="mt-3 d-flex gap-2">
+              <button class="btn btn-success" data-action="approve" data-id="${d.id}">Approve</button>
+              <button class="btn btn-danger" data-action="reject" data-id="${d.id}">Reject</button>
+            </div>
+          </div>
+        </div>
+      `);
+    });
+
+    container.innerHTML = fragments.join("");
+
+    // Bind approve/reject
+    container.querySelectorAll("button[data-action]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-id");
+        const action = btn.getAttribute("data-action");
+        try {
+          await updateDoc(doc(db, "kycRequests", id), { status: action === "approve" ? "approved" : "rejected" });
+          btn.closest(".card").querySelector(".card-text").innerHTML = `Status: <strong>${action === "approve" ? "approved" : "rejected"}</strong>`;
+        } catch (err) {
+          console.error("Failed to update KYC status", err);
+          alert("Failed to update status. Check console.");
+        }
+      });
+    });
+
+  } catch (err) {
+    console.error("Failed to load KYC requests", err);
+    container.innerHTML = `<div class="alert alert-danger">Failed to load KYC requests. Check console.</div>`;
+  }
+}
