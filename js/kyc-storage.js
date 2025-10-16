@@ -8,7 +8,7 @@ import { auth, storage } from "./firebase-config.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 import { getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-export async function uploadKycFrontBack(frontFile, backFile) {
+export async function uploadKycFrontBack(uid, frontFile, backFile) {
     const user = auth.currentUser;
     if (!user) throw new Error("Not signed in");
 

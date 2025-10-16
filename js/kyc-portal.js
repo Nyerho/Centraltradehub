@@ -461,6 +461,14 @@ document.addEventListener('DOMContentLoaded', () => {
     window.kycPortal = new KYCPortal();
 });
 
+// Bind after DOM is ready (and since we use type="module", this runs after parsing)
+document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("start-kyc-btn");
+    if (btn) {
+        btn.addEventListener("click", startKYCVerification);
+    }
+});
+
 // Remove the duplicate global functions and DOMContentLoaded listener at the end
 // Keep only the class definition and export
 
