@@ -303,12 +303,8 @@ class KYCPortal {
         }
     }
 
-    // submitVerification: only front/back, write Firestore doc
-    import { auth, db } from "./firebase-config.js";
-    import { serverTimestamp, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    import { uploadKycFrontBack } from "./kyc-storage.js";
-    
-    export async function submitVerification() {
+    // Convert exported function into a class method, and remove illegal imports from inside the class
+    async submitVerification() {
         const loadingOverlay = document.getElementById('loadingOverlay');
         loadingOverlay.style.display = 'block';
         
@@ -317,22 +313,22 @@ class KYCPortal {
             const idFile = document.getElementById('idFileInput').files[0];
             const billFile = document.getElementById('billFileInput').files[0];
             const selfieFile = document.getElementById('selfieFileInput').files[0];
-    
+
             // Upload documents to Firebase Storage and get URLs
             const userId = this.currentUser.uid;
             const timestamp = Date.now();
             const basePath = `kyc/${userId}/`;
-    
+
             const uploadAndGetUrl = async (file, path) => {
                 const storageRef = ref(storage, path);
                 await uploadBytes(storageRef, file);
                 return await getDownloadURL(storageRef);
             };
-    
+
             const idUrl = await uploadAndGetUrl(idFile, `${basePath}${timestamp}_id_${idFile.name}`);
             const addressUrl = await uploadAndGetUrl(billFile, `${basePath}${timestamp}_address_${billFile.name}`);
             const selfieUrl = await uploadAndGetUrl(selfieFile, `${basePath}${timestamp}_selfie_${selfieFile.name}`);
-    
+
             // Update user status to pending and store document URLs
             await updateDoc(doc(db, 'users', this.currentUser.uid), {
                 kycStatus: 'pending',
@@ -348,7 +344,7 @@ class KYCPortal {
                     selfieUrl
                 }
             });
-    
+
             // Send notification email
             const userDoc = await getDoc(doc(db, 'users', this.currentUser.uid));
             if (userDoc.exists()) {
@@ -518,4 +514,4 @@ async function submitVerification() {
     }
     // Example usage:
     // const { path, url } = await uploadAndGetUrl(selectedFile, `${Date.now()}_id_upload.png`);
-    // ... existing code ...
+}
