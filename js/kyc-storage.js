@@ -4,11 +4,8 @@ import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/fireba
 import { getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // Helper for KYC uploads (front/back)
-import { auth, storage } from "./firebase-config.js";
-import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-import { getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-export async function uploadKycFrontBack(uid, frontFile, backFile) {
+// kyc-storage helpers (fix duplicate 'auth' by only using shared storage)
+function uploadKycFrontBack(uid, frontFile, backFile) {
     const user = auth.currentUser;
     if (!user) throw new Error("Not signed in");
 
