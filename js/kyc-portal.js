@@ -303,7 +303,12 @@ class KYCPortal {
         }
     }
 
-    async submitVerification() {
+    // submitVerification: only front/back, write Firestore doc
+    import { auth, db } from "./firebase-config.js";
+    import { serverTimestamp, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { uploadKycFrontBack } from "./kyc-storage.js";
+    
+    export async function submitVerification() {
         const loadingOverlay = document.getElementById('loadingOverlay');
         loadingOverlay.style.display = 'block';
         
@@ -312,22 +317,22 @@ class KYCPortal {
             const idFile = document.getElementById('idFileInput').files[0];
             const billFile = document.getElementById('billFileInput').files[0];
             const selfieFile = document.getElementById('selfieFileInput').files[0];
-
+    
             // Upload documents to Firebase Storage and get URLs
             const userId = this.currentUser.uid;
             const timestamp = Date.now();
             const basePath = `kyc/${userId}/`;
-
+    
             const uploadAndGetUrl = async (file, path) => {
                 const storageRef = ref(storage, path);
                 await uploadBytes(storageRef, file);
                 return await getDownloadURL(storageRef);
             };
-
+    
             const idUrl = await uploadAndGetUrl(idFile, `${basePath}${timestamp}_id_${idFile.name}`);
             const addressUrl = await uploadAndGetUrl(billFile, `${basePath}${timestamp}_address_${billFile.name}`);
             const selfieUrl = await uploadAndGetUrl(selfieFile, `${basePath}${timestamp}_selfie_${selfieFile.name}`);
-
+    
             // Update user status to pending and store document URLs
             await updateDoc(doc(db, 'users', this.currentUser.uid), {
                 kycStatus: 'pending',
@@ -343,7 +348,7 @@ class KYCPortal {
                     selfieUrl
                 }
             });
-
+    
             // Send notification email
             const userDoc = await getDoc(doc(db, 'users', this.currentUser.uid));
             if (userDoc.exists()) {
@@ -468,14 +473,16 @@ import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/fireba
 import { getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 async function uploadAndGetUrl(file, filename) {
+    // Ensure user is signed in
     const user = auth.currentUser;
     if (!user) {
         throw new Error("Not signed in. Please log in before uploading KYC.");
     }
 
-    // Refresh token to ensure latest claims and avoid stale auth
+    // Refresh token to avoid stale auth issues (helps prevent 401/403 on preflight)
     await getIdTokenResult(user, true);
 
+    // Upload to the user's KYC folder
     const path = `kyc/${user.uid}/${filename}`;
     const fileRef = ref(storage, path);
 
@@ -489,7 +496,6 @@ async function uploadAndGetUrl(file, filename) {
         const url = await getDownloadURL(snap.ref);
         return { path, url };
     } catch (error) {
-        // Log Firebase Storage error code for clarity (e.g., storage/unauthorized)
         console.error("KYC upload failed:", error.code, error.message);
         throw error;
     }

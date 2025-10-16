@@ -1,6 +1,48 @@
 // ... existing code ...
 import { auth, storage } from "./firebase-config.js";
-import { ref, uploadBytes, getDownloadURL, list } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+// Helper for KYC uploads (front/back)
+import { auth, storage } from "./firebase-config.js";
+import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+export async function uploadKycFrontBack(frontFile, backFile) {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Not signed in");
+
+    // Refresh token to avoid stale auth
+    await getIdTokenResult(user, true);
+
+    const ts = Date.now();
+    const frontName = `${ts}_id_front${guessExt(frontFile)}`;
+    const backName = `${ts}_id_back${guessExt(backFile)}`;
+
+    const frontPath = `kyc/${user.uid}/${frontName}`;
+    const backPath = `kyc/${user.uid}/${backName}`;
+
+    const frontRef = ref(storage, frontPath);
+    const backRef = ref(storage, backPath);
+
+    const metaFront = { contentType: frontFile?.type || "image/png", cacheControl: "private, max-age=0" };
+    const metaBack = { contentType: backFile?.type || "image/png", cacheControl: "private, max-age=0" };
+
+    const frontSnap = await uploadBytes(frontRef, frontFile, metaFront);
+    const backSnap = await uploadBytes(backRef, backFile, metaBack);
+
+    const frontUrl = await getDownloadURL(frontSnap.ref);
+    const backUrl = await getDownloadURL(backSnap.ref);
+
+    return { front: { path: frontPath, url: frontUrl }, back: { path: backPath, url: backUrl } };
+}
+
+function guessExt(file) {
+    if (!file?.type) return ".png";
+    if (file.type.includes("jpeg")) return ".jpg";
+    if (file.type.includes("png")) return ".png";
+    return ".png";
+}
 
 // User upload to kyc/{uid}/filename
 export async function uploadKyc(file, filename) {
@@ -52,4 +94,3 @@ export async function listAllKyc() {
 
   return out;
 }
-// ... existing code ...

@@ -2132,7 +2132,18 @@
     
     <script type="module">
       import { listAllKyc } from "./js/kyc-storage.js";
+      import { renderAdminKyc } from "./js/admin-kyc.js";
       window.listAllKyc = listAllKyc;
+      
+      // Mount KYC admin UI when the KYC section is active
+      document.addEventListener("DOMContentLoaded", () => {
+        const section = document.querySelector("#kyc") || document.querySelector('[data-section="kyc"]');
+        if (section) {
+          // If section has an inner container, use it; else, render directly
+          const target = section.querySelector(".section-body") || section;
+          renderAdminKyc(target);
+        }
+      });
     </script>
     
     <script>

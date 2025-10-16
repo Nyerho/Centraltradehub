@@ -22,6 +22,12 @@ const firebaseConfig = {
     measurementId: "G-YHCS5CH450"
 };
 
+// Sanity check: storageBucket must be the bucket ID (appspot.com), not a serving domain
+const expectedBucket = "centraltradehub-30f00.appspot.com";
+if (firebaseConfig.storageBucket !== expectedBucket) {
+  console.error("❌ Storage bucket mismatch. Found:", firebaseConfig.storageBucket, "Expected:", expectedBucket);
+}
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
