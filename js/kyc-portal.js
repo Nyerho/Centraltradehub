@@ -17,26 +17,36 @@ class KYCPortal {
     }
 
     bindUploadPreviews() {
-        const showPreview = (inputId, imgId) => {
-            const input = document.getElementById(inputId);
-            const img = document.getElementById(imgId);
-            if (!input || !img) return;
+        const getOrCreateNameEl = (id) => {
+            const el = document.getElementById(id);
+            return el || null;
+        };
 
-            input.addEventListener('change', () => {
+        const bindNameOnly = (inputId, nameSpanId, imgId) => {
+            const input = document.getElementById(inputId);
+            const nameEl = getOrCreateNameEl(nameSpanId);
+            const img = document.getElementById(imgId);
+            if (!input || !nameEl) return;
+
+            const updateName = () => {
                 const file = input.files?.[0];
-                if (file) {
-                    img.src = URL.createObjectURL(file);
-                    img.style.display = 'block';
-                } else {
+                nameEl.textContent = file ? file.name : 'No file selected';
+                // Always hide image preview
+                if (img) {
                     img.src = '';
                     img.style.display = 'none';
                 }
                 this.checkSubmitButton();
-            });
+            };
+
+            input.addEventListener('change', updateName);
+            // Initialize on load
+            updateName();
         };
 
-        showPreview('idFrontFileInput', 'idFrontPreview');
-        showPreview('idBackFileInput', 'idBackPreview');
+        // Front and back: show only filenames, keep previews hidden
+        bindNameOnly('idFrontFileInput', 'idFrontFileName', 'idFrontPreview');
+        bindNameOnly('idBackFileInput', 'idBackFileName', 'idBackPreview');
     }
 
     checkSubmitButton() {
@@ -151,14 +161,14 @@ import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/fireb
 
 // Force disable image previews and show only filenames
 function disableKycImagePreview() {
-  const frontInput = document.getElementById('kycFrontFile');
-  const backInput  = document.getElementById('kycBackFile');
-  const frontImg   = document.getElementById('kycFrontPreview');
-  const backImg    = document.getElementById('kycBackPreview');
+  const frontInput = document.getElementById('idFrontFileInput');
+  const backInput  = document.getElementById('idBackFileInput');
+  const frontImg   = document.getElementById('idFrontPreview');
+  const backImg    = document.getElementById('idBackPreview');
 
   const hideImg = (img) => {
     if (!img) return;
-    img.src = ''; // clear src to prevent load
+    img.src = '';
     img.style.display = 'none';
     img.removeAttribute('srcset');
   };
@@ -166,26 +176,12 @@ function disableKycImagePreview() {
   hideImg(frontImg);
   hideImg(backImg);
 
-  const getOrCreateNameEl = (inputEl, id) => {
-    let el = document.getElementById(id);
-    if (el) return el;
-    el = document.createElement('span');
-    el.id = id;
-    el.className = 'text-muted';
-    el.style.display = 'inline-block';
-    el.style.marginTop = '6px';
-    el.textContent = 'No file selected';
-    if (inputEl && inputEl.parentNode) {
-      inputEl.parentNode.insertBefore(el, inputEl.nextSibling);
-    }
-    return el;
-  };
-
-  const frontNameEl = getOrCreateNameEl(frontInput, 'kycFrontFileName');
-  const backNameEl  = getOrCreateNameEl(backInput,  'kycBackFileName');
+  const frontNameEl = document.getElementById('idFrontFileName');
+  const backNameEl  = document.getElementById('idBackFileName');
 
   const updateName = (input, nameEl) => {
-    const f = input?.files?.[0];
+    if (!nameEl || !input) return;
+    const f = input.files?.[0];
     nameEl.textContent = f ? f.name : 'No file selected';
   };
 
@@ -199,14 +195,12 @@ function disableKycImagePreview() {
     hideImg(backImg);
   });
 
-  // MutationObserver: if any code tries to set src later, immediately hide it
+  // Guard against other code re-enabling previews
   const observer = new MutationObserver((mutations) => {
     for (const m of mutations) {
       if (m.type === 'attributes' && m.attributeName === 'src') {
         const t = m.target;
-        if (t.id === 'kycFrontPreview' || t.id === 'kycBackPreview' || t.getAttribute('data-kyc-preview') === 'true') {
-          hideImg(t);
-        }
+        if (t.id === 'idFrontPreview' || t.id === 'idBackPreview') hideImg(t);
       }
     }
   });
@@ -222,14 +216,20 @@ function ensureKycStatusFromUsers() {
     const userDocRef = doc(db, "users", user.uid);
     onSnapshot(userDocRef, (snap) => {
       const data = snap.data() || {};
-      const status = data.kycStatus ?? "pending"; // only use pending if doc has no value
-      const badge = document.getElementById("kycStatusBadge") || document.getElementById("kyc-status-text");
-      if (badge) {
-        badge.textContent = status;
-        badge.classList.remove("bg-success","bg-warning","bg-secondary");
-        if (status === "approved") badge.classList.add("bg-success");
-        else if (status === "pending") badge.classList.add("bg-warning");
-        else badge.classList.add("bg-secondary");
+      const status = data.kycStatus ?? "pending";
+      const badgeContainer = document.getElementById("statusBadge");
+      if (badgeContainer) {
+        const badge = badgeContainer.querySelector(".badge") || badgeContainer;
+        badge.textContent = (status === 'approved') ? 'Verified' : (status.charAt(0).toUpperCase() + status.slice(1));
+        badge.classList.remove("verified","pending","unverified","bg-success","bg-warning","bg-secondary");
+        // Map approved to verified style
+        if (status === "approved" || status === "verified") {
+          badge.classList.add("verified", "bg-success");
+        } else if (status === "pending") {
+          badge.classList.add("pending", "bg-warning");
+        } else {
+          badge.classList.add("unverified", "bg-secondary");
+        }
       }
     });
   });
@@ -299,5 +299,10 @@ function bindKycSubmit() {
 document.addEventListener('DOMContentLoaded', () => {
   disableKycImagePreview();
   ensureKycStatusFromUsers();
+  // Ensure click handler attached to existing button id
+  const submitBtn = document.getElementById('submitVerificationBtn');
+  if (submitBtn) {
+    submitBtn.addEventListener('click', () => window.submitVerification());
+  }
   bindKycSubmit();
 });

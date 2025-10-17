@@ -907,6 +907,7 @@ class DashboardManager {
         
         switch (status) {
             case 'verified':
+            case 'approved': // Treat approved as verified
                 kycBadge.classList.add('verified');
                 kycBadge.innerHTML = '<i class="fas fa-check-circle"></i><span class="kyc-text">VERIFIED</span>';
                 break;

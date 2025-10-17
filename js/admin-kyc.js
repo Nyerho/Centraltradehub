@@ -139,7 +139,8 @@ export async function renderAdminKyc(containerId = "kycAdminContainer") {
         const id = btn.getAttribute("data-id");
         const action = btn.getAttribute("data-action");
         try {
-          await updateDoc(doc(db, "kycRequests", id), { status: action === "approve" ? "approved" : "rejected" });
+          // Use the unified path that updates users/{uid}.kycStatus as source of truth
+          await setKycStatus(id, action === "approve" ? "approved" : "rejected");
           btn.closest(".card").querySelector(".card-text").innerHTML = `Status: <strong>${action === "approve" ? "approved" : "rejected"}</strong>`;
         } catch (err) {
           console.error("Failed to update KYC status", err);
