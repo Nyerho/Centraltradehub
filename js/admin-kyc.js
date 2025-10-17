@@ -63,21 +63,20 @@ async function renderKycRequests() {
 
 async function setKycStatus(uid, status) {
     try {
-        // Keep updating the kycRequests document (the request record)
         await updateDoc(doc(db, 'kycRequests', uid), {
             status,
             reviewedAt: serverTimestamp(),
             reviewerUid: auth.currentUser?.uid || null
         });
 
-        // AUTHORITATIVE SOURCE: users/{uid}.kycStatus (ensure this always exists)
+        // Authoritative source for the app: users/{uid}.kycStatus
         await setDoc(
           doc(db, 'users', uid),
           {
             kycStatus: status,
             kycLastReviewedAt: serverTimestamp()
           },
-          { merge: true } // create doc if missing, preserve other fields
+          { merge: true }
         );
 
         await renderKycRequests();

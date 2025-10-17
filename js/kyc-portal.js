@@ -144,72 +144,99 @@ function setKycImagePreview(imgEl, fileUrl) {
   imgEl.classList.add('kyc-image-preview'); // ensure sizing rules apply
 }
 
-// Initialize filename-only display (no image preview)
-document.addEventListener('DOMContentLoaded', () => {
-  attachKycFileNameDisplay();
-});
+// Ensure we have required imports
+import { auth, db } from "./firebase-config.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Hide image previews and show only filename near file inputs
-function attachKycFileNameDisplay() {
+// Force disable image previews and show only filenames
+function disableKycImagePreview() {
   const frontInput = document.getElementById('kycFrontFile');
   const backInput  = document.getElementById('kycBackFile');
+  const frontImg   = document.getElementById('kycFrontPreview');
+  const backImg    = document.getElementById('kycBackPreview');
 
-  // If preview images exist, hide them
-  const frontImg = document.getElementById('kycFrontPreview');
-  const backImg  = document.getElementById('kycBackPreview');
-  if (frontImg) frontImg.style.display = 'none';
-  if (backImg)  backImg.style.display  = 'none';
+  const hideImg = (img) => {
+    if (!img) return;
+    img.src = ''; // clear src to prevent load
+    img.style.display = 'none';
+    img.removeAttribute('srcset');
+  };
 
-  // Get or create filename display spans
-  const frontNameEl = document.getElementById('kycFrontFileName') || createNameEl(frontInput, 'kycFrontFileName');
-  const backNameEl  = document.getElementById('kycBackFileName')  || createNameEl(backInput,  'kycBackFileName');
+  hideImg(frontImg);
+  hideImg(backImg);
 
-  // Update filename on file selection
-  if (frontInput) {
-    frontInput.addEventListener('change', () => {
-      const f = frontInput.files?.[0];
-      frontNameEl.textContent = f ? f.name : 'No file selected';
-    });
-  }
-  if (backInput) {
-    backInput.addEventListener('change', () => {
-      const f = backInput.files?.[0];
-      backNameEl.textContent = f ? f.name : 'No file selected';
-    });
-  }
-}
+  const getOrCreateNameEl = (inputEl, id) => {
+    let el = document.getElementById(id);
+    if (el) return el;
+    el = document.createElement('span');
+    el.id = id;
+    el.className = 'text-muted';
+    el.style.display = 'inline-block';
+    el.style.marginTop = '6px';
+    el.textContent = 'No file selected';
+    if (inputEl && inputEl.parentNode) {
+      inputEl.parentNode.insertBefore(el, inputEl.nextSibling);
+    }
+    return el;
+  };
 
-// Helper to create filename element next to the input if missing
-function createNameEl(afterEl, id) {
-  const span = document.createElement('span');
-  span.id = id;
-  span.className = 'text-muted';
-  span.style.display = 'inline-block';
-  span.style.marginTop = '6px';
-  span.textContent = 'No file selected';
-  if (afterEl?.parentNode) {
-    afterEl.parentNode.insertBefore(span, afterEl.nextSibling);
-  }
-  return span;
+  const frontNameEl = getOrCreateNameEl(frontInput, 'kycFrontFileName');
+  const backNameEl  = getOrCreateNameEl(backInput,  'kycBackFileName');
+
+  const updateName = (input, nameEl) => {
+    const f = input?.files?.[0];
+    nameEl.textContent = f ? f.name : 'No file selected';
+  };
+
+  frontInput && frontInput.addEventListener('change', () => {
+    updateName(frontInput, frontNameEl);
+    hideImg(frontImg);
+  });
+
+  backInput && backInput.addEventListener('change', () => {
+    updateName(backInput, backNameEl);
+    hideImg(backImg);
+  });
+
+  // MutationObserver: if any code tries to set src later, immediately hide it
+  const observer = new MutationObserver((mutations) => {
+    for (const m of mutations) {
+      if (m.type === 'attributes' && m.attributeName === 'src') {
+        const t = m.target;
+        if (t.id === 'kycFrontPreview' || t.id === 'kycBackPreview' || t.getAttribute('data-kyc-preview') === 'true') {
+          hideImg(t);
+        }
+      }
+    }
+  });
+  [frontImg, backImg].forEach(img => {
+    if (img) observer.observe(img, { attributes: true, attributeFilter: ['src'] });
+  });
 }
 
 // Subscribe to the user's profile doc and reflect KYC status from the authoritative source
-onAuthStateChanged(auth, (user) => {
-  if (!user) return;
-  const userDocRef = doc(db, "users", user.uid);
-  onSnapshot(userDocRef, (snap) => {
-    const data = snap.data() || {};
-    const status = data.kycStatus || "pending";
-    // Update your UI here; adjust element IDs to match your page
-    const badge = document.getElementById("kycStatusBadge") || document.getElementById("kyc-status-text");
-    if (badge) {
-      badge.textContent = status;
-      badge.classList.remove("bg-success","bg-warning","bg-secondary");
-      if (status === "approved") badge.classList.add("bg-success");
-      else if (status === "pending") badge.classList.add("bg-warning");
-      else badge.classList.add("bg-secondary");
-    }
-    // If you previously set a default "pending" elsewhere after login, remove that code path
-    // so it doesn't override the value coming from Firestore.
+function ensureKycStatusFromUsers() {
+  onAuthStateChanged(auth, (user) => {
+    if (!user) return;
+    const userDocRef = doc(db, "users", user.uid);
+    onSnapshot(userDocRef, (snap) => {
+      const data = snap.data() || {};
+      const status = data.kycStatus || "pending";
+      const badge = document.getElementById("kycStatusBadge") || document.getElementById("kyc-status-text");
+      if (badge) {
+        badge.textContent = status;
+        badge.classList.remove("bg-success","bg-warning","bg-secondary");
+        if (status === "approved") badge.classList.add("bg-success");
+        else if (status === "pending") badge.classList.add("bg-warning");
+        else badge.classList.add("bg-secondary");
+      }
+    });
   });
+}
+
+// Initialize on DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+  disableKycImagePreview();
+  ensureKycStatusFromUsers();
 });
