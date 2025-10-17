@@ -4,7 +4,7 @@ import { auth, storage, db } from "./firebase-config.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { doc, setDoc, updateDoc, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-import { onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 
 class KYCPortal {
     constructor() {
@@ -346,9 +346,12 @@ function bindKycSubmit() {
 
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
+  // Single initializer: ensure bindings happen and submit is wired up
+  window.kycPortal = new KYCPortal();
+  window.kycPortal.bindUploadPreviews();
   disableKycImagePreview();
   ensureKycStatusFromUsers();
-  // Ensure click handler attached to existing button id
+
   const submitBtn = document.getElementById('submitVerificationBtn');
   if (submitBtn) {
     submitBtn.addEventListener('click', () => window.submitVerification());
