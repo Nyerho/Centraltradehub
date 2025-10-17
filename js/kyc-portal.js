@@ -2,7 +2,7 @@
 // Imports must be at top-level (ES module)
 import { auth, storage, db } from "./firebase-config.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { doc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { doc, setDoc, updateDoc, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 import { onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -84,23 +84,23 @@ class KYCPortal {
                 throw new Error("Please sign in before submitting KYC.");
             }
 
-            // Robustly locate selected files
+            // Try preferred IDs first
             const frontInput =
                 document.getElementById('idFrontFileInput') ||
                 document.getElementById('kycFrontFile');
-            const backInput =
+            const backInput  =
                 document.getElementById('idBackFileInput') ||
                 document.getElementById('kycBackFile');
 
             let frontFile = frontInput?.files?.[0] || null;
             let backFile  = backInput?.files?.[0]  || null;
 
-            // Fallback: if IDs differ, search all file inputs and pick first two selected files
+            // Fallback: scan all file inputs and pick first two selected files
             if (!frontFile || !backFile) {
                 const selectedFiles = Array
-                  .from(document.querySelectorAll('input[type="file"]'))
-                  .map(inp => inp.files?.[0])
-                  .filter(Boolean);
+                    .from(document.querySelectorAll('input[type="file"]'))
+                    .map(inp => inp.files?.[0])
+                    .filter(Boolean);
                 if (selectedFiles.length >= 2) {
                     [frontFile, backFile] = selectedFiles.slice(0, 2);
                 }
@@ -112,12 +112,12 @@ class KYCPortal {
                     backInputFound: !!backInput,
                     frontHasFile: !!frontFile,
                     backHasFile: !!backFile,
-                    allFileInputs: Array.from(document.querySelectorAll('input[type="file"]')).length
+                    allFileInputsCount: Array.from(document.querySelectorAll('input[type="file"]')).length
                 });
                 throw new Error("Both front and back ID images are required. Please select your files again.");
             }
 
-            // Show only filenames
+            // Show only filenames (no preview)
             const frontNameEl = document.getElementById('idFrontFileName');
             const backNameEl  = document.getElementById('idBackFileName');
             if (frontNameEl) frontNameEl.textContent = frontFile.name;
@@ -150,7 +150,7 @@ class KYCPortal {
                 }
             }, { merge: true });
 
-            // Reflect status in users collection (ignore if users doc doesn’t exist)
+            // Reflect status in users collection; ignore if users doc doesn’t exist
             await updateDoc(doc(db, 'users', uid), {
                 kycStatus: 'pending',
                 kycSubmittedAt: serverTimestamp()
@@ -175,11 +175,18 @@ window.submitVerification = () => {
 // If your HTML still calls startKYCVerification inline, define a harmless stub
 window.startKYCVerification = () => {};
 
+// Initialize on DOM ready (single block)
 document.addEventListener('DOMContentLoaded', () => {
     window.kycPortal = new KYCPortal();
     window.kycPortal.bindUploadPreviews();
 
-    // Optional: bind click if you prefer JavaScript-only (no inline onclick)
+    // Force hide previews and show filenames only
+    disableKycImagePreview();
+
+    // Keep KYC status synced from users/{uid}
+    ensureKycStatusFromUsers();
+
+    // Bind the existing button to the submit function
     const submitBtn = document.getElementById('submitVerificationBtn');
     if (submitBtn) {
         submitBtn.addEventListener('click', () => window.submitVerification());
