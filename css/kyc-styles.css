@@ -845,6 +845,55 @@
     object-fit: cover;
 }
 
+/* Add mobile-safe preview styles for KYC images */
+.kyc-image-preview-container {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  padding: 8px;
+  background: #0f131a; /* optional, matches dark theme */
+  border-radius: 8px;
+}
+
+.kyc-image-preview {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 6px;
+  /* Cap height on desktop too, feels better than unlimited */
+  max-height: 60vh;
+}
+
+/* Tighter cap on small screens */
+@media (max-width: 768px) {
+  .kyc-image-preview {
+    max-height: 40vh;
+  }
+}
+
+/* Very small screens (e.g., narrow phones) */
+@media (max-width: 480px) {
+  .kyc-image-preview {
+    max-height: 35vh;
+  }
+}
+
+/* If your previews are inside a modal or a specific section, apply this container for spacing */
+.kyc-preview-group {
+  display: grid;
+  grid-template-columns: 1fr; /* single column on mobile by default */
+  gap: 12px;
+}
+
+@media (min-width: 992px) {
+  .kyc-preview-group {
+    grid-template-columns: 1fr 1fr; /* front/back side by side on larger screens */
+  }
+}
+
 .pdf-icon {
     display: flex;
     align-items: center;

@@ -134,3 +134,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 export default KYCPortal;
+
+
+// Example: after you set the preview src for the selected file
+function setKycImagePreview(imgEl, fileUrl) {
+  if (!imgEl) return;
+  imgEl.src = fileUrl;
+  imgEl.classList.add('kyc-image-preview'); // ensure sizing rules apply
+}
