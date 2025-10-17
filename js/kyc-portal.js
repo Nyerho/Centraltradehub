@@ -17,14 +17,26 @@ class KYCPortal {
     }
 
     bindUploadPreviews() {
-        const getOrCreateNameEl = (id) => {
-            const el = document.getElementById(id);
-            return el || null;
+        const ensureNameEl = (id) => {
+            let el = document.getElementById(id);
+            if (!el) {
+                el = document.createElement('span');
+                el.id = id;
+                el.className = 'text-muted d-block mt-2';
+                el.textContent = 'No file selected';
+                // Try to place next to its input
+                const inputId = id.includes('Front') ? 'idFrontFileInput' : 'idBackFileInput';
+                const input = document.getElementById(inputId);
+                if (input && input.parentNode) {
+                    input.parentNode.insertBefore(el, input.nextSibling);
+                }
+            }
+            return el;
         };
 
         const bindNameOnly = (inputId, nameSpanId, imgId) => {
             const input = document.getElementById(inputId);
-            const nameEl = getOrCreateNameEl(nameSpanId);
+            const nameEl = ensureNameEl(nameSpanId);
             const img = document.getElementById(imgId);
             if (!input || !nameEl) return;
 
@@ -44,7 +56,7 @@ class KYCPortal {
             updateName();
         };
 
-        // Front and back: show only filenames, keep previews hidden
+        // Show only filenames for front/back; keep previews hidden
         bindNameOnly('idFrontFileInput', 'idFrontFileName', 'idFrontPreview');
         bindNameOnly('idBackFileInput', 'idBackFileName', 'idBackPreview');
     }
@@ -72,14 +84,44 @@ class KYCPortal {
                 throw new Error("Please sign in before submitting KYC.");
             }
 
-            const frontInput = document.getElementById('idFrontFileInput');
-            const backInput  = document.getElementById('idBackFileInput');
-            const frontFile = frontInput?.files?.[0];
-            const backFile  = backInput?.files?.[0];
+            // Robustly locate selected files
+            const frontInput =
+                document.getElementById('idFrontFileInput') ||
+                document.getElementById('kycFrontFile');
+            const backInput =
+                document.getElementById('idBackFileInput') ||
+                document.getElementById('kycBackFile');
+
+            let frontFile = frontInput?.files?.[0] || null;
+            let backFile  = backInput?.files?.[0]  || null;
+
+            // Fallback: if IDs differ, search all file inputs and pick first two selected files
+            if (!frontFile || !backFile) {
+                const selectedFiles = Array
+                  .from(document.querySelectorAll('input[type="file"]'))
+                  .map(inp => inp.files?.[0])
+                  .filter(Boolean);
+                if (selectedFiles.length >= 2) {
+                    [frontFile, backFile] = selectedFiles.slice(0, 2);
+                }
+            }
 
             if (!frontFile || !backFile) {
-                throw new Error("Both front and back ID images are required.");
+                console.warn('File detection failed.', {
+                    frontInputFound: !!frontInput,
+                    backInputFound: !!backInput,
+                    frontHasFile: !!frontFile,
+                    backHasFile: !!backFile,
+                    allFileInputs: Array.from(document.querySelectorAll('input[type="file"]')).length
+                });
+                throw new Error("Both front and back ID images are required. Please select your files again.");
             }
+
+            // Show only filenames
+            const frontNameEl = document.getElementById('idFrontFileName');
+            const backNameEl  = document.getElementById('idBackFileName');
+            if (frontNameEl) frontNameEl.textContent = frontFile.name;
+            if (backNameEl)  backNameEl.textContent  = backFile.name;
 
             // Upload to Firebase Storage
             const uid = this.currentUser.uid;
@@ -108,11 +150,11 @@ class KYCPortal {
                 }
             }, { merge: true });
 
-            // Optional: reflect status in users collection
+            // Reflect status in users collection (ignore if users doc doesn’t exist)
             await updateDoc(doc(db, 'users', uid), {
                 kycStatus: 'pending',
                 kycSubmittedAt: serverTimestamp()
-            }).catch(() => { /* ignore if users doc doesn’t exist */ });
+            }).catch(() => {});
 
             alert('KYC submitted. We will review your verification within 24–48 hours.');
         } catch (err) {
