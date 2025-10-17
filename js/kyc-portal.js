@@ -204,8 +204,6 @@ function setKycImagePreview(imgEl, fileUrl) {
 }
 
 
-
-
 // Force disable image previews and show only filenames
 function disableKycImagePreview() {
   const frontInput = document.getElementById('idFrontFileInput');
@@ -342,11 +340,16 @@ function bindKycSubmit() {
   form?.addEventListener('submit', handleSubmit);
 }
 
-// Initialize on DOM ready
+// DOM initialization
 document.addEventListener('DOMContentLoaded', () => {
   // Single initializer: ensure bindings happen and submit is wired up
   window.kycPortal = new KYCPortal();
   window.kycPortal.bindUploadPreviews();
+
+  // Ensure overlay is hidden initially
+  const overlay = document.getElementById('loadingOverlay');
+  if (overlay) overlay.style.display = 'none';
+
   disableKycImagePreview();
   ensureKycStatusFromUsers();
 
