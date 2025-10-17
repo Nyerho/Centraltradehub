@@ -8,7 +8,8 @@ import {
   doc,
   query,
   where,
-  serverTimestamp
+  serverTimestamp,
+  setDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 async function renderKycRequests() {
@@ -62,13 +63,23 @@ async function renderKycRequests() {
 
 async function setKycStatus(uid, status) {
     try {
+        // Keep updating the kycRequests document (the request record)
         await updateDoc(doc(db, 'kycRequests', uid), {
             status,
             reviewedAt: serverTimestamp(),
             reviewerUid: auth.currentUser?.uid || null
         });
-        // Optional: reflect on users collection as well
-        await updateDoc(doc(db, 'users', uid), { kycStatus: status }).catch(() => {});
+
+        // AUTHORITATIVE SOURCE: users/{uid}.kycStatus (ensure this always exists)
+        await setDoc(
+          doc(db, 'users', uid),
+          {
+            kycStatus: status,
+            kycLastReviewedAt: serverTimestamp()
+          },
+          { merge: true } // create doc if missing, preserve other fields
+        );
+
         await renderKycRequests();
     } catch (e) {
         console.error('Failed to update KYC status', e);

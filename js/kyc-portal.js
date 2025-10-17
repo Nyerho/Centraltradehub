@@ -4,6 +4,7 @@ import { auth, storage, db } from "./firebase-config.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { doc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 class KYCPortal {
     constructor() {
@@ -142,3 +143,73 @@ function setKycImagePreview(imgEl, fileUrl) {
   imgEl.src = fileUrl;
   imgEl.classList.add('kyc-image-preview'); // ensure sizing rules apply
 }
+
+// Initialize filename-only display (no image preview)
+document.addEventListener('DOMContentLoaded', () => {
+  attachKycFileNameDisplay();
+});
+
+// Hide image previews and show only filename near file inputs
+function attachKycFileNameDisplay() {
+  const frontInput = document.getElementById('kycFrontFile');
+  const backInput  = document.getElementById('kycBackFile');
+
+  // If preview images exist, hide them
+  const frontImg = document.getElementById('kycFrontPreview');
+  const backImg  = document.getElementById('kycBackPreview');
+  if (frontImg) frontImg.style.display = 'none';
+  if (backImg)  backImg.style.display  = 'none';
+
+  // Get or create filename display spans
+  const frontNameEl = document.getElementById('kycFrontFileName') || createNameEl(frontInput, 'kycFrontFileName');
+  const backNameEl  = document.getElementById('kycBackFileName')  || createNameEl(backInput,  'kycBackFileName');
+
+  // Update filename on file selection
+  if (frontInput) {
+    frontInput.addEventListener('change', () => {
+      const f = frontInput.files?.[0];
+      frontNameEl.textContent = f ? f.name : 'No file selected';
+    });
+  }
+  if (backInput) {
+    backInput.addEventListener('change', () => {
+      const f = backInput.files?.[0];
+      backNameEl.textContent = f ? f.name : 'No file selected';
+    });
+  }
+}
+
+// Helper to create filename element next to the input if missing
+function createNameEl(afterEl, id) {
+  const span = document.createElement('span');
+  span.id = id;
+  span.className = 'text-muted';
+  span.style.display = 'inline-block';
+  span.style.marginTop = '6px';
+  span.textContent = 'No file selected';
+  if (afterEl?.parentNode) {
+    afterEl.parentNode.insertBefore(span, afterEl.nextSibling);
+  }
+  return span;
+}
+
+// Subscribe to the user's profile doc and reflect KYC status from the authoritative source
+onAuthStateChanged(auth, (user) => {
+  if (!user) return;
+  const userDocRef = doc(db, "users", user.uid);
+  onSnapshot(userDocRef, (snap) => {
+    const data = snap.data() || {};
+    const status = data.kycStatus || "pending";
+    // Update your UI here; adjust element IDs to match your page
+    const badge = document.getElementById("kycStatusBadge") || document.getElementById("kyc-status-text");
+    if (badge) {
+      badge.textContent = status;
+      badge.classList.remove("bg-success","bg-warning","bg-secondary");
+      if (status === "approved") badge.classList.add("bg-success");
+      else if (status === "pending") badge.classList.add("bg-warning");
+      else badge.classList.add("bg-secondary");
+    }
+    // If you previously set a default "pending" elsewhere after login, remove that code path
+    // so it doesn't override the value coming from Firestore.
+  });
+});
