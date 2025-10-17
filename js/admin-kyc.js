@@ -68,14 +68,10 @@ async function setKycStatus(uid, status) {
             reviewedAt: serverTimestamp(),
             reviewerUid: auth.currentUser?.uid || null
         });
-
-        // Authoritative source for the app: users/{uid}.kycStatus
+        // Authoritative: users/{uid}.kycStatus (create/merge to ensure it exists)
         await setDoc(
           doc(db, 'users', uid),
-          {
-            kycStatus: status,
-            kycLastReviewedAt: serverTimestamp()
-          },
+          { kycStatus: status, kycLastReviewedAt: serverTimestamp() },
           { merge: true }
         );
 

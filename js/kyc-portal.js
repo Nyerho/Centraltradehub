@@ -222,7 +222,7 @@ function ensureKycStatusFromUsers() {
     const userDocRef = doc(db, "users", user.uid);
     onSnapshot(userDocRef, (snap) => {
       const data = snap.data() || {};
-      const status = data.kycStatus || "pending";
+      const status = data.kycStatus ?? "pending"; // only use pending if doc has no value
       const badge = document.getElementById("kycStatusBadge") || document.getElementById("kyc-status-text");
       if (badge) {
         badge.textContent = status;
@@ -235,8 +235,69 @@ function ensureKycStatusFromUsers() {
   });
 }
 
+// Robustly bind the submit button (prevents duplicates and works if IDs differ)
+function bindKycSubmit() {
+  const btn = document.getElementById('kycSubmitBtn') || document.getElementById('kyc-submit');
+  const form = document.getElementById('kycForm') || document.querySelector('form[data-kyc="true"]');
+  if (!btn && !form) return;
+
+  const handleSubmit = async (evt) => {
+    evt?.preventDefault?.();
+    const frontInput = document.getElementById('kycFrontFile');
+    const backInput  = document.getElementById('kycBackFile');
+
+    const frontFile = frontInput?.files?.[0] || null;
+    const backFile  = backInput?.files?.[0] || null;
+    if (!frontFile || !backFile) {
+      alert('Please choose both front and back images.');
+      return;
+    }
+
+    // Show only filenames (no preview)
+    const frontNameEl = document.getElementById('kycFrontFileName');
+    const backNameEl  = document.getElementById('kycBackFileName');
+    if (frontNameEl) frontNameEl.textContent = frontFile.name;
+    if (backNameEl)  backNameEl.textContent  = backFile.name;
+
+    // Disable submit to avoid double submissions
+    const prevText = btn?.textContent;
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+    }
+
+    try {
+      // If your project has a submit handler, call it; else rely on existing upload code
+      if (typeof window.handleKycSubmit === 'function') {
+        await window.handleKycSubmit(frontFile, backFile);
+      } else if (typeof window.uploadKycFrontBack === 'function') {
+        // If you exported from kyc-storage.js
+        const user = auth.currentUser;
+        if (!user) throw new Error('Not signed in');
+        await window.uploadKycFrontBack(user.uid, frontFile, backFile);
+      } else {
+        console.warn('No KYC submit function found. Please export handleKycSubmit or uploadKycFrontBack.');
+        alert('Upload function missing. Contact support.');
+      }
+    } catch (err) {
+      console.error('KYC submit failed', err);
+      alert('KYC submission error. Check console.');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = prevText || 'Submit';
+      }
+    }
+  };
+
+  // Bind to button click and/or form submit
+  btn?.addEventListener('click', handleSubmit);
+  form?.addEventListener('submit', handleSubmit);
+}
+
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
   disableKycImagePreview();
   ensureKycStatusFromUsers();
+  bindKycSubmit();
 });
