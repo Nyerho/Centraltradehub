@@ -1116,12 +1116,16 @@ body {
     padding: 80px 0;
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     color: #ffffff;
+    /* Prevent horizontal overflow if children expand */
+    overflow: hidden;
 }
 
 .news-achievements-content {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 60px;
+    /* Allow grid content to shrink within the container */
+    min-width: 0;
 }
 
 .news-section,
@@ -1130,6 +1134,8 @@ body {
     background: rgba(0, 212, 255, 0.05);
     border-radius: 15px;
     border: 1px solid rgba(0, 212, 255, 0.2);
+    /* Critical: allow grid items to shrink to prevent overflow */
+    min-width: 0;
 }
 
 .news-section h3,
