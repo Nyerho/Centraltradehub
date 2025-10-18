@@ -203,6 +203,14 @@
         padding: 0.5rem 1rem;
         font-size: 0.8rem;
     }
+    
+    header.auth-header .navbar-brand img {
+        max-height: 24px;
+    }
+    
+    header.auth-header .brand-text {
+        font-size: 15px;
+    }
 }
 
 
@@ -258,6 +266,27 @@
         display: flex !important;  /* ensure visible on mobile */
         cursor: pointer;
         z-index: 1001;
+    }
+    
+    /* Auth header — Bootstrap mobile support */
+    header.auth-header,
+    body[class*="auth"] header {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 8px 12px;
+        box-sizing: border-box;
+    }
+
+    header.auth-header .navbar-brand img {
+        max-height: 28px;
+    }
+
+    header.auth-header .brand-text {
+        font-size: 16px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
     /* Dashboard header — mobile layout and sizing */

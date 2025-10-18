@@ -1674,6 +1674,71 @@ body {
         text-overflow: ellipsis !important; /* prevent spillover on one line */
     }
     
+    /* Auth header — clamp width and ensure safe branding */
+    header.auth-header,
+    body[class*="auth"] header {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0;
+        box-sizing: border-box;
+        position: relative;
+        left: auto !important;
+        right: auto !important;
+        overflow-x: clip; /* contain any wide children */
+    }
+    
+    header.auth-header .navbar-brand {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    header.auth-header .navbar-brand img {
+        max-height: 32px;
+        height: auto;
+        width: auto;
+    }
+    
+    header.auth-header .brand-text {
+        font-size: 18px;
+        line-height: 1.2;
+        margin: 0;
+    }
+    
+    /* Auth header Bootstrap integration: clamp width, responsive logo, safe text */
+    header.auth-header,
+    body[class*="auth"] header {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0;
+        box-sizing: border-box;
+        position: relative;
+        left: auto !important;
+        right: auto !important;
+        overflow-x: clip; /* contain any wide children */
+    }
+    
+    header.auth-header .navbar-brand {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    header.auth-header .navbar-brand img {
+        max-height: 32px;
+        height: auto;
+        width: auto;
+    }
+    
+    header.auth-header .brand-text {
+        font-size: 18px;
+        line-height: 1.2;
+        margin: 0;
+    }
+
+    
     /* Dedicated mobile override for Choose Next: safe 100% width, single-column grid, no overflow */
     .choose-next {
         width: 100% !important;
