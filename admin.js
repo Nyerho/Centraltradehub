@@ -1,14 +1,11 @@
 // Top-level config (near your existing config/constants)
-const EXTERNAL_DELETE_ENABLED = false; // Set to true only when your backend is live and reachable
+const USE_EXTERNAL_DELETE = false; // ensure we never call external APIs for half-delete
 const PROD_API_BASE = 'https://www.centraltradekeplr.com/api';
 const LOCAL_API_BASE = 'http://localhost:3001/api';
 
-// Explicitly disable external API deletion for half-delete mode
-const USE_EXTERNAL_DELETE = false;
-
+// Helper: delete Firestore document for this user (half-delete)
 async function deleteFirestoreUser(uid) {
-    // Assumes modular Firestore v9 style with exported 'db', 'doc', 'deleteDoc'
-    // Adjust collection name if your schema differs.
+    // Adjust collection name if your schema differs
     await deleteDoc(doc(db, 'users', uid));
 
     // Optional: write a tombstone/audit record (ignore failures)
@@ -58,9 +55,13 @@ async function tryDeleteFromApi(uid) {
     }
 }
 
-// Replace your external delete attempts with Firestore-only half delete
+// Replace external delete attempts with Firestore-only half delete
 async function tryDelete(uid) {
     console.log('Half delete: removing Firestore document for uid:', uid);
+    // Skip external API calls entirely
+    if (USE_EXTERNAL_DELETE) {
+        console.warn('USE_EXTERNAL_DELETE is true, but half-delete mode is intended to skip external endpoints.');
+    }
     await deleteFirestoreUser(uid);
     return { deletedFirestore: true, deletedAuth: false };
 }
@@ -75,7 +76,10 @@ async function handleDeleteUser(uid) {
 
         // Update UI to reflect deletion in app data
         removeUserRow(uid);
-        toastSuccess('User deleted from app data', `Firestore: ${result.deletedFirestore}, Auth: ${result.deletedAuth} (not deleted)`);
+        toastSuccess(
+            'User deleted from app data',
+            `Firestore: ${result.deletedFirestore}, Auth: ${result.deletedAuth} (not deleted)`
+        );
 
     } catch (err) {
         console.error('Delete user error:', err);
