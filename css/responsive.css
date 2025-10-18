@@ -373,7 +373,7 @@
     header.auth-header .logo img,
     .auth-header .logo img {
         display: block !important;
-        max-width: 40vw !important;
+        max-width: 32vw !important;
         height: auto !important;
         object-fit: contain !important;
     }
@@ -385,6 +385,32 @@
     header.auth-header .nav-list,
     .auth-header .nav-list {
         flex-wrap: wrap !important;
+    }
+    
+    .auth-header .container,
+    .auth-header .navbar,
+    .auth-header nav,
+    .auth-header .nav,
+    .auth-header .nav-list {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        min-width: 0;
+    }
+    
+    .auth-header .brand-logo {
+        font-size: 16px;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    /* Optional: hide non-essential items to avoid horizontal overflow if present */
+    .auth-header .brand-tagline,
+    .auth-header .tagline {
+        display: none;
     }
     
     /* Liquidity Providers — robust mobile overflow fix (scoped) */

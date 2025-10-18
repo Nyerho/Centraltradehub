@@ -1603,40 +1603,75 @@ body {
     
     /* Auth header — clamp to viewport and allow shrink/wrap on mobile */
     header.auth-header,
-    .auth-header {
+    .auth-header,
+    body[class*="auth"] header {
         width: 100% !important;
         max-width: 100% !important;
         margin: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
         padding-left: 12px !important;
         padding-right: 12px !important;
         box-sizing: border-box !important;
         min-width: 0 !important;
         left: auto !important;
         right: auto !important;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-        overflow: visible !important;
+        position: relative !important;
+        overflow-x: clip !important; /* contain any wide children */
     }
 
     /* Ensure header children can shrink and wrap */
     header.auth-header .container,
     .auth-header .container,
     header.auth-header nav,
-    .auth-header nav {
+    .auth-header nav,
+    .auth-header .navbar,
+    .auth-header .nav,
+    .auth-header .nav-list,
+    body[class*="auth"] header .container,
+    body[class*="auth"] header nav {
         width: 100% !important;
         max-width: 100% !important;
         min-width: 0 !important;
         box-sizing: border-box !important;
         flex-wrap: wrap !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+
+    /* Auth header logo and brand styling */
+    .auth-header .logo,
+    .auth-header .logo-text,
+    .auth-header .brand {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        min-width: 0 !important;
+        flex: 0 1 auto !important;
     }
 
     /* Mobile logo sizing guard (Bootstrap-like) */
+    header.auth-header img,
+    .auth-header img,
     header.auth-header .logo img,
-    .auth-header .logo img {
+    .auth-header .logo img,
+    header.auth-header img[class*="logo"],
+    .auth-header img[class*="logo"] {
         display: block !important;
-        max-width: 40vw !important;
+        max-width: min(40vw, 160px) !important; /* responsive cap for desktop/tablet */
         height: auto !important;
+        width: auto !important; /* avoid forced widths that overflow */
         object-fit: contain !important;
+    }
+    
+    .auth-header .brand-logo {
+        font-size: 18px !important;
+        line-height: 1.2 !important;
+        margin: 0 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important; /* prevent spillover on one line */
     }
     
     /* Dedicated mobile override for Choose Next: safe 100% width, single-column grid, no overflow */
