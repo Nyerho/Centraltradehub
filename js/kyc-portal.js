@@ -214,7 +214,10 @@ function disableKycImagePreview() {
 
   const hideImg = (img) => {
     if (!img) return;
-    img.src = '';
+    // Remove src attribute only if present to avoid triggering repeated mutations
+    if (img.hasAttribute('src')) {
+      img.removeAttribute('src');
+    }
     img.style.display = 'none';
     img.removeAttribute('srcset');
   };
@@ -241,12 +244,14 @@ function disableKycImagePreview() {
     hideImg(backImg);
   });
 
-  // Guard against other code re-enabling previews
+  // Guard against other code re-enabling previews without causing recursive mutations
   const observer = new MutationObserver((mutations) => {
     for (const m of mutations) {
       if (m.type === 'attributes' && m.attributeName === 'src') {
         const t = m.target;
-        if (t.id === 'idFrontPreview' || t.id === 'idBackPreview') hideImg(t);
+        if ((t.id === 'idFrontPreview' || t.id === 'idBackPreview') && t.getAttribute('src')) {
+          hideImg(t);
+        }
       }
     }
   });
