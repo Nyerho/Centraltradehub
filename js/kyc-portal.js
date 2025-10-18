@@ -197,6 +197,7 @@ export default KYCPortal;
 
 
 // Example: after you set the preview src for the selected file
+// Top-level module scope
 function setKycImagePreview(imgEl, fileUrl) {
   if (!imgEl) return;
   imgEl.src = fileUrl;
@@ -339,23 +340,3 @@ function bindKycSubmit() {
   btn?.addEventListener('click', handleSubmit);
   form?.addEventListener('submit', handleSubmit);
 }
-
-// DOM initialization
-document.addEventListener('DOMContentLoaded', () => {
-  // Single initializer: ensure bindings happen and submit is wired up
-  window.kycPortal = new KYCPortal();
-  window.kycPortal.bindUploadPreviews();
-
-  // Ensure overlay is hidden initially
-  const overlay = document.getElementById('loadingOverlay');
-  if (overlay) overlay.style.display = 'none';
-
-  disableKycImagePreview();
-  ensureKycStatusFromUsers();
-
-  const submitBtn = document.getElementById('submitVerificationBtn');
-  if (submitBtn) {
-    submitBtn.addEventListener('click', () => window.submitVerification());
-  }
-  bindKycSubmit();
-});
