@@ -238,7 +238,7 @@
 }
 
 /* Ensure logos inside provider cards render visibly */
-/* Liquidity Providers — stack rows and show logos correctly */
+/* Liquidity Providers safe layout + contained marquee */
 .providers-logos {
     flex-direction: column;       /* row-1 above row-2 (no overlap) */
     width: 100%;
@@ -252,18 +252,24 @@
     opacity: 1 !important;
 }
 
-/* Liquidity Providers safe layout overrides */
+/* Variables for spacing/speed */
+:root {
+    --lp-gap: 24px;
+    --lp-logo-height: 48px;
+    --lp-duration-row1: 30s;
+    --lp-duration-row2: 36s;
+}
+
+/* Clamp section width and prevent page horizontal scroll */
 .liquidity-providers,
 .providers {
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 auto !important;
     position: static !important;
-    overflow-x: hidden !important; /* prevent page horiz scroll on laptops */
-    overflow-y: visible !important;
 }
 
-/* Clamp the container and apply safe padding */
+/* Container padding (safe) */
 .liquidity-providers .container,
 .providers .container {
     width: 100% !important;
@@ -273,38 +279,73 @@
     box-sizing: border-box !important;
 }
 
-/* Marquee wrapper should not overflow the viewport */
+/* Marquee wrapper: contain overflow inside section */
 .providers-marquee,
 .providers-logos {
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow: hidden !important; /* contain any inner wide content */
-    position: relative !important;
-}
-
-/* Stable logo rows: wrap logos, center them; hide duplicate track to prevent overflow */
-.providers-row {
     width: 100% !important;
     max-width: 100% !important;
     overflow: hidden !important;
     position: relative !important;
 }
 
-.providers-row .track {
+/* Each row: horizontally laid out, animated as a whole */
+.providers-row {
     display: flex !important;
-    flex-wrap: wrap !important;
+    flex-wrap: nowrap !important;
     align-items: center !important;
-    justify-content: center !important;
-    gap: 16px !important;
-    width: 100% !important;
+    gap: 0 !important; /* gaps are inside tracks */
+    width: max-content !important; /* row spans the combined width of both tracks */
+    will-change: transform !important;
+    animation: lp-marquee var(--lp-duration-row1) linear infinite !important;
+}
+
+/* Row-specific speeds if desired */
+.providers-row.row-2 {
+    animation-duration: var(--lp-duration-row2) !important;
+}
+
+/* Two identical tracks side-by-side for seamless loop */
+.providers-row .track,
+.providers-row .track-dup {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: var(--lp-gap) !important;
+    flex: none !important; /* don't grow/shrink; they define the row's width */
+}
+
+/* Logo sizing */
+.provider-logo {
+    display: block !important;
+    height: var(--lp-logo-height) !important;
+    width: auto !important;
+    max-height: var(--lp-logo-height) !important;
+    object-fit: contain !important;
+}
+
+/* General safety: no inner element exceeds container width */
+.liquidity-providers *,
+.providers * {
     max-width: 100% !important;
-    min-width: 0 !important; /* allow shrink */
+    min-width: 0 !important;
     box-sizing: border-box !important;
 }
 
-/* Hide duplicate scrolling track for stability */
-.providers-row .track-dup {
-    display: none !important;
+/* Keyframes: move row left by 50% of its own width (since it contains 2 identical tracks) */
+@keyframes lp-marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+/* Mobile tweaks: slightly smaller logos and gaps */
+@media (max-width: 768px) {
+    :root {
+        --lp-gap: 16px;
+        --lp-logo-height: 40px;
+        --lp-duration-row1: 26s;
+        --lp-duration-row2: 32s;
+    }
 }
 
 /* Logo sizing: keep within container, no overflow */
