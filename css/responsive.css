@@ -43,12 +43,20 @@
     /* Allow visibility if anything momentarily exceeds width */
     html, body {
         overflow-x: auto !important;
+        width: 100% !important;
         max-width: 100% !important;
     }
 
+    /* Neutralize any decorative pseudo-elements that may widen/clamp the layout */
+    .news-achievements::before,
+    .news-achievements::after {
+        content: none !important;
+        display: none !important;
+    }
+
     /* News & Achievements — robust mobile overflow fix */
-    .news-achievements,
-    .news-achievements .container {
+    body .news-achievements,
+    body .news-achievements .container {
         width: 100% !important;
         max-width: 100vw !important;        /* clamp to viewport width */
         margin-left: 0 !important;
@@ -56,12 +64,14 @@
         padding-left: 12px !important;
         padding-right: 12px !important;
         box-sizing: border-box !important;
+        overflow: visible !important; /* avoid clipping */
     }
 
     /* Collapse any desktop grid to single flow and remove gap that can cause overflow */
-    .news-achievements .news-achievements-content {
+    body .news-achievements .news-achievements-content {
         display: grid !important;           /* single column grid */
         grid-template-columns: 1fr !important;  /* single column */
+        grid-auto-flow: row !important;
         gap: 0 !important;                      /* remove large gaps on mobile */
         width: 100% !important;
         max-width: 100% !important;
@@ -72,36 +82,58 @@
     }
 
     /* Make each card stretch full width and allow shrinking */
-    .news-achievements .news-section,
-    .news-achievements .achievements-section {
+    body .news-achievements .news-section,
+    body .news-achievements .achievements-section {
         position: static !important;
         float: none !important;
         transform: none !important;
+        display: block !important;
         width: 100% !important;
         max-width: 100% !important;
         min-width: 0 !important;                /* critical: allow shrink */
         margin: 0 0 12px 0 !important;
         padding: 16px !important;
         box-sizing: border-box !important;
+        overflow: visible !important;
     }
 
     /* Clamp media inside cards */
-    .news-achievements img,
-    .news-achievements svg,
-    .news-achievements video,
-    .news-achievements canvas {
+    body .news-achievements img,
+    body .news-achievements svg,
+    body .news-achievements video,
+    body .news-achievements canvas {
         max-width: 100% !important;
         height: auto !important;
         display: block !important;
     }
 
+    /* Prevent long strings/links from expanding width */
+    body .news-achievements a,
+    body .news-achievements p,
+    body .news-achievements h1,
+    body .news-achievements h2,
+    body .news-achievements h3,
+    body .news-achievements h4,
+    body .news-achievements h5,
+    body .news-achievements h6 {
+        overflow-wrap: anywhere !important;
+        word-break: break-word !important;
+    }
+
     /* Ensure nested elements never push beyond viewport */
-    .news-achievements * {
+    body .news-achievements * {
         max-width: 100% !important;
         min-width: 0 !important;
         overflow-wrap: anywhere !important;
         word-break: break-word !important;
         box-sizing: border-box !important;
+    }
+
+    /* If you have code/pre blocks with long lines, ensure they wrap */
+    body .news-achievements pre,
+    body .news-achievements code {
+        white-space: pre-wrap !important;
+        word-break: break-word !important;
     }
 }
 
