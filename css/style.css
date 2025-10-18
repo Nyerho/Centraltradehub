@@ -1601,6 +1601,44 @@ body {
         width: 100% !important;
     }
     
+    /* Auth header — clamp to viewport and allow shrink/wrap on mobile */
+    header.auth-header,
+    .auth-header {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+        left: auto !important;
+        right: auto !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        overflow: visible !important;
+    }
+
+    /* Ensure header children can shrink and wrap */
+    header.auth-header .container,
+    .auth-header .container,
+    header.auth-header nav,
+    .auth-header nav {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        flex-wrap: wrap !important;
+    }
+
+    /* Mobile logo sizing guard (Bootstrap-like) */
+    header.auth-header .logo img,
+    .auth-header .logo img {
+        display: block !important;
+        max-width: 40vw !important;
+        height: auto !important;
+        object-fit: contain !important;
+    }
+    
     /* Dedicated mobile override for Choose Next: safe 100% width, single-column grid, no overflow */
     .choose-next {
         width: 100% !important;
