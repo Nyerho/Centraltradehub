@@ -1,22 +1,38 @@
 // Top-level config (near your existing config/constants)
-const USE_EXTERNAL_DELETE = false; // ensure we never call external APIs for half-delete
+const USE_EXTERNAL_DELETE = false; // force half-delete mode (skip external APIs)
 const PROD_API_BASE = 'https://www.centraltradekeplr.com/api';
 const LOCAL_API_BASE = 'http://localhost:3001/api';
 
 // Helper: delete Firestore document for this user (half-delete)
 async function deleteFirestoreUser(uid) {
-    // Adjust collection name if your schema differs
-    await deleteDoc(doc(db, 'users', uid));
-
-    // Optional: write a tombstone/audit record (ignore failures)
-    try {
-        await setDoc(doc(db, 'deleted_users', uid), {
-            uid,
-            deletedAt: serverTimestamp()
-        });
-    } catch (auditErr) {
-        console.warn('Could not write delete audit record:', auditErr);
+    // v9 modular Firestore (preferred)
+    if (typeof deleteDoc === 'function' && typeof doc === 'function' && typeof db !== 'undefined') {
+        await deleteDoc(doc(db, 'users', uid));
+        // Optional audit/tombstone
+        try {
+            await setDoc(doc(db, 'deleted_users', uid), { uid, deletedAt: serverTimestamp() });
+        } catch (auditErr) {
+            console.warn('Could not write delete audit record:', auditErr);
+        }
+        return;
     }
+
+    // v8 namespaced Firestore fallback
+    if (window.firebase?.firestore) {
+        const fs = window.firebase.firestore();
+        await fs.collection('users').doc(uid).delete();
+        try {
+            await fs.collection('deleted_users').doc(uid).set({
+                uid,
+                deletedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+            });
+        } catch (auditErr) {
+            console.warn('Could not write delete audit record (v8):', auditErr);
+        }
+        return;
+    }
+
+    throw new Error('Firestore not initialized. Ensure db (v9) or firebase.firestore() (v8) is available.');
 }
 
 async function tryDeleteFromApi(uid) {
@@ -58,18 +74,20 @@ async function tryDeleteFromApi(uid) {
 // Replace external delete attempts with Firestore-only half delete
 async function tryDelete(uid) {
     console.log('Half delete: removing Firestore document for uid:', uid);
-    // Skip external API calls entirely
+
+    // Hard block external endpoints in half-delete mode
     if (USE_EXTERNAL_DELETE) {
         console.warn('USE_EXTERNAL_DELETE is true, but half-delete mode is intended to skip external endpoints.');
     }
+
     await deleteFirestoreUser(uid);
     return { deletedFirestore: true, deletedAuth: false };
 }
 
+// If handleDeleteUser belongs to a class, keep the same method name/signature
 async function handleDeleteUser(uid) {
     // Set any UI deleting state (spinner/disabled button)
     setDeletingUIState(uid, true);
-
     try {
         console.log('Attempting half delete (Firestore only) for user:', uid);
         const result = await tryDelete(uid);
@@ -80,7 +98,6 @@ async function handleDeleteUser(uid) {
             'User deleted from app data',
             `Firestore: ${result.deletedFirestore}, Auth: ${result.deletedAuth} (not deleted)`
         );
-
     } catch (err) {
         console.error('Delete user error:', err);
         toastError('Delete failed', err?.message || String(err));
