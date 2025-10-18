@@ -123,3 +123,42 @@ function setDeletingUIState(uid, isDeleting) {
 
 function toastSuccess(title, message) { console.log('[SUCCESS]', title, message); }
 function toastError(title, message) { console.error('[ERROR]', title, message); }
+
+function renderUserRow(userDocData) {
+    // Example renderer: adjust to your actual table markup
+    const { uid, email, displayName, phoneNumber, password_last_changed_at, password_strength_score } = userDocData;
+    const table = document.querySelector('#admin-users-table tbody');
+    if (!table) return;
+
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-user-id', uid);
+    tr.innerHTML = `
+        <td>${displayName || ''}</td>
+        <td>${email || ''}</td>
+        <td>${phoneNumber || ''}</td>
+        <td>${password_last_changed_at ? new Date(password_last_changed_at.seconds ? password_last_changed_at.seconds * 1000 : password_last_changed_at).toLocaleString() : '—'}</td>
+        <td>${typeof password_strength_score === 'number' ? password_strength_score : '—'}</td>
+        <td>
+            <button class="btn btn-sm btn-danger delete-btn" onclick="handleDeleteUser('${uid}')">Delete</button>
+            <button class="btn btn-sm btn-secondary" onclick="sendPasswordReset('${email}')">Send Reset</button>
+        </td>
+    `;
+    table.appendChild(tr);
+}
+
+async function sendPasswordReset(email) {
+    try {
+        // v8
+        if (window.firebase?.auth) {
+            await window.firebase.auth().sendPasswordResetEmail(email);
+            toastSuccess('Reset email sent', email);
+            return;
+        }
+        // v9
+        const { getAuth, sendPasswordResetEmail } = await import('https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js');
+        await sendPasswordResetEmail(getAuth(), email);
+        toastSuccess('Reset email sent', email);
+    } catch (e) {
+        toastError('Reset email failed', e?.message || String(e));
+    }
+}
