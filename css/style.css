@@ -1723,6 +1723,38 @@ body {
 }
 
 @media (max-width: 480px) {
+    /* Slightly smaller logo on very small screens */
+    header img[class*="logo"],
+    header .logo img,
+    header .brand img,
+    body[class*="auth"] header img {
+        max-width: 36vw !important;
+    }
+    /* Keep header clamped and children shrink-wrapping */
+    header.auth-header,
+    .auth-header,
+    body[class*="auth"] header {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
+    header .container,
+    header .navbar,
+    header nav,
+    header .nav,
+    header .nav-list,
+    body[class*="auth"] header .container,
+    body[class*="auth"] header nav {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        flex-wrap: wrap !important;
+    }
+    
     .features,
     .tools-preview,
     .choose-us,

@@ -1,4 +1,56 @@
 /* Auth Page Styles */
+
+/* Auth header responsive layout */
+header.auth-header,
+.auth-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+}
+
+.auth-header .container,
+.auth-header nav,
+.auth-header .navbar {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    flex-wrap: wrap !important;
+}
+
+/* Responsive logo sizing (clamped) */
+.auth-header .logo img,
+.auth-header img[class*="logo"] {
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: clamp(120px, 38vw, 200px) !important; /* never too big/small */
+    object-fit: contain !important;
+}
+
+/* Ensure nav items wrap and don't force overflow */
+.auth-header .nav,
+.auth-header .nav-list {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+}
+
+.auth-header .nav-list li a {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+}
 .auth-body {
     margin: 0;
     padding: 0;
