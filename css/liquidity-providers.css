@@ -251,3 +251,84 @@
     mix-blend-mode: normal !important;
     opacity: 1 !important;
 }
+
+/* Liquidity Providers safe layout overrides */
+.liquidity-providers,
+.providers {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    position: static !important;
+    overflow-x: hidden !important; /* prevent page horiz scroll on laptops */
+    overflow-y: visible !important;
+}
+
+/* Clamp the container and apply safe padding */
+.liquidity-providers .container,
+.providers .container {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    box-sizing: border-box !important;
+}
+
+/* Marquee wrapper should not overflow the viewport */
+.providers-marquee,
+.providers-logos {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important; /* contain any inner wide content */
+    position: relative !important;
+}
+
+/* Stable logo rows: wrap logos, center them; hide duplicate track to prevent overflow */
+.providers-row {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    position: relative !important;
+}
+
+.providers-row .track {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 16px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important; /* allow shrink */
+    box-sizing: border-box !important;
+}
+
+/* Hide duplicate scrolling track for stability */
+.providers-row .track-dup {
+    display: none !important;
+}
+
+/* Logo sizing: keep within container, no overflow */
+.provider-logo {
+    display: block !important;
+    max-width: 160px !important; /* adjust if you prefer larger logos */
+    width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+}
+
+/* General safety: limit inner elements to container width */
+.liquidity-providers *,
+.providers * {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+}
+
+/* Responsive tweak: reduce logo size slightly on small screens */
+@media (max-width: 768px) {
+    .provider-logo {
+        max-width: 140px !important;
+    }
+}

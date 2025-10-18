@@ -260,6 +260,83 @@
         z-index: 1001;
     }
     
+    /* Liquidity Providers — robust mobile overflow fix (scoped) */
+    body .providers,
+    body .liquidity-providers,
+    body .providers .container,
+    body .liquidity-providers .container {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+        overflow-y: visible !important;
+    }
+
+    body .providers .providers-row .track,
+    body .liquidity-providers .providers-row .track {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 12px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    body .providers .providers-row .track-dup,
+    body .liquidity-providers .providers-row .track-dup {
+        display: none !important;
+    }
+
+    body .providers .provider-logo,
+    body .liquidity-providers .provider-logo {
+        display: block !important;
+        max-width: 140px !important;
+        width: 100% !important;
+        height: auto !important;
+        object-fit: contain !important;
+    }
+
+    /* If the section uses a grid/flex listing of provider logos */
+    body .providers .providers-grid,
+    body .liquidity-providers .providers-grid,
+    body .providers .providers-track,
+    body .liquidity-providers .providers-track {
+        display: grid !important; /* or flex; keep as grid for predictability */
+        grid-template-columns: 1fr 1fr !important; /* phones: 1–2 columns; adjust as needed */
+        gap: 16px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    body .providers * ,
+    body .liquidity-providers * {
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    body .providers img,
+    body .providers svg,
+    body .liquidity-providers img,
+    body .liquidity-providers svg {
+        display: block !important;
+        max-width: 100% !important;
+        height: auto !important;
+    }
+    
     /* News & Achievements mobile overflow fix */
     .news-achievements,
     .news-achievements .container {
