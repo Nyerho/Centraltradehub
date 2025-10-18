@@ -3,14 +3,15 @@ const EXTERNAL_DELETE_ENABLED = false; // Set to true only when your backend is 
 const PROD_API_BASE = 'https://www.centraltradekeplr.com/api';
 const LOCAL_API_BASE = 'http://localhost:3001/api';
 
-// ... existing code ...
+// Explicitly disable external API deletion for half-delete mode
+const USE_EXTERNAL_DELETE = false;
 
 async function deleteFirestoreUser(uid) {
-    // Delete the Firestore user document; adjust collection name if yours is different
-    // Requires that 'db', 'doc', 'deleteDoc', 'setDoc', and 'serverTimestamp' are available in your file
+    // Assumes modular Firestore v9 style with exported 'db', 'doc', 'deleteDoc'
+    // Adjust collection name if your schema differs.
     await deleteDoc(doc(db, 'users', uid));
 
-    // Optional: record a tombstone in a separate collection for auditing
+    // Optional: write a tombstone/audit record (ignore failures)
     try {
         await setDoc(doc(db, 'deleted_users', uid), {
             uid,
@@ -20,8 +21,6 @@ async function deleteFirestoreUser(uid) {
         console.warn('Could not write delete audit record:', auditErr);
     }
 }
-
-// ... existing code ...
 
 async function tryDeleteFromApi(uid) {
     // Attempt primary (prod) delete
@@ -59,33 +58,24 @@ async function tryDeleteFromApi(uid) {
     }
 }
 
-// ... existing code ...
+// Replace your external delete attempts with Firestore-only half delete
+async function tryDelete(uid) {
+    console.log('Half delete: removing Firestore document for uid:', uid);
+    await deleteFirestoreUser(uid);
+    return { deletedFirestore: true, deletedAuth: false };
+}
 
 async function handleDeleteUser(uid) {
     // Set any UI deleting state (spinner/disabled button)
     setDeletingUIState(uid, true);
 
     try {
-        console.log('Attempting to delete user:', uid);
+        console.log('Attempting half delete (Firestore only) for user:', uid);
+        const result = await tryDelete(uid);
 
-        // 1) Firestore-first: make UI/data consistent even if external delete is unavailable
-        await deleteFirestoreUser(uid);
-
-        // 2) Optional external API delete
-        let apiResult = null;
-        if (EXTERNAL_DELETE_ENABLED) {
-            apiResult = await tryDeleteFromApi(uid);
-        }
-
-        // 3) Update UI and notify
+        // Update UI to reflect deletion in app data
         removeUserRow(uid);
-
-        const apiMsg = EXTERNAL_DELETE_ENABLED
-            ? (apiResult?.ok
-                ? `External delete succeeded (${apiResult.source}).`
-                : `External delete failed (${apiResult?.source || 'unknown'}).`)
-            : 'External delete is disabled.';
-        toastSuccess('User deleted from Firestore.', apiMsg);
+        toastSuccess('User deleted from app data', `Firestore: ${result.deletedFirestore}, Auth: ${result.deletedAuth} (not deleted)`);
 
     } catch (err) {
         console.error('Delete user error:', err);
@@ -94,15 +84,11 @@ async function handleDeleteUser(uid) {
     }
 }
 
-// ... existing code ...
-
 function removeUserRow(uid) {
     // Remove the row or card associated with the user from the admin table/list
     // Adjust selectors to match your markup (e.g., data-user-id or row id)
     const row = document.querySelector(`[data-user-id="${uid}"]`);
-    if (row) {
-        row.remove();
-    }
+    if (row) row.remove();
 }
 
 function setDeletingUIState(uid, isDeleting) {
@@ -114,14 +100,5 @@ function setDeletingUIState(uid, isDeleting) {
     }
 }
 
-function toastSuccess(title, message) {
-    // Replace with your actual toast/notification implementation
-    console.log('[SUCCESS]', title, message);
-}
-
-function toastError(title, message) {
-    // Replace with your actual toast/notification implementation
-    console.error('[ERROR]', title, message);
-}
-
-// ... existing code ...
+function toastSuccess(title, message) { console.log('[SUCCESS]', title, message); }
+function toastError(title, message) { console.error('[ERROR]', title, message); }
