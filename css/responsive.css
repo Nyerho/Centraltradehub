@@ -260,6 +260,95 @@
         z-index: 1001;
     }
     
+    /* Dashboard header — mobile layout and sizing */
+    header.dashboard-header,
+    .dashboard-header,
+    #dashboard-header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
+        padding: 8px 12px !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    /* 1) Toggle button: placed first (left) */
+    .dashboard-header .mobile-toggle,
+    .dashboard-header .menu-toggle,
+    .dashboard-header .toggle {
+        order: 0 !important;
+        flex: 0 0 auto !important;
+        font-size: 16px !important;
+        padding: 6px 10px !important;
+    }
+
+    /* 2) Logo */
+    .dashboard-header .logo,
+    .dashboard-header .brand-logo,
+    .dashboard-header img[class*="logo"] {
+        order: 1 !important;
+        flex: 0 0 auto !important;
+        max-width: 24vw !important; /* cap logo size on mobile */
+        height: auto !important;
+        object-fit: contain !important;
+        display: block !important;
+    }
+
+    /* 3) Central Tradehub text/brand */
+    .dashboard-header .brand,
+    .dashboard-header .site-title,
+    .dashboard-header .title {
+        order: 2 !important;
+        flex: 1 1 auto !important;
+        font-size: 16px !important;
+        line-height: 1.2 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        min-width: 0 !important;
+    }
+
+    /* 4) KYC status */
+    .dashboard-header .kyc-status,
+    .dashboard-header .kyc {
+        order: 3 !important;
+        flex: 0 0 auto !important;
+        font-size: 14px !important;
+        line-height: 1.2 !important;
+    }
+
+    /* 5) Logout button */
+    .dashboard-header .logout,
+    .dashboard-header .logout-btn,
+    .dashboard-header .btn-logout {
+        order: 4 !important;
+        flex: 0 0 auto !important;
+        font-size: 14px !important;
+        padding: 6px 10px !important;
+    }
+
+    /* General safety: allow children to shrink */
+    .dashboard-header * {
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* CentralTradeHub header mobile layout */
+    .centraltradehub-header .header-container{display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;box-sizing:border-box}
+    .centraltradehub-header .mobile-toggle{order:0}
+    .centraltradehub-header .logo-section{order:1;display:flex;align-items:center;gap:8px;min-width:0}
+    .centraltradehub-header .dashboard-logo{max-width:28vw;height:auto}
+    .centraltradehub-header .brand-logo{font-size:16px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .centraltradehub-header .brand-tagline{display:none}
+    .centraltradehub-header .user-info{order:2;display:flex;align-items:center;gap:8px;margin-left:auto}
+    .centraltradehub-header .user-email,.centraltradehub-header .user-name{display:none}
+    .centraltradehub-header .logout-btn{padding:6px 10px;font-size:14px;line-height:1.2}
+    .container-fluid.dashboard-container .d-md-none{display:none!important}
+    
     /* Auth header — mobile guard */
     body[class*="auth"] header,
     header.auth-header,

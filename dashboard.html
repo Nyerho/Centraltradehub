@@ -41,6 +41,12 @@
     <!-- Central Trade Hub Header -->
     <header class="centraltradehub-header">
         <div class="header-container">
+            <!-- Mobile Sidebar Toggle (moved to header) -->
+            <div class="mobile-toggle d-md-none">
+                <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
             <div class="logo-section">
                 <a href="index.html" class="logo-link">
                     <img src="assets/images/logo.png" alt="Central Trade Hub" class="dashboard-logo">
@@ -110,8 +116,8 @@
 
             <!-- Main Content -->
             <main class="col-lg-9 col-md-8 ms-sm-auto px-md-4 dashboard-main">
-                <!-- Mobile Sidebar Toggle -->
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom d-md-none">
+                <!-- Mobile Sidebar Toggle (hidden since moved to header) -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom d-none">
                     <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
                         <i class="fas fa-bars"></i>
                     </button>
