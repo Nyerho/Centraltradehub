@@ -135,6 +135,59 @@
         white-space: pre-wrap !important;
         word-break: break-word !important;
     }
+    
+    /* Choose Where To Go Next — robust mobile overflow fix (scoped) */
+    body .choose-next,
+    body .choose-next .container {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        box-sizing: border-box !important;
+        overflow: visible !important;
+    }
+
+    body .choose-next .next-options {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+    }
+
+    body .choose-next .next-card {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important; /* allow shrink */
+        margin: 0 !important;
+        padding: 20px !important;
+        box-sizing: border-box !important;
+        overflow: visible !important;
+    }
+
+    body .choose-next img,
+    body .choose-next svg,
+    body .choose-next video,
+    body .choose-next canvas {
+        max-width: 100% !important;
+        height: auto !important;
+        display: block !important;
+    }
+
+    body .choose-next * {
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow-wrap: anywhere !important;
+        word-break: break-word !important;
+        box-sizing: border-box !important;
+    }
 }
 
 @media (max-width: 480px) {

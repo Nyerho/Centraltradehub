@@ -1574,7 +1574,6 @@ body {
     .choose-us,
     .security,
     .bonus,
-    .choose-next,
     .providers,
     .education-section,
     .indices {
@@ -1592,13 +1591,67 @@ body {
     .choose-us .container,
     .security .container,
     .bonus .container,
-    .choose-next .container,
     .providers .container,
     .education-section .container,
     .indices .container {
         padding: 0 1rem !important; /* Restore padding inside sections */
         max-width: none !important;
         width: 100% !important;
+    }
+    
+    /* Dedicated mobile override for Choose Next: safe 100% width, single-column grid, no overflow */
+    .choose-next {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        position: static !important;
+        left: auto !important;
+        right: auto !important;
+        overflow: visible !important;
+    }
+    .choose-next .container {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        box-sizing: border-box !important;
+    }
+    .choose-next .next-options {
+        display: grid !important;
+        grid-template-columns: 1fr !important; /* collapse to single column */
+        gap: 16px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important; /* allow grid to shrink */
+    }
+    .choose-next .next-card {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important; /* critical to prevent cutoff */
+        margin: 0 !important;
+        padding: 20px !important;
+        box-sizing: border-box !important;
+        overflow: visible !important;
+    }
+    .choose-next img,
+    .choose-next svg,
+    .choose-next video,
+    .choose-next canvas {
+        max-width: 100% !important;
+        height: auto !important;
+        display: block !important;
+    }
+    /* Prevent long strings/labels from widening the card */
+    .choose-next * {
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow-wrap: anywhere !important;
+        word-break: break-word !important;
+        box-sizing: border-box !important;
     }
     
     /* Dedicated mobile override for News & Achievements */
