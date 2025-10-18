@@ -1767,6 +1767,37 @@ body {
         max-width: 100% !important;
         width: 100% !important;
     }
+    
+    /* Slightly smaller logo on very small screens */
+    header img[class*="logo"],
+    header .logo img,
+    header .brand img {
+        max-width: 36vw !important;
+    }
+    /* Ensure header still clamps and children can shrink */
+    header.auth-header,
+    .auth-header,
+    body[class*="auth"] header,
+    [id*="auth"] header,
+    [class*="auth"] header {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
+    header .container,
+    header .navbar,
+    header nav,
+    header .nav,
+    header .nav-list {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        flex-wrap: wrap !important;
+    }
 }
 
 /* Extra guard for Liquidity Providers across all breakpoints (prevents laptop horizontal scroll) */
