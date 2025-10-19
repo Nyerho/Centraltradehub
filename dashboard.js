@@ -6,14 +6,12 @@ document.addEventListener('DOMContentLoaded', function () {
             email: profile.email || '',
             phoneNumber: profile.phoneNumber || ''
         };
-        // Auto-update annotated elements
         document.querySelectorAll('[data-user-field]').forEach(el => {
             const key = el.getAttribute('data-user-field');
             if (key && key in map) {
                 el.textContent = map[key];
             }
         });
-        // Optional: update known IDs if you have them
         const nameEl = document.getElementById('header-user-name');
         if (nameEl) nameEl.textContent = map.displayName || 'User';
     }

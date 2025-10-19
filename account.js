@@ -171,10 +171,7 @@
 
     // Toast helper
     function showToast(message, opts = {}) {
-        const {
-            type = 'success',
-            duration = 3000
-        } = opts;
+        const { type = 'success', duration = 3000 } = opts;
 
         // Inject minimal styles once
         if (!document.getElementById('toast-style')) {
@@ -213,7 +210,6 @@
             document.head.appendChild(style);
         }
 
-        // Create or reuse a container
         let container = document.querySelector('.toast-container');
         if (!container) {
             container = document.createElement('div');
@@ -221,16 +217,12 @@
             document.body.appendChild(container);
         }
 
-        // Create toast element
         const el = document.createElement('div');
         el.className = `toast ${type}`;
         el.textContent = message;
         container.appendChild(el);
 
-        // Animate in
         requestAnimationFrame(() => el.classList.add('show'));
-
-        // Auto-remove
         setTimeout(() => {
             el.classList.remove('show');
             setTimeout(() => el.remove(), 200);
@@ -240,21 +232,26 @@
     async function saveChanges() {
         const statusEl = document.getElementById('save-status');
         try {
-            const sdk = await getSdk();
-            const user = sdk.auth.currentUser;
+            const fb = window.firebase;
+            const auth = fb.auth();
+            const db = fb.firestore();
+            const user = auth.currentUser;
+
             if (!user) {
-                if (statusEl) statusEl.textContent = 'Not signed in.';
+                showToast('Not signed in', { type: 'error' });
                 return;
             }
 
-            // Read values (allow empty to mean "no change")
-            const displayName = document.getElementById('displayName')?.value.trim() ?? '';
-            const phoneNumber = document.getElementById('phoneNumber')?.value.trim() ?? '';
-            const newEmail = document.getElementById('email')?.value.trim() ?? '';
-            const currentPassword = document.getElementById('currentPassword')?.value ?? '';
-            const newPassword = document.getElementById('newPassword')?.value ?? '';
-            const confirmPassword = document.getElementById('confirmPassword')?.value ?? '';
+            // Collect form values
+            const displayName = (document.getElementById('displayName')?.value || '').trim();
+            const newEmail = (document.getElementById('email')?.value || '').trim();
+            const phoneNumber = (document.getElementById('phoneNumber')?.value || '').trim();
 
+            // Update Auth profile (this is what many platform UIs read)
+            const authOps = [];
+            if (displayName) authOps.push(user.updateProfile({ displayName }));
+            if (newEmail && newEmail !== (user.email || '')) authOps.push(user.updateEmail(newEmail));
+            // Password change logic remains as in your existing code
             if (statusEl) statusEl.textContent = 'Saving...';
 
             // Build Firestore update only with provided non-empty fields
@@ -308,14 +305,29 @@
                 }, { merge: true });
             }
 
+            // Firestore merge (align with platform service; write both displayName and fullName)
+            const docData = {
+                // cover both schema variants
+                ...(displayName ? { displayName, fullName: displayName } : {}),
+                ...(newEmail ? { email: newEmail } : { email: user.email || '' }),
+                ...(phoneNumber ? { phoneNumber } : {}),
+                updatedAt: fb.firestore.FieldValue.serverTimestamp()
+            };
+
+            // Write to both collections to match platform service expectations
+            await Promise.all([
+                db.collection('profiles').doc(user.uid).set(docData, { merge: true }),
+                db.collection('users').doc(user.uid).set(docData, { merge: true })
+            ]);
+
             if (statusEl) statusEl.textContent = 'Saved successfully.';
             showToast('Changes saved', { type: 'success' });
 
-            // Broadcast profile updates across pages and cache them
+            // Cross-page sync: cache and emit event
             const profile = {
                 uid: user.uid,
                 displayName: displayName || user.displayName || '',
-                email: (newEmail && newEmail !== user.email) ? newEmail : (user.email || ''),
+                email: newEmail || user.email || '',
                 phoneNumber: phoneNumber || ''
             };
             try { localStorage.setItem('userProfileCache', JSON.stringify(profile)); } catch (_) {}

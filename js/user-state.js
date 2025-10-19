@@ -38,11 +38,13 @@
   }
 
   function mergeProfile(user, data) {
+    // Prefer Firestore name; support both displayName and fullName; fallback to Auth
+    const nameFromDb = data?.displayName || data?.fullName || '';
     return {
       uid: user.uid,
-      displayName: (data?.displayName) || user.displayName || '',
-      email: user.email || '',
-      phoneNumber: (data?.phoneNumber) || ''
+      displayName: nameFromDb || user.displayName || '',
+      email: user.email || data?.email || '',
+      phoneNumber: data?.phoneNumber || ''
     };
   }
 
@@ -57,6 +59,8 @@
       const key = el.getAttribute('data-user-field');
       if (key && key in map) el.textContent = map[key];
     });
+    const nameEl = document.getElementById('current-user-name');
+    if (nameEl) nameEl.textContent = map.displayName || 'User';
   }
 
   async function startSync() {
@@ -91,15 +95,44 @@
         return;
       }
 
-      const docRef = db.collection('users').doc(user.uid);
-      unsubscribe = docRef.onSnapshot(snap => {
-        const data = snap.exists ? snap.data() : {};
+      // Prefer profiles/{uid}, fallback to users/{uid}
+      const profilesRef = db.collection('profiles').doc(user.uid);
+      const usersRef = db.collection('users').doc(user.uid);
+
+      unsubscribe = profilesRef.onSnapshot(snap => {
+        let data = snap.exists ? snap.data() : null;
+        const handleUsersFallback = () => {
+          return usersRef.onSnapshot(usersSnap => {
+            const usersData = usersSnap.exists ? usersSnap.data() : {};
+            const profile = mergeProfile(user, usersData || {});
+            try { localStorage.setItem('userProfileCache', JSON.stringify(profile)); } catch (_) {}
+            window.dispatchEvent(new CustomEvent('user-profile-changed', { detail: profile }));
+            updateDomFromProfile(profile);
+          }, err => {
+            console.warn('user-state: users snapshot error:', err);
+            const profile = mergeProfile(user, {});
+            updateDomFromProfile(profile);
+          });
+        };
+
+        // If profiles doc not present, fallback to users collection
+        if (!data) {
+          // switch subscription to users
+          if (unsubscribe) {
+            try { unsubscribe(); } catch (_) {}
+            unsubscribe = null;
+          }
+          unsubscribe = handleUsersFallback();
+          return;
+        }
+
         const profile = mergeProfile(user, data);
         try { localStorage.setItem('userProfileCache', JSON.stringify(profile)); } catch (_) {}
         window.dispatchEvent(new CustomEvent('user-profile-changed', { detail: profile }));
         updateDomFromProfile(profile);
       }, err => {
-        console.warn('user-state: snapshot error:', err);
+        console.warn('user-state: profiles snapshot error:', err);
+        // On error, at least show Auth values
         const profile = mergeProfile(user, {});
         updateDomFromProfile(profile);
       });
