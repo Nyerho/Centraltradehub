@@ -113,7 +113,6 @@
         try {
             const sdk = await getSdk();
 
-            // Wait for Firebase to report auth state
             sdk.auth.onAuthStateChanged(async (user) => {
                 if (!user) {
                     if (statusEl) statusEl.textContent = 'Not signed in.';
@@ -123,9 +122,10 @@
                 await populateProfileFromUser(user, sdk);
             });
 
-            // Attach Save Changes handler to form submit
             const form = document.getElementById('account-form');
             if (form) {
+                // Disable HTML5 validation so partial saves work and our JS decides what to update
+                form.setAttribute('novalidate', '');
                 form.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     await saveChanges();
@@ -150,22 +150,34 @@
                 return;
             }
 
-            const displayName = document.getElementById('displayName')?.value.trim() || '';
-            const phoneNumber = document.getElementById('phoneNumber')?.value.trim() || '';
-            const newEmail = document.getElementById('email')?.value.trim() || '';
-            const currentPassword = document.getElementById('currentPassword')?.value || '';
-            const newPassword = document.getElementById('newPassword')?.value || '';
-            const confirmPassword = document.getElementById('confirmPassword')?.value || '';
+            // Read values (allow empty to mean "no change")
+            const displayName = document.getElementById('displayName')?.value.trim() ?? '';
+            const phoneNumber = document.getElementById('phoneNumber')?.value.trim() ?? '';
+            const newEmail = document.getElementById('email')?.value.trim() ?? '';
+            const currentPassword = document.getElementById('currentPassword')?.value ?? '';
+            const newPassword = document.getElementById('newPassword')?.value ?? '';
+            const confirmPassword = document.getElementById('confirmPassword')?.value ?? '';
 
             if (statusEl) statusEl.textContent = 'Saving...';
 
-            // Update profile info
-            await sdk.db.collection('users').doc(user.uid).set({ displayName, phoneNumber }, { merge: true });
-            await user.updateProfile({ displayName });
+            // Build Firestore update only with provided non-empty fields
+            const profileUpdates = {};
+            if (displayName) profileUpdates.displayName = displayName;
+            if (phoneNumber) profileUpdates.phoneNumber = phoneNumber;
 
-            const needsEmailChange = newEmail && newEmail !== user.email;
-            const needsPasswordChange = newPassword && newPassword.length > 0;
+            if (Object.keys(profileUpdates).length > 0) {
+                await sdk.db.collection('users').doc(user.uid).set(profileUpdates, { merge: true });
+            }
 
+            // Update Auth profile only if displayName provided and changed
+            if (displayName && displayName !== (user.displayName || '')) {
+                await user.updateProfile({ displayName });
+            }
+
+            const needsEmailChange = !!newEmail && newEmail !== user.email;
+            const needsPasswordChange = !!newPassword;
+
+            // Only require current password when changing email or password
             async function reauthIfNeeded() {
                 if (!(needsEmailChange || needsPasswordChange)) return;
                 if (!currentPassword) throw new Error('Current password is required to change email or password.');
@@ -200,8 +212,10 @@
             }
 
             if (statusEl) statusEl.textContent = 'Saved successfully.';
-            const idsToClear = ['currentPassword', 'newPassword', 'confirmPassword'];
-            idsToClear.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            ['currentPassword', 'newPassword', 'confirmPassword'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
         } catch (e) {
             console.error('Save failed:', e);
             if (statusEl) statusEl.textContent = 'Save failed: ' + (e.message || e);
