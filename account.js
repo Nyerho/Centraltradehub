@@ -169,6 +169,21 @@
         initAccountPage();
     });
 
+    // Toast helper
+    function showToast(message, timeout = 3000) {
+        const el = document.getElementById('save-toast');
+        if (!el) return;
+        el.textContent = message;
+        el.style.display = 'block';
+        // Clear any previous timer
+        if (window.__accountToastTimer) {
+            clearTimeout(window.__accountToastTimer);
+        }
+        window.__accountToastTimer = setTimeout(() => {
+            el.style.display = 'none';
+        }, timeout);
+    }
+
     async function saveChanges() {
         const statusEl = document.getElementById('save-status');
         try {
@@ -241,6 +256,21 @@
             }
 
             if (statusEl) statusEl.textContent = 'Saved successfully.';
+            showToast('Changes saved');
+
+            // Emit profile changed event so other pages (or same page) can react,
+            // and store a lightweight cache in localStorage.
+            const profile = {
+                uid: user.uid,
+                displayName: displayName || user.displayName || '',
+                email: (newEmail && newEmail !== user.email) ? newEmail : (user.email || ''),
+                phoneNumber: phoneNumber || undefined,
+            };
+            try {
+                localStorage.setItem('userProfileCache', JSON.stringify(profile));
+            } catch (_) {}
+            window.dispatchEvent(new CustomEvent('user-profile-changed', { detail: profile }));
+
             ['currentPassword', 'newPassword', 'confirmPassword'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = '';

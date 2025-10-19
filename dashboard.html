@@ -36,6 +36,7 @@
     <script type="module" src="js/market-news.js"></script>
     <script type="module" src="js/ai-support-chat.js"></script>
     <script type="module" src="js/dashboard.js"></script>
+    <script src="js/user-state.js"></script>
 </head>
 <body>
     <!-- Central Trade Hub Header -->
@@ -64,8 +65,8 @@
                         <span class="kyc-text" id="kycStatusText">KYC</span>
                     </div>
                 </div>
-                <span class="user-email" id="userEmail">Loading...</span>
-                <span class="user-name" id="dashboard-user-name">Loading...</span>
+                <span class="user-email" id="userEmail" data-user-field="email">Loading...</span>
+                <span class="user-name" id="dashboard-user-name" data-user-field="displayName">Loading...</span>
                 <button class="logout-btn" onclick="logout()">Logout</button>
             </div>
         </div>
@@ -138,7 +139,7 @@
                 <div class="profile-avatar">
                     <span class="avatar-initial">E</span>
                 </div>
-                <span class="user-name" id="trading-user-name">User</span>
+                <span class="user-name" id="trading-user-name" data-user-field="displayName">User</span>
                 <button class="download-btn">
                     <i class="fas fa-download"></i>
                 </button>
