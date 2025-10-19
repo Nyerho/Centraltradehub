@@ -13,31 +13,68 @@
         return Math.min(score, 4);
     }
 
-    async function getSdk() {
-        if (window.firebase?.auth && window.firebase?.firestore) {
-            return {
-                variant: 'v8',
-                auth: window.firebase.auth(),
-                db: window.firebase.firestore(),
-                FieldValue: window.firebase.firestore.FieldValue
-            };
+    // Helper to load a script dynamically
+    function loadScript(src) {
+        return new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = src;
+            s.async = true;
+            s.onload = resolve;
+            s.onerror = () => reject(new Error('Failed to load script: ' + src));
+            document.head.appendChild(s);
+        });
+    }
+
+    // Load Firebase compat SDKs if not present
+    async function ensureFirebaseCompatLoaded() {
+        if (window.firebase) return;
+        // Load compat SDKs from CDN in order
+        await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
+        await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js');
+        await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js');
+        if (!window.firebase) {
+            throw new Error('Firebase compat SDK failed to load.');
         }
-        const [{ getAuth, signInWithEmailAndPassword, updateEmail, updatePassword },
-               { getFirestore, doc, getDoc, setDoc, serverTimestamp }] = await Promise.all([
-            import('https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js'),
-            import('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js'),
-        ]);
+    }
+
+    async function ensureFirebaseAppInitialized() {
+        await ensureFirebaseCompatLoaded();
+
+        const fb = window.firebase;
+        // Try to obtain config from global FB_CONFIG or firebase-config.js
+        let config = window.FB_CONFIG || window.firebaseConfig;
+        if (!config) {
+            try {
+                const mod = await import('./firebase-config.js');
+                if (mod?.firebaseConfig) {
+                    config = mod.firebaseConfig;
+                    window.FB_CONFIG = config; // cache globally
+                }
+            } catch (_) {
+                // ignore import error; we might have FB_CONFIG set elsewhere
+            }
+        }
+        if (!config) {
+            throw new Error('Firebase config not found. Set window.FB_CONFIG or provide ./firebase-config.js exporting firebaseConfig.');
+        }
+
+        if (fb.apps && fb.apps.length === 0) {
+            fb.initializeApp(config);
+        }
+    }
+
+    async function getSdk() {
+        await ensureFirebaseAppInitialized();
+        const fb = window.firebase;
+        if (!fb?.auth || !fb?.firestore) {
+            throw new Error('Firebase Auth/Firestore not available. Ensure compat SDKs are loaded.');
+        }
+        // Use v8 compat API to avoid modular getApp/getAuth calls
         return {
-            variant: 'v9',
-            auth: getAuth(),
-            db: getFirestore(),
-            signInWithEmailAndPassword,
-            updateEmail,
-            updatePassword,
-            doc,
-            getDoc,
-            setDoc,
-            serverTimestamp
+            variant: 'v8',
+            auth: fb.auth(),
+            db: fb.firestore(),
+            FieldValue: fb.firestore.FieldValue,
         };
     }
 
@@ -45,30 +82,18 @@
         const sdk = await getSdk();
         const user = sdk.auth.currentUser;
         if (!user) {
-            statusEl().textContent = 'Not signed in.';
+            document.getElementById('save-status').textContent = 'Not signed in.';
             return;
         }
-
         document.getElementById('displayName').value = user.displayName || '';
         document.getElementById('email').value = user.email || '';
 
         try {
-            const uid = user.uid;
-            if (sdk.variant === 'v8') {
-                const snap = await sdk.db.collection('users').doc(uid).get();
-                const data = snap.exists ? snap.data() : {};
-                document.getElementById('phoneNumber').value = data.phoneNumber || '';
-                if (!user.displayName && data.displayName) {
-                    document.getElementById('displayName').value = data.displayName;
-                }
-            } else {
-                const ref = sdk.doc(sdk.db, 'users', uid);
-                const snap = await sdk.getDoc(ref);
-                const data = snap.exists() ? snap.data() : {};
-                document.getElementById('phoneNumber').value = data.phoneNumber || '';
-                if (!user.displayName && data.displayName) {
-                    document.getElementById('displayName').value = data.displayName;
-                }
+            const snap = await sdk.db.collection('users').doc(user.uid).get();
+            const data = snap.exists ? snap.data() : {};
+            document.getElementById('phoneNumber').value = data.phoneNumber || '';
+            if (!user.displayName && data.displayName) {
+                document.getElementById('displayName').value = data.displayName;
             }
         } catch (e) {
             console.warn('Could not load Firestore profile:', e);
@@ -80,7 +105,7 @@
         const sdk = await getSdk();
         const user = sdk.auth.currentUser;
         if (!user) {
-            statusEl().textContent = 'Not signed in.';
+            document.getElementById('save-status').textContent = 'Not signed in.';
             return;
         }
 
@@ -91,26 +116,17 @@
         const newPassword = document.getElementById('newPassword').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
 
-        statusEl().textContent = 'Saving...';
+        document.getElementById('save-status').textContent = 'Saving...';
 
         try {
-            if (sdk.variant === 'v8') {
-                await sdk.db.collection('users').doc(user.uid).set({
-                    displayName,
-                    phoneNumber
-                }, { merge: true });
-                await user.updateProfile({ displayName });
-            } else {
-                const { doc, setDoc } = sdk;
-                await setDoc(doc(sdk.db, 'users', user.uid), {
-                    displayName,
-                    phoneNumber
-                }, { merge: true });
-                await user.updateProfile?.({ displayName });
-            }
+            await sdk.db.collection('users').doc(user.uid).set({
+                displayName,
+                phoneNumber
+            }, { merge: true });
+            await user.updateProfile({ displayName });
         } catch (e) {
             console.error('Profile update failed:', e);
-            statusEl().textContent = 'Profile update failed: ' + (e.message || e);
+            document.getElementById('save-status').textContent = 'Profile update failed: ' + (e.message || e);
             return;
         }
 
@@ -121,63 +137,55 @@
             if (!(needsEmailChange || needsPasswordChange)) return;
             if (!currentPassword) throw new Error('Current password is required to change email or password.');
             const currentEmail = user.email;
-            if (sdk.variant === 'v8') {
-                await sdk.auth.signInWithEmailAndPassword(currentEmail, currentPassword);
-            } else {
-                await sdk.signInWithEmailAndPassword(sdk.auth, currentEmail, currentPassword);
-            }
+            await sdk.auth.signInWithEmailAndPassword(currentEmail, currentPassword);
         }
 
         try {
             await reauthIfNeeded();
         } catch (e) {
             console.error('Reauthentication failed:', e);
-            statusEl().textContent = 'Reauthentication failed: ' + (e.message || e);
+            document.getElementById('save-status').textContent = 'Reauthentication failed: ' + (e.message || e);
             return;
         }
 
         if (needsEmailChange) {
             try {
-                if (sdk.variant === 'v8') {
-                    await user.updateEmail(newEmail);
-                } else {
-                    await sdk.updateEmail(user, newEmail);
-                }
+                await user.updateEmail(newEmail);
             } catch (e) {
                 console.error('Email update failed:', e);
-                statusEl().textContent = 'Email update failed: ' + (e.message || e);
+                document.getElementById('save-status').textContent = 'Email update failed: ' + (e.message || e);
                 return;
             }
         }
 
         if (needsPasswordChange) {
             if (newPassword !== confirmPassword) {
-                statusEl().textContent = 'New password and confirmation do not match.';
+                document.getElementById('save-status').textContent = 'New password and confirmation do not match.';
                 return;
             }
             try {
-                if (sdk.variant === 'v8') {
-                    await user.updatePassword(newPassword);
-                    await sdk.db.collection('users').doc(user.uid).set({
-                        password_last_changed_at: sdk.FieldValue.serverTimestamp(),
-                        password_strength_score: estimateStrength(newPassword)
-                    }, { merge: true });
-                } else {
-                    await sdk.updatePassword(user, newPassword);
-                    const { doc, setDoc, serverTimestamp } = sdk;
-                    await setDoc(doc(sdk.db, 'users', user.uid), {
-                        password_last_changed_at: serverTimestamp(),
-                        password_strength_score: estimateStrength(newPassword)
-                    }, { merge: true });
-                }
+                await user.updatePassword(newPassword);
+                await sdk.db.collection('users').doc(user.uid).set({
+                    password_last_changed_at: sdk.FieldValue.serverTimestamp(),
+                    password_strength_score: (function estimateStrength(pw) {
+                        if (!pw) return 0;
+                        let score = 0;
+                        if (pw.length >= 8) score++;
+                        if (/[A-Z]/.test(pw)) score++;
+                        if (/[a-z]/.test(pw)) score++;
+                        if (/[0-9]/.test(pw)) score++;
+                        if (/[^A-Za-z0-9]/.test(pw)) score++;
+                        return Math.min(score, 4);
+                    })(newPassword)
+                }, { merge: true });
             } catch (e) {
                 console.error('Password update failed:', e);
-                statusEl().textContent = 'Password update failed: ' + (e.message || e);
+                document.getElementById('save-status').textContent = 'Password update failed: ' + (e.message || e);
                 return;
             }
         }
 
-        statusEl().textContent = 'Saved successfully.';
+        document.getElementById('save-status').textContent = 'Saved successfully.';
         document.getElementById('currentPassword').value = '';
         document.getElementById('newPassword').value = '';
         document.getElementById('confirmPassword').value = '';
@@ -185,6 +193,6 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         loadProfile();
-        formEl()?.addEventListener('submit', saveChanges);
+        document.getElementById('account-form')?.addEventListener('submit', saveChanges);
     });
 })();
