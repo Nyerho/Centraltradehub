@@ -25,13 +25,12 @@
         });
     }
 
-    // Load Firebase compat SDKs if not present
+    // Load Firebase compat SDKs only if window.firebase is not present
     async function ensureFirebaseCompatLoaded() {
         if (window.firebase) return;
-        // Load compat SDKs from CDN in order
-        await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
-        await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js');
-        await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js');
+        await loadScript('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
+        await loadScript('https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js');
+        await loadScript('https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js');
         if (!window.firebase) {
             throw new Error('Firebase compat SDK failed to load.');
         }
@@ -41,23 +40,24 @@
         await ensureFirebaseCompatLoaded();
 
         const fb = window.firebase;
-        // Try to obtain config from global FB_CONFIG or firebase-config.js
+        // Prefer global config; otherwise import from js/firebase-config.js
         let config = window.FB_CONFIG || window.firebaseConfig;
         if (!config) {
             try {
-                const mod = await import('./firebase-config.js');
+                const mod = await import('./js/firebase-config.js');
                 if (mod?.firebaseConfig) {
                     config = mod.firebaseConfig;
                     window.FB_CONFIG = config; // cache globally
                 }
             } catch (_) {
-                // ignore import error; we might have FB_CONFIG set elsewhere
+                // ignore import errors (e.g., non-module context)
             }
         }
         if (!config) {
-            throw new Error('Firebase config not found. Set window.FB_CONFIG or provide ./firebase-config.js exporting firebaseConfig.');
+            throw new Error('Firebase config not found. Set window.FB_CONFIG or ensure ./js/firebase-config.js exports firebaseConfig and attaches window.FB_CONFIG.');
         }
 
+        // Initialize compat only if no app exists; avoids double init when modular is already initialized elsewhere
         if (fb.apps && fb.apps.length === 0) {
             fb.initializeApp(config);
         }
@@ -69,7 +69,7 @@
         if (!fb?.auth || !fb?.firestore) {
             throw new Error('Firebase Auth/Firestore not available. Ensure compat SDKs are loaded.');
         }
-        // Use v8 compat API to avoid modular getApp/getAuth calls
+        // Use v8 compat API for this page (browser-friendly)
         return {
             variant: 'v8',
             auth: fb.auth(),
@@ -78,92 +78,111 @@
         };
     }
 
-    async function loadProfile() {
-        const sdk = await getSdk();
-        const user = sdk.auth.currentUser;
-        if (!user) {
-            document.getElementById('save-status').textContent = 'Not signed in.';
+    // Populate inputs from the signed-in user and Firestore
+    async function populateProfileFromUser(user, sdk) {
+        const nameEl = document.getElementById('displayName');
+        const emailEl = document.getElementById('email');
+        const phoneEl = document.getElementById('phoneNumber');
+        const statusEl = document.getElementById('save-status');
+
+        if (!nameEl || !emailEl || !phoneEl) {
+            console.warn('Account page inputs not found. Ensure IDs: displayName, email, phoneNumber.');
+            if (statusEl) statusEl.textContent = 'Account form not found.';
             return;
         }
-        document.getElementById('displayName').value = user.displayName || '';
-        document.getElementById('email').value = user.email || '';
+
+        nameEl.value = user.displayName || '';
+        emailEl.value = user.email || '';
 
         try {
             const snap = await sdk.db.collection('users').doc(user.uid).get();
             const data = snap.exists ? snap.data() : {};
-            document.getElementById('phoneNumber').value = data.phoneNumber || '';
+            phoneEl.value = data.phoneNumber || '';
             if (!user.displayName && data.displayName) {
-                document.getElementById('displayName').value = data.displayName;
+                nameEl.value = data.displayName;
             }
         } catch (e) {
             console.warn('Could not load Firestore profile:', e);
+            if (statusEl) statusEl.textContent = 'Loaded basic profile. Firestore details unavailable.';
         }
     }
 
-    async function saveChanges(e) {
-        e.preventDefault();
-        const sdk = await getSdk();
-        const user = sdk.auth.currentUser;
-        if (!user) {
-            document.getElementById('save-status').textContent = 'Not signed in.';
-            return;
-        }
-
-        const displayName = document.getElementById('displayName').value.trim();
-        const phoneNumber = document.getElementById('phoneNumber').value.trim();
-        const newEmail = document.getElementById('email').value.trim();
-        const currentPassword = document.getElementById('currentPassword').value;
-        const newPassword = document.getElementById('newPassword').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-
-        document.getElementById('save-status').textContent = 'Saving...';
-
+    // Initialize page: wait for auth, then load profile and attach save handler
+    async function initAccountPage() {
+        const statusEl = document.getElementById('save-status');
         try {
-            await sdk.db.collection('users').doc(user.uid).set({
-                displayName,
-                phoneNumber
-            }, { merge: true });
+            const sdk = await getSdk();
+
+            // Wait for Firebase to report auth state
+            sdk.auth.onAuthStateChanged(async (user) => {
+                if (!user) {
+                    if (statusEl) statusEl.textContent = 'Not signed in.';
+                    return;
+                }
+                if (statusEl) statusEl.textContent = '';
+                await populateProfileFromUser(user, sdk);
+            });
+
+            // Attach Save Changes handler to form submit
+            const form = document.getElementById('account-form');
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    await saveChanges();
+                });
+            } else {
+                console.warn('Account form not found. Ensure a <form id="account-form"> wraps the inputs.');
+                if (statusEl) statusEl.textContent = 'Account form not found.';
+            }
+        } catch (e) {
+            console.error('Initialization failed:', e);
+            if (statusEl) statusEl.textContent = 'Initialization failed: ' + (e.message || e);
+        }
+    }
+
+    async function saveChanges() {
+        const statusEl = document.getElementById('save-status');
+        try {
+            const sdk = await getSdk();
+            const user = sdk.auth.currentUser;
+            if (!user) {
+                if (statusEl) statusEl.textContent = 'Not signed in.';
+                return;
+            }
+
+            const displayName = document.getElementById('displayName')?.value.trim() || '';
+            const phoneNumber = document.getElementById('phoneNumber')?.value.trim() || '';
+            const newEmail = document.getElementById('email')?.value.trim() || '';
+            const currentPassword = document.getElementById('currentPassword')?.value || '';
+            const newPassword = document.getElementById('newPassword')?.value || '';
+            const confirmPassword = document.getElementById('confirmPassword')?.value || '';
+
+            if (statusEl) statusEl.textContent = 'Saving...';
+
+            // Update profile info
+            await sdk.db.collection('users').doc(user.uid).set({ displayName, phoneNumber }, { merge: true });
             await user.updateProfile({ displayName });
-        } catch (e) {
-            console.error('Profile update failed:', e);
-            document.getElementById('save-status').textContent = 'Profile update failed: ' + (e.message || e);
-            return;
-        }
 
-        const needsEmailChange = newEmail && newEmail !== user.email;
-        const needsPasswordChange = newPassword && newPassword.length > 0;
+            const needsEmailChange = newEmail && newEmail !== user.email;
+            const needsPasswordChange = newPassword && newPassword.length > 0;
 
-        async function reauthIfNeeded() {
-            if (!(needsEmailChange || needsPasswordChange)) return;
-            if (!currentPassword) throw new Error('Current password is required to change email or password.');
-            const currentEmail = user.email;
-            await sdk.auth.signInWithEmailAndPassword(currentEmail, currentPassword);
-        }
+            async function reauthIfNeeded() {
+                if (!(needsEmailChange || needsPasswordChange)) return;
+                if (!currentPassword) throw new Error('Current password is required to change email or password.');
+                await sdk.auth.signInWithEmailAndPassword(user.email, currentPassword);
+            }
 
-        try {
             await reauthIfNeeded();
-        } catch (e) {
-            console.error('Reauthentication failed:', e);
-            document.getElementById('save-status').textContent = 'Reauthentication failed: ' + (e.message || e);
-            return;
-        }
 
-        if (needsEmailChange) {
-            try {
+            if (needsEmailChange) {
                 await user.updateEmail(newEmail);
-            } catch (e) {
-                console.error('Email update failed:', e);
-                document.getElementById('save-status').textContent = 'Email update failed: ' + (e.message || e);
-                return;
             }
-        }
 
-        if (needsPasswordChange) {
-            if (newPassword !== confirmPassword) {
-                document.getElementById('save-status').textContent = 'New password and confirmation do not match.';
-                return;
-            }
-            try {
+            if (needsPasswordChange) {
+                if (newPassword !== confirmPassword) {
+                    if (statusEl) statusEl.textContent = 'New password and confirmation do not match.';
+                    return;
+                }
                 await user.updatePassword(newPassword);
                 await sdk.db.collection('users').doc(user.uid).set({
                     password_last_changed_at: sdk.FieldValue.serverTimestamp(),
@@ -176,23 +195,20 @@
                         if (/[0-9]/.test(pw)) score++;
                         if (/[^A-Za-z0-9]/.test(pw)) score++;
                         return Math.min(score, 4);
-                    })(newPassword)
+                    })(newPassword),
                 }, { merge: true });
-            } catch (e) {
-                console.error('Password update failed:', e);
-                document.getElementById('save-status').textContent = 'Password update failed: ' + (e.message || e);
-                return;
             }
-        }
 
-        document.getElementById('save-status').textContent = 'Saved successfully.';
-        document.getElementById('currentPassword').value = '';
-        document.getElementById('newPassword').value = '';
-        document.getElementById('confirmPassword').value = '';
+            if (statusEl) statusEl.textContent = 'Saved successfully.';
+            const idsToClear = ['currentPassword', 'newPassword', 'confirmPassword'];
+            idsToClear.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+        } catch (e) {
+            console.error('Save failed:', e);
+            if (statusEl) statusEl.textContent = 'Save failed: ' + (e.message || e);
+        }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        loadProfile();
-        document.getElementById('account-form')?.addEventListener('submit', saveChanges);
+        initAccountPage();
     });
 })();

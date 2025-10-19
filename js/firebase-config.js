@@ -3,7 +3,6 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Export the config object so modules can import { firebaseConfig }
 export const firebaseConfig = {
   apiKey: "AIzaSyAwnWoLfrEc1EtXWCD0by5L0VtCmYf8Unw",
   authDomain: "centraltradehub-30f00.firebaseapp.com",
@@ -22,3 +21,8 @@ export const storage = getStorage(app);
 export const db = getFirestore(app);
 
 export default app;
+
+if (typeof window !== 'undefined') {
+  // Make the config available to classic scripts (account.js)
+  window.FB_CONFIG = window.FB_CONFIG || firebaseConfig;
+}
