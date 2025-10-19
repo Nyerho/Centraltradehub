@@ -28,14 +28,23 @@
     <!-- Bootstrap JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Firebase and JavaScript Dependencies -->
+    <!-- Firebase compat SDKs (needed by non-module scripts like user-state.js and any compat usage) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+    <!-- Module config runs early and exposes window.firebaseConfig + window.sdk -->
     <script type="module" src="js/firebase-config.js"></script>
+    
+    <!-- Firebase and JavaScript Dependencies -->
     <script type="module" src="js/firebase-database.js"></script>
     <script type="module" src="js/crypto-service.js"></script>
     <script type="module" src="js/wallet-service.js"></script>
     <script type="module" src="js/market-news.js"></script>
     <script type="module" src="js/ai-support-chat.js"></script>
     <script type="module" src="js/dashboard.js"></script>
+    
+    <!-- user-state uses global config + compat -->
     <script src="js/user-state.js"></script>
 </head>
 <body onload="checkUserState()">

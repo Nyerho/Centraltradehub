@@ -19,22 +19,18 @@
   }
 
   async function ensureFirebaseAppInitialized() {
-    await ensureFirebaseCompatLoaded();
-    const fb = window.firebase;
-    let config = window.FB_CONFIG || window.firebaseConfig;
-    if (!config) {
-      try {
-        const mod = await import('./firebase-config.js');
-        if (mod?.firebaseConfig) {
-          config = mod.firebaseConfig;
-          window.FB_CONFIG = config;
-        }
-      } catch (_) {}
+    const cfg = window.firebaseConfig || window.FB_CONFIG;
+    if (!cfg) {
+        throw new Error('Firebase config not found.');
     }
-    if (!config) throw new Error('Firebase config not found.');
-    if (fb.apps && fb.apps.length === 0) {
-      fb.initializeApp(config);
+    if (!window.firebase) {
+        // Compat SDKs should be loaded via CDN in HTML
+        await ensureFirebaseCompatLoaded();
     }
+    if (window.firebase && window.firebase.apps && window.firebase.apps.length === 0) {
+        window.firebase.initializeApp(cfg);
+    }
+    return window.firebase;
   }
 
   function mergeProfile(user, data) {
@@ -65,9 +61,10 @@
 
   async function startSync() {
     try {
-      await ensureFirebaseAppInitialized();
-    } catch (e) {
-      console.warn('user-state: Firebase init failed:', e);
+      const firebaseCompat = await ensureFirebaseAppInitialized();
+      // Continue with existing auth/Firestore listeners and DOM updates
+    } catch (err) {
+      console.error('user-state: Firebase init failed:', err);
       return;
     }
     const fb = window.firebase;
@@ -145,5 +142,15 @@
     });
   }
 
+  // Expose a global for dashboard.html onload
+  (function() {
+    window.checkUserState = function() {
+        try {
+            startSync();
+        } catch (e) {
+            console.error('checkUserState failed:', e);
+        }
+    };
+  })();
   document.addEventListener('DOMContentLoaded', startSync);
 })();
