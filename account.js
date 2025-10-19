@@ -108,11 +108,43 @@
     }
 
     // Initialize page: wait for auth, then load profile and attach save handler
+    // Attach handlers for both form submit and fallback button click
+    function wireSaveHandlers() {
+        const statusEl = document.getElementById('save-status');
+    
+        const form = document.getElementById('account-form');
+        if (form) {
+            // Allow partial saves by disabling HTML validation
+            form.setAttribute('novalidate', '');
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                console.log('[Account] Submit: Save Changes');
+                if (statusEl) statusEl.textContent = 'Saving...';
+                await saveChanges();
+            });
+        } else {
+            console.warn('Account form not found. Ensure a <form id="account-form"> wraps the inputs.');
+            if (statusEl) statusEl.textContent = 'Account form not found.';
+        }
+    
+        // Fallback: handle explicit button click if the button is outside the form
+        const btn = document.getElementById('save-button');
+        if (btn) {
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                console.log('[Account] Click: Save Changes');
+                if (statusEl) statusEl.textContent = 'Saving...';
+                await saveChanges();
+            });
+        }
+    }
+
     async function initAccountPage() {
         const statusEl = document.getElementById('save-status');
         try {
             const sdk = await getSdk();
 
+            // Wait for auth readiness then populate
             sdk.auth.onAuthStateChanged(async (user) => {
                 if (!user) {
                     if (statusEl) statusEl.textContent = 'Not signed in.';
@@ -122,23 +154,20 @@
                 await populateProfileFromUser(user, sdk);
             });
 
-            const form = document.getElementById('account-form');
-            if (form) {
-                // Disable HTML5 validation so partial saves work and our JS decides what to update
-                form.setAttribute('novalidate', '');
-                form.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    await saveChanges();
-                });
-            } else {
-                console.warn('Account form not found. Ensure a <form id="account-form"> wraps the inputs.');
-                if (statusEl) statusEl.textContent = 'Account form not found.';
-            }
+            // Always wire handlers so Save works regardless of form/button structure
+            wireSaveHandlers();
+
+            // Optional: expose for debugging
+            window._saveAccountChanges = saveChanges;
         } catch (e) {
             console.error('Initialization failed:', e);
             if (statusEl) statusEl.textContent = 'Initialization failed: ' + (e.message || e);
         }
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initAccountPage();
+    });
 
     async function saveChanges() {
         const statusEl = document.getElementById('save-status');
@@ -221,8 +250,4 @@
             if (statusEl) statusEl.textContent = 'Save failed: ' + (e.message || e);
         }
     }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        initAccountPage();
-    });
 })();
