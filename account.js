@@ -170,18 +170,71 @@
     });
 
     // Toast helper
-    function showToast(message, timeout = 3000) {
-        const el = document.getElementById('save-toast');
-        if (!el) return;
-        el.textContent = message;
-        el.style.display = 'block';
-        // Clear any previous timer
-        if (window.__accountToastTimer) {
-            clearTimeout(window.__accountToastTimer);
+    function showToast(message, opts = {}) {
+        const {
+            type = 'success',
+            duration = 3000
+        } = opts;
+
+        // Inject minimal styles once
+        if (!document.getElementById('toast-style')) {
+            const style = document.createElement('style');
+            style.id = 'toast-style';
+            style.textContent = `
+              .toast-container {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: 9999;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+              }
+              .toast {
+                min-width: 220px;
+                max-width: 320px;
+                padding: 12px 14px;
+                border-radius: 6px;
+                color: #fff;
+                font-size: 14px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                opacity: 0;
+                transform: translateY(10px);
+                transition: opacity 200ms ease, transform 200ms ease;
+              }
+              .toast.show {
+                opacity: 1;
+                transform: translateY(0);
+              }
+              .toast.success { background: #28a745; }
+              .toast.error   { background: #dc3545; }
+              .toast.info    { background: #007bff; }
+            `;
+            document.head.appendChild(style);
         }
-        window.__accountToastTimer = setTimeout(() => {
-            el.style.display = 'none';
-        }, timeout);
+
+        // Create or reuse a container
+        let container = document.querySelector('.toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+        }
+
+        // Create toast element
+        const el = document.createElement('div');
+        el.className = `toast ${type}`;
+        el.textContent = message;
+        container.appendChild(el);
+
+        // Animate in
+        requestAnimationFrame(() => el.classList.add('show'));
+
+        // Auto-remove
+        setTimeout(() => {
+            el.classList.remove('show');
+            setTimeout(() => el.remove(), 200);
+        }, duration);
     }
 
     async function saveChanges() {
@@ -256,21 +309,19 @@
             }
 
             if (statusEl) statusEl.textContent = 'Saved successfully.';
-            showToast('Changes saved');
+            showToast('Changes saved', { type: 'success' });
 
-            // Emit profile changed event so other pages (or same page) can react,
-            // and store a lightweight cache in localStorage.
+            // Broadcast profile updates across pages and cache them
             const profile = {
                 uid: user.uid,
                 displayName: displayName || user.displayName || '',
                 email: (newEmail && newEmail !== user.email) ? newEmail : (user.email || ''),
-                phoneNumber: phoneNumber || undefined,
+                phoneNumber: phoneNumber || ''
             };
-            try {
-                localStorage.setItem('userProfileCache', JSON.stringify(profile));
-            } catch (_) {}
+            try { localStorage.setItem('userProfileCache', JSON.stringify(profile)); } catch (_) {}
             window.dispatchEvent(new CustomEvent('user-profile-changed', { detail: profile }));
 
+            // Clear password fields
             ['currentPassword', 'newPassword', 'confirmPassword'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
@@ -278,6 +329,7 @@
         } catch (e) {
             console.error('Save failed:', e);
             if (statusEl) statusEl.textContent = 'Save failed: ' + (e.message || e);
+            showToast('Save failed: ' + (e.message || e), { type: 'error' });
         }
     }
 })();

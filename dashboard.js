@@ -1,9 +1,31 @@
-// ... existing code ...
-window.addEventListener('user-profile-changed', (e) => {
-    const profile = e.detail;
-    if (!profile) return;
-    // Update any custom elements by ID/class here
-    const nameEl = document.getElementById('header-user-name');
-    if (nameEl) nameEl.textContent = profile.displayName || 'User';
+document.addEventListener('DOMContentLoaded', function () {
+    function applyProfile(profile) {
+        if (!profile) return;
+        const map = {
+            displayName: profile.displayName || '',
+            email: profile.email || '',
+            phoneNumber: profile.phoneNumber || ''
+        };
+        // Auto-update annotated elements
+        document.querySelectorAll('[data-user-field]').forEach(el => {
+            const key = el.getAttribute('data-user-field');
+            if (key && key in map) {
+                el.textContent = map[key];
+            }
+        });
+        // Optional: update known IDs if you have them
+        const nameEl = document.getElementById('header-user-name');
+        if (nameEl) nameEl.textContent = map.displayName || 'User';
+    }
+
+    // Apply cached profile immediately
+    try {
+        const cached = JSON.parse(localStorage.getItem('userProfileCache') || 'null');
+        if (cached) applyProfile(cached);
+    } catch (_) {}
+
+    // React to live changes emitted by account.js or user-state.js
+    window.addEventListener('user-profile-changed', (e) => {
+        applyProfile(e.detail);
+    });
 });
-// ... existing code ...

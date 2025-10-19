@@ -12,13 +12,10 @@
 
   async function ensureFirebaseCompatLoaded() {
     if (window.firebase) return;
-    // Use the same compat version you prefer elsewhere (10.7.0 shown here)
     await loadScript('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
     await loadScript('https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js');
     await loadScript('https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js');
-    if (!window.firebase) {
-      throw new Error('Firebase compat SDK failed to load.');
-    }
+    if (!window.firebase) throw new Error('Firebase compat SDK failed to load.');
   }
 
   async function ensureFirebaseAppInitialized() {
@@ -41,14 +38,11 @@
   }
 
   function mergeProfile(user, data) {
-    const displayName = (data?.displayName) || user.displayName || '';
-    const email = user.email || '';
-    const phoneNumber = (data?.phoneNumber) || '';
     return {
       uid: user.uid,
-      displayName,
-      email,
-      phoneNumber
+      displayName: (data?.displayName) || user.displayName || '',
+      email: user.email || '',
+      phoneNumber: (data?.phoneNumber) || ''
     };
   }
 
@@ -61,9 +55,7 @@
     };
     document.querySelectorAll('[data-user-field]').forEach(el => {
       const key = el.getAttribute('data-user-field');
-      if (key && key in map) {
-        el.textContent = map[key];
-      }
+      if (key && key in map) el.textContent = map[key];
     });
   }
 
@@ -78,7 +70,7 @@
     const auth = fb.auth();
     const db = fb.firestore();
 
-    // Render cached values immediately if available
+    // Render cached values immediately
     try {
       const cached = JSON.parse(localStorage.getItem('userProfileCache') || 'null');
       if (cached) updateDomFromProfile(cached);
@@ -99,14 +91,11 @@
         return;
       }
 
-      // Listen to Firestore user doc in real time
       const docRef = db.collection('users').doc(user.uid);
       unsubscribe = docRef.onSnapshot(snap => {
         const data = snap.exists ? snap.data() : {};
         const profile = mergeProfile(user, data);
-        try {
-          localStorage.setItem('userProfileCache', JSON.stringify(profile));
-        } catch (_) {}
+        try { localStorage.setItem('userProfileCache', JSON.stringify(profile)); } catch (_) {}
         window.dispatchEvent(new CustomEvent('user-profile-changed', { detail: profile }));
         updateDomFromProfile(profile);
       }, err => {
