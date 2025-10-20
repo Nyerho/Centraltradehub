@@ -21,48 +21,91 @@
   async function ensureFirebaseAppInitialized() {
     const cfg = window.firebaseConfig || window.FB_CONFIG;
     if (!cfg) {
-        throw new Error('Firebase config not found.');
+      throw new Error('Firebase config not found.');
     }
     if (!window.firebase) {
-        // Compat SDKs should be loaded via CDN in HTML
-        await ensureFirebaseCompatLoaded();
+      await ensureFirebaseCompatLoaded();
     }
     if (window.firebase && window.firebase.apps && window.firebase.apps.length === 0) {
-        window.firebase.initializeApp(cfg);
+      window.firebase.initializeApp(cfg);
     }
     return window.firebase;
   }
 
-  function mergeProfile(user, data) {
-    // Prefer Firestore name; support both displayName and fullName; fallback to Auth
-    const nameFromDb = data?.displayName || data?.fullName || '';
-    return {
-      uid: user.uid,
-      displayName: nameFromDb || user.displayName || '',
-      email: user.email || data?.email || '',
-      phoneNumber: data?.phoneNumber || ''
-    };
-  }
-
   function updateDomFromProfile(profile) {
     if (!profile) return;
-    const map = {
-      displayName: profile.displayName || '',
-      email: profile.email || '',
-      phoneNumber: profile.phoneNumber || ''
-    };
-    document.querySelectorAll('[data-user-field]').forEach(el => {
-      const key = el.getAttribute('data-user-field');
-      if (key && key in map) el.textContent = map[key];
+    const name = profile.displayName || profile.fullName || '';
+    const email = profile.email || '';
+    const phone = profile.phoneNumber || '';
+  
+    // Update elements annotated with data-user-field
+    document.querySelectorAll('[data-user-field]').forEach((el) => {
+      const field = el.getAttribute('data-user-field');
+      if (field && profile[field] !== undefined) {
+        el.textContent = String(profile[field] ?? '');
+      }
     });
-    const nameEl = document.getElementById('current-user-name');
-    if (nameEl) nameEl.textContent = map.displayName || 'User';
+  
+    // Update a common header element if present
+    const headerName = document.getElementById('current-user-name');
+    if (headerName) headerName.textContent = name;
   }
 
   async function startSync() {
     try {
       const firebaseCompat = await ensureFirebaseAppInitialized();
-      // Continue with existing auth/Firestore listeners and DOM updates
+      const auth = firebaseCompat.auth();
+      const db = firebaseCompat.firestore();
+  
+      // Apply cached profile immediately
+      try {
+        const cached = localStorage.getItem('userProfileCache');
+        if (cached) updateDomFromProfile(JSON.parse(cached));
+      } catch (e) {
+        console.warn('user-state: failed to read cached profile', e);
+      }
+  
+      // React to cross-page saves
+      window.addEventListener('user-profile-changed', (e) => {
+        const profile = e.detail || {};
+        try {
+          localStorage.setItem('userProfileCache', JSON.stringify(profile));
+        } catch {}
+        updateDomFromProfile(profile);
+      });
+  
+      // Auth listener
+      auth.onAuthStateChanged(async (user) => {
+        if (!user) {
+          updateDomFromProfile({ displayName: '', email: '', phoneNumber: '' });
+          return;
+        }
+        const uid = user.uid;
+        // Prefer profiles, fallback to users
+        try {
+          const profDoc = await db.collection('profiles').doc(uid).get();
+          let profile = profDoc.exists ? profDoc.data() : null;
+          if (!profile) {
+            const usersDoc = await db.collection('users').doc(uid).get();
+            profile = usersDoc.exists ? usersDoc.data() : null;
+          }
+          // Merge with Auth details
+          const merged = {
+            uid,
+            displayName: (profile && (profile.displayName || profile.fullName)) || user.displayName || '',
+            fullName: (profile && profile.fullName) || (profile && profile.displayName) || user.displayName || '',
+            email: user.email || (profile && profile.email) || '',
+            phoneNumber: (profile && profile.phoneNumber) || ''
+          };
+          try {
+            localStorage.setItem('userProfileCache', JSON.stringify(merged));
+          } catch {}
+          updateDomFromProfile(merged);
+        } catch (err) {
+          console.error('user-state: failed to load profile:', err);
+        }
+      });
+  
     } catch (err) {
       console.error('user-state: Firebase init failed:', err);
       return;
@@ -143,14 +186,12 @@
   }
 
   // Expose a global for dashboard.html onload
-  (function() {
-    window.checkUserState = function() {
-        try {
-            startSync();
-        } catch (e) {
-            console.error('checkUserState failed:', e);
-        }
-    };
-  })();
+  window.checkUserState = function() {
+    try {
+      startSync();
+    } catch (e) {
+      console.error('checkUserState failed:', e);
+    }
+  };
   document.addEventListener('DOMContentLoaded', startSync);
 })();

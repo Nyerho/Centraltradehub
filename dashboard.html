@@ -36,6 +36,9 @@
     <!-- Module config runs early and exposes window.firebaseConfig + window.sdk -->
     <script type="module" src="js/firebase-config.js"></script>
     
+    <!-- user-state uses global config + compat -->
+    <script src="js/user-state.js"></script>
+    
     <!-- Firebase and JavaScript Dependencies -->
     <script type="module" src="js/firebase-database.js"></script>
     <script type="module" src="js/crypto-service.js"></script>
@@ -43,9 +46,6 @@
     <script type="module" src="js/market-news.js"></script>
     <script type="module" src="js/ai-support-chat.js"></script>
     <script type="module" src="js/dashboard.js"></script>
-    
-    <!-- user-state uses global config + compat -->
-    <script src="js/user-state.js"></script>
 </head>
 <body onload="checkUserState()">
     <!-- Central Trade Hub Header -->
