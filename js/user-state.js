@@ -12,9 +12,10 @@
 
   async function ensureFirebaseCompatLoaded() {
     if (window.firebase) return;
-    await loadScript('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
-    await loadScript('https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js');
-    await loadScript('https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js');
+    const base = 'https://www.gstatic.com/firebasejs/9.22.2';
+    await loadScript(`${base}/firebase-app-compat.js`);
+    await loadScript(`${base}/firebase-auth-compat.js`);
+    await loadScript(`${base}/firebase-firestore-compat.js`);
     if (!window.firebase) throw new Error('Firebase compat SDK failed to load.');
   }
 
@@ -51,12 +52,24 @@
     if (headerName) headerName.textContent = name;
   }
 
+  // Define a helper to consistently merge Auth and Firestore profile data
+  function mergeProfile(user, data) {
+    const profile = data || {};
+    return {
+      uid: user.uid,
+      displayName: profile.displayName || profile.fullName || user.displayName || '',
+      fullName: profile.fullName || profile.displayName || user.displayName || '',
+      email: user.email || profile.email || '',
+      phoneNumber: profile.phoneNumber || ''
+    };
+  }
+
   async function startSync() {
     try {
       const firebaseCompat = await ensureFirebaseAppInitialized();
       const auth = firebaseCompat.auth();
       const db = firebaseCompat.firestore();
-  
+
       // Apply cached profile immediately
       try {
         const cached = localStorage.getItem('userProfileCache');
@@ -64,125 +77,80 @@
       } catch (e) {
         console.warn('user-state: failed to read cached profile', e);
       }
-  
-      // React to cross-page saves
-      window.addEventListener('user-profile-changed', (e) => {
-        const profile = e.detail || {};
-        try {
-          localStorage.setItem('userProfileCache', JSON.stringify(profile));
-        } catch {}
-        updateDomFromProfile(profile);
-      });
-  
-      // Auth listener
-      auth.onAuthStateChanged(async (user) => {
+
+      let unsubscribe = null;
+
+      auth.onAuthStateChanged((user) => {
+        if (unsubscribe) {
+          try { unsubscribe(); } catch (_) {}
+          unsubscribe = null;
+        }
+
         if (!user) {
+          try { localStorage.removeItem('userProfileCache'); } catch (_) {}
           updateDomFromProfile({ displayName: '', email: '', phoneNumber: '' });
+          window.dispatchEvent(new CustomEvent('user-profile-changed', { detail: null }));
           return;
         }
+
         const uid = user.uid;
-        // Prefer profiles, fallback to users
-        try {
-          const profDoc = await db.collection('profiles').doc(uid).get();
-          let profile = profDoc.exists ? profDoc.data() : null;
-          if (!profile) {
-            const usersDoc = await db.collection('users').doc(uid).get();
-            profile = usersDoc.exists ? usersDoc.data() : null;
+        const profilesRef = db.collection('profiles').doc(uid);
+        const usersRef = db.collection('users').doc(uid);
+
+        unsubscribe = profilesRef.onSnapshot(
+          (snap) => {
+            if (!snap.exists) {
+              if (unsubscribe) {
+                try { unsubscribe(); } catch (_) {}
+                unsubscribe = null;
+              }
+              unsubscribe = usersRef.onSnapshot(
+                (userSnap) => {
+                  const usersData = userSnap.exists ? userSnap.data() : {};
+                  const profile = mergeProfile(user, usersData || {});
+                  try { localStorage.setItem('userProfileCache', JSON.stringify(profile)); } catch (_) {}
+                  window.dispatchEvent(new CustomEvent('user-profile-changed', { detail: profile }));
+                  updateDomFromProfile(profile);
+                },
+                (err) => {
+                  console.warn('user-state: users snapshot error:', err);
+                  const profile = mergeProfile(user, {});
+                  updateDomFromProfile(profile);
+                }
+              );
+              return;
+            }
+
+            const data = snap.data() || {};
+            const profile = mergeProfile(user, data);
+            try { localStorage.setItem('userProfileCache', JSON.stringify(profile)); } catch (_) {}
+            window.dispatchEvent(new CustomEvent('user-profile-changed', { detail: profile }));
+            updateDomFromProfile(profile);
+          },
+          (err) => {
+            console.warn('user-state: profiles snapshot error:', err);
+            const profile = mergeProfile(user, {});
+            updateDomFromProfile(profile);
           }
-          // Merge with Auth details
-          const merged = {
-            uid,
-            displayName: (profile && (profile.displayName || profile.fullName)) || user.displayName || '',
-            fullName: (profile && profile.fullName) || (profile && profile.displayName) || user.displayName || '',
-            email: user.email || (profile && profile.email) || '',
-            phoneNumber: (profile && profile.phoneNumber) || ''
-          };
-          try {
-            localStorage.setItem('userProfileCache', JSON.stringify(merged));
-          } catch {}
-          updateDomFromProfile(merged);
-        } catch (err) {
-          console.error('user-state: failed to load profile:', err);
+        );
+      });
+
+      window.addEventListener('beforeunload', () => {
+        if (unsubscribe) {
+          try { unsubscribe(); } catch (_) {}
         }
       });
-  
+
+      // React to cross-page saves (Account page)
+      window.addEventListener('user-profile-changed', (e) => {
+        const profile = e.detail || {};
+        try { localStorage.setItem('userProfileCache', JSON.stringify(profile)); } catch (_) {}
+        updateDomFromProfile(profile);
+      });
     } catch (err) {
       console.error('user-state: Firebase init failed:', err);
       return;
     }
-    const fb = window.firebase;
-    const auth = fb.auth();
-    const db = fb.firestore();
-
-    // Render cached values immediately
-    try {
-      const cached = JSON.parse(localStorage.getItem('userProfileCache') || 'null');
-      if (cached) updateDomFromProfile(cached);
-    } catch (_) {}
-
-    let unsubscribe = null;
-
-    auth.onAuthStateChanged(user => {
-      if (unsubscribe) {
-        try { unsubscribe(); } catch (_) {}
-        unsubscribe = null;
-      }
-
-      if (!user) {
-        window.dispatchEvent(new CustomEvent('user-profile-changed', { detail: null }));
-        try { localStorage.removeItem('userProfileCache'); } catch (_) {}
-        updateDomFromProfile({ displayName: '', email: '', phoneNumber: '' });
-        return;
-      }
-
-      // Prefer profiles/{uid}, fallback to users/{uid}
-      const profilesRef = db.collection('profiles').doc(user.uid);
-      const usersRef = db.collection('users').doc(user.uid);
-
-      unsubscribe = profilesRef.onSnapshot(snap => {
-        let data = snap.exists ? snap.data() : null;
-        const handleUsersFallback = () => {
-          return usersRef.onSnapshot(usersSnap => {
-            const usersData = usersSnap.exists ? usersSnap.data() : {};
-            const profile = mergeProfile(user, usersData || {});
-            try { localStorage.setItem('userProfileCache', JSON.stringify(profile)); } catch (_) {}
-            window.dispatchEvent(new CustomEvent('user-profile-changed', { detail: profile }));
-            updateDomFromProfile(profile);
-          }, err => {
-            console.warn('user-state: users snapshot error:', err);
-            const profile = mergeProfile(user, {});
-            updateDomFromProfile(profile);
-          });
-        };
-
-        // If profiles doc not present, fallback to users collection
-        if (!data) {
-          // switch subscription to users
-          if (unsubscribe) {
-            try { unsubscribe(); } catch (_) {}
-            unsubscribe = null;
-          }
-          unsubscribe = handleUsersFallback();
-          return;
-        }
-
-        const profile = mergeProfile(user, data);
-        try { localStorage.setItem('userProfileCache', JSON.stringify(profile)); } catch (_) {}
-        window.dispatchEvent(new CustomEvent('user-profile-changed', { detail: profile }));
-        updateDomFromProfile(profile);
-      }, err => {
-        console.warn('user-state: profiles snapshot error:', err);
-        // On error, at least show Auth values
-        const profile = mergeProfile(user, {});
-        updateDomFromProfile(profile);
-      });
-    });
-
-    window.addEventListener('beforeunload', () => {
-      if (unsubscribe) {
-        try { unsubscribe(); } catch (_) {}
-      }
-    });
   }
 
   // Expose a global for dashboard.html onload
