@@ -160,4 +160,40 @@ router.get('/market/quotes/:symbol', async (req, res) => {
     }
 });
 
+// Add admin-protected DELETE /users/:userId route to support the admin UI
+router.delete('/users/:userId', async (req, res) => {
+    try {
+        const authToken = req.headers.authorization?.replace('Bearer ', '');
+        if (!authToken) {
+            return res.status(401).json({ error: 'No token provided' });
+        }
+
+        // Verify token
+        const decodedToken = await admin.auth().verifyIdToken(authToken);
+
+        // Check admin role from Firestore
+        const userDoc = await admin.firestore().collection('users').doc(decodedToken.uid).get();
+        const userData = userDoc.data();
+        if (!userData || userData.role !== 'admin') {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const { userId } = req.params;
+
+        // 1) Revoke refresh tokens
+        await admin.auth().revokeRefreshTokens(userId);
+
+        // 2) Delete from Firebase Auth
+        await admin.auth().deleteUser(userId);
+
+        // 3) Delete from Firestore
+        await admin.firestore().collection('users').doc(userId).delete();
+
+        return res.json({ success: true, message: 'User deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        return res.status(500).json({ error: 'Failed to delete user' });
+    }
+});
+
 module.exports = router;
