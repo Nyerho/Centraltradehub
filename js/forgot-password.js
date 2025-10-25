@@ -24,6 +24,12 @@ class ForgotPasswordManager {
         }
     }
 
+    // Use a production, allowlisted URL to avoid unauthorized-continue-uri in dev
+    computeResetUrl() {
+        // Replace with your preferred domain if different
+        return 'https://www.centraltradekeplr.com/forgot-password.html';
+    }
+
     async handleForgotPassword(e) {
         e.preventDefault();
         
@@ -52,7 +58,7 @@ class ForgotPasswordManager {
         
         try {
             await sendPasswordResetEmail(auth, email, {
-                url: `${window.location.origin}/forgot-password.html`,
+                url: this.computeResetUrl(),
                 handleCodeInApp: false
             });
             
@@ -108,7 +114,7 @@ class ForgotPasswordManager {
         
         try {
             await sendPasswordResetEmail(auth, email, {
-                url: `${window.location.origin}/forgot-password.html`,
+                url: this.computeResetUrl(),
                 handleCodeInApp: false
             });
             

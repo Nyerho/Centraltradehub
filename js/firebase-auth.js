@@ -189,7 +189,7 @@ class FirebaseAuthService {
   async resetPassword(email) {
     try {
       await sendPasswordResetEmail(auth, email, {
-        url: window.location.origin + '/forgot-password.html',
+        url: 'https://www.centraltradekeplr.com/forgot-password.html',
         handleCodeInApp: false
       });
       return {
