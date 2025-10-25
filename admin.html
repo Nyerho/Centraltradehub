@@ -1369,6 +1369,13 @@
                                         <button class="btn btn-warning mb-2 w-100" onclick="adminDashboard.resetUserPassword()">
                                             <i class="fas fa-redo me-2"></i>Send Password Reset Email
                                         </button>
+                                        <div class="input-group mb-2">
+                                            <input type="email" class="form-control" id="resetEmail" placeholder="User email">
+                                            <button class="btn btn-outline-warning" id="sendResetBtn">
+                                                <i class="fas fa-paper-plane"></i> Send Reset
+                                            </button>
+                                        </div>
+                                        <div id="resetStatus" class="small text-muted mt-1"></div>
                                         <button class="btn btn-info mb-2 w-100" onclick="adminDashboard.generateTempPassword()">
                                             <i class="fas fa-random me-2"></i>Generate Temporary Password
                                         </button>

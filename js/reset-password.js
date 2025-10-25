@@ -5,6 +5,7 @@ import { confirmPasswordReset, verifyPasswordResetCode } from 'https://www.gstat
 class ResetPasswordManager {
     constructor() {
         this.oobCode = null;
+        this.mode = null;
         this.init();
     }
 
@@ -16,7 +17,13 @@ class ResetPasswordManager {
     getResetCode() {
         const urlParams = new URLSearchParams(window.location.search);
         this.oobCode = urlParams.get('oobCode');
-        
+        this.mode = urlParams.get('mode');
+
+        // Guard against wrong mode or missing code
+        if (this.mode && this.mode !== 'resetPassword') {
+            this.showError('This link is not a valid password reset link.');
+            return;
+        }
         if (!this.oobCode) {
             this.showError('Invalid or expired reset link. Please request a new password reset.');
             return;
@@ -28,8 +35,13 @@ class ResetPasswordManager {
 
     async verifyResetCode() {
         try {
-            await verifyPasswordResetCode(auth, this.oobCode);
-            console.log('Reset code verified successfully');
+            const email = await verifyPasswordResetCode(auth, this.oobCode);
+            console.log('Reset code verified successfully for:', email);
+            // Surface the email to the user in the header subtitle if available
+            const headerSubtitle = document.querySelector('.auth-header p');
+            if (headerSubtitle) {
+                headerSubtitle.textContent = `Resetting password for: ${email}`;
+            }
         } catch (error) {
             console.error('Reset code verification failed:', error);
             this.showError('Invalid or expired reset link. Please request a new password reset.');

@@ -268,6 +268,47 @@
         z-index: 1001;
     }
     
+    /* Professional Trading Tools — robust mobile overflow fix */
+    .tools-preview,
+    .tools-preview .container {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: calc(12px + env(safe-area-inset-left)) !important;
+        padding-right: calc(12px + env(safe-area-inset-right)) !important;
+        box-sizing: border-box !important;
+        overflow: visible !important;
+    }
+
+    .tools-content {
+        display: grid !important;
+        grid-template-columns: 1fr !important; /* single column on phones */
+        gap: 16px !important;                  /* smaller gap to avoid overflow */
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;               /* critical: allow container shrink */
+    }
+
+    .tools-content > *,
+    .tools-text,
+    .tools-visual {
+        min-width: 0 !important;               /* critical: allow child shrink */
+        box-sizing: border-box !important;
+    }
+
+    .tools-visual img {
+        max-width: 100% !important;
+        height: auto !important;
+        display: block !important;
+    }
+
+    .tools-text h2,
+    .tools-text p {
+        overflow-wrap: anywhere !important;
+        word-break: break-word !important;
+    }
+    
     /* Auth header — Bootstrap mobile support */
     header.auth-header,
     body[class*="auth"] header {
