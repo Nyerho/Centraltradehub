@@ -1,8 +1,76 @@
+// Top-level initialization block
 const express = require('express');
 const admin = require('firebase-admin');
 const cors = require('cors');
-require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
+const dotenv = require('dotenv');
 
+// Explicitly load ../.env (optional; we’ll still prefer the file)
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+
+// Use the existing 'admin' import already present earlier in this file
+function initializeFirebaseAdmin() {
+  let credential = null;
+  let source = 'none';
+
+  // Option A: FIREBASE_SERVICE_ACCOUNT (full JSON string in .env)
+  const svc = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (svc) {
+    try {
+      const serviceAccount = JSON.parse(svc);
+      if (typeof serviceAccount.private_key === 'string') {
+        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+      }
+      credential = admin.credential.cert(serviceAccount);
+      source = 'FIREBASE_SERVICE_ACCOUNT';
+    } catch (e) {
+      console.error('Invalid FIREBASE_SERVICE_ACCOUNT JSON:', e);
+    }
+  }
+
+  // Option B: Env trio (projectId, clientEmail, privateKey)
+  if (!credential) {
+    const projectId = process.env.FIREBASE_PROJECT_ID;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+    const privateKeyBase64 = process.env.FIREBASE_PRIVATE_KEY_BASE64;
+    if (!privateKey && privateKeyBase64) {
+      privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf8');
+    }
+
+    if (projectId && clientEmail && privateKey) {
+      privateKey = privateKey.replace(/\\n/g, '\n');
+      credential = admin.credential.cert({ projectId, clientEmail, privateKey });
+      source = 'env trio';
+    }
+  }
+
+  // Option C: serviceAccountKey.json at project root
+  if (!credential) {
+    try {
+      const serviceAccount = require(path.resolve(__dirname, '../serviceAccountKey.json'));
+      if (typeof serviceAccount.private_key === 'string') {
+        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+      }
+      credential = admin.credential.cert(serviceAccount);
+      source = 'serviceAccountKey.json';
+    } catch (e) {
+      // ignore if file not present
+    }
+  }
+
+  if (!credential) {
+    console.error('Firebase Admin initialization failed: No credentials found.');
+    process.exit(1);
+  }
+
+  admin.initializeApp({ credential });
+  console.log(`Firebase Admin initialized (source: ${source})`);
+}
+
+initializeFirebaseAdmin();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
