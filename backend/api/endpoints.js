@@ -172,21 +172,21 @@ router.delete('/users/:userId', async (req, res) => {
         const decodedToken = await admin.auth().verifyIdToken(authToken);
 
         // Check admin role from Firestore
-        const userDoc = await admin.firestore().collection('users').doc(decodedToken.uid).get();
-        const userData = userDoc.data();
-        if (!userData || userData.role !== 'admin') {
+        const adminDoc = await admin.firestore().collection('users').doc(decodedToken.uid).get();
+        const adminData = adminDoc.data();
+        if (!adminData || adminData.role !== 'admin') {
             return res.status(403).json({ error: 'Admin access required' });
         }
 
         const { userId } = req.params;
 
-        // 1) Revoke refresh tokens
+        // 1) Revoke refresh tokens (forces logout)
         await admin.auth().revokeRefreshTokens(userId);
 
         // 2) Delete from Firebase Auth
         await admin.auth().deleteUser(userId);
 
-        // 3) Delete from Firestore
+        // 3) Delete Firestore user document
         await admin.firestore().collection('users').doc(userId).delete();
 
         return res.json({ success: true, message: 'User deleted successfully' });
