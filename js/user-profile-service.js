@@ -1,6 +1,6 @@
 // User Profile Management Service
 import { auth, db } from './firebase-config.js';
-import { doc, getDoc, updateDoc, collection, query, where, orderBy, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 
 class UserProfileService {
     constructor() {
@@ -151,47 +151,38 @@ class UserProfileService {
             const transactionsRef = collection(db, 'transactions');
             const q = query(
                 transactionsRef,
-                where('uid', '==', uid), // This is correct
-                orderBy('timestamp', 'desc'), // Use 'timestamp' instead of 'createdAt'
-                limit(limit)
+                where('userId', '==', uid),
+                orderBy('timestamp', 'desc') // Use 'timestamp' instead of 'createdAt'
             );
-            
+    
             const querySnapshot = await getDocs(q);
             const transactions = [];
-            
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
                 transactions.push({
                     id: doc.id,
-                    ...data,
-                    // Ensure timestamp is properly formatted
-                    timestamp: data.timestamp?.toDate?.() || data.createdAt?.toDate?.() || new Date()
+                    ...data
                 });
             });
-            
             return transactions;
         } catch (error) {
             console.error('Error fetching transaction history:', error);
-            // Fallback query in case of index issues
-            try {
-                const fallbackQ = query(
-                    collection(db, 'transactions'),
-                    where('uid', '==', uid),
-                    limit(limit)
-                );
-                const fallbackSnapshot = await getDocs(fallbackQ);
-                const fallbackTransactions = [];
-                fallbackSnapshot.forEach((doc) => {
-                    fallbackTransactions.push({
-                        id: doc.id,
-                        ...doc.data()
-                    });
+            // Fallback in case of timestamp/index issues
+            const fallbackQuery = query(
+                collection(db, 'transactions'),
+                where('userId', '==', uid),
+                orderBy('createdAt', 'desc')
+            );
+            const fallbackSnapshot = await getDocs(fallbackQuery);
+            const fallbackTransactions = [];
+            fallbackSnapshot.forEach((doc) => {
+                const data = doc.data();
+                fallbackTransactions.push({
+                    id: doc.id,
+                    ...data
                 });
-                return fallbackTransactions;
-            } catch (fallbackError) {
-                console.error('Fallback query also failed:', fallbackError);
-                return [];
-            }
+            });
+            return fallbackTransactions;
         }
     }
 

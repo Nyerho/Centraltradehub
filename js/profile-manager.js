@@ -3,7 +3,7 @@ import userProfileService from './user-profile-service.js';
 import { auth } from './firebase-config.js';
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { db } from './firebase-config.js';
-import { collection, query, where, orderBy, limit, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 
 class ProfileManager {
     constructor() {
@@ -109,49 +109,40 @@ class ProfileManager {
     setupRealtimeTransactionListener() {
         const transactionList = document.getElementById('transactionList');
         if (!transactionList) return;
-
-        // Clean up existing listener
+    
         if (this.transactionListener) {
             this.transactionListener();
         }
-
+    
         transactionList.innerHTML = '<div class="loading">Loading transactions...</div>';
-
-        try {
-            // Setup real-time listener for transactions
-            const transactionsRef = collection(db, 'transactions');
-            const q = query(
-                transactionsRef,
-                where('uid', '==', auth.currentUser.uid),
-                orderBy('timestamp', 'desc'),
-                limit(50)
-            );
-            
-            this.transactionListener = onSnapshot(q, (querySnapshot) => {
-                const transactions = [];
-                
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    transactions.push({
-                        id: doc.id,
-                        ...data,
-                        // Ensure timestamp fields are properly handled
-                        createdAt: data.createdAt || data.timestamp,
-                        timestamp: data.timestamp || data.createdAt
-                    });
-                });
-                
-                this.displayTransactions(transactions);
-                
-            }, (error) => {
-                console.error('Error in transactions listener:', error);
-                transactionList.innerHTML = '<div class="error">Error loading transactions</div>';
-            });
-            
-        } catch (error) {
-            console.error('Error setting up transactions listener:', error);
-            transactionList.innerHTML = '<div class="error">Error loading transactions</div>';
+    
+        const transactionsRef = collection(db, 'transactions');
+        const uid = auth?.currentUser?.uid;
+        if (!uid) {
+            transactionList.innerHTML = '<div class="error">You must be signed in to see your transactions</div>';
+            return;
         }
+    
+        const q = query(
+            transactionsRef,
+            where('userId', '==', uid),
+            orderBy('timestamp', 'desc')
+        );
+    
+        this.transactionListener = onSnapshot(q, (querySnapshot) => {
+            const transactions = [];
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                transactions.push({
+                    id: doc.id,
+                    ...data
+                });
+            });
+            this.displayTransactions(transactions);
+        }, (error) => {
+            console.error('Error in transactions listener:', error);
+            transactionList.innerHTML = '<div class="error">Error loading transactions</div>';
+        });
     }
 
     async loadTransactionHistory() {
