@@ -2754,6 +2754,9 @@ class EnhancedAdminDashboard {
             case 'user-control':
                 this.loadUserControlSection();
                 break;
+            case 'history':
+                this.loadGlobalHistory();
+                break;
             default:
                 console.warn('Unknown page:', page); // Warning log
         }
@@ -2815,6 +2818,120 @@ class EnhancedAdminDashboard {
                 await this.loadWalletImports();
                 break;
         }
+    }
+
+    async loadGlobalHistory() {
+        try {
+            const tbody = document.getElementById('globalHistoryTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center py-3">
+                        <i class="fas fa-spinner fa-spin me-2"></i>Loading history...
+                    </td>
+                </tr>
+            `;
+
+            // Fetch collections: transactions, trades, withdrawals
+            const [transactionsSnap, tradesSnap, withdrawalsSnap] = await Promise.all([
+                getDocs(query(collection(this.db, 'transactions'), orderBy('timestamp', 'desc'))),
+                getDocs(query(collection(this.db, 'trades'), orderBy('timestamp', 'desc'))),
+                getDocs(query(collection(this.db, 'withdrawals'), orderBy('timestamp', 'desc')))
+            ]);
+
+            const events = [];
+
+            // Normalize transactions
+            transactionsSnap.forEach(docSnap => {
+                const data = docSnap.data();
+                const ts = data.timestamp?.toDate
+                    ? data.timestamp.toDate()
+                    : (data.createdAt?.toDate ? data.createdAt.toDate() : new Date());
+                events.push({
+                    id: docSnap.id,
+                    category: 'Transaction',
+                    type: data.type || 'transaction',
+                    amount: Math.abs(data.amount || 0),
+                    status: data.status || 'unknown',
+                    userEmail: data.userEmail || data.email || 'N/A',
+                    userId: data.userId || data.uid || 'N/A',
+                    time: ts
+                });
+            });
+
+            // Normalize trades
+            tradesSnap.forEach(docSnap => {
+                const data = docSnap.data();
+                const ts = data.timestamp?.toDate
+                    ? data.timestamp.toDate()
+                    : (data.createdAt?.toDate ? data.createdAt.toDate() : new Date());
+                events.push({
+                    id: docSnap.id,
+                    category: 'Trade',
+                    type: data.type || data.symbol || 'trade',
+                    amount: Math.abs(data.amount || data.value || data.size || 0),
+                    status: data.status || data.result || 'unknown',
+                    userEmail: data.userEmail || data.email || 'N/A',
+                    userId: data.userId || data.uid || 'N/A',
+                    time: ts
+                });
+            });
+
+            // Normalize withdrawals
+            withdrawalsSnap.forEach(docSnap => {
+                const data = docSnap.data();
+                const ts = data.timestamp?.toDate
+                    ? data.timestamp.toDate()
+                    : (data.createdAt?.toDate ? data.createdAt.toDate() : new Date());
+                events.push({
+                    id: docSnap.id,
+                    category: 'Withdrawal',
+                    type: 'withdrawal',
+                    amount: Math.abs(data.amount || 0),
+                    status: data.status || 'unknown',
+                    userEmail: data.userEmail || data.email || 'N/A',
+                    userId: data.userId || data.uid || 'N/A',
+                    time: ts
+                });
+            });
+
+            // Sort by time desc
+            events.sort((a, b) => b.time - a.time);
+
+            this.renderGlobalHistoryTable(events);
+        } catch (error) {
+            console.error('Global history load error:', error);
+            this.showNotification('Failed to load global history', 'error');
+        }
+    }
+
+    renderGlobalHistoryTable(events) {
+        const tbody = document.getElementById('globalHistoryTableBody');
+        if (!tbody) return;
+
+        if (!events || events.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center py-4">
+                        <i class="fas fa-info-circle me-2"></i>No history found
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = events.map(e => `
+            <tr>
+                <td>${e.time instanceof Date ? e.time.toLocaleString() : new Date(e.time).toLocaleString()}</td>
+                <td>${e.category}</td>
+                <td>${e.type}</td>
+                <td>$${(e.amount || 0).toFixed(2)}</td>
+                <td><span class="badge bg-${this.getTransactionStatusColor ? this.getTransactionStatusColor(e.status) : 'secondary'}">${e.status}</span></td>
+                <td>${e.userEmail || 'N/A'}</td>
+                <td>${e.userId || 'N/A'}</td>
+                <td>${e.id}</td>
+            </tr>
+        `).join('');
     }
 
     toggleMobileMenu() {
