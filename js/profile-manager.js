@@ -110,9 +110,12 @@ class ProfileManager {
         const transactionList = document.getElementById('transactionList');
         if (!transactionList) return;
     
-        if (this.transactionListener) {
-            this.transactionListener();
+        // Clean up existing listeners (support multiple)
+        if (this.transactionUnsubscribers && Array.isArray(this.transactionUnsubscribers)) {
+            this.transactionUnsubscribers.forEach(unsub => unsub && unsub());
+            this.transactionUnsubscribers = [];
         }
+        this.transactionListener = null; // preserve old field for compatibility
     
         transactionList.innerHTML = '<div class="loading">Loading transactions...</div>';
     
@@ -123,26 +126,48 @@ class ProfileManager {
             return;
         }
     
-        const q = query(
-            transactionsRef,
-            where('userId', '==', uid),
-            orderBy('timestamp', 'desc')
-        );
+        // Listen to both userId and legacy uid transactions
+        const qUserId = query(transactionsRef, where('userId', '==', uid), orderBy('timestamp', 'desc'));
+        const qUid = query(transactionsRef, where('uid', '==', uid), orderBy('timestamp', 'desc'));
     
-        this.transactionListener = onSnapshot(q, (querySnapshot) => {
-            const transactions = [];
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                transactions.push({
-                    id: doc.id,
-                    ...data
-                });
+        // Keep separate buffers, then merge + dedupe by document id
+        this._txUserId = [];
+        this._txUid = [];
+    
+        const mergeAndDisplay = () => {
+            const map = new Map();
+            [...this._txUserId, ...this._txUid].forEach(tx => map.set(tx.id, tx));
+            const merged = Array.from(map.values()).sort((a, b) => {
+                const aDate = (a.timestamp?.toDate ? a.timestamp.toDate() : a.timestamp) || (a.createdAt?.toDate ? a.createdAt.toDate() : a.createdAt) || 0;
+                const bDate = (b.timestamp?.toDate ? b.timestamp.toDate() : b.timestamp) || (b.createdAt?.toDate ? b.createdAt.toDate() : b.createdAt) || 0;
+                return (bDate instanceof Date ? bDate.getTime() : bDate) - (aDate instanceof Date ? aDate.getTime() : aDate);
             });
-            this.displayTransactions(transactions);
+            this.displayTransactions(merged);
+        };
+    
+        const unsubUserId = onSnapshot(qUserId, (querySnapshot) => {
+            this._txUserId = [];
+            querySnapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                this._txUserId.push({ id: docSnap.id, ...data });
+            });
+            mergeAndDisplay();
         }, (error) => {
-            console.error('Error in transactions listener:', error);
-            transactionList.innerHTML = '<div class="error">Error loading transactions</div>';
+            console.error('Error in transactions listener (userId):', error);
         });
+    
+        const unsubUid = onSnapshot(qUid, (querySnapshot) => {
+            this._txUid = [];
+            querySnapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                this._txUid.push({ id: docSnap.id, ...data });
+            });
+            mergeAndDisplay();
+        }, (error) => {
+            console.error('Error in transactions listener (uid):', error);
+        });
+    
+        this.transactionUnsubscribers.push(unsubUserId, unsubUid);
     }
 
     async loadTransactionHistory() {
