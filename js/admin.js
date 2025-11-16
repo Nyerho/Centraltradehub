@@ -1665,6 +1665,7 @@ class EnhancedAdminDashboard {
                     // Create transaction record for the approved withdrawal
                     await addDoc(collection(this.db, 'transactions'), {
                         uid: userId,
+                        userId: userId,
                         type: 'withdrawal',
                         amount: parseFloat(amount),
                         status: 'completed',
@@ -1678,6 +1679,21 @@ class EnhancedAdminDashboard {
                     console.log(`Updated user ${userId}: totalWithdrawals: ${currentTotalWithdrawals} -> ${newTotalWithdrawals}, balance: ${newBalance}`);
                     console.log(`Created transaction record for withdrawal ${withdrawalId}`);
                 }
+            } else if (status === 'rejected') {
+                // Create transaction record for rejected/declined withdrawal
+                await addDoc(collection(this.db, 'transactions'), {
+                    uid: userId,
+                    userId: userId,
+                    type: 'withdrawal',
+                    amount: parseFloat(amount),
+                    status: 'rejected',
+                    description: `Withdrawal declined by admin`,
+                    timestamp: serverTimestamp(),
+                    createdAt: serverTimestamp(),
+                    withdrawalId: withdrawalId,
+                    processedBy: this.currentUser.uid
+                });
+                console.log(`Created transaction record for rejected withdrawal ${withdrawalId}`);
             }
             
             this.showNotification(`Withdrawal ${status} successfully`, 'success');
@@ -2033,7 +2049,10 @@ class EnhancedAdminDashboard {
             completed: 'success',
             pending: 'warning',
             failed: 'danger',
-            cancelled: 'secondary'
+            cancelled: 'secondary',
+            approved: 'success',
+            rejected: 'danger',
+            declined: 'danger'
         };
         return colors[status] || 'primary';
     }
@@ -3971,6 +3990,7 @@ EnhancedAdminDashboard.prototype.approveDeposit = async function(depositId, user
         console.log('📝 Creating transaction record...');
         const transactionRef = await addDoc(collection(this.db, 'transactions'), {
             uid: userId,
+            userId: userId, // ensure user history queries match
             type: 'deposit',
             method: 'crypto',
             currency: currency,
@@ -4521,10 +4541,11 @@ EnhancedAdminDashboard.prototype.saveTransactionRecord = async function() {
             return;
         }
         
-        // Prepare transaction data with both userEmail and uid
+        // Prepare transaction data with both userEmail, uid, and userId for consistency
         const transactionData = {
             userEmail: userEmail,
             uid: userUid, // Add UID for user history queries
+            userId: userUid, // also include userId for consistency with profile queries
             type: type,
             amount: amount,
             fee: parseFloat(document.getElementById('transactionFee').value) || 0,
@@ -4743,6 +4764,90 @@ EnhancedAdminDashboard.prototype.downloadKYCFile = async function(url, filename)
     } catch (err) {
         console.error('Download error:', err);
         this.showNotification('Failed to download file', 'error');
+    }
+};
+
+EnhancedAdminDashboard.prototype.backfillWithdrawalTransactions = async function() {
+    try {
+        const confirmed = window.confirm('This will create missing transaction records for withdrawals (pending, approved, rejected, completed). Continue?');
+        if (!confirmed) return;
+
+        this.showNotification('Starting withdrawal backfill...', 'info');
+
+        // Fetch all withdrawals, newest first
+        const withdrawalsSnap = await getDocs(query(collection(this.db, 'withdrawals'), orderBy('timestamp', 'desc')));
+
+        let createdCount = 0;
+        let skippedCount = 0;
+
+        for (const docSnap of withdrawalsSnap.docs) {
+            const w = docSnap.data();
+            const withdrawalId = docSnap.id;
+            const userId = w.userId || w.uid;
+            const amount = parseFloat(w.amount) || 0;
+
+            // Ensure we have a userId
+            if (!userId) {
+                console.warn(`Withdrawal ${withdrawalId} has no userId/uid, skipping.`);
+                skippedCount++;
+                continue;
+            }
+
+            // Check if a transaction already exists for this withdrawal
+            const existingTxnSnap = await getDocs(
+                query(collection(this.db, 'transactions'), where('withdrawalId', '==', withdrawalId))
+            );
+            const alreadyExists = !existingTxnSnap.empty;
+
+            if (alreadyExists) {
+                skippedCount++;
+                continue;
+            }
+
+            // Map statuses: approved/completed -> completed, rejected -> rejected, pending -> pending
+            let txnStatus = 'pending';
+            const statusLower = (w.status || 'pending').toLowerCase();
+            if (statusLower === 'approved' || statusLower === 'completed') {
+                txnStatus = 'completed';
+            } else if (statusLower === 'rejected' || statusLower === 'declined') {
+                txnStatus = 'rejected';
+            } else {
+                txnStatus = 'pending';
+            }
+
+            // Use withdrawal timestamp if present
+            const ts = w.timestamp ? w.timestamp : (w.createdAt ? w.createdAt : serverTimestamp());
+
+            const description = statusLower === 'approved' || statusLower === 'completed'
+                ? 'Withdrawal approved by admin (backfill)'
+                : statusLower === 'rejected' || statusLower === 'declined'
+                    ? 'Withdrawal declined by admin (backfill)'
+                    : 'Withdrawal pending (backfill)';
+
+            // Create transaction document
+            await addDoc(collection(this.db, 'transactions'), {
+                uid: userId,
+                userId: userId,
+                type: 'withdrawal',
+                amount: amount,
+                status: txnStatus,
+                description: description,
+                timestamp: ts,
+                createdAt: serverTimestamp(),
+                withdrawalId: withdrawalId,
+                processedBy: this.currentUser?.uid || 'system'
+            });
+
+            createdCount++;
+        }
+
+        this.showNotification(`Backfill completed. Created: ${createdCount}, Skipped: ${skippedCount}`, 'success');
+
+        // Refresh Global History to reflect changes
+        await this.loadGlobalHistory();
+    } catch (error) {
+        console.error('Backfill error:', error);
+        this.showNotification('Backfill failed: ' + error.message, 'error');
     }
 };
 
