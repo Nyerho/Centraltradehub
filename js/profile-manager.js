@@ -110,12 +110,12 @@ class ProfileManager {
         const transactionList = document.getElementById('transactionList');
         if (!transactionList) return;
     
-        // Clean up existing listeners (support multiple)
+        // Clean up existing listeners
         if (this.transactionUnsubscribers && Array.isArray(this.transactionUnsubscribers)) {
             this.transactionUnsubscribers.forEach(unsub => unsub && unsub());
             this.transactionUnsubscribers = [];
         }
-        this.transactionListener = null; // preserve old field for compatibility
+        this.transactionListener = null;
     
         transactionList.innerHTML = '<div class="loading">Loading transactions...</div>';
     
@@ -130,17 +130,22 @@ class ProfileManager {
         const qUserId = query(transactionsRef, where('userId', '==', uid), orderBy('timestamp', 'desc'));
         const qUid = query(transactionsRef, where('uid', '==', uid), orderBy('timestamp', 'desc'));
     
-        // Keep separate buffers, then merge + dedupe by document id
+        // Buffers for merged display
         this._txUserId = [];
         this._txUid = [];
+    
+        const safeDate = (ts) => {
+            const d = ts?.toDate ? ts.toDate() : ts;
+            return d instanceof Date ? d.getTime() : (typeof d === 'number' ? d : 0);
+        };
     
         const mergeAndDisplay = () => {
             const map = new Map();
             [...this._txUserId, ...this._txUid].forEach(tx => map.set(tx.id, tx));
             const merged = Array.from(map.values()).sort((a, b) => {
-                const aDate = (a.timestamp?.toDate ? a.timestamp.toDate() : a.timestamp) || (a.createdAt?.toDate ? a.createdAt.toDate() : a.createdAt) || 0;
-                const bDate = (b.timestamp?.toDate ? b.timestamp.toDate() : b.timestamp) || (b.createdAt?.toDate ? b.createdAt.toDate() : b.createdAt) || 0;
-                return (bDate instanceof Date ? bDate.getTime() : bDate) - (aDate instanceof Date ? aDate.getTime() : aDate);
+                const aDate = safeDate(a.timestamp) || safeDate(a.createdAt);
+                const bDate = safeDate(b.timestamp) || safeDate(b.createdAt);
+                return bDate - aDate;
             });
             this.displayTransactions(merged);
         };
@@ -154,6 +159,7 @@ class ProfileManager {
             mergeAndDisplay();
         }, (error) => {
             console.error('Error in transactions listener (userId):', error);
+            transactionList.innerHTML = '<div class="error">Error loading transactions</div>';
         });
     
         const unsubUid = onSnapshot(qUid, (querySnapshot) => {
@@ -165,6 +171,7 @@ class ProfileManager {
             mergeAndDisplay();
         }, (error) => {
             console.error('Error in transactions listener (uid):', error);
+            transactionList.innerHTML = '<div class="error">Error loading transactions</div>';
         });
     
         this.transactionUnsubscribers.push(unsubUserId, unsubUid);

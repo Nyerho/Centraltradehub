@@ -1634,7 +1634,13 @@ class EnhancedAdminDashboard {
             }
             
             const withdrawalData = withdrawalDoc.data();
-            const { userId, amount } = withdrawalData;
+            const amountNum = parseFloat(withdrawalData?.amount || 0);
+            const targetUid = withdrawalData?.userId || withdrawalData?.uid; // fallback to uid
+            if (!targetUid) {
+                console.error('Withdrawal document missing userId/uid:', withdrawalData);
+                this.showNotification('Withdrawal record missing user identifier', 'error');
+                return;
+            }
             
             // Update withdrawal status
             await updateDoc(doc(this.db, 'withdrawals', withdrawalId), {
@@ -1645,13 +1651,13 @@ class EnhancedAdminDashboard {
             
             // If approved, deduct from user balance
             if (status === 'approved') {
-                const userRef = doc(this.db, 'users', userId);
+                const userRef = doc(this.db, 'users', targetUid);
                 const userDoc = await getDoc(userRef);
                 
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
                     const currentTotalWithdrawals = userData.totalWithdrawals || 0;
-                    const newTotalWithdrawals = currentTotalWithdrawals + parseFloat(amount);
+                    const newTotalWithdrawals = currentTotalWithdrawals + amountNum;
                     const newBalance = (userData.totalDeposits || 0) + (userData.totalProfits || 0) - newTotalWithdrawals;
                     
                     // Update user's totalWithdrawals and balance
@@ -1664,10 +1670,10 @@ class EnhancedAdminDashboard {
                     
                     // Create transaction record for the approved withdrawal
                     await addDoc(collection(this.db, 'transactions'), {
-                        uid: userId,
-                        userId: userId,
+                        uid: targetUid,
+                        userId: targetUid, // ensure user history filtering works
                         type: 'withdrawal',
-                        amount: parseFloat(amount),
+                        amount: amountNum,
                         status: 'completed',
                         description: `Withdrawal approved by admin`,
                         timestamp: serverTimestamp(),
@@ -1676,16 +1682,16 @@ class EnhancedAdminDashboard {
                         processedBy: this.currentUser.uid
                     });
                     
-                    console.log(`Updated user ${userId}: totalWithdrawals: ${currentTotalWithdrawals} -> ${newTotalWithdrawals}, balance: ${newBalance}`);
+                    console.log(`Updated user ${targetUid}: totalWithdrawals: ${currentTotalWithdrawals} -> ${newTotalWithdrawals}, balance: ${newBalance}`);
                     console.log(`Created transaction record for withdrawal ${withdrawalId}`);
                 }
             } else if (status === 'rejected') {
                 // Create transaction record for rejected/declined withdrawal
                 await addDoc(collection(this.db, 'transactions'), {
-                    uid: userId,
-                    userId: userId,
+                    uid: targetUid,
+                    userId: targetUid, // ensure user history filtering works
                     type: 'withdrawal',
-                    amount: parseFloat(amount),
+                    amount: amountNum,
                     status: 'rejected',
                     description: `Withdrawal declined by admin`,
                     timestamp: serverTimestamp(),
