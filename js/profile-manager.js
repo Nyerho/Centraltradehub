@@ -110,7 +110,7 @@ class ProfileManager {
         const transactionList = document.getElementById('transactionList');
         if (!transactionList) return;
     
-        // Clean up any existing listeners
+        // Clean existing listeners
         if (this.transactionUnsubscribers && Array.isArray(this.transactionUnsubscribers)) {
             this.transactionUnsubscribers.forEach(unsub => unsub && unsub());
         }
@@ -125,11 +125,11 @@ class ProfileManager {
             return;
         }
     
-        // Listen to both userId and legacy uid transactions (no orderBy to avoid index requirement)
+        // Listen on both fields (no orderBy to avoid index requirements)
         const qUserId = query(transactionsRef, where('userId', '==', uid));
         const qUid = query(transactionsRef, where('uid', '==', uid));
     
-        // Buffers for merging
+        // Buffers
         this._txUserId = [];
         this._txUid = [];
     
@@ -144,7 +144,6 @@ class ProfileManager {
             const map = new Map();
             [...this._txUserId, ...this._txUid].forEach(tx => map.set(tx.id, tx));
             const merged = Array.from(map.values()).sort((a, b) => {
-                // Prefer timestamp, fall back to createdAt
                 const aTs = toMillis(a.timestamp) || toMillis(a.createdAt);
                 const bTs = toMillis(b.timestamp) || toMillis(b.createdAt);
                 return bTs - aTs;
