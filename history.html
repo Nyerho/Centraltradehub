@@ -579,3 +579,34 @@
     </style>
 </body>
 </html>
+
+<script>
+  // Global tab switcher used by onclick handlers in history.html
+  window.switchTab = function(tabId) {
+    try {
+      // Toggle tab content
+      document.querySelectorAll('.history-tab').forEach(el => el.classList.remove('active'));
+      const selectedTab = document.getElementById(tabId);
+      if (selectedTab) selectedTab.classList.add('active');
+
+      // Toggle nav active state
+      document.querySelectorAll('[data-tab]').forEach(el => el.classList.remove('active'));
+      const selectedNavItem = document.querySelector(`[data-tab="${tabId}"]`);
+      if (selectedNavItem) selectedNavItem.classList.add('active');
+
+      // Delegate to profile-manager if available
+      if (window.profileManager && typeof window.profileManager.switchTab === 'function') {
+        window.profileManager.switchTab(tabId);
+      } else {
+        // Fallback: call specific loaders if they exist
+        if (window.profileManager && typeof window.profileManager.loadTransactionHistory === 'function' && tabId === 'transaction-history') {
+          window.profileManager.loadTransactionHistory();
+        } else if (window.profileManager && typeof window.profileManager.loadTradingHistory === 'function' && tabId === 'trading-history') {
+          window.profileManager.loadTradingHistory();
+        }
+      }
+    } catch (err) {
+      console.error('switchTab error:', err);
+    }
+  };
+</script>
